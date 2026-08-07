@@ -1,0 +1,70 @@
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: docker/web/Dockerfile
+
+    container_name: tenantplatform-web
+    restart: unless-stopped
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+
+      ConnectionStrings__DefaultConnection: >-
+        Host=postgres;
+        Port=5432;
+        Database=${POSTGRES_DB};
+        Username=${POSTGRES_USER};
+        Password=${POSTGRES_PASSWORD};
+        Include Error Detail=false
+
+    ports:
+      - "10.150.100.242:8080:8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - frontend
+      - backend
+
+  postgres:
+    image: postgres:17
+    container_name: tenantplatform-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+    name: tenantplatform_postgres_data
+
+networks:
+  frontend:
+    name: tenantplatform_frontend
+
+  backend:
+    name: tenantplatform_backend
+    internal: true
