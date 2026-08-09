@@ -13,4 +13,8 @@ public class User
     public string PreferredLanguage { get; set; } = "nb-NO";
 
     public bool IsActive { get; set; } = true;
+    public LoginAccount? LoginAccount { get; set; }
+
+    public ICollection<UserAccount> Accounts { get; set; }
+    = new List<UserAccount>();
 }

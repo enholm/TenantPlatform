@@ -22,8 +22,13 @@ public static class DemoDataInitializer
         await CreateUnitsAsync(dbContext, cancellationToken);
         await CreateOccupanciesAsync(dbContext, cancellationToken);
         await CreateUsersAsync(dbContext, cancellationToken);
-        await CreateUserRolesAsync(dbContext, cancellationToken);
-        await CreateServiceDefinitionsAsync(dbContext, cancellationToken);
+
+        Console.WriteLine("Creating user accounts...");
+        await CreateUserAccountsAsync(dbContext, cancellationToken);
+
+        Console.WriteLine("Creating user roles...");
+        await CreateUserRolesAsync(dbContext, cancellationToken);        await CreateServiceDefinitionsAsync(dbContext, cancellationToken);
+
         await CreateNetworkEnvironmentAsync(dbContext, cancellationToken);
         await CreateSsidsAsync(dbContext, cancellationToken);
         await CreateServiceRequestsAsync(dbContext, cancellationToken);
@@ -304,46 +309,43 @@ public static class DemoDataInitializer
     }
 
     private static async Task CreateUserRolesAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
+    TenantPlatformDbContext dbContext,
+    CancellationToken cancellationToken)
     {
-        if (!await dbContext.UserRoleAssignments.AnyAsync(
+        if (!await dbContext.UserAccountRoles.AnyAsync(
                 x => x.Id == SeedIds.PerPropertyAdminRole,
                 cancellationToken))
         {
-            dbContext.UserRoleAssignments.Add(new UserRoleAssignment
+            dbContext.UserAccountRoles.Add(new UserAccountRole
             {
                 Id = SeedIds.PerPropertyAdminRole,
-                UserId = SeedIds.PerPedersen,
-                AccountId = SeedIds.NordicPropertyAccount,
+                UserAccountId = SeedIds.PerNordicPropertyUserAccount,
                 BuildingId = SeedIds.OsloAtrium,
                 Role = UserRole.PropertyAdmin
             });
         }
 
-        if (!await dbContext.UserRoleAssignments.AnyAsync(
+        if (!await dbContext.UserAccountRoles.AnyAsync(
                 x => x.Id == SeedIds.OleTenantAdminRole,
                 cancellationToken))
         {
-            dbContext.UserRoleAssignments.Add(new UserRoleAssignment
+            dbContext.UserAccountRoles.Add(new UserAccountRole
             {
                 Id = SeedIds.OleTenantAdminRole,
-                UserId = SeedIds.OleOlsen,
-                AccountId = SeedIds.NordicPropertyAccount,
+                UserAccountId = SeedIds.OleNordicPropertyUserAccount,
                 OrganizationId = SeedIds.AcmeOrganization,
                 Role = UserRole.TenantAdmin
             });
         }
 
-        if (!await dbContext.UserRoleAssignments.AnyAsync(
+        if (!await dbContext.UserAccountRoles.AnyAsync(
                 x => x.Id == SeedIds.KariTenantUserRole,
                 cancellationToken))
         {
-            dbContext.UserRoleAssignments.Add(new UserRoleAssignment
+            dbContext.UserAccountRoles.Add(new UserAccountRole
             {
                 Id = SeedIds.KariTenantUserRole,
-                UserId = SeedIds.KariHansen,
-                AccountId = SeedIds.NordicPropertyAccount,
+                UserAccountId = SeedIds.KariNordicPropertyUserAccount,
                 OrganizationId = SeedIds.ContosoOrganization,
                 Role = UserRole.TenantUser
             });
@@ -351,7 +353,6 @@ public static class DemoDataInitializer
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
-
     private static async Task CreateServiceDefinitionsAsync(
         TenantPlatformDbContext dbContext,
         CancellationToken cancellationToken)
@@ -525,5 +526,48 @@ public static class DemoDataInitializer
 
             await dbContext.SaveChangesAsync(cancellationToken);
         }
+    }
+
+    private static async Task CreateUserAccountsAsync(
+    TenantPlatformDbContext dbContext,
+    CancellationToken cancellationToken)
+    {
+        if (!await dbContext.UserAccounts.AnyAsync(
+                x => x.Id == SeedIds.PerNordicPropertyUserAccount,
+                cancellationToken))
+        {
+            dbContext.UserAccounts.Add(new UserAccount
+            {
+                Id = SeedIds.PerNordicPropertyUserAccount,
+                UserId = SeedIds.PerPedersen,
+                AccountId = SeedIds.NordicPropertyAccount
+            });
+        }
+
+        if (!await dbContext.UserAccounts.AnyAsync(
+                x => x.Id == SeedIds.OleNordicPropertyUserAccount,
+                cancellationToken))
+        {
+            dbContext.UserAccounts.Add(new UserAccount
+            {
+                Id = SeedIds.OleNordicPropertyUserAccount,
+                UserId = SeedIds.OleOlsen,
+                AccountId = SeedIds.NordicPropertyAccount
+            });
+        }
+
+        if (!await dbContext.UserAccounts.AnyAsync(
+                x => x.Id == SeedIds.KariNordicPropertyUserAccount,
+                cancellationToken))
+        {
+            dbContext.UserAccounts.Add(new UserAccount
+            {
+                Id = SeedIds.KariNordicPropertyUserAccount,
+                UserId = SeedIds.KariHansen,
+                AccountId = SeedIds.NordicPropertyAccount
+            });
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

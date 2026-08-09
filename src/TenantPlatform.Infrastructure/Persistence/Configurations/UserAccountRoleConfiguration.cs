@@ -1,18 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TenantPlatform.Core.Accounts;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Core.Organizations;
 using TenantPlatform.Core.Properties;
 
 namespace TenantPlatform.Infrastructure.Persistence.Configurations;
 
-public class UserRoleAssignmentConfiguration
-    : IEntityTypeConfiguration<UserRoleAssignment>
+public class UserAccountRoleConfiguration
+    : IEntityTypeConfiguration<UserAccountRole>
 {
-    public void Configure(EntityTypeBuilder<UserRoleAssignment> builder)
+    public void Configure(EntityTypeBuilder<UserAccountRole> builder)
     {
-        builder.ToTable("user_role_assignments");
+        builder.ToTable("user_account_roles");
 
         builder.HasKey(x => x.Id);
 
@@ -20,14 +19,9 @@ public class UserRoleAssignmentConfiguration
             .HasConversion<int>()
             .IsRequired();
 
-        builder.HasOne<User>()
-            .WithMany()
-            .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne<Account>()
-            .WithMany()
-            .HasForeignKey(x => x.AccountId)
+        builder.HasOne(x => x.UserAccount)
+            .WithMany(x => x.UserAccountRoles)
+            .HasForeignKey(x => x.UserAccountId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<Organization>()
@@ -40,15 +34,13 @@ public class UserRoleAssignmentConfiguration
             .HasForeignKey(x => x.BuildingId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(x => x.UserId);
-        builder.HasIndex(x => x.AccountId);
+        builder.HasIndex(x => x.UserAccountId);
         builder.HasIndex(x => x.OrganizationId);
         builder.HasIndex(x => x.BuildingId);
 
         builder.HasIndex(x => new
         {
-            x.UserId,
-            x.AccountId,
+            x.UserAccountId,
             x.OrganizationId,
             x.BuildingId,
             x.Role

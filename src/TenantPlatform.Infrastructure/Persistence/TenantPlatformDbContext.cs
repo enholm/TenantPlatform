@@ -23,13 +23,15 @@ public class TenantPlatformDbContext : DbContext
     public DbSet<Unit> Units => Set<Unit>();
     public DbSet<Occupancy> Occupancies => Set<Occupancy>();
     public DbSet<User> Users => Set<User>();
-    public DbSet<UserRoleAssignment> UserRoleAssignments => Set<UserRoleAssignment>();
+    public DbSet<UserAccountRole> UserAccountRoles => Set<UserAccountRole>();
     public DbSet<ServiceDefinition> ServiceDefinitions => Set<ServiceDefinition>();
     public DbSet<ServiceDefinitionTranslation> ServiceDefinitionTranslations => Set<ServiceDefinitionTranslation>();
     public DbSet<ServiceRequest> ServiceRequests => Set<ServiceRequest>();
     public DbSet<NetworkSsid> NetworkSsids => Set<NetworkSsid>();
     public DbSet<SsidRequestDetails> SsidRequestDetails => Set<SsidRequestDetails>();
     public DbSet<NetworkEnvironment> NetworkEnvironments => Set<NetworkEnvironment>();
+    public DbSet<LoginAccount> LoginAccounts => Set<LoginAccount>();
+    public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(

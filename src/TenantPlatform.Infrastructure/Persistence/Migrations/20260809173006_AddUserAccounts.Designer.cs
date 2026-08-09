@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TenantPlatform.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using TenantPlatform.Infrastructure.Persistence;
 namespace TenantPlatform.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TenantPlatformDbContext))]
-    partial class TenantPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260809173006_AddUserAccounts")]
+    partial class AddUserAccounts
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,8 +60,7 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(320)
-                        .HasColumnType("character varying(320)");
+                        .HasColumnType("text");
 
                     b.Property<int>("FailedLoginCount")
                         .HasColumnType("integer");
@@ -81,13 +83,10 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
-
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("login_accounts", (string)null);
+                    b.ToTable("LoginAccounts");
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Identity.User", b =>
@@ -574,7 +573,7 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.HasOne("TenantPlatform.Core.Identity.User", "User")
                         .WithOne("LoginAccount")
                         .HasForeignKey("TenantPlatform.Core.Identity.LoginAccount", "UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
