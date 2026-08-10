@@ -70,6 +70,9 @@ public static class SeedIds
 
     public static readonly Guid KariNordicPropertyUserAccount =
         Guid.Parse("71000000-0000-0000-0000-000000000003");
+
+    public static readonly Guid PerLoginAccount =
+    Guid.Parse("72000000-0000-0000-0000-000000000001");
     // Service definition
     public static readonly Guid NetworkSsidService =
         Guid.Parse("80000000-0000-0000-0000-000000000001");

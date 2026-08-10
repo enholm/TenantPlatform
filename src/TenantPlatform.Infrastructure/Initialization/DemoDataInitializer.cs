@@ -7,6 +7,7 @@ using TenantPlatform.Core.Organizations;
 using TenantPlatform.Core.Properties;
 using TenantPlatform.Core.Services;
 using TenantPlatform.Infrastructure.Persistence;
+using TenantPlatform.Infrastructure.Authentication;
 
 namespace TenantPlatform.Infrastructure.Initialization;
 
@@ -14,6 +15,7 @@ public static class DemoDataInitializer
 {
     public static async Task InitializeAsync(
         TenantPlatformDbContext dbContext,
+        PasswordService passwordService,
         CancellationToken cancellationToken = default)
     {
         await CreateAccountAsync(dbContext, cancellationToken);
@@ -32,8 +34,41 @@ public static class DemoDataInitializer
         await CreateNetworkEnvironmentAsync(dbContext, cancellationToken);
         await CreateSsidsAsync(dbContext, cancellationToken);
         await CreateServiceRequestsAsync(dbContext, cancellationToken);
+
+        await CreateLoginAccountsAsync(dbContext, passwordService, cancellationToken);
     }
 
+    private static async Task CreateLoginAccountsAsync(
+        TenantPlatformDbContext dbContext,
+        PasswordService passwordService,
+        CancellationToken cancellationToken)
+    {
+        if (await dbContext.LoginAccounts.AnyAsync(
+                x => x.Id == SeedIds.PerLoginAccount,
+                cancellationToken))
+        {
+            return;
+        }
+
+        var loginAccount = new LoginAccount
+        {
+            Id = SeedIds.PerLoginAccount,
+            UserId = SeedIds.PerPedersen,
+            Email = "per@nordicproperty.example",
+            IsEnabled = true,
+            FailedLoginCount = 0,
+            CreatedUtc = DateTimeOffset.UtcNow
+        };
+
+        loginAccount.PasswordHash =
+            passwordService.HashPassword(
+                loginAccount,
+                "ChangeMe123!");
+
+        dbContext.LoginAccounts.Add(loginAccount);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
     private static async Task CreateAccountAsync(
         TenantPlatformDbContext dbContext,
         CancellationToken cancellationToken)

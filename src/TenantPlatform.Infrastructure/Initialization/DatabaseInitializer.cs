@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TenantPlatform.Infrastructure.Authentication;
 using TenantPlatform.Infrastructure.Persistence;
 
 namespace TenantPlatform.Infrastructure.Initialization;
@@ -9,6 +10,7 @@ public static class DatabaseInitializer
 public static async Task InitializeAsync(
     TenantPlatformDbContext dbContext,
     ILogger logger,
+    PasswordService passwordService,
     bool includeDemoData,
     CancellationToken cancellationToken = default)
 {
@@ -50,6 +52,7 @@ public static async Task InitializeAsync(
 
             await DemoDataInitializer.InitializeAsync(
                 dbContext,
+                passwordService,
                 cancellationToken);
 
             logger.LogInformation("Demo data initialization completed.");

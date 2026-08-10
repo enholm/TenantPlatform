@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Infrastructure.Initialization;
+using TenantPlatform.Infrastructure.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,8 @@ builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
-
+builder.Services.AddSingleton<PasswordService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -39,10 +41,12 @@ using (var scope = app.Services.CreateScope())
 
     var logger = scope.ServiceProvider
         .GetRequiredService<ILogger<Program>>();
-
+    var passwordService = scope.ServiceProvider
+        .GetRequiredService<PasswordService>();
     await DatabaseInitializer.InitializeAsync(
         dbContext,
         logger,
+        passwordService,
         includeDemoData: app.Environment.IsDevelopment());
 }
 
