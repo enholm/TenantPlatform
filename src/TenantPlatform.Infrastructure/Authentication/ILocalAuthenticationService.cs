@@ -1,6 +1,6 @@
 namespace TenantPlatform.Infrastructure.Authentication;
 
-public interface IAuthenticationService
+public interface ILocalAuthenticationService
 {
     Task<AuthenticationResult> AuthenticateAsync(
         string email,

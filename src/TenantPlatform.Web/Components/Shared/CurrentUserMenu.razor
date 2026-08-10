@@ -1,0 +1,19 @@
+@using TenantPlatform.Web.Security
+@inject ICurrentUserService CurrentUserService
+
+@if (CurrentUserService.CurrentUser.IsAuthenticated)
+{
+    <div class="d-flex align-items-center gap-3">
+        <span>
+            @CurrentUserService.CurrentUser.FullName
+        </span>
+
+        <form method="post"
+              action="/auth/logout">
+            <button type="submit"
+                    class="btn btn-outline-secondary btn-sm">
+                Logg ut
+            </button>
+        </form>
+    </div>
+}

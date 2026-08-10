@@ -1,0 +1,79 @@
+@attribute [AllowAnonymous]
+
+@using Microsoft.AspNetCore.Authorization
+
+@page "/login"
+
+<PageTitle>Logg inn</PageTitle>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5 col-lg-4">
+        <h1 class="mb-4">Logg inn</h1>
+
+        @if (InvalidLogin)
+        {
+            <div class="alert alert-danger">
+                Feil e-postadresse eller passord.
+            </div>
+        }
+
+        <form method="post" action="/auth/login">
+            <AntiforgeryToken />
+
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    E-post
+                </label>
+
+                <input id="email"
+                       name="email"
+                       type="email"
+                       class="form-control"
+                       autocomplete="username"
+                       required />
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">
+                    Passord
+                </label>
+
+                <input id="password"
+                       name="password"
+                       type="password"
+                       class="form-control"
+                       autocomplete="current-password"
+                       required />
+            </div>
+
+            <div class="form-check mb-3">
+                <input id="rememberMe"
+                       name="rememberMe"
+                       value="true"
+                       type="checkbox"
+                       class="form-check-input" />
+
+                <label for="rememberMe"
+                       class="form-check-label">
+                    Husk meg
+                </label>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary w-100">
+                Logg inn
+            </button>
+        </form>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Error { get; set; }
+
+    private bool InvalidLogin =>
+        string.Equals(
+            Error,
+            "invalid-login",
+            StringComparison.OrdinalIgnoreCase);
+}

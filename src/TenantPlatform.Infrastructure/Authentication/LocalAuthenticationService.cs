@@ -3,7 +3,7 @@ using TenantPlatform.Infrastructure.Persistence;
 
 namespace TenantPlatform.Infrastructure.Authentication;
 
-public class AuthenticationService : IAuthenticationService
+public class LocalAuthenticationService : ILocalAuthenticationService
 {
     private const int MaxFailedLoginAttempts = 5;
     private static readonly TimeSpan LockoutDuration =
@@ -12,7 +12,7 @@ public class AuthenticationService : IAuthenticationService
     private readonly TenantPlatformDbContext _dbContext;
     private readonly PasswordService _passwordService;
 
-    public AuthenticationService(
+    public LocalAuthenticationService(
         TenantPlatformDbContext dbContext,
         PasswordService passwordService)
     {

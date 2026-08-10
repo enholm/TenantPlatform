@@ -1,4 +1,7 @@
-﻿@page "/weather"
+﻿@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+
+@page "/weather"
 @attribute [StreamRendering]
 
 <PageTitle>Weather</PageTitle>

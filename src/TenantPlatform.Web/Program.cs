@@ -7,6 +7,9 @@ using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Infrastructure.Initialization;
 using TenantPlatform.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using TenantPlatform.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +26,13 @@ builder.Services
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<PasswordService>();
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<ILocalAuthenticationService, LocalAuthenticationService>();
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<
+    ICurrentUserService,
+    CurrentUserService>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -97,4 +106,80 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapPost("/auth/login", async (
+    HttpContext httpContext,
+    ILocalAuthenticationService authenticationService,
+    IFormCollection form,
+    CancellationToken cancellationToken) =>
+{
+    var email = form["email"].ToString();
+    var password = form["password"].ToString();
+
+    var rememberMe =
+        string.Equals(
+            form["rememberMe"].ToString(),
+            "true",
+            StringComparison.OrdinalIgnoreCase);
+
+    var result = await authenticationService.AuthenticateAsync(
+        email,
+        password,
+        cancellationToken);
+
+    if (!result.Succeeded || result.User is null)
+    {
+        return Results.Redirect(
+            "/login?error=invalid-login");
+    }
+
+    var claims = new List<Claim>
+    {
+        new(
+            TenantPlatformClaimTypes.UserId,
+            result.User.Id.ToString()),
+
+        new(
+            ClaimTypes.Email,
+            result.User.Email),
+
+        new(
+            ClaimTypes.Name,
+            $"{result.User.FirstName} {result.User.LastName}")
+    };
+
+    var identity = new ClaimsIdentity(
+        claims,
+        CookieAuthenticationDefaults.AuthenticationScheme);
+
+    var principal = new ClaimsPrincipal(identity);
+
+    var authenticationProperties = new AuthenticationProperties
+    {
+        IsPersistent = rememberMe,
+        AllowRefresh = true
+    };
+
+    await httpContext.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        principal,
+        authenticationProperties);
+
+    return Results.Redirect("/");
+});
+
+app.MapPost("/auth/logout", async (HttpContext httpContext) =>
+{
+    await httpContext.SignOutAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme);
+
+    return Results.Redirect("/login");
+});
+
 app.Run();
+
+
+public record LoginRequest(
+    string Email,
+    string Password,
+    bool RememberMe);
+
