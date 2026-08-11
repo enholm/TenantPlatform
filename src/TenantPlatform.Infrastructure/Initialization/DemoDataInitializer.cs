@@ -38,19 +38,16 @@ public static class DemoDataInitializer
         await CreateLoginAccountsAsync(dbContext, passwordService, cancellationToken);
     }
 
-    private static async Task CreateLoginAccountsAsync(
-        TenantPlatformDbContext dbContext,
-        PasswordService passwordService,
-        CancellationToken cancellationToken)
+ private static async Task CreateLoginAccountsAsync(
+    TenantPlatformDbContext dbContext,
+    PasswordService passwordService,
+    CancellationToken cancellationToken)
+{
+    if (!await dbContext.LoginAccounts.AnyAsync(
+            x => x.Id == SeedIds.PerLoginAccount,
+            cancellationToken))
     {
-        if (await dbContext.LoginAccounts.AnyAsync(
-                x => x.Id == SeedIds.PerLoginAccount,
-                cancellationToken))
-        {
-            return;
-        }
-
-        var loginAccount = new LoginAccount
+        var perLoginAccount = new LoginAccount
         {
             Id = SeedIds.PerLoginAccount,
             UserId = SeedIds.PerPedersen,
@@ -60,15 +57,38 @@ public static class DemoDataInitializer
             CreatedUtc = DateTimeOffset.UtcNow
         };
 
-        loginAccount.PasswordHash =
+        perLoginAccount.PasswordHash =
             passwordService.HashPassword(
-                loginAccount,
+                perLoginAccount,
                 "ChangeMe123!");
 
-        dbContext.LoginAccounts.Add(loginAccount);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.LoginAccounts.Add(perLoginAccount);
     }
+
+    if (!await dbContext.LoginAccounts.AnyAsync(
+            x => x.Id == SeedIds.OleLoginAccount,
+            cancellationToken))
+    {
+        var oleLoginAccount = new LoginAccount
+        {
+            Id = SeedIds.OleLoginAccount,
+            UserId = SeedIds.OleOlsen,
+            Email = "ole@acme.example",
+            IsEnabled = true,
+            FailedLoginCount = 0,
+            CreatedUtc = DateTimeOffset.UtcNow
+        };
+
+        oleLoginAccount.PasswordHash =
+            passwordService.HashPassword(
+                oleLoginAccount,
+                "ChangeMe123!");
+
+        dbContext.LoginAccounts.Add(oleLoginAccount);
+    }
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+}
     private static async Task CreateAccountAsync(
         TenantPlatformDbContext dbContext,
         CancellationToken cancellationToken)

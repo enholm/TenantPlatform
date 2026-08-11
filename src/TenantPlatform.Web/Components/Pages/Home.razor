@@ -1,5 +1,9 @@
 ﻿@attribute [Authorize]
 @using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Identity
+@using TenantPlatform.Infrastructure.Initialization
+@using TenantPlatform.Web.Security
+@inject ITenantAuthorizationService AuthorizationService
 
 @page "/"
 
@@ -7,4 +11,42 @@
 
 <h1>Hello, world!</h1>
 
-Welcome to your new app.
+<h3>Authorization test</h3>
+
+<ul>
+    <li>
+        AccountAdmin:
+        <strong>@(isAccountAdmin ? "Ja" : "Nei")</strong>
+    </li>
+
+    <li>
+        Kan administrere Oslo Atrium:
+        <strong>@(canManageOsloAtrium ? "Ja" : "Nei")</strong>
+    </li>
+
+    <li>
+        Kan administrere Acme:
+        <strong>@(canManageAcme ? "Ja" : "Nei")</strong>
+    </li>
+</ul>
+
+@code {
+    private bool isAccountAdmin;
+    private bool canManageOsloAtrium;
+    private bool canManageAcme;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isAccountAdmin =
+            await AuthorizationService.HasRoleAsync(
+                UserRole.AccountAdmin);
+
+        canManageOsloAtrium =
+            await AuthorizationService.CanManageBuildingAsync(
+                SeedIds.OsloAtrium);
+
+        canManageAcme =
+            await AuthorizationService.CanManageOrganizationAsync(
+                SeedIds.AcmeOrganization);
+    }
+}

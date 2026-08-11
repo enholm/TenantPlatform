@@ -1,0 +1,101 @@
+using Microsoft.EntityFrameworkCore;
+using TenantPlatform.Core.Identity;
+using TenantPlatform.Infrastructure.Persistence;
+
+namespace TenantPlatform.Web.Security;
+
+public class TenantAuthorizationService
+    : ITenantAuthorizationService
+{
+    private readonly TenantPlatformDbContext _dbContext;
+    private readonly ICurrentUserService _currentUserService;
+
+    public TenantAuthorizationService(
+        TenantPlatformDbContext dbContext,
+        ICurrentUserService currentUserService)
+    {
+        _dbContext = dbContext;
+        _currentUserService = currentUserService;
+    }
+
+    public async Task<bool> HasRoleAsync(
+        UserRole role,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.CurrentUser;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        return await _dbContext.UserAccountRoles
+            .AnyAsync(
+                x =>
+                    x.UserAccount.UserId == currentUser.UserId &&
+                    x.UserAccount.AccountId == currentUser.CurrentAccountId.Value &&
+                    x.Role == role &&
+                    x.OrganizationId == null &&
+                    x.BuildingId == null,
+                cancellationToken);
+    }
+
+    public async Task<bool> CanManageBuildingAsync(
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.CurrentUser;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        return await _dbContext.UserAccountRoles
+            .AnyAsync(
+                x =>
+                    x.UserAccount.UserId == currentUser.UserId &&
+                    x.UserAccount.AccountId == accountId &&
+                    (
+                        x.Role == UserRole.AccountAdmin ||
+                        (
+                            x.Role == UserRole.PropertyAdmin &&
+                            x.BuildingId == buildingId
+                        )
+                    ),
+                cancellationToken);
+    }
+
+    public async Task<bool> CanManageOrganizationAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.CurrentUser;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        return await _dbContext.UserAccountRoles
+            .AnyAsync(
+                x =>
+                    x.UserAccount.UserId == currentUser.UserId &&
+                    x.UserAccount.AccountId == accountId &&
+                    (
+                        x.Role == UserRole.AccountAdmin ||
+                        (
+                            x.Role == UserRole.TenantAdmin &&
+                            x.OrganizationId == organizationId
+                        )
+                    ),
+                cancellationToken);
+    }
+}

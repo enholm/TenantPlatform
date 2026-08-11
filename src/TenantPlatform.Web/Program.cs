@@ -28,6 +28,7 @@ builder.Services
 builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddScoped<ILocalAuthenticationService, LocalAuthenticationService>();
 builder.Services.AddScoped<AuthenticationCookieService>();
+builder.Services.AddScoped<ITenantAuthorizationService, TenantAuthorizationService>();
 
 builder.Services.AddHttpContextAccessor();
 
