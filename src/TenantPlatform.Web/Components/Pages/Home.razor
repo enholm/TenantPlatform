@@ -1,52 +1,185 @@
-﻿@attribute [Authorize]
+﻿@page "/"
+@attribute [Authorize]
+
 @using Microsoft.AspNetCore.Authorization
-@using TenantPlatform.Core.Identity
-@using TenantPlatform.Infrastructure.Initialization
-@using TenantPlatform.Web.Security.Authorization
-@inject ITenantAuthorizationService AuthorizationService
+@using Microsoft.EntityFrameworkCore
 
-@page "/"
+@using TenantPlatform.Infrastructure.Persistence
+@using TenantPlatform.Web.Security.CurrentUserContext
 
-<PageTitle>Home</PageTitle>
+@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
+@inject ICurrentUserContextService UserContext
 
-<h1>Hello, world!</h1>
+<PageTitle>Dashboard</PageTitle>
 
-<h3>Authorization test</h3>
+@if (isLoading)
+{
+    <p>Laster dashboard...</p>
+}
+else if (accountName is null)
+{
+    <div class="alert alert-warning">
+        Ingen aktiv Account er valgt.
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <h1>Dashboard</h1>
+        <p class="text-muted">@accountName</p>
+    </div>
 
-<ul>
-    <li>
-        AccountAdmin:
-        <strong>@(isAccountAdmin ? "Ja" : "Nei")</strong>
-    </li>
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted">Bygg</div>
+                    <div class="fs-2 fw-bold">@buildingCount</div>
+                </div>
+            </div>
+        </div>
 
-    <li>
-        Kan administrere Oslo Atrium:
-        <strong>@(canManageOsloAtrium ? "Ja" : "Nei")</strong>
-    </li>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted">Organisasjoner</div>
+                    <div class="fs-2 fw-bold">@organizationCount</div>
+                </div>
+            </div>
+        </div>
 
-    <li>
-        Kan administrere Acme:
-        <strong>@(canManageAcme ? "Ja" : "Nei")</strong>
-    </li>
-</ul>
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted">Seksjoner / enheter</div>
+                    <div class="fs-2 fw-bold">@unitCount</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted">Åpne bestillinger</div>
+                    <div class="fs-2 fw-bold">@openRequestCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            Siste bestillinger
+        </div>
+
+        <div class="card-body p-0">
+            @if (recentRequests.Count == 0)
+            {
+                <div class="p-3 text-muted">
+                    Ingen bestillinger ennå.
+                </div>
+            }
+            else
+            {
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Opprettet</th>
+                            <th>Status</th>
+                            <th>Requester</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var request in recentRequests)
+                        {
+                            <tr>
+                                <td>@request.CreatedAt.LocalDateTime.ToString("g")</td>
+                                <td>@request.Status</td>
+                                <td>@request.RequesterName</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+}
 
 @code {
-    private bool isAccountAdmin;
-    private bool canManageOsloAtrium;
-    private bool canManageAcme;
+    private bool isLoading = true;
 
-    protected override async Task OnInitializedAsync()
+    private string? accountName;
+
+    private int buildingCount;
+    private int organizationCount;
+    private int unitCount;
+    private int openRequestCount;
+
+    private List<RecentRequest> recentRequests = [];
+
+   protected override async Task OnInitializedAsync()
+{
+    var currentAccountId = UserContext.Current.CurrentAccountId;
+
+    if (!currentAccountId.HasValue)
     {
-        isAccountAdmin =
-            await AuthorizationService.HasRoleAsync(
-                UserRole.AccountAdmin);
+        isLoading = false;
+        return;
+    }
 
-        canManageOsloAtrium =
-            await AuthorizationService.CanManageBuildingAsync(
-                SeedIds.OsloAtrium);
+    await using var dbContext =
+        await DbContextFactory.CreateDbContextAsync();
 
-        canManageAcme =
-            await AuthorizationService.CanManageOrganizationAsync(
-                SeedIds.AcmeOrganization);
+    var accountId = currentAccountId.Value;
+
+    accountName = await dbContext.Accounts
+        .Where(x => x.Id == accountId)
+        .Select(x => x.Name)
+        .SingleOrDefaultAsync();
+
+    buildingCount = await dbContext.Buildings
+        .CountAsync(x => x.AccountId == accountId);
+
+    organizationCount = await dbContext.Organizations
+        .CountAsync(x => x.AccountId == accountId);
+
+    unitCount = await dbContext.Units
+        .CountAsync(x => x.AccountId == accountId);
+
+    openRequestCount = await dbContext.ServiceRequests
+        .CountAsync(x =>
+            x.AccountId == accountId &&
+            x.Status != Core.Services.ServiceRequestStatus.Completed &&
+            x.Status != Core.Services.ServiceRequestStatus.Cancelled &&
+            x.Status != Core.Services.ServiceRequestStatus.Rejected &&
+            x.Status != Core.Services.ServiceRequestStatus.Failed);
+
+    recentRequests = await dbContext.ServiceRequests
+        .Where(x => x.AccountId == accountId)
+        .OrderByDescending(x => x.CreatedAt)
+        .Take(10)
+        .Join(
+            dbContext.Users,
+            request => request.RequesterUserId,
+            user => user.Id,
+            (request, user) => new RecentRequest
+            {
+                CreatedAt = request.CreatedAt,
+                Status = request.Status.ToString(),
+                RequesterName =
+                    user.FirstName + " " + user.LastName
+            })
+        .ToListAsync();
+
+    isLoading = false;
+}
+    private class RecentRequest
+    {
+        public DateTimeOffset CreatedAt { get; set; }
+
+        public string Status { get; set; } = string.Empty;
+
+        public string RequesterName { get; set; } = string.Empty;
     }
 }

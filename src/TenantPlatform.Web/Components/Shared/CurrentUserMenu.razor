@@ -3,7 +3,7 @@
 @using TenantPlatform.Web.Security.CurrentUserContext
 
 @inject ICurrentUserContextService CurrentUserContextService
-@inject TenantPlatformDbContext DbContext
+@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
 
 @if (CurrentUserContextService.Current.IsAuthenticated)
 {
@@ -45,8 +45,9 @@
         }
 
         var userId = CurrentUserContextService.Current.UserId;
-
-        accountCount = await DbContext.UserAccounts
+        await using var dbContext =
+            await DbContextFactory.CreateDbContextAsync();
+        accountCount = await dbContext.UserAccounts
             .CountAsync(x => x.UserId == userId);
     }
 }

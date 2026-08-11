@@ -6,7 +6,7 @@
 @using TenantPlatform.Infrastructure.Persistence
 @using TenantPlatform.Web.Security.CurrentUserContext
 
-@inject TenantPlatformDbContext DbContext
+@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
 @inject ICurrentUserContextService CurrentUserContextService
 
 <PageTitle>Velg selskap</PageTitle>
@@ -52,8 +52,9 @@ else
     {
         var userId =
             CurrentUserContextService.Current.UserId;
-
-        accounts = await DbContext.UserAccounts
+        await using var dbContext =
+            await DbContextFactory.CreateDbContextAsync();
+        accounts = await dbContext.UserAccounts
             .Where(x => x.UserId == userId)
             .OrderBy(x => x.Account.Name)
             .Select(x => new AccountOption(

@@ -20,7 +20,7 @@ var connectionString =
     ?? throw new InvalidOperationException(
         "Connection string 'DefaultConnection' was not found.");
 
-builder.Services.AddDbContext<TenantPlatformDbContext>(options =>
+builder.Services.AddDbContextFactory<TenantPlatformDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services
@@ -76,13 +76,14 @@ var app = builder.Build();
 // Initialize database and add platform data (and also demo data if dev environment)
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider
-        .GetRequiredService<TenantPlatformDbContext>();
-
+    var dbContextFactory = scope.ServiceProvider
+        .GetRequiredService<IDbContextFactory<TenantPlatformDbContext>>();
     var logger = scope.ServiceProvider
         .GetRequiredService<ILogger<Program>>();
     var passwordService = scope.ServiceProvider
         .GetRequiredService<PasswordService>();
+    await using var dbContext =
+        await dbContextFactory.CreateDbContextAsync();
     await DatabaseInitializer.InitializeAsync(
         dbContext,
         logger,
