@@ -11,4 +11,6 @@ public class CurrentUser
     public bool IsAuthenticated { get; init; }
 
     public Guid? CurrentAccountId { get; set; }
+
+    public string? CurrentAccountName { get; init; }
 }

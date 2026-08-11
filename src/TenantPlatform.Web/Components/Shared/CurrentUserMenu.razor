@@ -4,9 +4,17 @@
 @if (CurrentUserService.CurrentUser.IsAuthenticated)
 {
     <div class="d-flex align-items-center gap-3">
+
         <span>
             @CurrentUserService.CurrentUser.FullName
         </span>
+
+        <a href="/select-account"
+           class="btn btn-outline-primary btn-sm">
+            Bytt Account
+        </a>
+
+        <AntiforgeryToken />
 
         <form method="post"
               action="/auth/logout">

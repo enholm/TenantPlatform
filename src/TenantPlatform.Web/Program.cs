@@ -175,6 +175,61 @@ app.MapPost("/auth/logout", async (HttpContext httpContext) =>
     return Results.Redirect("/login");
 });
 
+app.MapPost("/auth/select-account", async (
+    HttpContext httpContext,
+    TenantPlatformDbContext dbContext,
+    IFormCollection form,
+    CancellationToken cancellationToken) =>
+{
+    var accountIdValue = form["accountId"].ToString();
+
+    if (!Guid.TryParse(accountIdValue, out var accountId))
+    {
+        return Results.BadRequest("Invalid account ID.");
+    }
+
+    var userIdValue = httpContext.User.FindFirstValue(
+        TenantPlatformClaimTypes.UserId);
+
+    if (!Guid.TryParse(userIdValue, out var userId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var hasAccess = await dbContext.UserAccounts
+        .AnyAsync(
+            x => x.UserId == userId &&
+                 x.AccountId == accountId,
+            cancellationToken);
+
+    if (!hasAccess)
+    {
+        return Results.Forbid();
+    }
+
+    var existingClaims = httpContext.User.Claims
+        .Where(x =>
+            x.Type != TenantPlatformClaimTypes.CurrentAccountId)
+        .ToList();
+
+    existingClaims.Add(
+        new Claim(
+            TenantPlatformClaimTypes.CurrentAccountId,
+            accountId.ToString()));
+
+    var identity = new ClaimsIdentity(
+        existingClaims,
+        CookieAuthenticationDefaults.AuthenticationScheme);
+
+    var principal = new ClaimsPrincipal(identity);
+
+    await httpContext.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        principal);
+
+    return Results.Redirect("/");
+});
+
 app.Run();
 
 

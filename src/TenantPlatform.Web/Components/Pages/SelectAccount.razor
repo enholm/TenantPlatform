@@ -1,0 +1,68 @@
+@page "/select-account"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using TenantPlatform.Infrastructure.Persistence
+@using TenantPlatform.Web.Security
+
+@inject TenantPlatformDbContext DbContext
+@inject ICurrentUserService CurrentUserService
+
+<PageTitle>Velg selskap</PageTitle>
+
+<h1>Velg selskap</h1>
+
+@if (accounts is null)
+{
+    <p>Laster...</p>
+}
+else if (accounts.Count == 0)
+{
+    <div class="alert alert-warning">
+        Du har ikke tilgang til noen Accounts.
+    </div>
+}
+else
+{
+    @foreach (var account in accounts)
+    {
+        <form method="post"
+              action="/auth/select-account"
+              class="mb-2">
+            
+            <AntiforgeryToken />
+            
+            <input type="hidden"
+                   name="accountId"
+                   value="@account.Id" />
+
+            <button type="submit"
+                    class="btn btn-outline-primary">
+                @account.Name
+            </button>
+        </form>
+    }
+}
+
+@code {
+    private List<AccountOption>? accounts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userId =
+            CurrentUserService.CurrentUser.UserId;
+
+        accounts = await DbContext.UserAccounts
+            .Where(x => x.UserId == userId)
+            .OrderBy(x => x.Account.Name)
+            .Select(x => new AccountOption(
+                x.AccountId,
+                x.Account.Name))
+            .ToListAsync();
+    }
+
+    private record AccountOption(
+        Guid Id,
+        string Name);
+}

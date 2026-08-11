@@ -34,29 +34,35 @@ public class CurrentUserService : ICurrentUserService
             return new CurrentUser();
         }
 
+        var userIdValue = principal.FindFirstValue(
+            TenantPlatformClaimTypes.UserId);
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+        {
+            return new CurrentUser();
+        }
+
         return new CurrentUser
         {
             IsAuthenticated = true,
 
-            UserId = Guid.Parse(
-                principal.FindFirstValue(
-                    TenantPlatformClaimTypes.UserId)!),
+            UserId = userId,
 
             Email =
                 principal.FindFirstValue(
-                    ClaimTypes.Email)!,
+                    ClaimTypes.Email) ?? string.Empty,
 
             FullName =
                 principal.FindFirstValue(
-                    ClaimTypes.Name)!,
+                    ClaimTypes.Name) ?? string.Empty,
 
             CurrentAccountId =
                 Guid.TryParse(
                     principal.FindFirstValue(
                         TenantPlatformClaimTypes.CurrentAccountId),
-                    out var id)
-                    ? id
-                    : null
+                    out var accountId)
+                        ? accountId
+                        : null
         };
     }
 }
