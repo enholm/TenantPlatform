@@ -15,6 +15,7 @@ using TenantPlatform.Web.Security.CurrentUserContext;
 using Microsoft.Extensions.Options;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
+using TenantPlatform.Web.Services.Buildings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,7 @@ builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddScoped<ILocalAuthenticationService, LocalAuthenticationService>();
 builder.Services.AddScoped<AuthenticationCookieService>();
 builder.Services.AddScoped<ITenantAuthorizationService, TenantAuthorizationService>();
+builder.Services.AddScoped<IBuildingService, BuildingService>();
 
 builder.Services.AddHttpContextAccessor();
 

@@ -73,4 +73,72 @@
     <value>Create</value>
   </data>
 
+    <data name="BuildingsDescription" xml:space="preserve">
+    <value>Buildings registered for the current account.</value>
+    </data>
+
+    <data name="CreateBuilding" xml:space="preserve">
+    <value>Create building</value>
+    </data>
+
+    <data name="NoBuildings" xml:space="preserve">
+    <value>No buildings have been registered.</value>
+    </data>
+
+    <data name="Name" xml:space="preserve">
+    <value>Name</value>
+    </data>
+
+    <data name="Address" xml:space="preserve">
+    <value>Address</value>
+    </data>
+
+    <data name="PostalCode" xml:space="preserve">
+    <value>Postal code</value>
+    </data>
+
+    <data name="City" xml:space="preserve">
+    <value>City</value>
+    </data>
+
+    <data name="Open" xml:space="preserve">
+    <value>Open</value>
+    </data>
+
+<data name="Building" xml:space="preserve">
+  <value>Building</value>
+</data>
+
+<data name="BuildingNotFound" xml:space="preserve">
+  <value>The building could not be found.</value>
+</data>
+
+<data name="BuildingInformation" xml:space="preserve">
+  <value>Building information</value>
+</data>
+
+<data name="Units" xml:space="preserve">
+  <value>Units</value>
+</data>
+
+<data name="Tenants" xml:space="preserve">
+  <value>Tenants</value>
+</data>
+
+<data name="OpenRequests" xml:space="preserve">
+  <value>Open requests</value>
+</data>
+
+<data name="Country" xml:space="preserve">
+  <value>Country</value>
+</data>
+
+<data name="Type" xml:space="preserve">
+  <value>Type</value>
+</data>
+
+<data name="NoUnits" xml:space="preserve">
+  <value>No units have been registered.</value>
+</data>
+
 </root>

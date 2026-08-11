@@ -73,4 +73,71 @@
     <value>Opprett</value>
   </data>
 
+    <data name="BuildingsDescription" xml:space="preserve">
+    <value>Bygg registrert for valgt konto.</value>
+    </data>
+
+    <data name="CreateBuilding" xml:space="preserve">
+    <value>Opprett bygg</value>
+    </data>
+
+    <data name="NoBuildings" xml:space="preserve">
+    <value>Ingen bygg er registrert.</value>
+    </data>
+
+    <data name="Name" xml:space="preserve">
+    <value>Navn</value>
+    </data>
+
+    <data name="Address" xml:space="preserve">
+    <value>Adresse</value>
+    </data>
+
+    <data name="PostalCode" xml:space="preserve">
+    <value>Postnummer</value>
+    </data>
+
+    <data name="City" xml:space="preserve">
+    <value>Sted</value>
+    </data>
+
+    <data name="Open" xml:space="preserve">
+    <value>Åpne</value>
+    </data>
+
+<data name="Building" xml:space="preserve">
+  <value>Bygg</value>
+</data>
+
+<data name="BuildingNotFound" xml:space="preserve">
+  <value>Bygget ble ikke funnet.</value>
+</data>
+
+<data name="BuildingInformation" xml:space="preserve">
+  <value>Bygningsinformasjon</value>
+</data>
+
+<data name="Units" xml:space="preserve">
+  <value>Enheter</value>
+</data>
+
+<data name="Tenants" xml:space="preserve">
+  <value>Leietakere</value>
+</data>
+
+<data name="OpenRequests" xml:space="preserve">
+  <value>Åpne bestillinger</value>
+</data>
+
+<data name="Country" xml:space="preserve">
+  <value>Land</value>
+</data>
+
+<data name="Type" xml:space="preserve">
+  <value>Type</value>
+</data>
+
+<data name="NoUnits" xml:space="preserve">
+  <value>Ingen enheter er registrert.</value>
+</data>
 </root>

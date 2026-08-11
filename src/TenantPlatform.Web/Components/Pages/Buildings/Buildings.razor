@@ -1,0 +1,107 @@
+@page "/buildings"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Buildings
+
+@inject IBuildingService BuildingService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@L["Buildings"]</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>@L["Buildings"]</h1>
+        <p class="text-muted mb-0">
+            @L["BuildingsDescription"]
+        </p>
+    </div>
+
+    <a href="/buildings/create"
+       class="btn btn-primary">
+        @L["CreateBuilding"]
+    </a>
+</div>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (buildings.Count == 0)
+{
+    <div class="alert alert-info">
+        @L["NoBuildings"]
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@L["Name"]</th>
+                        <th>@L["Address"]</th>
+                        <th>@L["PostalCode"]</th>
+                        <th>@L["City"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var building in buildings)
+                    {
+                        <tr>
+                            <td class="fw-semibold">
+                                @building.Name
+                            </td>
+
+                            <td>
+                                @building.AddressLine1
+                            </td>
+
+                            <td>
+                                @building.PostalCode
+                            </td>
+
+                            <td>
+                                @building.City
+                            </td>
+
+                            <td class="text-end">
+                                <a href="@($"/buildings/{building.Id}")"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    @L["Open"]
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+
+    private List<BuildingListItemDto> buildings = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId = UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        buildings = await BuildingService.GetBuildingsAsync(
+            accountId.Value);
+
+        isLoading = false;
+    }
+
+}

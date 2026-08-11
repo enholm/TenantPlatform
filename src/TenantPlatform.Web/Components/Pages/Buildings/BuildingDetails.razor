@@ -1,0 +1,206 @@
+@page "/buildings/{Id:guid}"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Buildings
+@inject IBuildingService BuildingService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@(building?.Name ?? L["Building"])</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (building is null)
+{
+    <div class="alert alert-warning">
+        @L["BuildingNotFound"]
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="mb-2">
+                <a href="/buildings"
+                   class="text-decoration-none">
+                    ← @L["Buildings"]
+                </a>
+            </div>
+
+            <h1 class="mb-1">@building.Name</h1>
+
+            <div class="text-muted">
+                @FormatAddress(building)
+            </div>
+        </div>
+
+        @if (canManageBuilding)
+        {
+            <a href="@($"/buildings/{building.Id}/edit")"
+               class="btn btn-outline-primary">
+                @L["Edit"]
+            </a>
+        }
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted mb-1">
+                        @L["Units"]
+                    </div>
+
+                    <div class="fs-2 fw-bold">
+                        @building.UnitCount
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted mb-1">
+                        @L["Tenants"]
+                    </div>
+
+                    <div class="fs-2 fw-bold">
+                        @building.TenantCount
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-muted mb-1">
+                        @L["OpenRequests"]
+                    </div>
+
+                    <div class="fs-2 fw-bold">
+                        @building.OpenRequestCount
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            @L["BuildingInformation"]
+        </div>
+
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">@L["Name"]</dt>
+                <dd class="col-sm-9">@building.Name</dd>
+
+                <dt class="col-sm-3">@L["Address"]</dt>
+                <dd class="col-sm-9">@building.AddressLine1</dd>
+
+                <dt class="col-sm-3">@L["PostalCode"]</dt>
+                <dd class="col-sm-9">@building.PostalCode</dd>
+
+                <dt class="col-sm-3">@L["City"]</dt>
+                <dd class="col-sm-9">@building.City</dd>
+
+                <dt class="col-sm-3">@L["Country"]</dt>
+                <dd class="col-sm-9">@building.CountryCode</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            @L["Units"]
+        </div>
+
+        <div class="card-body p-0">
+            @if (building.Units.Count == 0)
+            {
+                <div class="p-3 text-muted">
+                    @L["NoUnits"]
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>@L["Name"]</th>
+                                <th>@L["Type"]</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var unit in building.Units)
+                            {
+                                <tr>
+                                    <td>@unit.Name</td>
+                                    <td>@unit.Type</td>
+                                    <td class="text-end">
+                                        <a href="@($"/units/{unit.Id}")"
+                                           class="btn btn-outline-secondary btn-sm">
+                                            @L["Open"]
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private bool isLoading = true;
+    private bool canManageBuilding;
+    private BuildingDetailsDto? building;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId = UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        building = await BuildingService.GetBuildingAsync(
+            accountId.Value,
+            Id);
+
+        if (building is not null)
+        {
+            canManageBuilding = false;
+        }
+
+        isLoading = false;
+    }
+    private static string FormatAddress(BuildingDetailsDto building)
+    {
+        var parts = new[]
+        {
+            building.AddressLine1,
+            building.PostalCode,
+            building.City
+        };
+
+        return string.Join(
+            ", ",
+            parts.Where(x => !string.IsNullOrWhiteSpace(x)));
+    }
+}
