@@ -1,5 +1,9 @@
+@using Microsoft.EntityFrameworkCore
+@using TenantPlatform.Infrastructure.Persistence
 @using TenantPlatform.Web.Security
+
 @inject ICurrentUserService CurrentUserService
+@inject TenantPlatformDbContext DbContext
 
 @if (CurrentUserService.CurrentUser.IsAuthenticated)
 {
@@ -9,19 +13,40 @@
             @CurrentUserService.CurrentUser.FullName
         </span>
 
-        <a href="/select-account"
-           class="btn btn-outline-primary btn-sm">
-            Bytt Account
-        </a>
-
-        <AntiforgeryToken />
+        @if (accountCount > 1)
+        {
+            <a href="/select-account"
+               class="btn btn-outline-primary btn-sm">
+                Bytt Account
+            </a>
+        }
 
         <form method="post"
               action="/auth/logout">
+
+            <AntiforgeryToken />
+
             <button type="submit"
                     class="btn btn-outline-secondary btn-sm">
                 Logg ut
             </button>
         </form>
     </div>
+}
+
+@code {
+    private int accountCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUserService.CurrentUser.IsAuthenticated)
+        {
+            return;
+        }
+
+        var userId = CurrentUserService.CurrentUser.UserId;
+
+        accountCount = await DbContext.UserAccounts
+            .CountAsync(x => x.UserId == userId);
+    }
 }

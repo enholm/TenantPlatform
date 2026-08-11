@@ -27,6 +27,7 @@ builder.Services
 
 builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddScoped<ILocalAuthenticationService, LocalAuthenticationService>();
+builder.Services.AddScoped<AuthenticationCookieService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -106,9 +107,19 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+
+/***************
+**  ENDPOINTS **
+****************/
+
+//---------------
+// Endpoint login
+// --------------
 app.MapPost("/auth/login", async (
     HttpContext httpContext,
     ILocalAuthenticationService authenticationService,
+    AuthenticationCookieService cookieService,
+    TenantPlatformDbContext dbContext,
     IFormCollection form,
     CancellationToken cancellationToken) =>
 {
@@ -132,41 +143,64 @@ app.MapPost("/auth/login", async (
             "/login?error=invalid-login");
     }
 
-    var claims = new List<Claim>
+    var user = result.User;
+
+    var accountIds = await dbContext.UserAccounts
+        .Where(x => x.UserId == user.Id)
+        .Select(x => x.AccountId)
+        .ToListAsync(cancellationToken);
+
+    if (accountIds.Count == 0)
     {
-        new(
-            TenantPlatformClaimTypes.UserId,
-            result.User.Id.ToString()),
+        return Results.Redirect(
+            "/login?error=no-account-access");
+    }
 
-        new(
-            ClaimTypes.Email,
-            result.User.Email),
+    var loginAccount = await dbContext.LoginAccounts
+        .SingleAsync(
+            x => x.UserId == user.Id,
+            cancellationToken);
 
-        new(
-            ClaimTypes.Name,
-            $"{result.User.FirstName} {result.User.LastName}")
-    };
+    Guid? selectedAccountId = null;
 
-    var identity = new ClaimsIdentity(
-        claims,
-        CookieAuthenticationDefaults.AuthenticationScheme);
-
-    var principal = new ClaimsPrincipal(identity);
-
-    var authenticationProperties = new AuthenticationProperties
+    if (accountIds.Count == 1)
     {
-        IsPersistent = rememberMe,
-        AllowRefresh = true
-    };
+        // Brukeren har bare én Account.
+        selectedAccountId = accountIds[0];
 
-    await httpContext.SignInAsync(
-        CookieAuthenticationDefaults.AuthenticationScheme,
-        principal,
-        authenticationProperties);
+        loginAccount.LastAccountId = selectedAccountId;
 
-    return Results.Redirect("/");
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+    }
+    else if (
+        loginAccount.LastAccountId.HasValue &&
+        accountIds.Contains(
+            loginAccount.LastAccountId.Value))
+    {
+        // Brukeren har flere Accounts,
+        // men vi kjenner siste gyldige valg.
+        selectedAccountId =
+            loginAccount.LastAccountId.Value;
+    }
+
+    await cookieService.SignInAsync(
+        httpContext,
+        user,
+        selectedAccountId,
+        rememberMe);
+
+    if (selectedAccountId.HasValue)
+    {
+        return Results.Redirect("/");
+    }
+
+    return Results.Redirect("/select-account");
 });
 
+//----------------
+// Endpoint logout
+// ---------------
 app.MapPost("/auth/logout", async (HttpContext httpContext) =>
 {
     await httpContext.SignOutAsync(
@@ -175,23 +209,34 @@ app.MapPost("/auth/logout", async (HttpContext httpContext) =>
     return Results.Redirect("/login");
 });
 
+//------------------------
+// Endpoint select-account
+// -----------------------
 app.MapPost("/auth/select-account", async (
     HttpContext httpContext,
+    AuthenticationCookieService cookieService,
     TenantPlatformDbContext dbContext,
     IFormCollection form,
     CancellationToken cancellationToken) =>
 {
-    var accountIdValue = form["accountId"].ToString();
+    var accountIdValue =
+        form["accountId"].ToString();
 
-    if (!Guid.TryParse(accountIdValue, out var accountId))
+    if (!Guid.TryParse(
+            accountIdValue,
+            out var accountId))
     {
-        return Results.BadRequest("Invalid account ID.");
+        return Results.BadRequest(
+            "Invalid account ID.");
     }
 
-    var userIdValue = httpContext.User.FindFirstValue(
-        TenantPlatformClaimTypes.UserId);
+    var userIdValue =
+        httpContext.User.FindFirstValue(
+            TenantPlatformClaimTypes.UserId);
 
-    if (!Guid.TryParse(userIdValue, out var userId))
+    if (!Guid.TryParse(
+            userIdValue,
+            out var userId))
     {
         return Results.Unauthorized();
     }
@@ -207,28 +252,39 @@ app.MapPost("/auth/select-account", async (
         return Results.Forbid();
     }
 
-    var existingClaims = httpContext.User.Claims
-        .Where(x =>
-            x.Type != TenantPlatformClaimTypes.CurrentAccountId)
-        .ToList();
+    var loginAccount = await dbContext.LoginAccounts
+        .SingleAsync(
+            x => x.UserId == userId,
+            cancellationToken);
 
-    existingClaims.Add(
-        new Claim(
-            TenantPlatformClaimTypes.CurrentAccountId,
-            accountId.ToString()));
+    loginAccount.LastAccountId = accountId;
 
-    var identity = new ClaimsIdentity(
-        existingClaims,
-        CookieAuthenticationDefaults.AuthenticationScheme);
+    await dbContext.SaveChangesAsync(
+        cancellationToken);
 
-    var principal = new ClaimsPrincipal(identity);
+    var user = await dbContext.Users
+        .SingleAsync(
+            x => x.Id == userId,
+            cancellationToken);
 
-    await httpContext.SignInAsync(
-        CookieAuthenticationDefaults.AuthenticationScheme,
-        principal);
+    // Behold "Husk meg"-egenskapen fra eksisterende cookie.
+    var authenticationResult =
+        await httpContext.AuthenticateAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+    var rememberMe =
+        authenticationResult.Properties?.IsPersistent
+        ?? false;
+
+    await cookieService.SignInAsync(
+        httpContext,
+        user,
+        accountId,
+        rememberMe);
 
     return Results.Redirect("/");
 });
+// ----------------------------------------------------------------------
 
 app.Run();
 

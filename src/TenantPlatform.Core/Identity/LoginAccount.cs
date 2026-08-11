@@ -13,6 +13,8 @@ public class LoginAccount
     public bool IsEnabled { get; set; } = true;
 
     public int FailedLoginCount { get; set; }
+    
+    public Guid? LastAccountId { get; set; }
 
     public DateTimeOffset? LockedUntilUtc { get; set; }
 

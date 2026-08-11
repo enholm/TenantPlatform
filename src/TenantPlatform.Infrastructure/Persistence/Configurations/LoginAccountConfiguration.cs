@@ -21,6 +21,8 @@ public class LoginAccountConfiguration
             .HasMaxLength(1000)
             .IsRequired();
 
+        builder.Property(x => x.LastAccountId);
+        
         builder.Property(x => x.IsEnabled)
             .IsRequired();
 
