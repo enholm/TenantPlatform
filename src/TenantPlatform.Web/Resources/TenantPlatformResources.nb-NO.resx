@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+
+  <data name="ApplicationName" xml:space="preserve">
+    <value>TenantPlatform</value>
+  </data>
+
+  <data name="Dashboard" xml:space="preserve">
+    <value>Oversikt</value>
+  </data>
+
+  <data name="Buildings" xml:space="preserve">
+    <value>Bygg</value>
+  </data>
+
+  <data name="Organizations" xml:space="preserve">
+    <value>Organisasjoner</value>
+  </data>
+
+  <data name="Users" xml:space="preserve">
+    <value>Brukere</value>
+  </data>
+
+  <data name="Services" xml:space="preserve">
+    <value>Tjenester</value>
+  </data>
+
+  <data name="Network" xml:space="preserve">
+    <value>Nettverk</value>
+  </data>
+
+  <data name="Administration" xml:space="preserve">
+    <value>Administrasjon</value>
+  </data>
+
+  <data name="Logout" xml:space="preserve">
+    <value>Logg ut</value>
+  </data>
+
+  <data name="SelectAccount" xml:space="preserve">
+    <value>Velg konto</value>
+  </data>
+
+  <data name="CurrentAccount" xml:space="preserve">
+    <value>Aktiv konto</value>
+  </data>
+
+  <data name="Welcome" xml:space="preserve">
+    <value>Velkommen</value>
+  </data>
+
+  <data name="Loading" xml:space="preserve">
+    <value>Laster...</value>
+  </data>
+
+  <data name="Save" xml:space="preserve">
+    <value>Lagre</value>
+  </data>
+
+  <data name="Cancel" xml:space="preserve">
+    <value>Avbryt</value>
+  </data>
+
+  <data name="Delete" xml:space="preserve">
+    <value>Slett</value>
+  </data>
+
+  <data name="Edit" xml:space="preserve">
+    <value>Rediger</value>
+  </data>
+
+  <data name="Create" xml:space="preserve">
+    <value>Opprett</value>
+  </data>
+
+</root>

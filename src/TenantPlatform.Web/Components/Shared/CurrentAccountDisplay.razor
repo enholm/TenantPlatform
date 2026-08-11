@@ -1,0 +1,33 @@
+@using Microsoft.EntityFrameworkCore
+@using TenantPlatform.Infrastructure.Persistence
+@using TenantPlatform.Web.Security.CurrentUserContext
+
+@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
+@inject ICurrentUserContextService UserContext
+
+@if (!string.IsNullOrWhiteSpace(accountName))
+{
+    <span>@accountName</span>
+}
+
+@code {
+    private string? accountName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId = UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        await using var dbContext =
+            await DbContextFactory.CreateDbContextAsync();
+
+        accountName = await dbContext.Accounts
+            .Where(x => x.Id == accountId.Value)
+            .Select(x => x.Name)
+            .SingleOrDefaultAsync();
+    }
+}

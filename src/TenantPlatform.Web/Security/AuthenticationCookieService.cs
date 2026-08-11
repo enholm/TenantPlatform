@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using TenantPlatform.Core.Identity;
+using Microsoft.AspNetCore.Localization;
 
 namespace TenantPlatform.Web.Security;
 
@@ -52,5 +53,27 @@ public class AuthenticationCookieService
             CookieAuthenticationDefaults.AuthenticationScheme,
             principal,
             properties);
+    }
+
+    public void SetCulture(
+    HttpContext httpContext,
+    string? cultureName)
+    {
+        var culture =
+            cultureName is "nb-NO" or "en-GB"
+                ? cultureName
+                : "nb-NO";
+
+        httpContext.Response.Cookies.Append(
+            CookieRequestCultureProvider.DefaultCookieName,
+            CookieRequestCultureProvider.MakeCookieValue(
+                new RequestCulture(culture)),
+            new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddYears(1),
+                IsEssential = true,
+                HttpOnly = false,
+                SameSite = SameSiteMode.Lax
+            });
     }
 }

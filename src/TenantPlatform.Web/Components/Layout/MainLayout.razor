@@ -1,26 +1,76 @@
 ﻿@inherits LayoutComponentBase
+
 @using TenantPlatform.Web.Components.Shared
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using Microsoft.Extensions.Localization
+@using TenantPlatform.Web
+@inject IStringLocalizer<TenantPlatformResources> L
+@inject ICurrentUserContextService UserContext
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<div class="app-shell">
 
-    <main>
-        <div class="top-row px-4">
-            <div class="ms-auto">
-                <CurrentUserMenu />
-            </div>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="brand">
+                TenantPlatform
+            </a>
         </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+        <nav class="sidebar-nav">
+            <NavLink href="/"
+                     Match="NavLinkMatch.All"
+                     class="nav-item">
+                @L["Dashboard"]
+            </NavLink>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+            <NavLink href="/buildings"
+                     class="nav-item">
+                @L["Buildings"]
+            </NavLink>
+
+            <NavLink href="/organizations"
+                     class="nav-item">
+                @L["Organizations"]
+            </NavLink>
+
+            <NavLink href="/users"
+                     class="nav-item">
+                @L["Users"]
+            </NavLink>
+
+            <NavLink href="/services"
+                     class="nav-item">
+                @L["Services"]
+            </NavLink>
+
+            <NavLink href="/network"
+                     class="nav-item">
+                @L["Network"]
+            </NavLink>
+
+            <NavLink href="/administration"
+                     class="nav-item">
+                @L["Administration"]
+            </NavLink>
+        </nav>
+    </aside>
+
+    <div class="main-area">
+
+        <header class="topbar">
+            <div class="topbar-account">
+                <CurrentAccountDisplay />
+            </div>
+
+            <div class="topbar-user">
+                <CurrentUserMenu />
+            </div>
+        </header>
+
+        <main class="content">
+            @Body
+        </main>
+
+    </div>
+
 </div>

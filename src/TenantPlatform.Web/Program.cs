@@ -12,6 +12,9 @@ using Microsoft.AspNetCore.Authentication;
 using TenantPlatform.Web.Security;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
+using Microsoft.Extensions.Options;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +29,25 @@ builder.Services.AddDbContextFactory<TenantPlatformDbContext>(options =>
 builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddLocalization(options =>
+    options.ResourcesPath = "Resources");
+
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var cultures = new[]
+    {
+        new CultureInfo("nb-NO"),
+        new CultureInfo("en-GB")
+    };
+
+    options.DefaultRequestCulture =
+        new RequestCulture("nb-NO");
+
+    options.SupportedCultures = cultures;
+    options.SupportedUICultures = cultures;
+});
 
 builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddScoped<ILocalAuthenticationService, LocalAuthenticationService>();
@@ -72,6 +94,14 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
+
+var localizationOptions = app.Services
+    .GetRequiredService<
+        IOptions<RequestLocalizationOptions>>()
+    .Value;
+
+app.UseRequestLocalization(localizationOptions);
+
 
 // Initialize database and add platform data (and also demo data if dev environment)
 using (var scope = app.Services.CreateScope())
@@ -193,6 +223,10 @@ app.MapPost("/auth/login", async (
         user,
         selectedAccountId,
         rememberMe);
+
+    cookieService.SetCulture(
+        httpContext,
+        user.PreferredLanguage);
 
     if (selectedAccountId.HasValue)
     {
