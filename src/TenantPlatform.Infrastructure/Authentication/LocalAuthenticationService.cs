@@ -20,7 +20,7 @@ public class LocalAuthenticationService : ILocalAuthenticationService
         _passwordService = passwordService;
     }
 
-    public async Task<AuthenticationResult> AuthenticateAsync(
+    public async Task<LoginResult> AuthenticateAsync(
         string email,
         string password,
         CancellationToken cancellationToken = default)
@@ -35,13 +35,13 @@ public class LocalAuthenticationService : ILocalAuthenticationService
 
         if (loginAccount is null)
         {
-            return AuthenticationResult.Failure(
+            return LoginResult.Failure(
                 "Invalid email or password.");
         }
 
         if (!loginAccount.IsEnabled)
         {
-            return AuthenticationResult.Failure(
+            return LoginResult.Failure(
                 "This account is disabled.");
         }
 
@@ -50,7 +50,7 @@ public class LocalAuthenticationService : ILocalAuthenticationService
         if (loginAccount.LockedUntilUtc.HasValue &&
             loginAccount.LockedUntilUtc.Value > now)
         {
-            return AuthenticationResult.Failure(
+            return LoginResult.Failure(
                 "This account is temporarily locked.");
         }
 
@@ -73,7 +73,7 @@ public class LocalAuthenticationService : ILocalAuthenticationService
 
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            return AuthenticationResult.Failure(
+            return LoginResult.Failure(
                 "Invalid email or password.");
         }
 
@@ -83,6 +83,6 @@ public class LocalAuthenticationService : ILocalAuthenticationService
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        return AuthenticationResult.Success(loginAccount.User);
+        return LoginResult.Success(loginAccount.User);
     }
 }

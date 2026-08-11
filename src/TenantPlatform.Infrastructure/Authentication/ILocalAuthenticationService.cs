@@ -2,7 +2,7 @@ namespace TenantPlatform.Infrastructure.Authentication;
 
 public interface ILocalAuthenticationService
 {
-    Task<AuthenticationResult> AuthenticateAsync(
+    Task<LoginResult> AuthenticateAsync(
         string email,
         string password,
         CancellationToken cancellationToken = default);

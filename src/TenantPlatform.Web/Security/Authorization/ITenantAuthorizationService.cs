@@ -1,6 +1,6 @@
 using TenantPlatform.Core.Identity;
 
-namespace TenantPlatform.Web.Security;
+namespace TenantPlatform.Web.Security.Authorization;
 
 public interface ITenantAuthorizationService
 {

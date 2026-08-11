@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using TenantPlatform.Web.Security;
+using TenantPlatform.Web.Security.Authorization;
+using TenantPlatform.Web.Security.CurrentUserContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,8 +35,8 @@ builder.Services.AddScoped<ITenantAuthorizationService, TenantAuthorizationServi
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<
-    ICurrentUserService,
-    CurrentUserService>();
+    ICurrentUserContextService,
+    CurrentUserContextService>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

@@ -1,18 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Infrastructure.Persistence;
+using TenantPlatform.Web.Security.CurrentUserContext;
 
-namespace TenantPlatform.Web.Security;
+namespace TenantPlatform.Web.Security.Authorization;
 
 public class TenantAuthorizationService
     : ITenantAuthorizationService
 {
     private readonly TenantPlatformDbContext _dbContext;
-    private readonly ICurrentUserService _currentUserService;
+    private readonly ICurrentUserContextService _currentUserService;
 
     public TenantAuthorizationService(
         TenantPlatformDbContext dbContext,
-        ICurrentUserService currentUserService)
+        ICurrentUserContextService currentUserService)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
@@ -22,7 +23,7 @@ public class TenantAuthorizationService
         UserRole role,
         CancellationToken cancellationToken = default)
     {
-        var currentUser = _currentUserService.CurrentUser;
+        var currentUser = _currentUserService.Current;
 
         if (!currentUser.IsAuthenticated ||
             !currentUser.CurrentAccountId.HasValue)
@@ -45,7 +46,7 @@ public class TenantAuthorizationService
         Guid buildingId,
         CancellationToken cancellationToken = default)
     {
-        var currentUser = _currentUserService.CurrentUser;
+        var currentUser = _currentUserService.Current;
 
         if (!currentUser.IsAuthenticated ||
             !currentUser.CurrentAccountId.HasValue)
@@ -74,7 +75,7 @@ public class TenantAuthorizationService
         Guid organizationId,
         CancellationToken cancellationToken = default)
     {
-        var currentUser = _currentUserService.CurrentUser;
+        var currentUser = _currentUserService.Current;
 
         if (!currentUser.IsAuthenticated ||
             !currentUser.CurrentAccountId.HasValue)

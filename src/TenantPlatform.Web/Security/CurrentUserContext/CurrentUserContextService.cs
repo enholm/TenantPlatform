@@ -1,37 +1,37 @@
 using System.Security.Claims;
 
-namespace TenantPlatform.Web.Security;
+namespace TenantPlatform.Web.Security.CurrentUserContext;
 
-public class CurrentUserService : ICurrentUserService
+public class CurrentUserContextService : ICurrentUserContextService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    private CurrentUser? _currentUser;
+    private CurrentUserContext? _currentUser;
 
-    public CurrentUserService(
+    public CurrentUserContextService(
         IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public CurrentUser CurrentUser
+    public CurrentUserContext Current
     {
         get
         {
-            _currentUser ??= BuildCurrentUser();
+            _currentUser ??= BuildCurrentUserContext();
 
             return _currentUser;
         }
     }
 
-    private CurrentUser BuildCurrentUser()
+    private CurrentUserContext BuildCurrentUserContext()
     {
         var principal =
             _httpContextAccessor.HttpContext?.User;
 
         if (principal?.Identity?.IsAuthenticated != true)
         {
-            return new CurrentUser();
+            return new CurrentUserContext();
         }
 
         var userIdValue = principal.FindFirstValue(
@@ -39,10 +39,10 @@ public class CurrentUserService : ICurrentUserService
 
         if (!Guid.TryParse(userIdValue, out var userId))
         {
-            return new CurrentUser();
+            return new CurrentUserContext();
         }
 
-        return new CurrentUser
+        return new CurrentUserContext
         {
             IsAuthenticated = true,
 

@@ -2,7 +2,7 @@ using TenantPlatform.Core.Identity;
 
 namespace TenantPlatform.Infrastructure.Authentication;
 
-public class AuthenticationResult
+public class LoginResult
 {
     public bool Succeeded { get; init; }
 
@@ -10,14 +10,14 @@ public class AuthenticationResult
 
     public User? User { get; init; }
 
-    public static AuthenticationResult Success(User user) =>
+    public static LoginResult Success(User user) =>
         new()
         {
             Succeeded = true,
             User = user
         };
 
-    public static AuthenticationResult Failure(string errorMessage) =>
+    public static LoginResult Failure(string errorMessage) =>
         new()
         {
             Succeeded = false,

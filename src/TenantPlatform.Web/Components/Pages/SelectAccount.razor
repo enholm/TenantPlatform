@@ -4,10 +4,10 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using TenantPlatform.Infrastructure.Persistence
-@using TenantPlatform.Web.Security
+@using TenantPlatform.Web.Security.CurrentUserContext
 
 @inject TenantPlatformDbContext DbContext
-@inject ICurrentUserService CurrentUserService
+@inject ICurrentUserContextService CurrentUserContextService
 
 <PageTitle>Velg selskap</PageTitle>
 
@@ -51,7 +51,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         var userId =
-            CurrentUserService.CurrentUser.UserId;
+            CurrentUserContextService.Current.UserId;
 
         accounts = await DbContext.UserAccounts
             .Where(x => x.UserId == userId)

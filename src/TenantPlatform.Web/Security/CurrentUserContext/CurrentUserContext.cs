@@ -1,6 +1,6 @@
-namespace TenantPlatform.Web.Security;
+namespace TenantPlatform.Web.Security.CurrentUserContext;
 
-public class CurrentUser
+public class CurrentUserContext
 {
     public Guid UserId { get; init; }
 

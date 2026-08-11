@@ -1,16 +1,16 @@
 @using Microsoft.EntityFrameworkCore
 @using TenantPlatform.Infrastructure.Persistence
-@using TenantPlatform.Web.Security
+@using TenantPlatform.Web.Security.CurrentUserContext
 
-@inject ICurrentUserService CurrentUserService
+@inject ICurrentUserContextService CurrentUserContextService
 @inject TenantPlatformDbContext DbContext
 
-@if (CurrentUserService.CurrentUser.IsAuthenticated)
+@if (CurrentUserContextService.Current.IsAuthenticated)
 {
     <div class="d-flex align-items-center gap-3">
 
         <span>
-            @CurrentUserService.CurrentUser.FullName
+            @CurrentUserContextService.Current.FullName
         </span>
 
         @if (accountCount > 1)
@@ -39,12 +39,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (!CurrentUserService.CurrentUser.IsAuthenticated)
+        if (!CurrentUserContextService.Current.IsAuthenticated)
         {
             return;
         }
 
-        var userId = CurrentUserService.CurrentUser.UserId;
+        var userId = CurrentUserContextService.Current.UserId;
 
         accountCount = await DbContext.UserAccounts
             .CountAsync(x => x.UserId == userId);
