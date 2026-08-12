@@ -144,4 +144,8 @@
 <data name="Saving" xml:space="preserve">
   <value>Lagrer...</value>
 </data>
+
+<data name="EditBuilding" xml:space="preserve">
+  <value>Rediger bygg</value>
+</data>
 </root>

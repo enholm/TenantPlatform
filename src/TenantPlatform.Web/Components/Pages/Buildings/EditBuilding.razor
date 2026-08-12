@@ -1,38 +1,48 @@
-@page "/buildings/create"
+@page "/buildings/{Id:guid}/edit"
 @attribute [Authorize]
 
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
+@using TenantPlatform.Web.Security.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.Buildings
-@using TenantPlatform.Web.Security.Authorization
 
 @inject IBuildingService BuildingService
+@inject ITenantAuthorizationService AuthorizationService
 @inject ICurrentUserContextService UserContext
 @inject NavigationManager Navigation
-@inject ITenantAuthorizationService AuthorizationService;
 
-<PageTitle>@L["CreateBuilding"]</PageTitle>
+<PageTitle>@L["EditBuilding"]</PageTitle>
 
-<div class="mb-4">
-    <a href="/buildings"
-       class="text-decoration-none">
-        ← @L["Buildings"]
-    </a>
-</div>
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (notFound)
+{
+    <div class="alert alert-warning">
+        @L["BuildingNotFound"]
+    </div>
+}
+else if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="@($"/buildings/{Id}")"
+           class="text-decoration-none">
+            ← @L["Building"]
+        </a>
+    </div>
 
-<h1>@L["CreateBuilding"]</h1>
+    <h1>@L["EditBuilding"]</h1>
 
-<div class="card mt-4">
-    <div class="card-body">
-        @if (Model is not null)
-        {
-            <EditForm Model="Model"
-                    OnValidSubmit="CreateAsync"
-                    FormName="CreateBuilding">
+    <div class="card mt-4">
+        <div class="card-body">
+
+            <EditForm Model="Model!"
+                      OnValidSubmit="SaveAsync"
+                      FormName="EditBuilding">
 
                 <DataAnnotationsValidator />
-
                 <ValidationSummary />
 
                 <div class="mb-3">
@@ -41,7 +51,7 @@
                     </label>
 
                     <InputText class="form-control"
-                            @bind-Value="Model!.Name" />
+                               @bind-Value="Model!.Name" />
 
                     <ValidationMessage For="() => Model.Name" />
                 </div>
@@ -52,7 +62,7 @@
                     </label>
 
                     <InputText class="form-control"
-                            @bind-Value="Model!.AddressLine1" />
+                               @bind-Value="Model!.AddressLine1" />
                 </div>
 
                 <div class="row">
@@ -62,7 +72,7 @@
                         </label>
 
                         <InputText class="form-control"
-                                @bind-Value="Model!.PostalCode" />
+                                   @bind-Value="Model!.PostalCode" />
                     </div>
 
                     <div class="col-md-8 mb-3">
@@ -71,7 +81,7 @@
                         </label>
 
                         <InputText class="form-control"
-                                @bind-Value="Model!.City" />
+                                   @bind-Value="Model!.City" />
                     </div>
                 </div>
 
@@ -81,40 +91,45 @@
                     </label>
 
                     <InputText class="form-control"
-                            @bind-Value="Model!.CountryCode" />
+                               @bind-Value="Model!.CountryCode" />
+
+                    <ValidationMessage For="() => Model.CountryCode" />
                 </div>
 
                 <div class="d-flex gap-2">
                     <button type="submit"
                             class="btn btn-primary"
                             disabled="@isSaving">
-                        @(isSaving ? L["Saving"] : L["Create"])
+                        @(isSaving ? L["Saving"] : L["Save"])
                     </button>
 
-                    <a href="/buildings"
-                    class="btn btn-outline-secondary">
+                    <a href="@($"/buildings/{Id}")"
+                       class="btn btn-outline-secondary">
                         @L["Cancel"]
                     </a>
                 </div>
+
             </EditForm>
-        }
+        </div>
     </div>
-</div>
+}
 
 @code {
-    [SupplyParameterFromForm(FormName = "CreateBuilding")]
-    private CreateBuildingFormModel? Model { get; set; }
+    [Parameter]
+    public Guid Id { get; set; }
 
-    protected override void OnInitialized()
-    {
-        Model ??= new CreateBuildingFormModel();
-    }
+    private bool isLoading = true;
     private bool isSaving;
+    private bool notFound;
 
+
+    [SupplyParameterFromForm(FormName = "EditBuilding")]
+    public EditBuildingFormModel? Model { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        var accountId = UserContext.Current.CurrentAccountId;
+        var accountId =
+            UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)
         {
@@ -122,27 +137,64 @@
             return;
         }
 
-        if (!await AuthorizationService.CanCreateBuildingAsync())
+        var canEdit =
+            await AuthorizationService.CanEditBuildingAsync(Id);
+
+        if (!canEdit)
         {
             Navigation.NavigateTo("/access-denied");
+            return;
         }
+
+        // Ved POST er Model allerede fylt fra skjemaet.
+        if (Model is not null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        // Første GET: hent eksisterende verdier fra databasen.
+        var building =
+            await BuildingService.GetBuildingAsync(
+                accountId.Value,
+                Id);
+
+        if (building is null)
+        {
+            notFound = true;
+            isLoading = false;
+            return;
+        }
+
+        Model = new EditBuildingFormModel
+        {
+            Name = building.Name,
+            AddressLine1 = building.AddressLine1,
+            PostalCode = building.PostalCode,
+            City = building.City,
+            CountryCode = building.CountryCode ?? "NO"
+        };
+
+        isLoading = false;
     }
 
-    private async Task CreateAsync()
+    private async Task SaveAsync()
     {
         if (Model is null)
         {
             return;
         }
 
-        var accountId = UserContext.Current.CurrentAccountId;
+        var accountId =
+            UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)
         {
             return;
         }
 
-        if (!await AuthorizationService.CanCreateBuildingAsync())
+        // Autorisasjon sjekkes også ved selve skriveoperasjonen.
+        if (!await AuthorizationService.CanEditBuildingAsync(Id))
         {
             Navigation.NavigateTo("/access-denied");
             return;
@@ -152,9 +204,10 @@
 
         try
         {
-            var id = await BuildingService.CreateBuildingAsync(
+            await BuildingService.UpdateBuildingAsync(
                 accountId.Value,
-                new CreateBuildingRequest
+                Id,
+                new UpdateBuildingRequest
                 {
                     Name = Model.Name,
                     AddressLine1 = Model.AddressLine1,
@@ -163,14 +216,16 @@
                     CountryCode = Model.CountryCode
                 });
 
-            Navigation.NavigateTo($"/buildings/{id}");
+            Navigation.NavigateTo(
+                $"/buildings/{Id}");
         }
         finally
         {
             isSaving = false;
         }
     }
-    public sealed class CreateBuildingFormModel
+
+    public sealed class EditBuildingFormModel
     {
         [Required]
         [StringLength(200)]
@@ -188,6 +243,5 @@
         [Required]
         [StringLength(2, MinimumLength = 2)]
         public string CountryCode { get; set; } = "NO";
-
     }
 }

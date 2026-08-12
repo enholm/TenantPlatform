@@ -116,4 +116,35 @@ public class BuildingService : IBuildingService
 
         return building.Id;
     }
+
+    public async Task UpdateBuildingAsync(
+        Guid accountId,
+        Guid buildingId,
+        UpdateBuildingRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var building = await dbContext.Buildings
+            .SingleOrDefaultAsync(
+                x => x.Id == buildingId &&
+                    x.AccountId == accountId,
+                cancellationToken);
+
+        if (building is null)
+        {
+            throw new InvalidOperationException(
+                "Building was not found in the current account.");
+        }
+
+        building.Name = request.Name.Trim();
+        building.AddressLine1 = request.AddressLine1?.Trim();
+        building.PostalCode = request.PostalCode?.Trim();
+        building.City = request.City?.Trim();
+        building.CountryCode =
+            request.CountryCode.Trim().ToUpperInvariant();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }    
 }
