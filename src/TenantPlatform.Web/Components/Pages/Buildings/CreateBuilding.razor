@@ -1,0 +1,187 @@
+@page "/buildings/create"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Buildings
+@using TenantPlatform.Web.Security.Authorization
+
+@inject IBuildingService BuildingService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ITenantAuthorizationService AuthorizationService;
+
+<PageTitle>@L["CreateBuilding"]</PageTitle>
+
+<div class="mb-4">
+    <a href="/buildings"
+       class="text-decoration-none">
+        ← @L["Buildings"]
+    </a>
+</div>
+
+<h1>@L["CreateBuilding"]</h1>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <EditForm Model="Model"
+                  OnValidSubmit="CreateAsync"
+                  FormName="CreateBuilding">
+
+            <DataAnnotationsValidator />
+
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">
+                    @L["Name"]
+                </label>
+
+                <InputText class="form-control"
+                           @bind-Value="Model.Name" />
+
+                <ValidationMessage For="() => Model.Name" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    @L["Address"]
+                </label>
+
+                <InputText class="form-control"
+                           @bind-Value="Model.AddressLine1" />
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">
+                        @L["PostalCode"]
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="Model.PostalCode" />
+                </div>
+
+                <div class="col-md-8 mb-3">
+                    <label class="form-label">
+                        @L["City"]
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="Model.City" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    @L["Country"]
+                </label>
+
+                <InputText class="form-control"
+                           @bind-Value="Model.CountryCode" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit"
+                        class="btn btn-primary"
+                        disabled="@isSaving">
+                    @(isSaving ? L["Saving"] : L["Create"])
+                </button>
+
+                <a href="/buildings"
+                   class="btn btn-outline-secondary">
+                    @L["Cancel"]
+                </a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private CreateBuildingFormModel Model { get; set; } = new();
+
+    [SupplyParameterFromForm(FormName = "CreateBuilding")]
+    public CreateBuildingFormModel? PostedModel { get; set; }
+    private bool isSaving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = PostedModel ?? Model;
+
+        var accountId = UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        var canCreate =
+            await AuthorizationService.CanCreateBuildingAsync();
+
+        if (!canCreate)
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
+    }
+    private async Task CreateAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            var id = await BuildingService.CreateBuildingAsync(
+                accountId.Value,
+                new CreateBuildingRequest
+                {
+                    Name = Model.Name,
+                    AddressLine1 = Model.AddressLine1,
+                    PostalCode = Model.PostalCode,
+                    City = Model.City,
+                    CountryCode = Model.CountryCode
+                });
+
+            Navigation.NavigateTo(
+                $"/buildings/{id}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class CreateBuildingFormModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(300)]
+        public string? AddressLine1 { get; set; }
+
+        [StringLength(20)]
+        public string? PostalCode { get; set; }
+
+        [StringLength(100)]
+        public string? City { get; set; }
+
+        [Required]
+        [StringLength(2, MinimumLength = 2)]
+        public string CountryCode { get; set; } = "NO";
+
+    }
+}

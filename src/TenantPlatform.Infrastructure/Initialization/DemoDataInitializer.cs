@@ -381,6 +381,18 @@ public static class DemoDataInitializer
         }
 
         if (!await dbContext.UserAccountRoles.AnyAsync(
+                x => x.Id == SeedIds.PerNordicPropertyAccountAdminRole,
+                cancellationToken))
+        {
+            dbContext.UserAccountRoles.Add(new UserAccountRole
+            {
+                Id = SeedIds.PerNordicPropertyAccountAdminRole,
+                UserAccountId = SeedIds.PerNordicPropertyUserAccount,
+                Role = UserRole.AccountAdmin
+            });
+        }
+
+        if (!await dbContext.UserAccountRoles.AnyAsync(
                 x => x.Id == SeedIds.OleTenantAdminRole,
                 cancellationToken))
         {

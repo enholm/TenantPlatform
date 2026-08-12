@@ -10,4 +10,9 @@ public interface IBuildingService
         Guid accountId,
         Guid buildingId,
         CancellationToken cancellationToken = default);
+
+    Task<Guid> CreateBuildingAsync(
+    Guid accountId,
+    CreateBuildingRequest request,
+    CancellationToken cancellationToken = default);
 }

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TenantPlatform.Infrastructure.Persistence;
-
+using TenantPlatform.Core.Properties;
 namespace TenantPlatform.Web.Services.Buildings;
 
 public class BuildingService : IBuildingService
@@ -89,5 +89,31 @@ public class BuildingService : IBuildingService
                     .ToList()
             })
             .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<Guid> CreateBuildingAsync(
+        Guid accountId,
+        CreateBuildingRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var building = new Building
+        {
+            Id = Guid.NewGuid(),
+            AccountId = accountId,
+            Name = request.Name.Trim(),
+            AddressLine1 = request.AddressLine1?.Trim(),
+            PostalCode = request.PostalCode?.Trim(),
+            City = request.City?.Trim(),
+            CountryCode = request.CountryCode.Trim().ToUpperInvariant(),
+        };
+
+        dbContext.Buildings.Add(building);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return building.Id;
     }
 }

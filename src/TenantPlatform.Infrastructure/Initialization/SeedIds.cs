@@ -77,6 +77,8 @@ public static class SeedIds
     public static readonly Guid OleLoginAccount =
     Guid.Parse("72000000-0000-0000-0000-000000000002");
     // Service definition
+    public static readonly Guid PerNordicPropertyAccountAdminRole =
+    Guid.Parse("73000000-0000-0000-0000-000000000001");
     public static readonly Guid NetworkSsidService =
         Guid.Parse("80000000-0000-0000-0000-000000000001");
 

@@ -4,6 +4,8 @@
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.Buildings
+@using TenantPlatform.Web.Security.Authorization
+@inject ITenantAuthorizationService AuthorizationService
 
 @inject IBuildingService BuildingService
 @inject ICurrentUserContextService UserContext
@@ -18,10 +20,13 @@
         </p>
     </div>
 
-    <a href="/buildings/create"
-       class="btn btn-primary">
-        @L["CreateBuilding"]
-    </a>
+    @if (canCreate)
+    {
+        <a href="/buildings/create"
+        class="btn btn-primary">
+            @L["CreateBuilding"]
+        </a>
+    }
 </div>
 
 @if (isLoading)
@@ -85,7 +90,7 @@ else
 
 @code {
     private bool isLoading = true;
-
+    private bool canCreate;
     private List<BuildingListItemDto> buildings = [];
 
     protected override async Task OnInitializedAsync()
@@ -98,8 +103,12 @@ else
             return;
         }
 
-        buildings = await BuildingService.GetBuildingsAsync(
-            accountId.Value);
+        canCreate =
+            await AuthorizationService.CanCreateBuildingAsync();
+
+        buildings =
+            await BuildingService.GetBuildingsAsync(
+                accountId.Value);
 
         isLoading = false;
     }

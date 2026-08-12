@@ -71,6 +71,31 @@ public class TenantAuthorizationService
                 cancellationToken);
     }
 
+    public async Task<bool> CanCreateBuildingAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await HasRoleAsync(
+            UserRole.AccountAdmin,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanEditBuildingAsync(
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanManageBuildingAsync(
+            buildingId,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanDeleteBuildingAsync(
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanManageBuildingAsync(
+            buildingId,
+            cancellationToken);
+    }
     public async Task<bool> CanManageOrganizationAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default)

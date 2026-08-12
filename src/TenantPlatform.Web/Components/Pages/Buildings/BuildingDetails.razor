@@ -4,6 +4,8 @@
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.Buildings
+@using TenantPlatform.Web.Security.Authorization
+@inject ITenantAuthorizationService AuthorizationService
 @inject IBuildingService BuildingService
 @inject ICurrentUserContextService UserContext
 
@@ -185,7 +187,8 @@ else
 
         if (building is not null)
         {
-            canManageBuilding = false;
+            canManageBuilding =await AuthorizationService.CanEditBuildingAsync(Id);
+
         }
 
         isLoading = false;

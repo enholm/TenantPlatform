@@ -141,4 +141,7 @@
   <value>No units have been registered.</value>
 </data>
 
+<data name="Saving" xml:space="preserve">
+  <value>Saving...</value>
+</data>
 </root>
