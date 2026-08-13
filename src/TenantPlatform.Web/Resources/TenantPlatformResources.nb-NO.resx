@@ -180,5 +180,24 @@
 <data name="BuildingCannotBeDeleted" xml:space="preserve">
     <value>Bygget kan ikke slettes.</value>
 </data>
+<data name="Language" xml:space="preserve">
+  <value>Språk</value>
+</data>
+
+<data name="Appearance" xml:space="preserve">
+  <value>Utseende</value>
+</data>
+
+<data name="SystemTheme" xml:space="preserve">
+  <value>Følg systemet</value>
+</data>
+
+<data name="LightTheme" xml:space="preserve">
+  <value>Lys</value>
+</data>
+
+<data name="DarkTheme" xml:space="preserve">
+  <value>Mørk</value>
+</data>
 
 </root>

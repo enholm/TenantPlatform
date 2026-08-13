@@ -1,0 +1,194 @@
+@using Microsoft.EntityFrameworkCore
+@using TenantPlatform.Infrastructure.Persistence
+@using TenantPlatform.Web.Security.CurrentUserContext
+
+@inject ICurrentUserContextService UserContext
+@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
+
+@if (UserContext.Current.IsAuthenticated)
+{
+    <div class="dropdown">
+        <button class="btn btn-link text-decoration-none dropdown-toggle d-flex align-items-center gap-2"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+
+            <i class="bi bi-person-circle"></i>
+
+            <span>
+                @UserContext.Current.FullName
+            </span>
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm user-menu">
+
+            <li>
+                <div class="dropdown-item-text py-2">
+                    <div class="fw-semibold">
+                        @UserContext.Current.FullName
+                    </div>
+
+                    <div class="small text-body-secondary">
+                        @UserContext.Current.Email
+                    </div>
+                </div>
+            </li>
+
+            @if (accountCount > 1)
+            {
+                <li>
+                    <hr class="dropdown-divider" />
+                </li>
+
+                <li>
+                    <a class="dropdown-item d-flex align-items-center gap-2"
+                       href="/select-account">
+
+                        <i class="bi bi-arrow-left-right"></i>
+
+                        <span>
+                            @L["SelectAccount"]
+                        </span>
+                    </a>
+                </li>
+            }
+
+            <li>
+                <hr class="dropdown-divider" />
+            </li>
+
+            <li>
+                <h6 class="dropdown-header">
+                    @L["Language"]
+                </h6>
+            </li>
+
+            <li>
+                <form method="post"
+                      action="/preferences/language">
+
+                    <AntiforgeryToken />
+
+                    <input type="hidden"
+                           name="culture"
+                           value="nb-NO" />
+
+                    <button type="submit"
+                            class="dropdown-item d-flex align-items-center gap-2">
+
+                        <i class="bi bi-globe2"></i>
+
+                        <span>Norsk</span>
+                    </button>
+                </form>
+            </li>
+
+            <li>
+                <form method="post"
+                      action="/preferences/language">
+
+                    <AntiforgeryToken />
+
+                    <input type="hidden"
+                           name="culture"
+                           value="en-GB" />
+
+                    <button type="submit"
+                            class="dropdown-item d-flex align-items-center gap-2">
+
+                        <i class="bi bi-globe2"></i>
+
+                        <span>English</span>
+                    </button>
+                </form>
+            </li>
+
+            <li>
+                <hr class="dropdown-divider" />
+            </li>
+
+            <li>
+                <h6 class="dropdown-header">
+                    @L["Appearance"]
+                </h6>
+            </li>
+
+            <li>
+                <button type="button"
+                        class="dropdown-item d-flex align-items-center gap-2"
+                        onclick="tenantPlatformTheme.set('system')">
+
+                    <i class="bi bi-circle-half"></i>
+
+                    <span>
+                        @L["SystemTheme"]
+                    </span>
+                </button>
+            </li>
+
+            <li>
+                <button type="button"
+                        class="dropdown-item d-flex align-items-center gap-2"
+                        onclick="tenantPlatformTheme.set('light')">
+
+                    <i class="bi bi-sun"></i>
+
+                    <span>
+                        @L["LightTheme"]
+                    </span>
+                </button>
+            </li>
+
+            <li>
+                <button type="button"
+                        class="dropdown-item d-flex align-items-center gap-2"
+                        onclick="tenantPlatformTheme.set('dark')">
+
+                    <i class="bi bi-moon"></i>
+
+                    <span>
+                        @L["DarkTheme"]
+                    </span>
+                </button>
+            </li>
+
+            <li>
+                <hr class="dropdown-divider" />
+            </li>
+
+            <li>
+                <form method="post"
+                      action="/auth/logout">
+
+                    <AntiforgeryToken />
+
+                    <button type="submit"
+                            class="dropdown-item text-danger d-flex align-items-center gap-2">
+
+                        <i class="bi bi-box-arrow-right"></i>
+
+                        <span>
+                            @L["Logout"]
+                        </span>
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </div>
+}
+
+@code {
+    private int accountCount;
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserContext.Current.IsAuthenticated)
+        {
+            return;
+        }
+        await using var dbContext =
+            await DbContextFactory.CreateDbContextAsync();
+        var userId = UserContext.Current.UserId;
+        accountCount = await dbContext.UserAccounts
+            .CountAsync(x => x.UserId == userId);
+    }
+}

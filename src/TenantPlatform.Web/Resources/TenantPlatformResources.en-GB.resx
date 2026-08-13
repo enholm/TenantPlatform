@@ -180,5 +180,23 @@
 <data name="BuildingCannotBeDeleted" xml:space="preserve">
     <value>The building cannot be deleted.</value>
 </data>
+<data name="Language" xml:space="preserve">
+  <value>Language</value>
+</data>
 
+<data name="Appearance" xml:space="preserve">
+  <value>Appearance</value>
+</data>
+
+<data name="SystemTheme" xml:space="preserve">
+  <value>Use system setting</value>
+</data>
+
+<data name="LightTheme" xml:space="preserve">
+  <value>Light</value>
+</data>
+
+<data name="DarkTheme" xml:space="preserve">
+  <value>Dark</value>
+</data>
 </root>

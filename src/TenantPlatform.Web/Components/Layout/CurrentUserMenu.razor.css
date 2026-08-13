@@ -1,0 +1,36 @@
+.user-menu {
+    min-width: 260px;
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+}
+
+.user-menu .dropdown-item,
+.user-menu .dropdown-item-text {
+    border-radius: 0.5rem;
+}
+
+.user-menu .dropdown-item {
+    padding: 0.6rem 0.75rem;
+}
+
+.user-menu .dropdown-item i {
+    width: 1.25rem;
+    text-align: center;
+    color: var(--bs-primary);
+}
+
+.user-menu .dropdown-item.text-danger i {
+    color: var(--bs-danger);
+}
+
+.user-menu .dropdown-header {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.user-menu .dropdown-divider {
+    margin: 0.4rem 0;
+}

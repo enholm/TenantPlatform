@@ -324,6 +324,55 @@ app.MapPost("/auth/select-account", async (
 
     return Results.Redirect("/");
 });
+
+//------------------------------
+// Endpoint preferences/language
+// -----------------------------
+app.MapPost("/preferences/language", async (
+    HttpContext httpContext,
+    AuthenticationCookieService cookieService,
+    IDbContextFactory<TenantPlatformDbContext> dbContextFactory,
+    IFormCollection form,
+    CancellationToken cancellationToken) =>
+{
+    var culture = form["culture"].ToString();
+
+    if (culture is not ("nb-NO" or "en-GB"))
+    {
+        return Results.BadRequest("Unsupported language.");
+    }
+
+    var userIdValue = httpContext.User.FindFirstValue(
+        TenantPlatformClaimTypes.UserId);
+
+    if (!Guid.TryParse(userIdValue, out var userId))
+    {
+        return Results.Unauthorized();
+    }
+
+    await using var dbContext =
+        await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+    var user = await dbContext.Users
+        .SingleOrDefaultAsync(
+            x => x.Id == userId,
+            cancellationToken);
+
+    if (user is null)
+    {
+        return Results.Unauthorized();
+    }
+
+    user.PreferredLanguage = culture;
+
+    await dbContext.SaveChangesAsync(cancellationToken);
+
+    cookieService.SetCulture(
+        httpContext,
+        culture);
+
+    return Results.Redirect("/");
+});
 // ----------------------------------------------------------------------
 
 app.Run();

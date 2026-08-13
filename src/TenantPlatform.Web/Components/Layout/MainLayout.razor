@@ -15,43 +15,51 @@
                 TenantPlatform
             </a>
         </div>
-
         <nav class="sidebar-nav">
+
             <NavLink href="/"
-                     Match="NavLinkMatch.All"
-                     class="nav-item">
-                @L["Dashboard"]
+                    Match="NavLinkMatch.All"
+                    class="sidebar-link">
+                <i class="bi bi-house-door"></i>
+                <span>@L["Dashboard"]</span>
             </NavLink>
 
             <NavLink href="/buildings"
-                     class="nav-item">
-                @L["Buildings"]
+                    class="sidebar-link">
+                <i class="bi bi-buildings"></i>
+                <span>@L["Buildings"]</span>
             </NavLink>
 
             <NavLink href="/organizations"
-                     class="nav-item">
-                @L["Organizations"]
+                    class="sidebar-link">
+                <i class="bi bi-people"></i>
+                <span>@L["Organizations"]</span>
             </NavLink>
 
             <NavLink href="/users"
-                     class="nav-item">
-                @L["Users"]
+                    class="sidebar-link">
+                <i class="bi bi-person"></i>
+                <span>@L["Users"]</span>
             </NavLink>
 
             <NavLink href="/services"
-                     class="nav-item">
-                @L["Services"]
+                    class="sidebar-link">
+                <i class="bi bi-briefcase"></i>
+                <span>@L["Services"]</span>
             </NavLink>
 
             <NavLink href="/network"
-                     class="nav-item">
-                @L["Network"]
+                    class="sidebar-link">
+                <i class="bi bi-wifi"></i>
+                <span>@L["Network"]</span>
             </NavLink>
 
             <NavLink href="/administration"
-                     class="nav-item">
-                @L["Administration"]
+                    class="sidebar-link">
+                <i class="bi bi-shield-check"></i>
+                <span>@L["Administration"]</span>
             </NavLink>
+
         </nav>
     </aside>
 

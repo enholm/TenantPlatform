@@ -49,3 +49,38 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+:root {
+    --tp-sidebar-width: 240px;
+    --tp-topbar-height: 64px;
+
+    --tp-sidebar-bg: #f3f6fa;
+    --tp-sidebar-border: #d9e1ea;
+
+    --tp-sidebar-text: #495057;
+    --tp-sidebar-text-active: #212529;
+
+    --tp-sidebar-hover: rgba(13, 110, 253, 0.08);
+    --tp-sidebar-active: rgba(13, 110, 253, 0.12);
+
+    --tp-sidebar-icon: #0d6efd;
+
+    --tp-sidebar-shadow: 2px 0 12px rgba(0, 0, 0, 0.08);
+    --tp-topbar-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+[data-bs-theme="dark"] {
+    --tp-sidebar-bg: #111827;
+    --tp-sidebar-border: rgba(255, 255, 255, 0.08);
+
+    --tp-sidebar-text: #cbd5e1;
+    --tp-sidebar-text-active: #ffffff;
+
+    --tp-sidebar-hover: rgba(255, 255, 255, 0.06);
+    --tp-sidebar-active: rgba(37, 99, 235, 0.18);
+
+    --tp-sidebar-icon: #3b82f6;
+
+    --tp-sidebar-shadow: 2px 0 14px rgba(0, 0, 0, 0.35);
+    --tp-topbar-shadow: 0 1px 4px rgba(0, 0, 0, 0.30);
+}
