@@ -1,0 +1,176 @@
+@page "/buildings/{Id:guid}/delete"
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Buildings
+
+@inject IBuildingService BuildingService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["DeleteBuilding"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (building is null)
+{
+    <div class="alert alert-warning">
+        @L["BuildingNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/buildings/{Id}")"
+           class="text-decoration-none">
+            ← @building.Name
+        </a>
+    </div>
+
+    <h1>@L["DeleteBuilding"]</h1>
+
+    <div class="alert alert-danger mt-4">
+        <strong>@L["Warning"]</strong>
+
+        <div class="mt-2">
+            @L["DeleteBuildingConfirmation"]
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5>@building.Name</h5>
+
+            <div class="text-muted mb-4">
+                @building.AddressLine1<br />
+                @building.PostalCode @building.City
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(deleteError))
+            {
+                <div class="alert alert-danger">
+                    @L[deleteError]
+                </div>
+            }
+
+            <EditForm Model="Model!"
+                      OnValidSubmit="DeleteAsync"
+                      FormName="DeleteBuilding">
+
+                <DataAnnotationsValidator />
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        disabled="@isDeleting">
+                    @(isDeleting
+                        ? L["Deleting"]
+                        : L["Delete"])
+                </button>
+
+                <a href="@($"/buildings/{Id}")"
+                   class="btn btn-outline-secondary ms-2">
+                    @L["Cancel"]
+                </a>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code
+{
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "DeleteBuilding")]
+    public DeleteBuildingFormModel? Model { get; set; }
+
+    private BuildingDetailsDto? building;
+
+    private bool isLoading = true;
+
+    private bool isDeleting;
+
+    private string? deleteError;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new DeleteBuildingFormModel();
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService.CanDeleteBuildingAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        building =
+            await BuildingService.GetBuildingAsync(
+                accountId.Value,
+                Id);
+
+        isLoading = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService.CanDeleteBuildingAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        deleteError = null;
+        isDeleting = true;
+
+        try
+        {
+            await BuildingService.DeleteBuildingAsync(
+                accountId.Value,
+                Id);
+
+            Navigation.NavigateTo("/buildings");
+        }
+        catch (BuildingDeleteNotAllowedException ex)
+        {
+            deleteError = ex.Message;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+    
+    public sealed class DeleteBuildingFormModel
+    {
+    }
+}

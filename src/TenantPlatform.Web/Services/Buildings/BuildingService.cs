@@ -147,4 +147,100 @@ public class BuildingService : IBuildingService
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }    
+
+    public async Task DeleteBuildingAsync(
+        Guid accountId,
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        var deleteCheck = await CanDeleteBuildingAsync(
+            accountId,
+            buildingId,
+            cancellationToken);
+
+        if (!deleteCheck.CanDelete)
+        {
+            throw new BuildingDeleteNotAllowedException(
+                deleteCheck.Reason ?? "BuildingCannotBeDeleted");
+        }
+
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var building = await dbContext.Buildings
+            .SingleOrDefaultAsync(
+                x => x.Id == buildingId &&
+                    x.AccountId == accountId,
+                cancellationToken);
+
+        if (building is null)
+        {
+            throw new InvalidOperationException(
+                "Building was not found in the current account.");
+        }
+
+        dbContext.Buildings.Remove(building);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<BuildingDeleteCheckResult> CanDeleteBuildingAsync(
+        Guid accountId,
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var buildingExists = await dbContext.Buildings
+            .AsNoTracking()
+            .AnyAsync(
+                x => x.Id == buildingId &&
+                    x.AccountId == accountId,
+                cancellationToken);
+
+        if (!buildingExists)
+        {
+            return BuildingDeleteCheckResult.NotAllowed(
+                "BuildingNotFound");
+        }
+
+        var hasUnits = await dbContext.Units
+            .AsNoTracking()
+            .AnyAsync(
+                x => x.BuildingId == buildingId,
+                cancellationToken);
+
+        if (hasUnits)
+        {
+            return BuildingDeleteCheckResult.NotAllowed(
+                "BuildingContainsUnits");
+        }
+
+        var hasServiceRequests = await dbContext.ServiceRequests
+            .AsNoTracking()
+            .AnyAsync(
+                x => x.BuildingId == buildingId,
+                cancellationToken);
+
+        if (hasServiceRequests)
+        {
+            return BuildingDeleteCheckResult.NotAllowed(
+                "BuildingContainsServiceRequests");
+        }
+
+        var hasNetworkEnvironments = await dbContext.NetworkEnvironments
+            .AsNoTracking()
+            .AnyAsync(
+                x => x.BuildingId == buildingId,
+                cancellationToken);
+
+        if (hasNetworkEnvironments)
+        {
+            return BuildingDeleteCheckResult.NotAllowed(
+                "BuildingContainsNetworkEnvironments");
+        }
+
+        return BuildingDeleteCheckResult.Allowed();
+    }
 }

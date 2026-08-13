@@ -39,13 +39,35 @@ else
             </div>
         </div>
 
-        @if (canManageBuilding)
-        {
-            <a href="@($"/buildings/{building.Id}/edit")"
-               class="btn btn-outline-primary">
-                @L["Edit"]
-            </a>
-        }
+        <div class="d-flex gap-2">
+            @if (canManageBuilding)
+            {
+                <a href="@($"/buildings/{building.Id}/edit")"
+                class="btn btn-outline-primary">
+                    @L["Edit"]
+                </a>
+            }
+
+            @if (canDeleteBuilding)
+            {
+                @if (deleteCheck?.CanDelete == true)
+                {
+                    <a href="@($"/buildings/{building.Id}/delete")"
+                    class="btn btn-outline-danger">
+                        @L["Delete"]
+                    </a>
+                }
+                else
+                {
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            disabled
+                            title="@L[deleteCheck?.Reason ?? "BuildingCannotBeDeleted"]">
+                        @L["Delete"]
+                    </button>
+                }
+            }
+        </div>
     </div>
 
     <div class="row g-3 mb-4">
@@ -169,7 +191,9 @@ else
 
     private bool isLoading = true;
     private bool canManageBuilding;
+    private bool canDeleteBuilding;
     private BuildingDetailsDto? building;
+    private BuildingDeleteCheckResult? deleteCheck;
 
     protected override async Task OnInitializedAsync()
     {
@@ -188,7 +212,14 @@ else
         if (building is not null)
         {
             canManageBuilding =await AuthorizationService.CanEditBuildingAsync(Id);
-
+            canDeleteBuilding = await AuthorizationService.CanDeleteBuildingAsync(Id);
+            if (canDeleteBuilding)
+            {
+                deleteCheck =
+                    await BuildingService.CanDeleteBuildingAsync(
+                        accountId.Value,
+                        Id);
+            }            
         }
 
         isLoading = false;

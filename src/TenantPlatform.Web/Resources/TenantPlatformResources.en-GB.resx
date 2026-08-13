@@ -148,4 +148,37 @@
 <data name="EditBuilding" xml:space="preserve">
   <value>Edit building</value>
 </data>
+
+<data name="DeleteBuilding" xml:space="preserve">
+    <value>Delete building</value>
+</data>
+
+<data name="DeleteBuildingConfirmation" xml:space="preserve">
+    <value>Are you sure you want to delete this building? This action cannot be undone.</value>
+</data>
+
+<data name="Deleting" xml:space="preserve">
+    <value>Deleting...</value>
+</data>
+
+<data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+</data>
+
+<data name="BuildingContainsUnits" xml:space="preserve">
+    <value>The building cannot be deleted because it contains units.</value>
+</data>
+
+<data name="BuildingContainsServiceRequests" xml:space="preserve">
+    <value>The building cannot be deleted because service requests are linked to it.</value>
+</data>
+
+<data name="BuildingContainsNetworkEnvironments" xml:space="preserve">
+    <value>The building cannot be deleted because network environments are linked to it.</value>
+</data>
+
+<data name="BuildingCannotBeDeleted" xml:space="preserve">
+    <value>The building cannot be deleted.</value>
+</data>
+
 </root>

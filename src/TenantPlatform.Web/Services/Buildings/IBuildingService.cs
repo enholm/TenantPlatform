@@ -21,4 +21,14 @@ public interface IBuildingService
     Guid buildingId,
     UpdateBuildingRequest request,
     CancellationToken cancellationToken = default);
+
+    Task DeleteBuildingAsync(
+        Guid accountId,
+        Guid buildingId,
+        CancellationToken cancellationToken = default);    
+
+    Task<BuildingDeleteCheckResult> CanDeleteBuildingAsync(
+        Guid accountId,
+        Guid buildingId,
+        CancellationToken cancellationToken = default);
 }

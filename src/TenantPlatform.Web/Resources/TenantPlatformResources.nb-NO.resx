@@ -148,4 +148,37 @@
 <data name="EditBuilding" xml:space="preserve">
   <value>Rediger bygg</value>
 </data>
+
+<data name="DeleteBuilding" xml:space="preserve">
+    <value>Slett bygg</value>
+</data>
+
+<data name="DeleteBuildingConfirmation" xml:space="preserve">
+    <value>Er du sikker på at du vil slette dette bygget? Handlingen kan ikke angres.</value>
+</data>
+
+<data name="Deleting" xml:space="preserve">
+    <value>Sletter...</value>
+</data>
+
+<data name="Warning" xml:space="preserve">
+    <value>Advarsel</value>
+</data>
+
+<data name="BuildingContainsUnits" xml:space="preserve">
+    <value>Bygget kan ikke slettes fordi det inneholder enheter.</value>
+</data>
+
+<data name="BuildingContainsServiceRequests" xml:space="preserve">
+    <value>Bygget kan ikke slettes fordi det finnes servicebestillinger knyttet til bygget.</value>
+</data>
+
+<data name="BuildingContainsNetworkEnvironments" xml:space="preserve">
+    <value>Bygget kan ikke slettes fordi det finnes nettverksmiljøer knyttet til bygget.</value>
+</data>
+
+<data name="BuildingCannotBeDeleted" xml:space="preserve">
+    <value>Bygget kan ikke slettes.</value>
+</data>
+
 </root>
