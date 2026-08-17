@@ -200,4 +200,95 @@
   <value>Mørk</value>
 </data>
 
+<data name="Organization" xml:space="preserve">
+  <value>Organisasjon</value>
+</data>
+
+<data name="OrganizationsDescription" xml:space="preserve">
+  <value>Organisasjoner registrert for valgt konto.</value>
+</data>
+
+<data name="CreateOrganization" xml:space="preserve">
+  <value>Opprett organisasjon</value>
+</data>
+
+<data name="NoOrganizations" xml:space="preserve">
+  <value>Ingen organisasjoner er registrert.</value>
+</data>
+
+<data name="OrganizationNumber" xml:space="preserve">
+  <value>Organisasjonsnummer</value>
+</data>
+
+<data name="Status" xml:space="preserve">
+  <value>Status</value>
+</data>
+
+<data name="Active" xml:space="preserve">
+  <value>Aktiv</value>
+</data>
+
+<data name="Inactive" xml:space="preserve">
+  <value>Inaktiv</value>
+</data>
+
+<data name="OrganizationInformation" xml:space="preserve">
+  <value>Organisasjonsinformasjon</value>
+</data>
+
+<data name="OrganizationNotFound" xml:space="preserve">
+  <value>Organisasjonen ble ikke funnet.</value>
+</data>
+
+<data name="OrganizationTypePropertyManager" xml:space="preserve">
+  <value>Eiendomsforvalter</value>
+</data>
+
+<data name="OrganizationTypeTenant" xml:space="preserve">
+  <value>Leietaker</value>
+</data>
+
+<data name="Occupancies" xml:space="preserve">
+  <value>Leieforhold</value>
+</data>
+
+<data name="OrganizationCannotBeDeleted" xml:space="preserve">
+  <value>Organisasjonen kan ikke slettes.</value>
+</data>
+
+<data name="OrganizationContainsOccupancies" xml:space="preserve">
+  <value>Organisasjonen kan ikke slettes fordi den har leieforhold.</value>
+</data>
+
+<data name="OrganizationContainsNetworkSsids" xml:space="preserve">
+  <value>Organisasjonen kan ikke slettes fordi den har tilknyttede trådløse nettverk.</value>
+</data>
+
+<data name="OrganizationContainsServiceRequests" xml:space="preserve">
+  <value>Organisasjonen kan ikke slettes fordi den har servicebestillinger.</value>
+</data>
+
+<data name="OrganizationContainsUserRoles" xml:space="preserve">
+  <value>Organisasjonen kan ikke slettes fordi brukere har roller knyttet til den.</value>
+</data>
+
+<data name="EditOrganization" xml:space="preserve">
+  <value>Rediger organisasjon</value>
+</data>
+
+<data name="OrganizationType" xml:space="preserve">
+  <value>Organisasjonstype</value>
+</data>
+
+<data name="IsActive" xml:space="preserve">
+  <value>Aktiv</value>
+</data>
+
+<data name="DeleteOrganization" xml:space="preserve">
+  <value>Slett organisasjon</value>
+</data>
+
+<data name="DeleteOrganizationConfirmation" xml:space="preserve">
+  <value>Er du sikker på at du vil slette denne organisasjonen? Handlingen kan ikke angres.</value>
+</data>
 </root>

@@ -1,0 +1,217 @@
+@page "/organizations/{Id:guid}"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Organizations
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Organizations
+
+@inject IOrganizationService OrganizationService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@(organization?.Name ?? L["Organization"])</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (organization is null)
+{
+    <div class="alert alert-warning">
+        @L["OrganizationNotFound"]
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="mb-2">
+                <a href="/organizations"
+                   class="text-decoration-none">
+                    ← @L["Organizations"]
+                </a>
+            </div>
+
+            <h1 class="mb-1">
+                @organization.Name
+            </h1>
+
+            <div class="text-body-secondary">
+                @GetOrganizationTypeText(organization.Type)
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            @if (canEdit)
+            {
+                <a href="@($"/organizations/{organization.Id}/edit")"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>
+                    @L["Edit"]
+                </a>
+            }
+
+            @if (canDelete)
+            {
+                @if (deleteCheck?.CanDelete == true)
+                {
+                    <a href="@($"/organizations/{organization.Id}/delete")"
+                       class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>
+                        @L["Delete"]
+                    </a>
+                }
+                else
+                {
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            disabled>
+                        <i class="bi bi-trash me-1"></i>
+                        @L["Delete"]
+                    </button>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-body-secondary mb-1">
+                        @L["Occupancies"]
+                    </div>
+
+                    <div class="fs-2 fw-bold">
+                        @organization.OccupancyCount
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            @L["OrganizationInformation"]
+        </div>
+
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">
+                    @L["Name"]
+                </dt>
+
+                <dd class="col-sm-9">
+                    @organization.Name
+                </dd>
+
+                <dt class="col-sm-3">
+                    @L["OrganizationNumber"]
+                </dt>
+
+                <dd class="col-sm-9">
+                    @(string.IsNullOrWhiteSpace(
+                        organization.OrganizationNumber)
+                        ? "-"
+                        : organization.OrganizationNumber)
+                </dd>
+
+                <dt class="col-sm-3">
+                    @L["Type"]
+                </dt>
+
+                <dd class="col-sm-9">
+                    @GetOrganizationTypeText(organization.Type)
+                </dd>
+
+                <dt class="col-sm-3">
+                    @L["Status"]
+                </dt>
+
+                <dd class="col-sm-9">
+                    @if (organization.IsActive)
+                    {
+                        <span class="badge text-bg-success">
+                            @L["Active"]
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">
+                            @L["Inactive"]
+                        </span>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private bool isLoading = true;
+    private bool canEdit;
+    private bool canDelete;
+
+    private OrganizationDetailsDto? organization;
+    private OrganizationDeleteCheckResult? deleteCheck;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        organization =
+            await OrganizationService.GetOrganizationAsync(
+                accountId.Value,
+                Id);
+
+        if (organization is not null)
+        {
+            canEdit =
+                await AuthorizationService
+                    .CanEditOrganizationAsync(Id);
+
+            canDelete =
+                await AuthorizationService
+                    .CanDeleteOrganizationAsync(Id);
+
+            if (canDelete)
+            {
+                deleteCheck =
+                    await OrganizationService
+                        .CanDeleteOrganizationAsync(
+                            accountId.Value,
+                            Id);
+            }
+        }
+
+        isLoading = false;
+    }
+
+    private string GetOrganizationTypeText(
+        OrganizationType type)
+    {
+        return type switch
+        {
+            OrganizationType.PropertyManager
+                => L["OrganizationTypePropertyManager"],
+
+            OrganizationType.Tenant
+                => L["OrganizationTypeTenant"],
+
+            _ => type.ToString()
+        };
+    }
+}
+

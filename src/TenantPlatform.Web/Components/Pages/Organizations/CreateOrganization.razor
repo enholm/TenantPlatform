@@ -1,0 +1,199 @@
+@page "/organizations/create"
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Organizations
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Organizations
+
+@inject IOrganizationService OrganizationService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["CreateOrganization"]</PageTitle>
+
+@if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="/organizations"
+           class="text-decoration-none">
+            ← @L["Organizations"]
+        </a>
+    </div>
+
+    <h1>@L["CreateOrganization"]</h1>
+
+    <div class="card mt-4">
+        <div class="card-body">
+
+            <EditForm Model="Model"
+                      OnValidSubmit="CreateAsync"
+                      FormName="CreateOrganization">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["Name"]
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="Model.Name" />
+
+                    <ValidationMessage For="() => Model.Name" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["OrganizationNumber"]
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="Model.OrganizationNumber" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["OrganizationType"]
+                    </label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="Model.Type">
+                        <option value="@OrganizationType.PropertyManager">
+                            @L["OrganizationTypePropertyManager"]
+                        </option>
+
+                        <option value="@OrganizationType.Tenant">
+                            @L["OrganizationTypeTenant"]
+                        </option>
+                    </InputSelect>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.IsActive" />
+
+                    <label class="form-check-label">
+                        @L["IsActive"]
+                    </label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+                        @(isSaving
+                            ? L["Saving"]
+                            : L["Create"])
+                    </button>
+
+                    <a href="/organizations"
+                       class="btn btn-outline-secondary">
+                        @L["Cancel"]
+                    </a>
+                </div>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromForm(FormName = "CreateOrganization")]
+    public CreateOrganizationFormModel? Model { get; set; }
+
+    private bool isSaving;
+
+    protected override void OnInitialized()
+    {
+        Model ??= new CreateOrganizationFormModel();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+                .CanCreateOrganizationAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+                .CanCreateOrganizationAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            var id =
+                await OrganizationService
+                    .CreateOrganizationAsync(
+                        accountId.Value,
+                        new CreateOrganizationRequest
+                        {
+                            Name = Model.Name,
+                            OrganizationNumber =
+                                Model.OrganizationNumber,
+                            Type = Model.Type,
+                            IsActive = Model.IsActive
+                        });
+
+            Navigation.NavigateTo(
+                $"/organizations/{id}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class CreateOrganizationFormModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(50)]
+        public string? OrganizationNumber { get; set; }
+
+        [Required]
+        public OrganizationType Type { get; set; }
+            = OrganizationType.Tenant;
+
+        public bool IsActive { get; set; } = true;
+    }
+}
+

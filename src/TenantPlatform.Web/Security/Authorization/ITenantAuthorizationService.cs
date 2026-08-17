@@ -24,4 +24,15 @@ public interface ITenantAuthorizationService
     Task<bool> CanManageOrganizationAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default);
+
+    Task<bool> CanCreateOrganizationAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanEditOrganizationAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanDeleteOrganizationAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default);
 }

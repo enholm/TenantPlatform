@@ -1,0 +1,175 @@
+@page "/organizations/{Id:guid}/delete"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Organizations
+
+@inject IOrganizationService OrganizationService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["DeleteOrganization"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (organization is null)
+{
+    <div class="alert alert-warning">
+        @L["OrganizationNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/organizations/{Id}")"
+           class="text-decoration-none">
+            ← @organization.Name
+        </a>
+    </div>
+
+    <h1>@L["DeleteOrganization"]</h1>
+
+    <div class="alert alert-danger mt-4">
+        <strong>@L["Warning"]</strong>
+
+        <div class="mt-2">
+            @L["DeleteOrganizationConfirmation"]
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5>@organization.Name</h5>
+
+            <div class="text-body-secondary mb-4">
+                @organization.OrganizationNumber
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(deleteError))
+            {
+                <div class="alert alert-danger">
+                    @L[deleteError]
+                </div>
+            }
+
+            <EditForm Model="Model!"
+                      OnValidSubmit="DeleteAsync"
+                      FormName="DeleteOrganization">
+
+                <DataAnnotationsValidator />
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        disabled="@isDeleting">
+                    @(isDeleting
+                        ? L["Deleting"]
+                        : L["Delete"])
+                </button>
+
+                <a href="@($"/organizations/{Id}")"
+                   class="btn btn-outline-secondary ms-2">
+                    @L["Cancel"]
+                </a>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "DeleteOrganization")]
+    public DeleteOrganizationFormModel? Model { get; set; }
+
+    private OrganizationDetailsDto? organization;
+
+    private bool isLoading = true;
+    private bool isDeleting;
+
+    private string? deleteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new DeleteOrganizationFormModel();
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+                .CanDeleteOrganizationAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        organization =
+            await OrganizationService.GetOrganizationAsync(
+                accountId.Value,
+                Id);
+
+        isLoading = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+                .CanDeleteOrganizationAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        deleteError = null;
+        isDeleting = true;
+
+        try
+        {
+            await OrganizationService.DeleteOrganizationAsync(
+                accountId.Value,
+                Id);
+
+            Navigation.NavigateTo("/organizations");
+        }
+        catch (OrganizationDeleteNotAllowedException ex)
+        {
+            deleteError = ex.Message;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    public sealed class DeleteOrganizationFormModel
+    {
+    }
+}
+

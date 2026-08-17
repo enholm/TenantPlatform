@@ -124,4 +124,51 @@ public class TenantAuthorizationService
                     ),
                 cancellationToken);
     }
+
+
+    public async Task<bool> CanCreateOrganizationAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await HasRoleAsync(
+            UserRole.AccountAdmin,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanEditOrganizationAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        return await _dbContext.UserAccountRoles
+            .AnyAsync(
+                x =>
+                    x.UserAccount.UserId == currentUser.UserId &&
+                    x.UserAccount.AccountId == accountId &&
+                    (
+                        x.Role == UserRole.AccountAdmin ||
+                        (
+                            x.Role == UserRole.TenantAdmin &&
+                            x.OrganizationId == organizationId
+                        )
+                    ),
+                cancellationToken);
+    }
+
+    public async Task<bool> CanDeleteOrganizationAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default)
+    {
+        return await HasRoleAsync(
+            UserRole.AccountAdmin,
+            cancellationToken);
+    }
 }
