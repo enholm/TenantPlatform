@@ -291,4 +291,108 @@
 <data name="DeleteOrganizationConfirmation" xml:space="preserve">
   <value>Er du sikker på at du vil slette denne organisasjonen? Handlingen kan ikke angres.</value>
 </data>
+
+<data name="Unit" xml:space="preserve">
+  <value>Enhet</value>
+</data>
+
+<data name="UnitsDescription" xml:space="preserve">
+  <value>Enheter registrert for valgt konto.</value>
+</data>
+
+<data name="CreateUnit" xml:space="preserve">
+  <value>Opprett enhet</value>
+</data>
+
+<data name="ParentUnit" xml:space="preserve">
+  <value>Overordnet enhet</value>
+</data>
+
+<data name="ChildUnits" xml:space="preserve">
+  <value>Underenheter</value>
+</data>
+
+<data name="UnitInformation" xml:space="preserve">
+  <value>Enhetsinformasjon</value>
+</data>
+
+<data name="UnitNotFound" xml:space="preserve">
+  <value>Enheten ble ikke funnet.</value>
+</data>
+
+<data name="UnitTypeSection" xml:space="preserve">
+  <value>Seksjon</value>
+</data>
+
+<data name="UnitTypeFloor" xml:space="preserve">
+  <value>Etasje</value>
+</data>
+
+<data name="UnitTypeOffice" xml:space="preserve">
+  <value>Kontor</value>
+</data>
+
+<data name="UnitTypeOther" xml:space="preserve">
+  <value>Annet</value>
+</data>
+
+<data name="UnitCannotBeDeleted" xml:space="preserve">
+  <value>Enheten kan ikke slettes.</value>
+</data>
+
+<data name="UnitContainsChildUnits" xml:space="preserve">
+  <value>Enheten kan ikke slettes fordi den har underenheter.</value>
+</data>
+
+<data name="UnitContainsOccupancies" xml:space="preserve">
+  <value>Enheten kan ikke slettes fordi den har leieforhold.</value>
+</data>
+
+<data name="EditUnit" xml:space="preserve">
+  <value>Rediger enhet</value>
+</data>
+
+<data name="NoParentUnit" xml:space="preserve">
+  <value>Ingen overordnet enhet</value>
+</data>
+
+<data name="NoBuildingsAvailableForUnit" xml:space="preserve">
+  <value>Det finnes ingen bygg du har rettighet til å opprette enheter i.</value>
+</data>
+
+<data name="UnitParentCreatesCircularHierarchy" xml:space="preserve">
+  <value>Den valgte overordnede enheten ville opprette en sirkulær struktur.</value>
+</data>
+
+<data name="UnitParentNotInSelectedAccount" xml:space="preserve">
+  <value>Den overordnede enheten finnes ikke for gjeldende konto</value>
+</data>
+
+<data name="UnitParentNotInSelectedBuilding" xml:space="preserve">
+  <value>Den overordnede enheten finnes ikke i det valgte bygget.</value>
+</data>
+
+<data name="UnitCannotBeOwnParent" xml:space="preserve">
+  <value>En enhet kan ikke være sin egen overordnede enhet.</value>
+</data>
+
+<data name="UnitHierarchyContainsCircularReference" xml:space="preserve">
+  <value>Eksisterende Unit hierarki inneholder en sirkulær referanse</value>
+</data>
+
+<data name="DeleteUnit" xml:space="preserve">
+  <value>Slett enhet</value>
+</data>
+
+<data name="DeleteUnitConfirmation" xml:space="preserve">
+  <value>Er du sikker på at du vil slette denne enheten? Handlingen kan ikke angres.</value>
+</data>
+
+<data name="DeleteUnit" xml:space="preserve">
+  <value>Slett enhet</value>
+</data>
+
+<data name="DeleteUnitConfirmation" xml:space="preserve">
+  <value>Er du sikker på at du vil slette denne enheten? Handlingen kan ikke angres.</value>
+</data>
 </root>

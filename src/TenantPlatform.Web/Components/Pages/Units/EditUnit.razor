@@ -1,0 +1,338 @@
+@page "/units/{Id:guid}/edit"
+
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Properties
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Buildings
+@using TenantPlatform.Web.Services.Units
+
+@inject IUnitService UnitService
+@inject IBuildingService BuildingService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["EditUnit"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (notFound)
+{
+    <div class="alert alert-warning">
+        @L["UnitNotFound"]
+    </div>
+}
+else if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="@($"/units/{Id}")"
+           class="text-decoration-none">
+            ← @L["Unit"]
+        </a>
+    </div>
+
+    <h1>@L["EditUnit"]</h1>
+
+    <div class="card mt-4">
+        <div class="card-body">
+
+            <EditForm Model="Model"
+                      OnValidSubmit="SaveAsync"
+                      FormName="EditUnit">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                @if (!string.IsNullOrWhiteSpace(saveError))
+                {
+                    <div class="alert alert-danger">
+                        @L[saveError]
+                    </div>
+                }
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["Building"]
+                    </label>
+
+                    <InputSelect id="buildingSelect"
+                                 class="form-select"
+                                 @bind-Value="Model.BuildingId"
+                                 oninput="tenantPlatformUnitForm.filterParents(this.value, 'parentUnitSelect')">
+
+                        @foreach (var building in buildings)
+                        {
+                            <option value="@building.Id">
+                                @building.Name
+                            </option>
+                        }
+
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["ParentUnit"]
+                    </label>
+
+                    <InputSelect id="parentUnitSelect"
+                                 class="form-select"
+                                 @bind-Value="Model.ParentUnitId">
+
+                        <option value="">
+                            @L["NoParentUnit"]
+                        </option>
+
+                        @foreach (var candidate in parentUnits)
+                        {
+                            <option value="@candidate.Id"
+                                    data-building-id="@candidate.BuildingId"
+                                    hidden="@(candidate.BuildingId != Model.BuildingId)">
+                                @candidate.Name
+                            </option>
+                        }
+
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["Name"]
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="Model.Name" />
+
+                    <ValidationMessage For="() => Model.Name" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["Type"]
+                    </label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="Model.Type">
+
+                        <option value="@UnitType.Section">
+                            @L["UnitTypeSection"]
+                        </option>
+
+                        <option value="@UnitType.Floor">
+                            @L["UnitTypeFloor"]
+                        </option>
+
+                        <option value="@UnitType.Office">
+                            @L["UnitTypeOffice"]
+                        </option>
+
+                        <option value="@UnitType.Other">
+                            @L["UnitTypeOther"]
+                        </option>
+
+                    </InputSelect>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.IsActive" />
+
+                    <label class="form-check-label">
+                        @L["IsActive"]
+                    </label>
+                </div>
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+                        @(isSaving
+                            ? L["Saving"]
+                            : L["Save"])
+                    </button>
+
+                    <a href="@($"/units/{Id}")"
+                       class="btn btn-outline-secondary">
+                        @L["Cancel"]
+                    </a>
+
+                </div>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "EditUnit")]
+    public EditUnitFormModel? Model { get; set; }
+
+    private bool isLoading = true;
+    private bool isSaving;
+    private bool notFound;
+    private string? saveError;
+
+    private List<BuildingListItemDto> buildings = [];
+    private List<UnitListItemDto> parentUnits = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEditUnitAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        var allBuildings =
+            await BuildingService.GetBuildingsAsync(
+                accountId.Value);
+
+        foreach (var building in allBuildings)
+        {
+            if (await AuthorizationService
+                .CanCreateUnitAsync(building.Id))
+            {
+                buildings.Add(building);
+            }
+        }
+
+        parentUnits =
+            (await UnitService.GetUnitsAsync(
+                accountId.Value))
+            .Where(x => x.Id != Id)
+            .ToList();
+
+        // POST: behold verdiene som kom fra formen.
+        if (Model is not null)
+        {
+            if (!buildings.Any(
+                x => x.Id == Model.BuildingId))
+            {
+                Navigation.NavigateTo("/access-denied");
+                return;
+            }
+
+            isLoading = false;
+            return;
+        }
+
+        // GET: hent eksisterende Unit.
+        var unit =
+            await UnitService.GetUnitAsync(
+                accountId.Value,
+                Id);
+
+        if (unit is null)
+        {
+            notFound = true;
+            isLoading = false;
+            return;
+        }
+
+        Model = new EditUnitFormModel
+        {
+            BuildingId = unit.BuildingId,
+            ParentUnitId = unit.ParentUnitId,
+            Name = unit.Name,
+            Type = unit.Type,
+            IsActive = unit.IsActive
+        };
+
+        isLoading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService.CanEditUnitAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanCreateUnitAsync(Model.BuildingId))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            await UnitService.UpdateUnitAsync(
+                accountId.Value,
+                Id,
+                new UpdateUnitRequest
+                {
+                    BuildingId = Model.BuildingId,
+                    ParentUnitId = Model.ParentUnitId,
+                    Name = Model.Name,
+                    Type = Model.Type,
+                    IsActive = Model.IsActive
+                });
+
+            Navigation.NavigateTo(
+                $"/units/{Id}");
+        }
+        catch (UnitValidationException ex)
+        {
+            saveError = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+    public sealed class EditUnitFormModel
+    {
+        [Required]
+        public Guid BuildingId { get; set; }
+
+        public Guid? ParentUnitId { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; }
+            = string.Empty;
+
+        [Required]
+        public UnitType Type { get; set; }
+
+        public bool IsActive { get; set; }
+    }
+}
+

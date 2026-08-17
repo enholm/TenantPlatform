@@ -42,6 +42,9 @@ public class TenantAuthorizationService
                 cancellationToken);
     }
 
+    /***************
+     ** Buildings **
+     ***************/
     public async Task<bool> CanManageBuildingAsync(
         Guid buildingId,
         CancellationToken cancellationToken = default)
@@ -125,6 +128,9 @@ public class TenantAuthorizationService
                 cancellationToken);
     }
 
+    /*******************
+     ** Organizations **
+     *******************/
 
     public async Task<bool> CanCreateOrganizationAsync(
         CancellationToken cancellationToken = default)
@@ -169,6 +175,60 @@ public class TenantAuthorizationService
     {
         return await HasRoleAsync(
             UserRole.AccountAdmin,
+            cancellationToken);
+    }
+
+
+
+    /***********
+     ** Units **
+     ***********/
+    public async Task<bool> CanCreateUnitAsync(
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanManageBuildingAsync(
+            buildingId,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanEditUnitAsync(
+        Guid unitId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        var buildingId = await _dbContext.Units
+            .Where(x =>
+                x.Id == unitId &&
+                x.AccountId == accountId)
+            .Select(x => (Guid?)x.BuildingId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!buildingId.HasValue)
+        {
+            return false;
+        }
+
+        return await CanManageBuildingAsync(
+            buildingId.Value,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanDeleteUnitAsync(
+        Guid unitId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanEditUnitAsync(
+            unitId,
             cancellationToken);
     }
 }

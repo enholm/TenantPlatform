@@ -291,4 +291,108 @@
 <data name="DeleteOrganizationConfirmation" xml:space="preserve">
   <value>Are you sure you want to delete this organization? This action cannot be undone.</value>
 </data>
+
+<data name="Unit" xml:space="preserve">
+  <value>Unit</value>
+</data>
+
+<data name="UnitsDescription" xml:space="preserve">
+  <value>Units registered for the current account.</value>
+</data>
+
+<data name="CreateUnit" xml:space="preserve">
+  <value>Create unit</value>
+</data>
+
+<data name="ParentUnit" xml:space="preserve">
+  <value>Parent unit</value>
+</data>
+
+<data name="ChildUnits" xml:space="preserve">
+  <value>Child units</value>
+</data>
+
+<data name="UnitInformation" xml:space="preserve">
+  <value>Unit information</value>
+</data>
+
+<data name="UnitNotFound" xml:space="preserve">
+  <value>The unit could not be found.</value>
+</data>
+
+<data name="UnitTypeSection" xml:space="preserve">
+  <value>Section</value>
+</data>
+
+<data name="UnitTypeFloor" xml:space="preserve">
+  <value>Floor</value>
+</data>
+
+<data name="UnitTypeOffice" xml:space="preserve">
+  <value>Office</value>
+</data>
+
+<data name="UnitTypeOther" xml:space="preserve">
+  <value>Other</value>
+</data>
+
+<data name="UnitCannotBeDeleted" xml:space="preserve">
+  <value>The unit cannot be deleted.</value>
+</data>
+
+<data name="UnitContainsChildUnits" xml:space="preserve">
+  <value>The unit cannot be deleted because it has child units.</value>
+</data>
+
+<data name="UnitContainsOccupancies" xml:space="preserve">
+  <value>The unit cannot be deleted because it has occupancies.</value>
+</data>
+
+<data name="EditUnit" xml:space="preserve">
+  <value>Edit unit</value>
+</data>
+
+<data name="NoParentUnit" xml:space="preserve">
+  <value>No parent unit</value>
+</data>
+
+<data name="NoBuildingsAvailableForUnit" xml:space="preserve">
+  <value>There are no buildings in which you are allowed to create units.</value>
+</data>
+
+<data name="UnitParentCreatesCircularHierarchy" xml:space="preserve">
+  <value>The selected parent would create a circular unit hierarchy.</value>
+</data>
+
+<data name="UnitParentNotInSelectedAccount" xml:space="preserve">
+  <value>Building was not found in the current account.</value>
+</data>
+
+<data name="UnitParentNotInSelectedBuilding" xml:space="preserve">
+  <value>Parent unit was not found in the selected building.</value>
+</data>
+
+<data name="UnitCannotBeOwnParent" xml:space="preserve">
+  <value>A unit cannot be its own parent.</value>
+</data>
+
+<data name="UnitHierarchyContainsCircularReference" xml:space="preserve">
+  <value>The existing unit hierarchy contains a circular reference.</value>
+</data>
+
+<data name="DeleteUnit" xml:space="preserve">
+  <value>Delete unit</value>
+</data>
+
+<data name="DeleteUnitConfirmation" xml:space="preserve">
+  <value>Are you sure you want to delete this unit? This action cannot be undone.</value>
+</data>
+
+<data name="DeleteUnit" xml:space="preserve">
+  <value>Delete unit</value>
+</data>
+
+<data name="DeleteUnitConfirmation" xml:space="preserve">
+  <value>Are you sure you want to delete this unit? This action cannot be undone.</value>
+</data>
 </root>

@@ -1,0 +1,174 @@
+@page "/units/{Id:guid}/delete"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Units
+
+@inject IUnitService UnitService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["DeleteUnit"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (unit is null)
+{
+    <div class="alert alert-warning">
+        @L["UnitNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/units/{Id}")"
+           class="text-decoration-none">
+            ← @unit.Name
+        </a>
+    </div>
+
+    <h1>@L["DeleteUnit"]</h1>
+
+    <div class="alert alert-danger mt-4">
+        <strong>@L["Warning"]</strong>
+
+        <div class="mt-2">
+            @L["DeleteUnitConfirmation"]
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5>@unit.Name</h5>
+
+            <div class="text-body-secondary mb-4">
+                @unit.BuildingName
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(deleteError))
+            {
+                <div class="alert alert-danger">
+                    @L[deleteError]
+                </div>
+            }
+
+            <EditForm Model="Model!"
+                      OnValidSubmit="DeleteAsync"
+                      FormName="DeleteUnit">
+
+                <DataAnnotationsValidator />
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        disabled="@isDeleting">
+                    @(isDeleting
+                        ? L["Deleting"]
+                        : L["Delete"])
+                </button>
+
+                <a href="@($"/units/{Id}")"
+                   class="btn btn-outline-secondary ms-2">
+                    @L["Cancel"]
+                </a>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "DeleteUnit")]
+    public DeleteUnitFormModel? Model { get; set; }
+
+    private UnitDetailsDto? unit;
+
+    private bool isLoading = true;
+    private bool isDeleting;
+
+    private string? deleteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new DeleteUnitFormModel();
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+                .CanDeleteUnitAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        unit = await UnitService.GetUnitAsync(
+            accountId.Value,
+            Id);
+
+        isLoading = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+                .CanDeleteUnitAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        deleteError = null;
+        isDeleting = true;
+
+        try
+        {
+            await UnitService.DeleteUnitAsync(
+                accountId.Value,
+                Id);
+
+            Navigation.NavigateTo("/units");
+        }
+        catch (UnitDeleteNotAllowedException ex)
+        {
+            deleteError = ex.Message;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    public sealed class DeleteUnitFormModel
+    {
+    }
+}
+

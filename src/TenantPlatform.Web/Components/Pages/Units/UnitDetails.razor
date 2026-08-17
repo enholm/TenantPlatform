@@ -1,0 +1,215 @@
+@page "/units/{Id:guid}"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Properties
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Units
+
+@inject IUnitService UnitService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@(unit?.Name ?? L["Unit"])</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (unit is null)
+{
+    <div class="alert alert-warning">
+        @L["UnitNotFound"]
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="mb-2">
+                <a href="@($"/buildings/{unit.BuildingId}")"
+                class="text-decoration-none">
+                    ← @unit.BuildingName
+                </a>
+            </div>
+
+            <h1 class="mb-1">@unit.Name</h1>
+
+            <div class="text-body-secondary">
+                <a href="@($"/buildings/{unit.BuildingId}")"
+                   class="text-decoration-none">
+                    @unit.BuildingName
+                </a>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            @if (canEdit)
+            {
+                <a href="@($"/units/{unit.Id}/edit")"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>
+                    @L["Edit"]
+                </a>
+            }
+
+            @if (canDelete)
+            {
+                @if (deleteCheck?.CanDelete == true)
+                {
+                    <a href="@($"/units/{unit.Id}/delete")"
+                       class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>
+                        @L["Delete"]
+                    </a>
+                }
+                else
+                {
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            disabled>
+                        <i class="bi bi-trash me-1"></i>
+                        @L["Delete"]
+                    </button>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-body-secondary mb-1">
+                        @L["ChildUnits"]
+                    </div>
+
+                    <div class="fs-2 fw-bold">
+                        @unit.ChildUnitCount
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-body-secondary mb-1">
+                        @L["Occupancies"]
+                    </div>
+
+                    <div class="fs-2 fw-bold">
+                        @unit.OccupancyCount
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            @L["UnitInformation"]
+        </div>
+
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">@L["Name"]</dt>
+                <dd class="col-sm-9">@unit.Name</dd>
+
+                <dt class="col-sm-3">@L["Building"]</dt>
+                <dd class="col-sm-9">@unit.BuildingName</dd>
+
+                <dt class="col-sm-3">@L["ParentUnit"]</dt>
+                <dd class="col-sm-9">
+                    @(string.IsNullOrWhiteSpace(unit.ParentUnitName)
+                        ? "-"
+                        : unit.ParentUnitName)
+                </dd>
+
+                <dt class="col-sm-3">@L["Type"]</dt>
+                <dd class="col-sm-9">
+                    @GetUnitTypeText(unit.Type)
+                </dd>
+
+                <dt class="col-sm-3">@L["Status"]</dt>
+                <dd class="col-sm-9">
+                    @if (unit.IsActive)
+                    {
+                        <span class="badge text-bg-success">
+                            @L["Active"]
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">
+                            @L["Inactive"]
+                        </span>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private bool isLoading = true;
+    private bool canEdit;
+    private bool canDelete;
+
+    private UnitDetailsDto? unit;
+    private UnitDeleteCheckResult? deleteCheck;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        unit = await UnitService.GetUnitAsync(
+            accountId.Value,
+            Id);
+
+        if (unit is not null)
+        {
+            canEdit =
+                await AuthorizationService
+                    .CanEditUnitAsync(Id);
+
+            canDelete =
+                await AuthorizationService
+                    .CanDeleteUnitAsync(Id);
+
+            if (canDelete)
+            {
+                deleteCheck =
+                    await UnitService.CanDeleteUnitAsync(
+                        accountId.Value,
+                        Id);
+            }
+        }
+
+        isLoading = false;
+    }
+
+    private string GetUnitTypeText(UnitType type)
+    {
+        return type switch
+        {
+            UnitType.Section => L["UnitTypeSection"],
+            UnitType.Floor => L["UnitTypeFloor"],
+            UnitType.Office => L["UnitTypeOffice"],
+            UnitType.Other => L["UnitTypeOther"],
+            _ => type.ToString()
+        };
+    }
+}
+
