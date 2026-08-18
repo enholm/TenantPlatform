@@ -388,11 +388,79 @@
   <value>Er du sikker på at du vil slette denne enheten? Handlingen kan ikke angres.</value>
 </data>
 
-<data name="DeleteUnit" xml:space="preserve">
-  <value>Slett enhet</value>
+<data name="OccupancyValidToBeforeValidFrom" xml:space="preserve">
+  <value>Sluttdato kan ikke være før startdato.</value>
 </data>
 
-<data name="DeleteUnitConfirmation" xml:space="preserve">
-  <value>Er du sikker på at du vil slette denne enheten? Handlingen kan ikke angres.</value>
+<data name="OccupancyTenantOrganizationNotFound" xml:space="preserve">
+  <value>Den valgte leietakerorganisasjonen ble ikke funnet.</value>
+</data>
+
+<data name="OccupancyOrganizationMustBeTenant" xml:space="preserve">
+  <value>Den valgte organisasjonen er ikke registrert som leietaker.</value>
+</data>
+
+<data name="OccupancyTenantOrganizationInactive" xml:space="preserve">
+  <value>Den valgte leietakerorganisasjonen er inaktiv.</value>
+</data>
+
+<data name="OccupancyUnitNotFound" xml:space="preserve">
+  <value>Den valgte enheten ble ikke funnet.</value>
+</data>
+
+<data name="OccupancyUnitInactive" xml:space="preserve">
+  <value>Den valgte enheten er inaktiv.</value>
+</data>
+
+<data name="OccupancyOverlapsExisting" xml:space="preserve">
+  <value>Enheten har allerede et leieforhold som overlapper den valgte perioden.</value>
+</data>
+
+<data name="Occupancy" xml:space="preserve">
+  <value>Leieforhold</value>
+</data>
+
+<data name="OccupanciesDescription" xml:space="preserve">
+  <value>Oversikt over leieforhold for valgt konto.</value>
+</data>
+
+<data name="CreateOccupancy" xml:space="preserve">
+  <value>Opprett leieforhold</value>
+</data>
+
+<data name="EditOccupancy" xml:space="preserve">
+  <value>Rediger leieforhold</value>
+</data>
+
+<data name="EndOccupancy" xml:space="preserve">
+  <value>Avslutt leieforhold</value>
+</data>
+
+<data name="EndOccupancyExplanation" xml:space="preserve">
+  <value>Velg datoen leieforholdet skal avsluttes.</value>
+</data>
+
+<data name="OccupancyInformation" xml:space="preserve">
+  <value>Informasjon om leieforhold</value>
+</data>
+
+<data name="OccupancyNotFound" xml:space="preserve">
+  <value>Leieforholdet ble ikke funnet.</value>
+</data>
+
+<data name="NoOccupancies" xml:space="preserve">
+  <value>Ingen leieforhold er registrert.</value>
+</data>
+
+<data name="Tenant" xml:space="preserve">
+  <value>Leietaker</value>
+</data>
+
+<data name="ValidFrom" xml:space="preserve">
+  <value>Gyldig fra</value>
+</data>
+
+<data name="ValidTo" xml:space="preserve">
+  <value>Gyldig til</value>
 </data>
 </root>

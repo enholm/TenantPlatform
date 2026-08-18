@@ -1,0 +1,269 @@
+@page "/occupancies/{Id:guid}/edit"
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Organizations
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Occupancies
+@using TenantPlatform.Web.Services.Organizations
+@using TenantPlatform.Web.Services.Units
+
+@inject IOccupancyService OccupancyService
+@inject IOrganizationService OrganizationService
+@inject IUnitService UnitService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["EditOccupancy"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (notFound)
+{
+    <div class="alert alert-warning">
+        @L["OccupancyNotFound"]
+    </div>
+}
+else if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="@($"/occupancies/{Id}")"
+           class="text-decoration-none">
+            ← @L["Occupancy"]
+        </a>
+    </div>
+
+    <h1>@L["EditOccupancy"]</h1>
+
+    @if (!string.IsNullOrWhiteSpace(saveError))
+    {
+        <div class="alert alert-danger">
+            @L[saveError]
+        </div>
+    }
+
+    <div class="card mt-4">
+        <div class="card-body">
+
+            <EditForm Model="Model"
+                      OnValidSubmit="SaveAsync"
+                      FormName="EditOccupancy">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Tenant"]</label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="Model.TenantOrganizationId">
+                        @foreach (var tenant in tenants)
+                        {
+                            <option value="@tenant.Id">
+                                @tenant.Name
+                            </option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Unit"]</label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="Model.UnitId">
+                        @foreach (var unit in units)
+                        {
+                            <option value="@unit.Id">
+                                @unit.BuildingName — @unit.Name
+                            </option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@L["ValidFrom"]</label>
+
+                        <InputDate class="form-control"
+                                   @bind-Value="Model.ValidFrom" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">@L["ValidTo"]</label>
+
+                        <InputDate class="form-control"
+                                   @bind-Value="Model.ValidTo" />
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+                        @(isSaving ? L["Saving"] : L["Save"])
+                    </button>
+
+                    <a href="@($"/occupancies/{Id}")"
+                       class="btn btn-outline-secondary">
+                        @L["Cancel"]
+                    </a>
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "EditOccupancy")]
+    public EditOccupancyFormModel? Model { get; set; }
+
+    private bool isLoading = true;
+    private bool isSaving;
+    private bool notFound;
+
+    private string? saveError;
+
+    private List<OrganizationListItemDto> tenants = [];
+    private List<UnitListItemDto> units = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEditOccupancyAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        tenants =
+            (await OrganizationService
+                .GetOrganizationsAsync(accountId.Value))
+            .Where(x =>
+                x.Type == OrganizationType.Tenant &&
+                x.IsActive)
+            .ToList();
+
+        units =
+            (await UnitService.GetUnitsAsync(accountId.Value))
+            .Where(x => x.IsActive)
+            .ToList();
+
+        if (Model is not null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        var occupancy =
+            await OccupancyService.GetOccupancyAsync(
+                accountId.Value,
+                Id);
+
+        if (occupancy is null)
+        {
+            notFound = true;
+            isLoading = false;
+            return;
+        }
+
+        Model = new EditOccupancyFormModel
+        {
+            TenantOrganizationId =
+                occupancy.TenantOrganizationId,
+
+            UnitId = occupancy.UnitId,
+
+            ValidFrom = occupancy.ValidFrom,
+            ValidTo = occupancy.ValidTo
+        };
+
+        isLoading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEditOccupancyAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            await OccupancyService.UpdateOccupancyAsync(
+                accountId.Value,
+                Id,
+                new UpdateOccupancyRequest
+                {
+                    TenantOrganizationId =
+                        Model.TenantOrganizationId,
+
+                    UnitId = Model.UnitId,
+
+                    ValidFrom = Model.ValidFrom,
+                    ValidTo = Model.ValidTo
+                });
+
+            Navigation.NavigateTo(
+                $"/occupancies/{Id}");
+        }
+        catch (OccupancyValidationException ex)
+        {
+            saveError = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class EditOccupancyFormModel
+    {
+        [Required]
+        public Guid TenantOrganizationId { get; set; }
+
+        [Required]
+        public Guid UnitId { get; set; }
+
+        [Required]
+        public DateOnly ValidFrom { get; set; }
+
+        public DateOnly? ValidTo { get; set; }
+    }
+}
+

@@ -1,0 +1,180 @@
+@page "/occupancies/{Id:guid}/end"
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Occupancies
+
+@inject IOccupancyService OccupancyService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["EndOccupancy"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (occupancy is null)
+{
+    <div class="alert alert-warning">
+        @L["OccupancyNotFound"]
+    </div>
+}
+else if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="@($"/occupancies/{Id}")"
+           class="text-decoration-none">
+            ← @L["Occupancy"]
+        </a>
+    </div>
+
+    <h1>@L["EndOccupancy"]</h1>
+
+    <div class="alert alert-warning mt-4">
+        @L["EndOccupancyExplanation"]
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(saveError))
+    {
+        <div class="alert alert-danger">
+            @L[saveError]
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5>@occupancy.TenantOrganizationName</h5>
+
+            <div class="text-body-secondary mb-4">
+                @occupancy.BuildingName — @occupancy.UnitName
+            </div>
+
+            <EditForm Model="Model"
+                      OnValidSubmit="EndAsync"
+                      FormName="EndOccupancy">
+
+                <DataAnnotationsValidator />
+
+                <div class="mb-4">
+                    <label class="form-label">
+                        @L["ValidTo"]
+                    </label>
+
+                    <InputDate class="form-control"
+                               @bind-Value="Model.ValidTo" />
+                </div>
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        disabled="@isSaving">
+                    @(isSaving
+                        ? L["Saving"]
+                        : L["EndOccupancy"])
+                </button>
+
+                <a href="@($"/occupancies/{Id}")"
+                   class="btn btn-outline-secondary ms-2">
+                    @L["Cancel"]
+                </a>
+
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "EndOccupancy")]
+    public EndOccupancyFormModel? Model { get; set; }
+
+    private OccupancyDetailsDto? occupancy;
+
+    private bool isLoading = true;
+    private bool isSaving;
+
+    private string? saveError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new EndOccupancyFormModel
+        {
+            ValidTo =
+                DateOnly.FromDateTime(DateTime.Today)
+        };
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEndOccupancyAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        occupancy =
+            await OccupancyService.GetOccupancyAsync(
+                accountId.Value,
+                Id);
+
+        isLoading = false;
+    }
+
+    private async Task EndAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            await OccupancyService.EndOccupancyAsync(
+                accountId.Value,
+                Id,
+                Model.ValidTo);
+
+            Navigation.NavigateTo(
+                $"/occupancies/{Id}");
+        }
+        catch (OccupancyValidationException ex)
+        {
+            saveError = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class EndOccupancyFormModel
+    {
+        [Required]
+        public DateOnly ValidTo { get; set; }
+    }
+}

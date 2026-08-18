@@ -1,0 +1,134 @@
+@page "/occupancies"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Occupancies
+
+@inject IOccupancyService OccupancyService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@L["Occupancies"]</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>@L["Occupancies"]</h1>
+
+        <p class="text-body-secondary mb-0">
+            @L["OccupanciesDescription"]
+        </p>
+    </div>
+
+    <a href="/occupancies/create"
+       class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>
+        @L["CreateOccupancy"]
+    </a>
+</div>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (occupancies.Count == 0)
+{
+    <div class="alert alert-info">
+        @L["NoOccupancies"]
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@L["Tenant"]</th>
+                        <th>@L["Building"]</th>
+                        <th>@L["Unit"]</th>
+                        <th>@L["ValidFrom"]</th>
+                        <th>@L["ValidTo"]</th>
+                        <th>@L["Status"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var occupancy in occupancies)
+                    {
+                        <tr>
+                            <td class="fw-semibold">
+                                @occupancy.TenantOrganizationName
+                            </td>
+
+                            <td>
+                                @occupancy.BuildingName
+                            </td>
+
+                            <td>
+                                @occupancy.UnitName
+                            </td>
+
+                            <td>
+                                @occupancy.ValidFrom.ToString("d")
+                            </td>
+
+                            <td>
+                                @(occupancy.ValidTo.HasValue
+                                    ? occupancy.ValidTo.Value.ToString("d")
+                                    : "-")
+                            </td>
+
+                            <td>
+                                @if (occupancy.IsActive)
+                                {
+                                    <span class="badge text-bg-success">
+                                        @L["Active"]
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        @L["Inactive"]
+                                    </span>
+                                }
+                            </td>
+
+                            <td class="text-end">
+                                <a href="@($"/occupancies/{occupancy.Id}")"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    @L["Open"]
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+
+    private List<OccupancyListItemDto> occupancies = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        occupancies =
+            await OccupancyService.GetOccupanciesAsync(
+                accountId.Value);
+
+        isLoading = false;
+    }
+}
+

@@ -388,11 +388,79 @@
   <value>Are you sure you want to delete this unit? This action cannot be undone.</value>
 </data>
 
-<data name="DeleteUnit" xml:space="preserve">
-  <value>Delete unit</value>
+<data name="OccupancyValidToBeforeValidFrom" xml:space="preserve">
+  <value>The end date cannot be before the start date.</value>
 </data>
 
-<data name="DeleteUnitConfirmation" xml:space="preserve">
-  <value>Are you sure you want to delete this unit? This action cannot be undone.</value>
+<data name="OccupancyTenantOrganizationNotFound" xml:space="preserve">
+  <value>The selected tenant organization could not be found.</value>
+</data>
+
+<data name="OccupancyOrganizationMustBeTenant" xml:space="preserve">
+  <value>The selected organization is not registered as a tenant.</value>
+</data>
+
+<data name="OccupancyTenantOrganizationInactive" xml:space="preserve">
+  <value>The selected tenant organization is inactive.</value>
+</data>
+
+<data name="OccupancyUnitNotFound" xml:space="preserve">
+  <value>The selected unit could not be found.</value>
+</data>
+
+<data name="OccupancyUnitInactive" xml:space="preserve">
+  <value>The selected unit is inactive.</value>
+</data>
+
+<data name="OccupancyOverlapsExisting" xml:space="preserve">
+  <value>The unit already has an occupancy that overlaps the selected period.</value>
+</data>
+
+<data name="Occupancy" xml:space="preserve">
+  <value>Occupancy</value>
+</data>
+
+<data name="OccupanciesDescription" xml:space="preserve">
+  <value>Overview of occupancies for the current account.</value>
+</data>
+
+<data name="CreateOccupancy" xml:space="preserve">
+  <value>Create occupancy</value>
+</data>
+
+<data name="EditOccupancy" xml:space="preserve">
+  <value>Edit occupancy</value>
+</data>
+
+<data name="EndOccupancy" xml:space="preserve">
+  <value>End occupancy</value>
+</data>
+
+<data name="EndOccupancyExplanation" xml:space="preserve">
+  <value>Select the date on which the occupancy should end.</value>
+</data>
+
+<data name="OccupancyInformation" xml:space="preserve">
+  <value>Occupancy information</value>
+</data>
+
+<data name="OccupancyNotFound" xml:space="preserve">
+  <value>The occupancy could not be found.</value>
+</data>
+
+<data name="NoOccupancies" xml:space="preserve">
+  <value>No occupancies have been registered.</value>
+</data>
+
+<data name="Tenant" xml:space="preserve">
+  <value>Tenant</value>
+</data>
+
+<data name="ValidFrom" xml:space="preserve">
+  <value>Valid from</value>
+</data>
+
+<data name="ValidTo" xml:space="preserve">
+  <value>Valid to</value>
 </data>
 </root>

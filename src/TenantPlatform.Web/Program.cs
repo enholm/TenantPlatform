@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Localization;
 using TenantPlatform.Web.Services.Buildings;
 using TenantPlatform.Web.Services.Organizations;
 using TenantPlatform.Web.Services.Units;
+using TenantPlatform.Web.Services.Occupancies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +60,8 @@ builder.Services.AddScoped<ITenantAuthorizationService, TenantAuthorizationServi
 builder.Services.AddScoped<IBuildingService, BuildingService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IUnitService, UnitService>();
+builder.Services.AddScoped<IOccupancyService, OccupancyService>();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<

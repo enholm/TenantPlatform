@@ -42,9 +42,10 @@ public class TenantAuthorizationService
                 cancellationToken);
     }
 
-    /***************
-     ** Buildings **
-     ***************/
+    /***************************************************************
+     **                         Buildings                         **
+     ***************************************************************/
+     
     public async Task<bool> CanManageBuildingAsync(
         Guid buildingId,
         CancellationToken cancellationToken = default)
@@ -128,9 +129,10 @@ public class TenantAuthorizationService
                 cancellationToken);
     }
 
-    /*******************
-     ** Organizations **
-     *******************/
+
+    /***************************************************************
+     **                         Organizations                     **
+     ***************************************************************/
 
     public async Task<bool> CanCreateOrganizationAsync(
         CancellationToken cancellationToken = default)
@@ -180,9 +182,9 @@ public class TenantAuthorizationService
 
 
 
-    /***********
-     ** Units **
-     ***********/
+    /***************************************************************
+     **                           Units                           **
+     ***************************************************************/
     public async Task<bool> CanCreateUnitAsync(
         Guid buildingId,
         CancellationToken cancellationToken = default)
@@ -229,6 +231,82 @@ public class TenantAuthorizationService
     {
         return await CanEditUnitAsync(
             unitId,
+            cancellationToken);
+    }
+
+    /***************************************************************
+     **                        Occupancies                        **
+     ***************************************************************/
+    public async Task<bool> CanCreateOccupancyAsync(
+        Guid unitId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        var buildingId = await _dbContext.Units
+            .Where(x =>
+                x.Id == unitId &&
+                x.AccountId == accountId)
+            .Select(x => (Guid?)x.BuildingId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!buildingId.HasValue)
+        {
+            return false;
+        }
+
+        return await CanManageBuildingAsync(
+            buildingId.Value,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanEditOccupancyAsync(
+        Guid occupancyId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        var buildingId = await (
+            from occupancy in _dbContext.Occupancies
+            join unit in _dbContext.Units
+                on occupancy.UnitId equals unit.Id
+            where occupancy.Id == occupancyId
+                && occupancy.AccountId == accountId
+            select (Guid?)unit.BuildingId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (!buildingId.HasValue)
+        {
+            return false;
+        }
+
+        return await CanManageBuildingAsync(
+            buildingId.Value,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanEndOccupancyAsync(
+        Guid occupancyId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanEditOccupancyAsync(
+            occupancyId,
             cancellationToken);
     }
 }

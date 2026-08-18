@@ -1,0 +1,182 @@
+@page "/occupancies/{Id:guid}"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Occupancies
+
+@inject IOccupancyService OccupancyService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@L["Occupancy"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (occupancy is null)
+{
+    <div class="alert alert-warning">
+        @L["OccupancyNotFound"]
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="mb-2">
+                <a href="/occupancies"
+                   class="text-decoration-none">
+                    ← @L["Occupancies"]
+                </a>
+            </div>
+
+            <h1 class="mb-1">
+                @occupancy.TenantOrganizationName
+            </h1>
+
+            <div class="text-body-secondary">
+                @occupancy.BuildingName · @occupancy.UnitName
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            @if (canEdit)
+            {
+                <a href="@($"/occupancies/{Id}/edit")"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>
+                    @L["Edit"]
+                </a>
+            }
+
+            @if (canEnd && IsActive(occupancy))
+            {
+                <a href="@($"/occupancies/{Id}/end")"
+                   class="btn btn-outline-danger">
+                    <i class="bi bi-calendar-x me-1"></i>
+                    @L["EndOccupancy"]
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            @L["OccupancyInformation"]
+        </div>
+
+        <div class="card-body">
+            <dl class="row mb-0">
+
+                <dt class="col-sm-3">@L["Tenant"]</dt>
+                <dd class="col-sm-9">
+                    <a href="@($"/organizations/{occupancy.TenantOrganizationId}")"
+                       class="text-decoration-none">
+                        @occupancy.TenantOrganizationName
+                    </a>
+                </dd>
+
+                <dt class="col-sm-3">@L["Building"]</dt>
+                <dd class="col-sm-9">
+                    <a href="@($"/buildings/{occupancy.BuildingId}")"
+                       class="text-decoration-none">
+                        @occupancy.BuildingName
+                    </a>
+                </dd>
+
+                <dt class="col-sm-3">@L["Unit"]</dt>
+                <dd class="col-sm-9">
+                    <a href="@($"/units/{occupancy.UnitId}")"
+                       class="text-decoration-none">
+                        @occupancy.UnitName
+                    </a>
+                </dd>
+
+                <dt class="col-sm-3">@L["ValidFrom"]</dt>
+                <dd class="col-sm-9">
+                    @occupancy.ValidFrom.ToString("d")
+                </dd>
+
+                <dt class="col-sm-3">@L["ValidTo"]</dt>
+                <dd class="col-sm-9">
+                    @(occupancy.ValidTo.HasValue
+                        ? occupancy.ValidTo.Value.ToString("d")
+                        : "-")
+                </dd>
+
+                <dt class="col-sm-3">@L["Status"]</dt>
+                <dd class="col-sm-9">
+                    @if (IsActive(occupancy))
+                    {
+                        <span class="badge text-bg-success">
+                            @L["Active"]
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">
+                            @L["Inactive"]
+                        </span>
+                    }
+                </dd>
+
+            </dl>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private OccupancyDetailsDto? occupancy;
+
+    private bool isLoading = true;
+    private bool canEdit;
+    private bool canEnd;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        occupancy =
+            await OccupancyService.GetOccupancyAsync(
+                accountId.Value,
+                Id);
+
+        if (occupancy is not null)
+        {
+            canEdit =
+                await AuthorizationService
+                    .CanEditOccupancyAsync(Id);
+
+            canEnd =
+                await AuthorizationService
+                    .CanEndOccupancyAsync(Id);
+        }
+
+        isLoading = false;
+    }
+
+    private static bool IsActive(
+        OccupancyDetailsDto occupancy)
+    {
+        var today =
+            DateOnly.FromDateTime(DateTime.Today);
+
+        return occupancy.ValidFrom <= today &&
+               (!occupancy.ValidTo.HasValue ||
+                occupancy.ValidTo.Value >= today);
+    }
+}
+

@@ -8,6 +8,10 @@ public interface ITenantAuthorizationService
         UserRole role,
         CancellationToken cancellationToken = default);
 
+    /***************************************************************
+     **                         Buildings                         **
+     ***************************************************************/
+
     Task<bool> CanManageBuildingAsync(
         Guid buildingId,
         CancellationToken cancellationToken = default);
@@ -21,7 +25,12 @@ public interface ITenantAuthorizationService
     Task<bool> CanDeleteBuildingAsync(
         Guid buildingId,
         CancellationToken cancellationToken = default);
-    Task<bool> CanManageOrganizationAsync(
+    
+    
+    /***************************************************************
+     **                         Organizations                     **
+     ***************************************************************/   
+     Task<bool> CanManageOrganizationAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default);
 
@@ -32,10 +41,15 @@ public interface ITenantAuthorizationService
         Guid organizationId,
         CancellationToken cancellationToken = default);
 
+
     Task<bool> CanDeleteOrganizationAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default);
 
+
+    /***************************************************************
+     **                           Units                           **
+     ***************************************************************/
     Task<bool> CanCreateUnitAsync(
         Guid buildingId,
         CancellationToken cancellationToken = default);
@@ -46,5 +60,21 @@ public interface ITenantAuthorizationService
 
     Task<bool> CanDeleteUnitAsync(
         Guid unitId,
+        CancellationToken cancellationToken = default);
+
+
+    /***************************************************************
+     **                        Occupancies                        **
+     ***************************************************************/
+    Task<bool> CanCreateOccupancyAsync(
+        Guid unitId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanEditOccupancyAsync(
+        Guid occupancyId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanEndOccupancyAsync(
+        Guid occupancyId,
         CancellationToken cancellationToken = default);
 }
