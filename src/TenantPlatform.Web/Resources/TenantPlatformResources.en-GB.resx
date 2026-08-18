@@ -483,4 +483,20 @@
 <data name="ChildUnit" xml:space="preserve">
   <value>Child unit</value>
 </data>
+
+<data name="DeleteOccupancy" xml:space="preserve">
+  <value>Delete occupancy</value>
+</data>
+
+<data name="DeleteOccupancyConfirmation" xml:space="preserve">
+  <value>Are you sure you want to delete this occupancy? This action cannot be undone.</value>
+</data>
+
+<data name="OccupancyCannotBeDeleted" xml:space="preserve">
+  <value>The occupancy cannot be deleted.</value>
+</data>
+
+<data name="OccupancyHistoricalCannotBeDeleted" xml:space="preserve">
+  <value>Historical occupancies cannot be deleted.</value>
+</data>
 </root>

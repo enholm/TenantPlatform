@@ -309,4 +309,13 @@ public class TenantAuthorizationService
             occupancyId,
             cancellationToken);
     }
+
+    public async Task<bool> CanDeleteOccupancyAsync(
+        Guid occupancyId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanEditOccupancyAsync(
+            occupancyId,
+            cancellationToken);
+    }    
 }

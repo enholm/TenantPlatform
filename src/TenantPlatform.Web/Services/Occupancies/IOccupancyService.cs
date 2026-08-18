@@ -39,5 +39,15 @@ public interface IOccupancyService
             DateOnly? validTo,
             Guid? excludeOccupancyId = null,
             CancellationToken cancellationToken = default);
+
+    Task<OccupancyDeleteCheckResult> CanDeleteOccupancyAsync(
+        Guid accountId,
+        Guid occupancyId,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteOccupancyAsync(
+        Guid accountId,
+        Guid occupancyId,
+        CancellationToken cancellationToken = default);
 }
 

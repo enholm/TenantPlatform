@@ -1,0 +1,172 @@
+@page "/occupancies/{Id:guid}/delete"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Occupancies
+
+@inject IOccupancyService OccupancyService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["DeleteOccupancy"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (occupancy is null)
+{
+    <div class="alert alert-warning">
+        @L["OccupancyNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/occupancies/{Id}")"
+           class="text-decoration-none">
+            ← @L["Occupancy"]
+        </a>
+    </div>
+
+    <h1>@L["DeleteOccupancy"]</h1>
+
+    <div class="alert alert-danger mt-4">
+        <strong>@L["Warning"]</strong>
+
+        <div class="mt-2">
+            @L["DeleteOccupancyConfirmation"]
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5>@occupancy.TenantOrganizationName</h5>
+
+            <div class="text-body-secondary mb-4">
+                @occupancy.BuildingName — @occupancy.UnitName
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(deleteError))
+            {
+                <div class="alert alert-danger">
+                    @L[deleteError]
+                </div>
+            }
+
+            <EditForm Model="Model!"
+                      OnValidSubmit="DeleteAsync"
+                      FormName="DeleteOccupancy">
+
+                <DataAnnotationsValidator />
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        disabled="@isDeleting">
+                    @(isDeleting
+                        ? L["Deleting"]
+                        : L["Delete"])
+                </button>
+
+                <a href="@($"/occupancies/{Id}")"
+                   class="btn btn-outline-secondary ms-2">
+                    @L["Cancel"]
+                </a>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "DeleteOccupancy")]
+    public DeleteOccupancyFormModel? Model { get; set; }
+
+    private OccupancyDetailsDto? occupancy;
+
+    private bool isLoading = true;
+    private bool isDeleting;
+
+    private string? deleteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new DeleteOccupancyFormModel();
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService.CanDeleteOccupancyAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        occupancy =
+            await OccupancyService.GetOccupancyAsync(
+                accountId.Value,
+                Id);
+
+        isLoading = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService.CanDeleteOccupancyAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        deleteError = null;
+        isDeleting = true;
+
+        try
+        {
+            await OccupancyService.DeleteOccupancyAsync(
+                accountId.Value,
+                Id);
+
+            Navigation.NavigateTo("/occupancies");
+        }
+        catch (OccupancyDeleteNotAllowedException ex)
+        {
+            deleteError = ex.Message;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    public sealed class DeleteOccupancyFormModel
+    {
+    }
+}

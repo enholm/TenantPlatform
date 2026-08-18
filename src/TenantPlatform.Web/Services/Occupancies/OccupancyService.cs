@@ -535,5 +535,81 @@ public class OccupancyService : IOccupancyService
             .OrderBy(x => x.UnitName)
             .ToList();
     }
+
+    public async Task<OccupancyDeleteCheckResult> CanDeleteOccupancyAsync(
+        Guid accountId,
+        Guid occupancyId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var occupancy = await dbContext.Occupancies
+            .AsNoTracking()
+            .Where(x =>
+                x.Id == occupancyId &&
+                x.AccountId == accountId)
+            .Select(x => new
+            {
+                x.ValidFrom,
+                x.ValidTo
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (occupancy is null)
+        {
+            return OccupancyDeleteCheckResult.NotAllowed(
+                "OccupancyNotFound");
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        if (occupancy.ValidTo.HasValue &&
+            occupancy.ValidTo.Value < today)
+        {
+            return OccupancyDeleteCheckResult.NotAllowed(
+                "OccupancyHistoricalCannotBeDeleted");
+        }
+
+        return OccupancyDeleteCheckResult.Allowed();
+    }
+
+    public async Task DeleteOccupancyAsync(
+        Guid accountId,
+        Guid occupancyId,
+        CancellationToken cancellationToken = default)
+    {
+        var deleteCheck =
+            await CanDeleteOccupancyAsync(
+                accountId,
+                occupancyId,
+                cancellationToken);
+
+        if (!deleteCheck.CanDelete)
+        {
+            throw new OccupancyDeleteNotAllowedException(
+                deleteCheck.Reason ?? "OccupancyCannotBeDeleted");
+        }
+
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var occupancy = await dbContext.Occupancies
+            .SingleOrDefaultAsync(
+                x =>
+                    x.Id == occupancyId &&
+                    x.AccountId == accountId,
+                cancellationToken);
+
+        if (occupancy is null)
+        {
+            throw new InvalidOperationException(
+                "Occupancy was not found in the current account.");
+        }
+
+        dbContext.Occupancies.Remove(occupancy);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 }
 

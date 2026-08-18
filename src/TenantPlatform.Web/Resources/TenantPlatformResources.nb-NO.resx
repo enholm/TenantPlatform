@@ -483,4 +483,20 @@
 <data name="ChildUnit" xml:space="preserve">
   <value>Underenhet</value>
 </data>
+
+<data name="DeleteOccupancy" xml:space="preserve">
+  <value>Slett leieforhold</value>
+</data>
+
+<data name="DeleteOccupancyConfirmation" xml:space="preserve">
+  <value>Er du sikker på at du vil slette dette leieforholdet? Handlingen kan ikke angres.</value>
+</data>
+
+<data name="OccupancyCannotBeDeleted" xml:space="preserve">
+  <value>Leieforholdet kan ikke slettes.</value>
+</data>
+
+<data name="OccupancyHistoricalCannotBeDeleted" xml:space="preserve">
+  <value>Historiske leieforhold kan ikke slettes.</value>
+</data>
 </root>

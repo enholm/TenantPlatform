@@ -60,6 +60,27 @@ else
                     @L["EndOccupancy"]
                 </a>
             }
+
+            @if (canDelete)
+            {
+                @if (deleteCheck?.CanDelete == true)
+                {
+                    <a href="@($"/occupancies/{Id}/delete")"
+                    class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>
+                        @L["Delete"]
+                    </a>
+                }
+                else
+                {
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            disabled>
+                        <i class="bi bi-trash me-1"></i>
+                        @L["Delete"]
+                    </button>
+                }
+            }            
         </div>
     </div>
 
@@ -137,7 +158,8 @@ else
     private bool isLoading = true;
     private bool canEdit;
     private bool canEnd;
-
+    private bool canDelete;
+    private OccupancyDeleteCheckResult? deleteCheck;
     protected override async Task OnInitializedAsync()
     {
         var accountId =
@@ -163,6 +185,15 @@ else
             canEnd =
                 await AuthorizationService
                     .CanEndOccupancyAsync(Id);
+            canDelete =
+                await AuthorizationService.CanDeleteOccupancyAsync(Id);
+            if (canDelete)
+            {
+                deleteCheck =
+                    await OccupancyService.CanDeleteOccupancyAsync(
+                        accountId.Value,
+                        Id);
+            }
         }
 
         isLoading = false;

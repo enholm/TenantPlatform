@@ -77,4 +77,8 @@ public interface ITenantAuthorizationService
     Task<bool> CanEndOccupancyAsync(
         Guid occupancyId,
         CancellationToken cancellationToken = default);
+
+    Task<bool> CanDeleteOccupancyAsync(
+        Guid occupancyId,
+        CancellationToken cancellationToken = default);
 }
