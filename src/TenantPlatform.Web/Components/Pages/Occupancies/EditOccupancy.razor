@@ -56,7 +56,28 @@ else if (Model is not null)
 
                 <DataAnnotationsValidator />
                 <ValidationSummary />
-
+                <input type="hidden"
+                    name="Model.ConfirmHierarchyConflicts"
+                    value="@(Model.ConfirmHierarchyConflicts ? "true" : "false")" />
+                @if (hierarchyConflicts.Count > 0)
+                {
+                    <div class="alert alert-warning">
+                        <div class="fw-semibold mb-2">
+                            @L["OccupancyHierarchyConflictWarning"]
+                        </div>
+                        <ul class="mb-2">
+                            @foreach (var conflict in hierarchyConflicts)
+                            {
+                                <li>
+                                    @GetConflictText(conflict)
+                                </li>
+                            }
+                        </ul>
+                        <div>
+                            @L["OccupancyHierarchyConflictContinue"]
+                        </div>
+                    </div>
+                }
                 <div class="mb-3">
                     <label class="form-label">@L["Tenant"]</label>
 
@@ -105,7 +126,18 @@ else if (Model is not null)
                     <button type="submit"
                             class="btn btn-primary"
                             disabled="@isSaving">
-                        @(isSaving ? L["Saving"] : L["Save"])
+                        @if (isSaving)
+                        {
+                            @L["Saving"]
+                        }
+                        else if (Model.ConfirmHierarchyConflicts)
+                        {
+                            @L["SaveAnyway"]
+                        }
+                        else
+                        {
+                            @L["Save"]
+                        }
                     </button>
 
                     <a href="@($"/occupancies/{Id}")"
@@ -130,6 +162,7 @@ else if (Model is not null)
     private bool isSaving;
     private bool notFound;
 
+    private List<OccupancyHierarchyConflictDto> hierarchyConflicts = [];
     private string? saveError;
 
     private List<OrganizationListItemDto> tenants = [];
@@ -221,6 +254,24 @@ else if (Model is not null)
         }
 
         saveError = null;
+
+        if (!Model.ConfirmHierarchyConflicts)
+        {
+            hierarchyConflicts =
+                await OccupancyService.GetHierarchyConflictsAsync(
+                    accountId.Value,
+                    Model.UnitId,
+                    Model.ValidFrom,
+                    Model.ValidTo,
+                    excludeOccupancyId: Id);
+
+            if (hierarchyConflicts.Count > 0)
+            {
+                Model.ConfirmHierarchyConflicts = true;
+                return;
+            }
+        }
+
         isSaving = true;
 
         try
@@ -245,13 +296,36 @@ else if (Model is not null)
         catch (OccupancyValidationException ex)
         {
             saveError = ex.Message;
+            Model.ConfirmHierarchyConflicts = false;
         }
         finally
         {
             isSaving = false;
         }
     }
+    private string GetConflictText(
+        OccupancyHierarchyConflictDto conflict)
+    {
+        var relation =
+            conflict.ConflictType switch
+            {
+                OccupancyHierarchyConflictType.ParentUnit =>
+                    L["ParentUnit"],
 
+                OccupancyHierarchyConflictType.ChildUnit =>
+                    L["ChildUnit"],
+
+                _ => string.Empty
+            };
+
+        var period =
+            conflict.ValidTo.HasValue
+                ? $"{conflict.ValidFrom:d} – {conflict.ValidTo.Value:d}"
+                : $"{conflict.ValidFrom:d} –";
+
+        return $"{conflict.UnitName} ({relation}) – " +
+            $"{conflict.TenantOrganizationName}, {period}";
+    }
     public sealed class EditOccupancyFormModel
     {
         [Required]
@@ -264,6 +338,8 @@ else if (Model is not null)
         public DateOnly ValidFrom { get; set; }
 
         public DateOnly? ValidTo { get; set; }
+
+        public bool ConfirmHierarchyConflicts { get; set; }
     }
 }
 

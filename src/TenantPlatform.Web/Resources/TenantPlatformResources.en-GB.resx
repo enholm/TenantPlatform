@@ -463,4 +463,24 @@
 <data name="ValidTo" xml:space="preserve">
   <value>Valid to</value>
 </data>
+
+<data name="OccupancyHierarchyConflictWarning" xml:space="preserve">
+  <value>There are overlapping occupancies on parent or child units.</value>
+</data>
+
+<data name="OccupancyHierarchyConflictContinue" xml:space="preserve">
+  <value>Review the occupancies below. You may continue if the overlap is intentional.</value>
+</data>
+
+<data name="CreateAnyway" xml:space="preserve">
+  <value>Create anyway</value>
+</data>
+
+<data name="SaveAnyway" xml:space="preserve">
+  <value>Save anyway</value>
+</data>
+
+<data name="ChildUnit" xml:space="preserve">
+  <value>Child unit</value>
+</data>
 </root>

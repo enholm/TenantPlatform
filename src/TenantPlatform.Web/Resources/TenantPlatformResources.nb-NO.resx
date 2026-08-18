@@ -463,4 +463,24 @@
 <data name="ValidTo" xml:space="preserve">
   <value>Gyldig til</value>
 </data>
+
+<data name="OccupancyHierarchyConflictWarning" xml:space="preserve">
+  <value>Det finnes overlappende leieforhold på overordnede eller underordnede enheter.</value>
+</data>
+
+<data name="OccupancyHierarchyConflictContinue" xml:space="preserve">
+  <value>Kontroller leieforholdene nedenfor. Du kan fortsette dersom overlappen er tilsiktet.</value>
+</data>
+
+<data name="CreateAnyway" xml:space="preserve">
+  <value>Opprett likevel</value>
+</data>
+
+<data name="SaveAnyway" xml:space="preserve">
+  <value>Lagre likevel</value>
+</data>
+
+<data name="ChildUnit" xml:space="preserve">
+  <value>Underenhet</value>
+</data>
 </root>

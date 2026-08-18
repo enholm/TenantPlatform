@@ -30,5 +30,14 @@ public interface IOccupancyService
         Guid occupancyId,
         DateOnly validTo,
         CancellationToken cancellationToken = default);
+
+    Task<List<OccupancyHierarchyConflictDto>>
+        GetHierarchyConflictsAsync(
+            Guid accountId,
+            Guid unitId,
+            DateOnly validFrom,
+            DateOnly? validTo,
+            Guid? excludeOccupancyId = null,
+            CancellationToken cancellationToken = default);
 }
 

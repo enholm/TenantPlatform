@@ -50,7 +50,30 @@ else if (Model is not null)
 
                 <DataAnnotationsValidator />
                 <ValidationSummary />
+                <input type="hidden"
+                    name="Model.ConfirmHierarchyConflicts"
+                    value="@(Model.ConfirmHierarchyConflicts ? "true" : "false")" />
+                @if (hierarchyConflicts.Count > 0)
+                {
+                    <div class="alert alert-warning">
+                        <div class="fw-semibold mb-2">
+                            @L["OccupancyHierarchyConflictWarning"]
+                        </div>
 
+                        <ul class="mb-2">
+                            @foreach (var conflict in hierarchyConflicts)
+                            {
+                                <li>
+                                    @GetConflictText(conflict)
+                                </li>
+                            }
+                        </ul>
+
+                        <div>
+                            @L["OccupancyHierarchyConflictContinue"]
+                        </div>
+                    </div>
+                }
                 <div class="mb-3">
                     <label class="form-label">
                         @L["Tenant"]
@@ -111,9 +134,18 @@ else if (Model is not null)
                     <button type="submit"
                             class="btn btn-primary"
                             disabled="@isSaving">
-                        @(isSaving
-                            ? L["Saving"]
-                            : L["Create"])
+                        @if (isSaving)
+                        {
+                            @L["Saving"]
+                        }
+                        else if (Model.ConfirmHierarchyConflicts)
+                        {
+                            @L["CreateAnyway"]
+                        }
+                        else
+                        {
+                            @L["Create"]
+                        }
                     </button>
 
                     <a href="/occupancies"
@@ -138,7 +170,7 @@ else if (Model is not null)
 
     private List<OrganizationListItemDto> tenants = [];
     private List<UnitListItemDto> units = [];
-
+    private List<OccupancyHierarchyConflictDto> hierarchyConflicts = [];
     protected override void OnInitialized()
     {
         Model ??= new CreateOccupancyFormModel
@@ -219,6 +251,23 @@ else if (Model is not null)
         }
 
         saveError = null;
+
+        if (!Model.ConfirmHierarchyConflicts)
+        {
+            hierarchyConflicts =
+                await OccupancyService.GetHierarchyConflictsAsync(
+                    accountId.Value,
+                    Model.UnitId,
+                    Model.ValidFrom,
+                    Model.ValidTo);
+
+            if (hierarchyConflicts.Count > 0)
+            {
+                Model.ConfirmHierarchyConflicts = true;
+                return;
+            }
+        }
+
         isSaving = true;
 
         try
@@ -231,10 +280,14 @@ else if (Model is not null)
                         TenantOrganizationId =
                             Model.TenantOrganizationId,
 
-                        UnitId = Model.UnitId,
+                        UnitId =
+                            Model.UnitId,
 
-                        ValidFrom = Model.ValidFrom,
-                        ValidTo = Model.ValidTo
+                        ValidFrom =
+                            Model.ValidFrom,
+
+                        ValidTo =
+                            Model.ValidTo
                     });
 
             Navigation.NavigateTo(
@@ -243,6 +296,8 @@ else if (Model is not null)
         catch (OccupancyValidationException ex)
         {
             saveError = ex.Message;
+
+            Model.ConfirmHierarchyConflicts = false;
         }
         finally
         {
@@ -250,6 +305,29 @@ else if (Model is not null)
         }
     }
 
+    private string GetConflictText(
+        OccupancyHierarchyConflictDto conflict)
+    {
+        var relation =
+            conflict.ConflictType switch
+            {
+                OccupancyHierarchyConflictType.ParentUnit =>
+                    L["ParentUnit"],
+
+                OccupancyHierarchyConflictType.ChildUnit =>
+                    L["ChildUnit"],
+
+                _ => string.Empty
+            };
+
+        var period =
+            conflict.ValidTo.HasValue
+                ? $"{conflict.ValidFrom:d} – {conflict.ValidTo.Value:d}"
+                : $"{conflict.ValidFrom:d} –";
+
+        return $"{conflict.UnitName} ({relation}) – " +
+            $"{conflict.TenantOrganizationName}, {period}";
+    }
     public sealed class CreateOccupancyFormModel
     {
         [Required]
@@ -262,6 +340,8 @@ else if (Model is not null)
         public DateOnly ValidFrom { get; set; }
 
         public DateOnly? ValidTo { get; set; }
+
+        public bool ConfirmHierarchyConflicts { get; set; }
     }
 }
 

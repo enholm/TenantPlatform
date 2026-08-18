@@ -363,5 +363,177 @@ public class OccupancyService : IOccupancyService
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<List<OccupancyHierarchyConflictDto>>
+        GetHierarchyConflictsAsync(
+            Guid accountId,
+            Guid unitId,
+            DateOnly validFrom,
+            DateOnly? validTo,
+            Guid? excludeOccupancyId = null,
+            CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var targetUnit = await dbContext.Units
+            .AsNoTracking()
+            .Where(x =>
+                x.Id == unitId &&
+                x.AccountId == accountId)
+            .Select(x => new
+            {
+                x.Id,
+                x.BuildingId,
+                x.ParentUnitId
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (targetUnit is null)
+        {
+            throw new OccupancyValidationException(
+                "OccupancyUnitNotFound");
+        }
+
+        // Hent hele Unit-treet for bygget.
+        var units = await dbContext.Units
+            .AsNoTracking()
+            .Where(x =>
+                x.AccountId == accountId &&
+                x.BuildingId == targetUnit.BuildingId)
+            .Select(x => new
+            {
+                x.Id,
+                x.ParentUnitId
+            })
+            .ToListAsync(cancellationToken);
+
+        var unitById =
+            units.ToDictionary(x => x.Id);
+
+        //
+        // Finn ancestors
+        //
+        var ancestorIds = new HashSet<Guid>();
+
+        var parentId = targetUnit.ParentUnitId;
+
+        while (parentId.HasValue)
+        {
+            if (!ancestorIds.Add(parentId.Value))
+            {
+                // Burde aldri skje dersom Unit-valideringen vår fungerer.
+                break;
+            }
+
+            if (!unitById.TryGetValue(
+                    parentId.Value,
+                    out var parent))
+            {
+                break;
+            }
+
+            parentId = parent.ParentUnitId;
+        }
+
+        //
+        // Finn descendants
+        //
+        var childLookup = units
+            .Where(x => x.ParentUnitId.HasValue)
+            .GroupBy(x => x.ParentUnitId!.Value)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Select(y => y.Id).ToList());
+
+        var descendantIds = new HashSet<Guid>();
+
+        var queue = new Queue<Guid>();
+
+        queue.Enqueue(unitId);
+
+        while (queue.Count > 0)
+        {
+            var currentId = queue.Dequeue();
+
+            if (!childLookup.TryGetValue(
+                    currentId,
+                    out var children))
+            {
+                continue;
+            }
+
+            foreach (var childId in children)
+            {
+                if (descendantIds.Add(childId))
+                {
+                    queue.Enqueue(childId);
+                }
+            }
+        }
+
+        var relatedUnitIds = ancestorIds
+            .Concat(descendantIds)
+            .Distinct()
+            .ToList();
+
+        if (relatedUnitIds.Count == 0)
+        {
+            return [];
+        }
+
+        var requestedValidTo =
+            validTo ?? DateOnly.MaxValue;
+
+        var conflictQuery =
+            from occupancy in dbContext.Occupancies.AsNoTracking()
+            join unit in dbContext.Units
+                on occupancy.UnitId equals unit.Id
+            join organization in dbContext.Organizations
+                on occupancy.TenantOrganizationId equals organization.Id
+            where occupancy.AccountId == accountId
+                && relatedUnitIds.Contains(occupancy.UnitId)
+                && occupancy.ValidFrom <= requestedValidTo
+                && (occupancy.ValidTo ?? DateOnly.MaxValue) >= validFrom
+            select new
+            {
+                occupancy.Id,
+                occupancy.UnitId,
+                UnitName = unit.Name,
+                TenantOrganizationName = organization.Name,
+                occupancy.ValidFrom,
+                occupancy.ValidTo
+            };
+
+        if (excludeOccupancyId.HasValue)
+        {
+            conflictQuery = conflictQuery.Where(
+                x => x.Id != excludeOccupancyId.Value);
+        }
+
+        var rawConflicts =
+            await conflictQuery.ToListAsync(
+                cancellationToken);
+
+        return rawConflicts
+            .Select(x => new OccupancyHierarchyConflictDto
+            {
+                OccupancyId = x.Id,
+                UnitId = x.UnitId,
+                UnitName = x.UnitName,
+                TenantOrganizationName =
+                    x.TenantOrganizationName,
+                ValidFrom = x.ValidFrom,
+                ValidTo = x.ValidTo,
+
+                ConflictType =
+                    ancestorIds.Contains(x.UnitId)
+                        ? OccupancyHierarchyConflictType.ParentUnit
+                        : OccupancyHierarchyConflictType.ChildUnit
+            })
+            .OrderBy(x => x.UnitName)
+            .ToList();
+    }
 }
 
