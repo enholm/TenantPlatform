@@ -6,6 +6,7 @@ using TenantPlatform.Core.Occupancies;
 using TenantPlatform.Core.Organizations;
 using TenantPlatform.Core.Properties;
 using TenantPlatform.Core.Services;
+using TenantPlatform.Core.Auditing;
 
 namespace TenantPlatform.Infrastructure.Persistence;
 
@@ -32,6 +33,7 @@ public class TenantPlatformDbContext : DbContext
     public DbSet<NetworkEnvironment> NetworkEnvironments => Set<NetworkEnvironment>();
     public DbSet<LoginAccount> LoginAccounts => Set<LoginAccount>();
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(

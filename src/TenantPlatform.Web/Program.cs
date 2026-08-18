@@ -19,6 +19,8 @@ using TenantPlatform.Web.Services.Buildings;
 using TenantPlatform.Web.Services.Organizations;
 using TenantPlatform.Web.Services.Units;
 using TenantPlatform.Web.Services.Occupancies;
+using TenantPlatform.Infrastructure.Auditing;
+using TenantPlatform.Web.Security.Auditing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,8 +29,16 @@ var connectionString =
     ?? throw new InvalidOperationException(
         "Connection string 'DefaultConnection' was not found.");
 
-builder.Services.AddDbContextFactory<TenantPlatformDbContext>(options =>
-    options.UseNpgsql(connectionString));
+builder.Services.AddDbContextFactory<TenantPlatformDbContext>(
+    (serviceProvider, options) =>
+    {
+        options.UseNpgsql(connectionString);
+
+        options.AddInterceptors(
+            serviceProvider.GetRequiredService<
+                AuditSaveChangesInterceptor>());
+    },
+    ServiceLifetime.Scoped);
 
 builder.Services
     .AddRazorComponents()
@@ -61,6 +71,9 @@ builder.Services.AddScoped<IBuildingService, BuildingService>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IUnitService, UnitService>();
 builder.Services.AddScoped<IOccupancyService, OccupancyService>();
+builder.Services.AddScoped<IAuditUserContext, AuditUserContext>();
+
+builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 
 builder.Services.AddHttpContextAccessor();
 
