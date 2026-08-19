@@ -210,6 +210,9 @@ else
             OrganizationType.Tenant
                 => L["OrganizationTypeTenant"],
 
+            OrganizationType.ServiceProvider =>
+                L["OrganizationType_ServiceProvider"],
+                
             _ => type.ToString()
         };
     }

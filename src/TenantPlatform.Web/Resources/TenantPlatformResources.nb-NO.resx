@@ -499,4 +499,8 @@
 <data name="OccupancyHistoricalCannotBeDeleted" xml:space="preserve">
   <value>Historiske leieforhold kan ikke slettes.</value>
 </data>
+
+<data name="OrganizationType_ServiceProvider" xml:space="preserve">
+  <value>Tjenesteleverandør</value>
+</data>
 </root>

@@ -499,4 +499,9 @@
 <data name="OccupancyHistoricalCannotBeDeleted" xml:space="preserve">
   <value>Historical occupancies cannot be deleted.</value>
 </data>
+
+<data name="OrganizationType_ServiceProvider" xml:space="preserve">
+  <value>Service Provider</value>
+</data>
+
 </root>

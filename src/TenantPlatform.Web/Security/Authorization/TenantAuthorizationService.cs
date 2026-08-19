@@ -472,7 +472,7 @@ public class TenantAuthorizationService
         Guid buildingId,
         CancellationToken cancellationToken = default)
     {
-        var currentUser = _currentUserContextService.Current;
+        var currentUser = _currentUserService.Current;
 
         if (!currentUser.IsAuthenticated ||
             !currentUser.CurrentAccountId.HasValue)
