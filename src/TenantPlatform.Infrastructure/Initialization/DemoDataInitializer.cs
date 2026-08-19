@@ -13,32 +13,797 @@ namespace TenantPlatform.Infrastructure.Initialization;
 
 public static class DemoDataInitializer
 {
+
     public static async Task InitializeAsync(
         TenantPlatformDbContext dbContext,
         PasswordService passwordService,
         CancellationToken cancellationToken = default)
     {
-        await CreateAccountAsync(dbContext, cancellationToken);
-        await CreateOrganizationsAsync(dbContext, cancellationToken);
-        await CreateBuildingAsync(dbContext, cancellationToken);
-        await CreateUnitsAsync(dbContext, cancellationToken);
-        await CreateOccupanciesAsync(dbContext, cancellationToken);
-        await CreateUsersAsync(dbContext, cancellationToken);
 
-        Console.WriteLine("Creating user accounts...");
-        await CreateUserAccountsAsync(dbContext, cancellationToken);
+            await SeedAccountAsync(
+                dbContext,
+                cancellationToken);
+            await SeedOrganizationsAsync(
+                dbContext,
+                cancellationToken);
+            await SeedBuildingsAsync(
+                dbContext,
+                cancellationToken);
+            await SeedUnitsAsync(
+                dbContext,
+                cancellationToken);
+            await SeedOccupanciesAsync(
+                dbContext,
+                cancellationToken);
+            await SeedServiceDefinitionsAsync(
+                dbContext,
+                cancellationToken);
+            await SeedServiceDefinitionFieldsAsync(
+                dbContext,
+                cancellationToken);
+            await SeedServiceDefinitionFieldTranslationsAsync(
+                dbContext,
+                cancellationToken);
+            await SeedServiceProvidersAsync(
+                dbContext,
+                cancellationToken);
+            await SeedLoginAccountsAsync(dbContext, passwordService, cancellationToken);
+            await SeedUsersAsync(dbContext, cancellationToken);
+            await SeedUserRolesAsync(dbContext, cancellationToken);
 
-        Console.WriteLine("Creating user roles...");
-        await CreateUserRolesAsync(dbContext, cancellationToken);        await CreateServiceDefinitionsAsync(dbContext, cancellationToken);
-
-        await CreateNetworkEnvironmentAsync(dbContext, cancellationToken);
-        await CreateSsidsAsync(dbContext, cancellationToken);
-        await CreateServiceRequestsAsync(dbContext, cancellationToken);
-
-        await CreateLoginAccountsAsync(dbContext, passwordService, cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
     }
 
- private static async Task CreateLoginAccountsAsync(
+    private static async Task SeedAccountAsync(
+
+        TenantPlatformDbContext dbContext,
+
+        CancellationToken cancellationToken)
+
+    {
+        if (await dbContext.Accounts.AnyAsync(
+            x => x.Id == SeedIds.NordicPropertyAccount,
+            cancellationToken))
+        {
+            return;
+        }
+        dbContext.Accounts.Add(
+            new Account
+            {
+                Id = SeedIds.NordicPropertyAccount,
+                Name = "Nordic Property",
+                DefaultLanguage = "nb-NO",
+                IsActive = true
+            });
+    }
+    private static async Task SeedOrganizationsAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var organizations = new[]
+        {
+            new Organization
+            {
+                Id = SeedIds.NordicPropertyOrganization,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Name = "Nordic Property AS",
+                OrganizationNumber = "999111222",
+                Type = OrganizationType.PropertyManager,
+                IsActive = true
+            },
+            new Organization
+            {
+                Id = SeedIds.AcmeOrganization,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Name = "Acme Consulting AS",
+                OrganizationNumber = "999222333",
+                Type = OrganizationType.Tenant,
+                IsActive = true
+            },
+            new Organization
+            {
+                Id = SeedIds.ContosoOrganization,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Name = "Contoso AS",
+                OrganizationNumber = "999333444",
+                Type = OrganizationType.Tenant,
+                IsActive = true
+            },
+            new Organization
+            {
+                Id = SeedIds.BravidaOrganization,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Name = "Bravida Norge AS",
+                OrganizationNumber = "987582561",
+                Type = OrganizationType.ServiceProvider,
+                IsActive = true
+            },
+            new Organization
+            {
+                Id = SeedIds.CaverionOrganization,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Name = "Caverion Norge AS",
+                OrganizationNumber = "959069743",
+                Type = OrganizationType.ServiceProvider,
+                IsActive = true
+            },
+            new Organization
+            {
+                Id = SeedIds.IssOrganization,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Name = "ISS Facility Services AS",
+                OrganizationNumber = "914791723",
+                Type = OrganizationType.ServiceProvider,
+                IsActive = true
+            }
+        };
+        foreach (var organization in organizations)
+        {
+            if (!await dbContext.Organizations.AnyAsync(
+                x => x.Id == organization.Id,
+                cancellationToken))
+            {
+                dbContext.Organizations.Add(organization);
+            }
+        }
+    }
+
+    private static async Task SeedBuildingsAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        if (await dbContext.Buildings.AnyAsync(
+            x => x.Id == SeedIds.OsloAtrium,
+            cancellationToken))
+        {
+            return;
+        }
+        dbContext.Buildings.Add(
+            new Building
+            {
+                Id = SeedIds.OsloAtrium,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Name = "Oslo Atrium",
+                AddressLine1 = "Dronning Eufemias gate 1",
+                PostalCode = "0191",
+                City = "Oslo",
+                CountryCode = "NO",
+                IsActive = true
+            });
+    }
+    private static async Task SeedUnitsAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var units = new[]
+        {
+            new Unit
+            {
+                Id = SeedIds.Floor1,
+                AccountId = SeedIds.NordicPropertyAccount,
+                BuildingId = SeedIds.OsloAtrium,
+                Name = "1. etasje",
+                Type = UnitType.Floor,
+                IsActive = true
+            },
+            new Unit
+            {
+                Id = SeedIds.Floor2,
+                AccountId = SeedIds.NordicPropertyAccount,
+                BuildingId = SeedIds.OsloAtrium,
+                Name = "2. etasje",
+                Type = UnitType.Floor,
+                IsActive = true
+            },
+            new Unit
+            {
+                Id = SeedIds.Unit101,
+                AccountId = SeedIds.NordicPropertyAccount,
+                BuildingId = SeedIds.OsloAtrium,
+                ParentUnitId = SeedIds.Floor1,
+                Name = "1.101",
+                Type = UnitType.Office,
+                IsActive = true
+            },
+            new Unit
+            {
+                Id = SeedIds.Unit201,
+                AccountId = SeedIds.NordicPropertyAccount,
+                BuildingId = SeedIds.OsloAtrium,
+                ParentUnitId = SeedIds.Floor2,
+                Name = "2.101",
+                Type = UnitType.Office,
+                IsActive = true
+            },
+            new Unit
+            {
+                Id = SeedIds.Unit202,
+                AccountId = SeedIds.NordicPropertyAccount,
+                BuildingId = SeedIds.OsloAtrium,
+                ParentUnitId = SeedIds.Floor2,
+                Name = "2.102",
+                Type = UnitType.Office,
+                IsActive = true
+            }
+        };
+        foreach (var unit in units)
+        {
+            if (!await dbContext.Units.AnyAsync(
+                x => x.Id == unit.Id,
+                cancellationToken))
+            {
+                dbContext.Units.Add(unit);
+            }
+        }
+    }
+    private static async Task SeedOccupanciesAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var occupancies = new[]
+        {
+            new Occupancy
+            {
+                Id = SeedIds.AcmeOccupancy,
+                AccountId = SeedIds.NordicPropertyAccount,
+                TenantOrganizationId = SeedIds.AcmeOrganization,
+                UnitId = SeedIds.Unit201,
+                ValidFrom = new DateOnly(2026, 1, 1)
+            },
+            new Occupancy
+            {
+                Id = SeedIds.ContosoOccupancy,
+                AccountId = SeedIds.NordicPropertyAccount,
+                TenantOrganizationId = SeedIds.ContosoOrganization,
+                UnitId = SeedIds.Unit202,
+                ValidFrom = new DateOnly(2026, 1, 1)
+            }
+        };
+        foreach (var occupancy in occupancies)
+        {
+            if (!await dbContext.Occupancies.AnyAsync(
+                x => x.Id == occupancy.Id,
+                cancellationToken))
+            {
+                dbContext.Occupancies.Add(occupancy);
+            }
+        }
+    }
+    private static async Task SeedServiceDefinitionsAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var definitions = new[]
+        {
+            new ServiceDefinition
+            {
+                Id = SeedIds.NewSsidService,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Code = "NEW_SSID",
+                Category = "Network",
+                HandlerType = "Networking.Ssid",
+                RequiresApproval = false,
+                IsBookableByTenant = true,
+                EstimatedDurationMinutes = 60,
+                IsActive = true
+            },
+            new ServiceDefinition
+            {
+                Id = SeedIds.AccessCardService,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Code = "ACCESS_CARD",
+                Category = "Access",
+                HandlerType = "Generic",
+                RequiresApproval = true,
+                IsBookableByTenant = true,
+                EstimatedDurationMinutes = 30,
+                IsActive = true
+            },
+            new ServiceDefinition
+            {
+                Id = SeedIds.ParkingService,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Code = "PARKING",
+                Category = "Parking",
+                HandlerType = "Generic",
+                RequiresApproval = true,
+                IsBookableByTenant = true,
+                EstimatedDurationMinutes = 15,
+                IsActive = true
+            },
+            new ServiceDefinition
+            {
+                Id = SeedIds.FacilityFaultService,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Code = "FACILITY_FAULT",
+                Category = "Facility",
+                HandlerType = "Generic",
+                RequiresApproval = false,
+                IsBookableByTenant = true,
+                IsActive = true
+            },
+            new ServiceDefinition
+            {
+                Id = SeedIds.ExtraCleaningService,
+                AccountId = SeedIds.NordicPropertyAccount,
+                Code = "EXTRA_CLEANING",
+                Category = "Facility",
+                HandlerType = "Generic",
+                RequiresApproval = false,
+                IsBookableByTenant = true,
+                EstimatedDurationMinutes = 120,
+                IsActive = true
+            }
+        };
+        foreach (var definition in definitions)
+        {
+            if (!await dbContext.ServiceDefinitions.AnyAsync(
+                x => x.Id == definition.Id,
+                cancellationToken))
+            {
+                dbContext.ServiceDefinitions.Add(definition);
+            }
+        }
+    }
+    private static async Task SeedServiceDefinitionFieldsAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var fields = new[]
+        {
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.AccessCardEmployeeNameField,
+                ServiceDefinitionId = SeedIds.AccessCardService,
+                Key = "employee_name",
+                FieldType = ServiceFieldType.Text,
+                IsRequired = true,
+                SortOrder = 10
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.AccessCardEmployeeEmailField,
+                ServiceDefinitionId = SeedIds.AccessCardService,
+                Key = "employee_email",
+                FieldType = ServiceFieldType.Text,
+                IsRequired = true,
+                SortOrder = 20
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.AccessCardValidFromField,
+                ServiceDefinitionId = SeedIds.AccessCardService,
+                Key = "valid_from",
+                FieldType = ServiceFieldType.Date,
+                IsRequired = true,
+                SortOrder = 30
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.AccessCardValidToField,
+                ServiceDefinitionId = SeedIds.AccessCardService,
+                Key = "valid_to",
+                FieldType = ServiceFieldType.Date,
+                IsRequired = false,
+                SortOrder = 40
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.AccessCardAccessLevelField,
+                ServiceDefinitionId = SeedIds.AccessCardService,
+                Key = "access_level",
+                FieldType = ServiceFieldType.Select,
+                IsRequired = true,
+                SortOrder = 50,
+                OptionsJson =
+                    "[{\"value\": \"common\"},{\"value\": \"own_floor\"},{\"value\": \"extended\"}]"
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.ParkingLicensePlateField,
+                ServiceDefinitionId = SeedIds.ParkingService,
+                Key = "license_plate",
+                FieldType = ServiceFieldType.Text,
+                IsRequired = true,
+                SortOrder = 10
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.ParkingValidFromField,
+                ServiceDefinitionId = SeedIds.ParkingService,
+                Key = "valid_from",
+                FieldType = ServiceFieldType.Date,
+                IsRequired = true,
+                SortOrder = 20
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.ParkingValidToField,
+                ServiceDefinitionId = SeedIds.ParkingService,
+                Key = "valid_to",
+                FieldType = ServiceFieldType.Date,
+                IsRequired = false,
+                SortOrder = 30
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.FacilityFaultDescriptionField,
+                ServiceDefinitionId = SeedIds.FacilityFaultService,
+                Key = "description",
+                FieldType = ServiceFieldType.TextArea,
+                IsRequired = true,
+                SortOrder = 10
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.FacilityFaultUrgentField,
+                ServiceDefinitionId = SeedIds.FacilityFaultService,
+                Key = "urgent",
+                FieldType = ServiceFieldType.Boolean,
+                IsRequired = false,
+                SortOrder = 20
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.ExtraCleaningDescriptionField,
+                ServiceDefinitionId = SeedIds.ExtraCleaningService,
+                Key = "description",
+                FieldType = ServiceFieldType.TextArea,
+                IsRequired = true,
+                SortOrder = 10
+            },
+            new ServiceDefinitionField
+            {
+                Id = SeedIds.ExtraCleaningRequestedDateField,
+                ServiceDefinitionId = SeedIds.ExtraCleaningService,
+                Key = "requested_date",
+                FieldType = ServiceFieldType.Date,
+                IsRequired = true,
+                SortOrder = 20
+            }
+        };
+        foreach (var field in fields)
+        {
+            if (!await dbContext.ServiceDefinitionFields.AnyAsync(
+                x => x.Id == field.Id,
+                cancellationToken))
+            {
+                dbContext.ServiceDefinitionFields.Add(field);
+            }
+        }
+    }
+
+    private static async Task SeedServiceDefinitionFieldTranslationsAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var translations = new[]
+        {
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardEmployeeNameFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardEmployeeNameField,
+                LanguageCode = "nb-NO",
+                Label = "Navn",
+                HelpText = "Navnet på personen adgangskortet gjelder."
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardEmployeeNameFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardEmployeeNameField,
+                LanguageCode = "en-GB",
+                Label = "Name",
+                HelpText = "Name of the person the access card is for."
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardEmployeeEmailFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardEmployeeEmailField,
+                LanguageCode = "nb-NO",
+                Label = "E-post"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardEmployeeEmailFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardEmployeeEmailField,
+                LanguageCode = "en-GB",
+                Label = "Email"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardValidFromFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardValidFromField,
+                LanguageCode = "nb-NO",
+                Label = "Gyldig fra"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardValidFromFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardValidFromField,
+                LanguageCode = "en-GB",
+                Label = "Valid from"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardValidToFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardValidToField,
+                LanguageCode = "nb-NO",
+                Label = "Gyldig til"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardValidToFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardValidToField,
+                LanguageCode = "en-GB",
+                Label = "Valid to"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardAccessLevelFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardAccessLevelField,
+                LanguageCode = "nb-NO",
+                Label = "Tilgangsnivå"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.AccessCardAccessLevelFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.AccessCardAccessLevelField,
+                LanguageCode = "en-GB",
+                Label = "Access level"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ParkingLicensePlateFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.ParkingLicensePlateField,
+                LanguageCode = "nb-NO",
+                Label = "Registreringsnummer"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ParkingLicensePlateFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.ParkingLicensePlateField,
+                LanguageCode = "en-GB",
+                Label = "Licence plate"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ParkingValidFromFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.ParkingValidFromField,
+                LanguageCode = "nb-NO",
+                Label = "Gyldig fra"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ParkingValidFromFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.ParkingValidFromField,
+                LanguageCode = "en-GB",
+                Label = "Valid from"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ParkingValidToFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.ParkingValidToField,
+                LanguageCode = "nb-NO",
+                Label = "Gyldig til"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ParkingValidToFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.ParkingValidToField,
+                LanguageCode = "en-GB",
+                Label = "Valid to"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.FacilityFaultDescriptionFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.FacilityFaultDescriptionField,
+                LanguageCode = "nb-NO",
+                Label = "Beskrivelse",
+                HelpText = "Beskriv feilen så detaljert som mulig."
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.FacilityFaultDescriptionFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.FacilityFaultDescriptionField,
+                LanguageCode = "en-GB",
+                Label = "Description",
+                HelpText = "Describe the issue in as much detail as possible."
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.FacilityFaultUrgentFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.FacilityFaultUrgentField,
+                LanguageCode = "nb-NO",
+                Label = "Haster"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.FacilityFaultUrgentFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.FacilityFaultUrgentField,
+                LanguageCode = "en-GB",
+                Label = "Urgent"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ExtraCleaningDescriptionFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.ExtraCleaningDescriptionField,
+                LanguageCode = "nb-NO",
+                Label = "Beskrivelse"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ExtraCleaningDescriptionFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.ExtraCleaningDescriptionField,
+                LanguageCode = "en-GB",
+                Label = "Description"
+            },
+
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ExtraCleaningRequestedDateFieldNb,
+                ServiceDefinitionFieldId =
+                    SeedIds.ExtraCleaningRequestedDateField,
+                LanguageCode = "nb-NO",
+                Label = "Ønsket dato"
+            },
+            new ServiceDefinitionFieldTranslation
+            {
+                Id = SeedIds.ExtraCleaningRequestedDateFieldEn,
+                ServiceDefinitionFieldId =
+                    SeedIds.ExtraCleaningRequestedDateField,
+                LanguageCode = "en-GB",
+                Label = "Requested date"
+            }
+        };
+
+        foreach (var translation in translations)
+        {
+            if (!await dbContext.ServiceDefinitionFieldTranslations
+                .AnyAsync(
+                    x => x.Id == translation.Id,
+                    cancellationToken))
+            {
+                dbContext.ServiceDefinitionFieldTranslations.Add(
+                    translation);
+            }
+        }
+    }
+    private static async Task SeedServiceProvidersAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var providers = new[]
+        {
+            new ServiceDefinitionProvider
+            {
+                Id = SeedIds.NewSsidBravidaProvider,
+                AccountId = SeedIds.NordicPropertyAccount,
+                ServiceDefinitionId = SeedIds.NewSsidService,
+                ServiceProviderOrganizationId =
+                    SeedIds.BravidaOrganization,
+                IntegrationType =
+                    ServiceProviderIntegrationType.Email,
+                RequestEmailAddress =
+                    "network@bravida.example",
+                IsDefault = true,
+                IsActive = true
+            },
+            new ServiceDefinitionProvider
+            {
+                Id = SeedIds.NewSsidCaverionProvider,
+                AccountId = SeedIds.NordicPropertyAccount,
+                ServiceDefinitionId = SeedIds.NewSsidService,
+                ServiceProviderOrganizationId =
+                    SeedIds.CaverionOrganization,
+                IntegrationType =
+                    ServiceProviderIntegrationType.Email,
+                RequestEmailAddress =
+                    "network@caverion.example",
+                IsDefault = false,
+                IsActive = true
+            },
+            new ServiceDefinitionProvider
+            {
+                Id = SeedIds.AccessCardBravidaProvider,
+                AccountId = SeedIds.NordicPropertyAccount,
+                ServiceDefinitionId = SeedIds.AccessCardService,
+                ServiceProviderOrganizationId =
+                    SeedIds.BravidaOrganization,
+                IntegrationType =
+                    ServiceProviderIntegrationType.Email,
+                RequestEmailAddress =
+                    "access@bravida.example",
+                IsDefault = true,
+                IsActive = true
+            },
+            new ServiceDefinitionProvider
+            {
+                Id = SeedIds.ParkingIssProvider,
+                AccountId = SeedIds.NordicPropertyAccount,
+                ServiceDefinitionId = SeedIds.ParkingService,
+                ServiceProviderOrganizationId =
+                    SeedIds.IssOrganization,
+                IntegrationType =
+                    ServiceProviderIntegrationType.Email,
+                RequestEmailAddress =
+                    "parking@iss.example",
+                IsDefault = true,
+                IsActive = true
+            },
+            new ServiceDefinitionProvider
+            {
+                Id = SeedIds.FacilityFaultBravidaProvider,
+                AccountId = SeedIds.NordicPropertyAccount,
+                ServiceDefinitionId =
+                    SeedIds.FacilityFaultService,
+                ServiceProviderOrganizationId =
+                    SeedIds.BravidaOrganization,
+                IntegrationType =
+                    ServiceProviderIntegrationType.Email,
+                RequestEmailAddress =
+                    "facility@bravida.example",
+                IsDefault = true,
+                IsActive = true
+            },
+            new ServiceDefinitionProvider
+            {
+                Id = SeedIds.ExtraCleaningIssProvider,
+                AccountId = SeedIds.NordicPropertyAccount,
+                ServiceDefinitionId =
+                    SeedIds.ExtraCleaningService,
+                ServiceProviderOrganizationId =
+                    SeedIds.IssOrganization,
+                IntegrationType =
+                    ServiceProviderIntegrationType.Email,
+                RequestEmailAddress =
+                    "cleaning@iss.example",
+                IsDefault = true,
+                IsActive = true
+            }
+        };
+        foreach (var provider in providers)
+        {
+            if (!await dbContext.ServiceDefinitionProviders.AnyAsync(
+                x => x.Id == provider.Id,
+                cancellationToken))
+            {
+                dbContext.ServiceDefinitionProviders.Add(provider);
+            }
+        }
+    }
+ private static async Task SeedLoginAccountsAsync(
     TenantPlatformDbContext dbContext,
     PasswordService passwordService,
     CancellationToken cancellationToken)
@@ -89,229 +854,8 @@ public static class DemoDataInitializer
 
     await dbContext.SaveChangesAsync(cancellationToken);
 }
-    private static async Task CreateAccountAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (await dbContext.Accounts.AnyAsync(
-                x => x.Id == SeedIds.NordicPropertyAccount,
-                cancellationToken))
-        {
-            return;
-        }
 
-        dbContext.Accounts.Add(new Account
-        {
-            Id = SeedIds.NordicPropertyAccount,
-            Name = "Nordic Property AS",
-            DefaultLanguage = "nb-NO",
-            IsActive = true
-        });
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task CreateOrganizationsAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (!await dbContext.Organizations.AnyAsync(
-                x => x.Id == SeedIds.NordicPropertyOrganization,
-                cancellationToken))
-        {
-            dbContext.Organizations.Add(new Organization
-            {
-                Id = SeedIds.NordicPropertyOrganization,
-                AccountId = SeedIds.NordicPropertyAccount,
-                Name = "Nordic Property AS",
-                OrganizationNumber = "999888777",
-                Type = OrganizationType.PropertyManager,
-                IsActive = true
-            });
-        }
-
-        if (!await dbContext.Organizations.AnyAsync(
-                x => x.Id == SeedIds.AcmeOrganization,
-                cancellationToken))
-        {
-            dbContext.Organizations.Add(new Organization
-            {
-                Id = SeedIds.AcmeOrganization,
-                AccountId = SeedIds.NordicPropertyAccount,
-                Name = "Acme Consulting AS",
-                OrganizationNumber = "999888776",
-                Type = OrganizationType.Tenant,
-                IsActive = true
-            });
-        }
-
-        if (!await dbContext.Organizations.AnyAsync(
-                x => x.Id == SeedIds.ContosoOrganization,
-                cancellationToken))
-        {
-            dbContext.Organizations.Add(new Organization
-            {
-                Id = SeedIds.ContosoOrganization,
-                AccountId = SeedIds.NordicPropertyAccount,
-                Name = "Contoso Energy AS",
-                OrganizationNumber = "999888775",
-                Type = OrganizationType.Tenant,
-                IsActive = true
-            });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task CreateBuildingAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (await dbContext.Buildings.AnyAsync(
-                x => x.Id == SeedIds.OsloAtrium,
-                cancellationToken))
-        {
-            return;
-        }
-
-        dbContext.Buildings.Add(new Building
-        {
-            Id = SeedIds.OsloAtrium,
-            AccountId = SeedIds.NordicPropertyAccount,
-            Name = "Oslo Atrium",
-            AddressLine1 = "Atriumveien 1",
-            PostalCode = "0001",
-            City = "Oslo",
-            CountryCode = "NO",
-            IsActive = true
-        });
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task CreateUnitsAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (!await dbContext.Units.AnyAsync(
-                x => x.Id == SeedIds.Floor1,
-                cancellationToken))
-        {
-            dbContext.Units.Add(new Unit
-            {
-                Id = SeedIds.Floor1,
-                AccountId = SeedIds.NordicPropertyAccount,
-                BuildingId = SeedIds.OsloAtrium,
-                Name = "1. etasje",
-                Type = UnitType.Floor,
-                IsActive = true
-            });
-        }
-
-        if (!await dbContext.Units.AnyAsync(
-                x => x.Id == SeedIds.Floor2,
-                cancellationToken))
-        {
-            dbContext.Units.Add(new Unit
-            {
-                Id = SeedIds.Floor2,
-                AccountId = SeedIds.NordicPropertyAccount,
-                BuildingId = SeedIds.OsloAtrium,
-                Name = "2. etasje",
-                Type = UnitType.Floor,
-                IsActive = true
-            });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        if (!await dbContext.Units.AnyAsync(
-                x => x.Id == SeedIds.Unit101,
-                cancellationToken))
-        {
-            dbContext.Units.Add(new Unit
-            {
-                Id = SeedIds.Unit101,
-                AccountId = SeedIds.NordicPropertyAccount,
-                BuildingId = SeedIds.OsloAtrium,
-                ParentUnitId = SeedIds.Floor1,
-                Name = "1.101",
-                Type = UnitType.Office,
-                IsActive = true
-            });
-        }
-
-        if (!await dbContext.Units.AnyAsync(
-                x => x.Id == SeedIds.Unit201,
-                cancellationToken))
-        {
-            dbContext.Units.Add(new Unit
-            {
-                Id = SeedIds.Unit201,
-                AccountId = SeedIds.NordicPropertyAccount,
-                BuildingId = SeedIds.OsloAtrium,
-                ParentUnitId = SeedIds.Floor2,
-                Name = "2.101",
-                Type = UnitType.Office,
-                IsActive = true
-            });
-        }
-
-        if (!await dbContext.Units.AnyAsync(
-                x => x.Id == SeedIds.Unit202,
-                cancellationToken))
-        {
-            dbContext.Units.Add(new Unit
-            {
-                Id = SeedIds.Unit202,
-                AccountId = SeedIds.NordicPropertyAccount,
-                BuildingId = SeedIds.OsloAtrium,
-                ParentUnitId = SeedIds.Floor2,
-                Name = "2.102",
-                Type = UnitType.Office,
-                IsActive = true
-            });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task CreateOccupanciesAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (!await dbContext.Occupancies.AnyAsync(
-                x => x.Id == SeedIds.AcmeOccupancy,
-                cancellationToken))
-        {
-            dbContext.Occupancies.Add(new Occupancy
-            {
-                Id = SeedIds.AcmeOccupancy,
-                AccountId = SeedIds.NordicPropertyAccount,
-                TenantOrganizationId = SeedIds.AcmeOrganization,
-                UnitId = SeedIds.Unit201,
-                ValidFrom = new DateOnly(2026, 1, 1)
-            });
-        }
-
-        if (!await dbContext.Occupancies.AnyAsync(
-                x => x.Id == SeedIds.ContosoOccupancy,
-                cancellationToken))
-        {
-            dbContext.Occupancies.Add(new Occupancy
-            {
-                Id = SeedIds.ContosoOccupancy,
-                AccountId = SeedIds.NordicPropertyAccount,
-                TenantOrganizationId = SeedIds.ContosoOrganization,
-                UnitId = SeedIds.Unit202,
-                ValidFrom = new DateOnly(2026, 1, 1)
-            });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task CreateUsersAsync(
+    private static async Task SeedUsersAsync(
         TenantPlatformDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -363,7 +907,7 @@ public static class DemoDataInitializer
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private static async Task CreateUserRolesAsync(
+    private static async Task SeedUserRolesAsync(
     TenantPlatformDbContext dbContext,
     CancellationToken cancellationToken)
     {
@@ -420,221 +964,5 @@ public static class DemoDataInitializer
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
-    private static async Task CreateServiceDefinitionsAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (!await dbContext.ServiceDefinitions.AnyAsync(
-                x => x.Id == SeedIds.NetworkSsidService,
-                cancellationToken))
-        {
-            dbContext.ServiceDefinitions.Add(new ServiceDefinition
-            {
-                Id = SeedIds.NetworkSsidService,
-                AccountId = SeedIds.NordicPropertyAccount,
-                Code = "NETWORK_SSID",
-                IsActive = true
-            });
-
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-
-        if (!await dbContext.ServiceDefinitionTranslations.AnyAsync(
-                x => x.Id == SeedIds.NetworkSsidServiceNorwegian,
-                cancellationToken))
-        {
-            dbContext.ServiceDefinitionTranslations.Add(
-                new ServiceDefinitionTranslation
-                {
-                    Id = SeedIds.NetworkSsidServiceNorwegian,
-                    ServiceDefinitionId = SeedIds.NetworkSsidService,
-                    LanguageCode = "nb-NO",
-                    Name = "Trådløst nettverk",
-                    Description =
-                        "Opprett, endre eller slett et trådløst nettverk."
-                });
-        }
-
-        if (!await dbContext.ServiceDefinitionTranslations.AnyAsync(
-                x => x.Id == SeedIds.NetworkSsidServiceEnglish,
-                cancellationToken))
-        {
-            dbContext.ServiceDefinitionTranslations.Add(
-                new ServiceDefinitionTranslation
-                {
-                    Id = SeedIds.NetworkSsidServiceEnglish,
-                    ServiceDefinitionId = SeedIds.NetworkSsidService,
-                    LanguageCode = "en-GB",
-                    Name = "Wireless network",
-                    Description =
-                        "Create, modify or delete a wireless network."
-                });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task CreateNetworkEnvironmentAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (await dbContext.NetworkEnvironments.AnyAsync(
-                x => x.Id == SeedIds.CorporateLan,
-                cancellationToken))
-        {
-            return;
-        }
-
-        dbContext.NetworkEnvironments.Add(new NetworkEnvironment
-        {
-            Id = SeedIds.CorporateLan,
-            AccountId = SeedIds.NordicPropertyAccount,
-            BuildingId = SeedIds.OsloAtrium,
-            Name = "Corporate LAN",
-            Vendor = NetworkVendor.CiscoMeraki,
-            IsActive = true
-        });
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task CreateSsidsAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (!await dbContext.NetworkSsids.AnyAsync(
-                x => x.Id == SeedIds.AcmeCorpSsid,
-                cancellationToken))
-        {
-            dbContext.NetworkSsids.Add(new NetworkSsid
-            {
-                Id = SeedIds.AcmeCorpSsid,
-                AccountId = SeedIds.NordicPropertyAccount,
-                NetworkEnvironmentId = SeedIds.CorporateLan,
-                TenantOrganizationId = SeedIds.AcmeOrganization,
-                UnitId = SeedIds.Unit201,
-                Name = "ACME-CORP",
-                VlanId = 312,
-                SecurityType = SsidSecurityType.WPA3Enterprise,
-                IsBroadcast = true,
-                Status = NetworkSsidStatus.Active,
-                CreatedAt = new DateTimeOffset(
-                    2026, 1, 15, 10, 0, 0, TimeSpan.Zero)
-            });
-        }
-
-        if (!await dbContext.NetworkSsids.AnyAsync(
-                x => x.Id == SeedIds.ContosoSsid,
-                cancellationToken))
-        {
-            dbContext.NetworkSsids.Add(new NetworkSsid
-            {
-                Id = SeedIds.ContosoSsid,
-                AccountId = SeedIds.NordicPropertyAccount,
-                NetworkEnvironmentId = SeedIds.CorporateLan,
-                TenantOrganizationId = SeedIds.ContosoOrganization,
-                UnitId = SeedIds.Unit202,
-                Name = "CONTOSO",
-                VlanId = 318,
-                SecurityType = SsidSecurityType.WPA3Enterprise,
-                IsBroadcast = true,
-                Status = NetworkSsidStatus.Active,
-                CreatedAt = new DateTimeOffset(
-                    2026, 2, 1, 10, 0, 0, TimeSpan.Zero)
-            });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static async Task CreateServiceRequestsAsync(
-        TenantPlatformDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        if (!await dbContext.ServiceRequests.AnyAsync(
-                x => x.Id == SeedIds.AcmeSsidChangeRequest,
-                cancellationToken))
-        {
-            dbContext.ServiceRequests.Add(new ServiceRequest
-            {
-                Id = SeedIds.AcmeSsidChangeRequest,
-                AccountId = SeedIds.NordicPropertyAccount,
-                ServiceDefinitionId = SeedIds.NetworkSsidService,
-                RequesterUserId = SeedIds.OleOlsen,
-                RequesterOrganizationId = SeedIds.AcmeOrganization,
-                BuildingId = SeedIds.OsloAtrium,
-                UnitId = SeedIds.Unit201,
-                Status = ServiceRequestStatus.Submitted,
-                CreatedAt = new DateTimeOffset(
-                    2026, 8, 8, 10, 0, 0, TimeSpan.Zero),
-                SubmittedAt = new DateTimeOffset(
-                    2026, 8, 8, 10, 5, 0, TimeSpan.Zero)
-            });
-
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-
-        if (!await dbContext.SsidRequestDetails.AnyAsync(
-                x => x.Id == SeedIds.AcmeSsidChangeRequestDetails,
-                cancellationToken))
-        {
-            dbContext.SsidRequestDetails.Add(new SsidRequestDetails
-            {
-                Id = SeedIds.AcmeSsidChangeRequestDetails,
-                ServiceRequestId = SeedIds.AcmeSsidChangeRequest,
-                NetworkEnvironmentId = SeedIds.CorporateLan,
-                Action = SsidRequestAction.Update,
-                ExistingNetworkSsidId = SeedIds.AcmeCorpSsid,
-                RequestedName = "ACME-GUEST",
-                RequestedVlanId = 350,
-                RequestedSecurityType = SsidSecurityType.WPA3Enterprise,
-                RequestedIsBroadcast = true
-            });
-
-            await dbContext.SaveChangesAsync(cancellationToken);
-        }
-    }
-
-    private static async Task CreateUserAccountsAsync(
-    TenantPlatformDbContext dbContext,
-    CancellationToken cancellationToken)
-    {
-        if (!await dbContext.UserAccounts.AnyAsync(
-                x => x.Id == SeedIds.PerNordicPropertyUserAccount,
-                cancellationToken))
-        {
-            dbContext.UserAccounts.Add(new UserAccount
-            {
-                Id = SeedIds.PerNordicPropertyUserAccount,
-                UserId = SeedIds.PerPedersen,
-                AccountId = SeedIds.NordicPropertyAccount
-            });
-        }
-
-        if (!await dbContext.UserAccounts.AnyAsync(
-                x => x.Id == SeedIds.OleNordicPropertyUserAccount,
-                cancellationToken))
-        {
-            dbContext.UserAccounts.Add(new UserAccount
-            {
-                Id = SeedIds.OleNordicPropertyUserAccount,
-                UserId = SeedIds.OleOlsen,
-                AccountId = SeedIds.NordicPropertyAccount
-            });
-        }
-
-        if (!await dbContext.UserAccounts.AnyAsync(
-                x => x.Id == SeedIds.KariNordicPropertyUserAccount,
-                cancellationToken))
-        {
-            dbContext.UserAccounts.Add(new UserAccount
-            {
-                Id = SeedIds.KariNordicPropertyUserAccount,
-                UserId = SeedIds.KariHansen,
-                AccountId = SeedIds.NordicPropertyAccount
-            });
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
+   
 }

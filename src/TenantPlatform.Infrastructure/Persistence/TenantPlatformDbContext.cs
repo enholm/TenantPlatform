@@ -33,6 +33,21 @@ public class TenantPlatformDbContext : DbContext
     public DbSet<NetworkEnvironment> NetworkEnvironments => Set<NetworkEnvironment>();
     public DbSet<LoginAccount> LoginAccounts => Set<LoginAccount>();
     public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
+
+    public DbSet<ServiceDefinitionField> ServiceDefinitionFields =>
+        Set<ServiceDefinitionField>();
+
+    public DbSet<ServiceDefinitionProvider> ServiceDefinitionProviders =>
+        Set<ServiceDefinitionProvider>();
+
+    public DbSet<ServiceRequestFieldValue> ServiceRequestFieldValues =>
+        Set<ServiceRequestFieldValue>();
+
+    public DbSet<ServiceRequestMessage> ServiceRequestMessages =>
+        Set<ServiceRequestMessage>();
+
+    public DbSet<ServiceDefinitionFieldTranslation> ServiceDefinitionFieldTranslations =>
+            Set<ServiceDefinitionFieldTranslation>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

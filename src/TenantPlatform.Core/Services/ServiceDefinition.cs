@@ -8,10 +8,6 @@ public class ServiceDefinition
 
     public string Code { get; set; } = string.Empty;
 
-    public string Name { get; set; } = string.Empty;
-
-    public string? Description { get; set; }
-
     public string? Category { get; set; }
 
     public string HandlerType { get; set; } = "Generic";

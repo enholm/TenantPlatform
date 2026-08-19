@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TenantPlatform.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using TenantPlatform.Infrastructure.Persistence;
 namespace TenantPlatform.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TenantPlatformDbContext))]
-    partial class TenantPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819104102_ServiceModel_V4")]
+    partial class ServiceModel_V4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -526,6 +529,10 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.Property<int?>("EstimatedDurationMinutes")
                         .HasColumnType("integer");
 
@@ -539,6 +546,11 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsBookableByTenant")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<bool>("RequiresApproval")
                         .HasColumnType("boolean");
@@ -562,6 +574,10 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.Property<int>("FieldType")
                         .HasColumnType("integer");
 
+                    b.Property<string>("HelpText")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
                     b.Property<bool>("IsRequired")
                         .HasColumnType("boolean");
 
@@ -569,6 +585,11 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("OptionsJson")
                         .HasColumnType("jsonb");
@@ -587,37 +608,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.HasIndex("ServiceDefinitionId", "SortOrder");
 
                     b.ToTable("service_definition_fields", (string)null);
-                });
-
-            modelBuilder.Entity("TenantPlatform.Core.Services.ServiceDefinitionFieldTranslation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("HelpText")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("LanguageCode")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<Guid>("ServiceDefinitionFieldId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceDefinitionFieldId", "LanguageCode")
-                        .IsUnique();
-
-                    b.ToTable("service_definition_field_translations", (string)null);
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Services.ServiceDefinitionProvider", b =>
@@ -1033,15 +1023,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.HasOne("TenantPlatform.Core.Services.ServiceDefinition", null)
                         .WithMany()
                         .HasForeignKey("ServiceDefinitionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("TenantPlatform.Core.Services.ServiceDefinitionFieldTranslation", b =>
-                {
-                    b.HasOne("TenantPlatform.Core.Services.ServiceDefinitionField", null)
-                        .WithMany()
-                        .HasForeignKey("ServiceDefinitionFieldId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

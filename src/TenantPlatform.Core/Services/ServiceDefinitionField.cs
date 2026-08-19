@@ -8,15 +8,11 @@ public class ServiceDefinitionField
 
     public string Key { get; set; } = string.Empty;
 
-    public string Label { get; set; } = string.Empty;
-
     public ServiceFieldType FieldType { get; set; }
 
     public bool IsRequired { get; set; }
 
     public int SortOrder { get; set; }
-
-    public string? HelpText { get; set; }
 
     public string? OptionsJson { get; set; }
 }

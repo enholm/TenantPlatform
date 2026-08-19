@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TenantPlatform.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using TenantPlatform.Infrastructure.Persistence;
 namespace TenantPlatform.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TenantPlatformDbContext))]
-    partial class TenantPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260819115038_ServiceModel_V5")]
+    partial class ServiceModel_V5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

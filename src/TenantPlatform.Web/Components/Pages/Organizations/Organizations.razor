@@ -138,6 +138,9 @@ else
             TenantPlatform.Core.Organizations.OrganizationType.Tenant
                 => L["OrganizationTypeTenant"],
 
+            TenantPlatform.Core.Organizations.OrganizationType.ServiceProvider =>
+                L["OrganizationType_ServiceProvider"],
+
             _ => type.ToString()
         };
     }

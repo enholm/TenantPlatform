@@ -18,6 +18,21 @@ public class ServiceDefinitionConfiguration
             .HasMaxLength(100)
             .IsRequired();
 
+        builder.Property(x => x.Category)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.HandlerType)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        builder.Property(x => x.RequiresApproval)
+            .IsRequired();
+
+        builder.Property(x => x.IsBookableByTenant)
+            .IsRequired();
+
+        builder.Property(x => x.EstimatedDurationMinutes);
+
         builder.Property(x => x.IsActive)
             .IsRequired();
 
@@ -32,5 +47,11 @@ public class ServiceDefinitionConfiguration
             x.Code
         })
         .IsUnique();
+
+        builder.HasIndex(x => new
+        {
+            x.AccountId,
+            x.Category
+        });
     }
 }
