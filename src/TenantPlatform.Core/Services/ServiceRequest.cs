@@ -16,6 +16,14 @@ public class ServiceRequest
 
     public Guid? UnitId { get; set; }
 
+    public Guid? AssignedServiceProviderOrganizationId { get; set; }
+
+    public string? Title { get; set; }
+
+    public string? Comment { get; set; }
+
+    public string ReplyToken { get; set; } = string.Empty;
+
     public ServiceRequestStatus Status { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
@@ -24,3 +32,4 @@ public class ServiceRequest
 
     public DateTimeOffset? CompletedAt { get; set; }
 }
+
