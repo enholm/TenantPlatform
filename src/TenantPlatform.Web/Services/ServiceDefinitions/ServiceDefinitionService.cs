@@ -482,11 +482,12 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 Id = field.Id,
                 Key = field.Key,
                 Label = translation?.Label ?? field.Key,
+                Placeholder = translation?.Placeholder,
                 HelpText = translation?.HelpText,
                 FieldType = field.FieldType,
                 IsRequired = field.IsRequired,
                 SortOrder = field.SortOrder,
-                OptionsJson = field.OptionsJson
+                Options = field.Options
             };
         }).ToList();
     }

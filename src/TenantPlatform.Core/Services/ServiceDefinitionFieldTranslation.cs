@@ -10,6 +10,8 @@ public class ServiceDefinitionFieldTranslation
 
     public string Label { get; set; } = string.Empty;
 
+    public string? Placeholder { get; set; }
+
     public string? HelpText { get; set; }
 }
 

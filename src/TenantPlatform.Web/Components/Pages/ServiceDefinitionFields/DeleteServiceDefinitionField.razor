@@ -1,0 +1,167 @@
+@page "/service-definitions/{ServiceDefinitionId:guid}/fields/{Id:guid}/delete"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceDefinitionFields
+
+@inject IServiceDefinitionFieldService FieldService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["DeleteField"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (field is null)
+{
+    <div class="alert alert-warning">
+        @L["ServiceDefinitionFieldNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/service-definitions/{ServiceDefinitionId}")"
+           class="text-decoration-none">
+            ← @L["ServiceDefinition"]
+        </a>
+    </div>
+
+    <h1>@L["DeleteField"]</h1>
+
+    <div class="alert alert-danger mt-4">
+        <strong>@L["Warning"]</strong>
+
+        <div class="mt-2">
+            @L["DeleteFieldConfirmation"]
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(deleteError))
+    {
+        <div class="alert alert-danger">
+            @deleteError
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5>@field.NorwegianLabel</h5>
+
+            <div class="text-body-secondary mb-4">
+                <code>@field.Key</code>
+            </div>
+
+            <EditForm Model="Model!"
+                      OnValidSubmit="DeleteAsync"
+                      FormName="DeleteServiceDefinitionField">
+
+                <DataAnnotationsValidator />
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        disabled="@isDeleting">
+                    @(isDeleting ? L["Deleting"] : L["Delete"])
+                </button>
+
+                <a href="@($"/service-definitions/{ServiceDefinitionId}")"
+                   class="btn btn-outline-secondary ms-2">
+                    @L["Cancel"]
+                </a>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid ServiceDefinitionId { get; set; }
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "DeleteServiceDefinitionField")]
+    public DeleteFieldFormModel? Model { get; set; }
+
+    private ServiceDefinitionFieldDetailsDto? field;
+
+    private bool isLoading = true;
+    private bool isDeleting;
+
+    private string? deleteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new DeleteFieldFormModel();
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEditServiceDefinitionAsync(ServiceDefinitionId))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        field =
+            await FieldService.GetFieldAsync(
+                accountId.Value,
+                ServiceDefinitionId,
+                Id);
+
+        isLoading = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        deleteError = null;
+        isDeleting = true;
+
+        try
+        {
+            await FieldService.DeleteFieldAsync(
+                accountId.Value,
+                ServiceDefinitionId,
+                Id);
+
+            Navigation.NavigateTo(
+                $"/service-definitions/{ServiceDefinitionId}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            deleteError = ex.Message;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    public sealed class DeleteFieldFormModel
+    {
+    }
+}
+

@@ -28,7 +28,8 @@ public class ServiceDefinitionFieldConfiguration
         builder.Property(x => x.SortOrder)
             .IsRequired();
 
-        builder.Property(x => x.OptionsJson)
+        builder.Property(x => x.Options)
+            .HasColumnName("options")
             .HasColumnType("jsonb");
 
         builder.HasOne<ServiceDefinition>()

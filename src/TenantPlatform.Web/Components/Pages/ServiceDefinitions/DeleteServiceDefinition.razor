@@ -1,0 +1,175 @@
+@page "/service-definitions/{Id:guid}/delete"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using System.Globalization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceDefinitions
+
+@inject IServiceDefinitionService ServiceDefinitionService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["DeleteServiceDefinition"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (definition is null)
+{
+    <div class="alert alert-warning">
+        @L["ServiceDefinitionNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/service-definitions/{Id}")"
+           class="text-decoration-none">
+            ← @definition.Name
+        </a>
+    </div>
+
+    <h1>@L["DeleteServiceDefinition"]</h1>
+
+    <div class="alert alert-danger mt-4">
+        <strong>@L["Warning"]</strong>
+        <div class="mt-2">
+            @L["DeleteServiceDefinitionConfirmation"]
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(deleteError))
+    {
+        <div class="alert alert-danger">
+            @L[deleteError]
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <h5>@definition.Name</h5>
+            <div class="text-body-secondary mb-4">
+                @definition.Code
+            </div>
+
+            <EditForm Model="Model!"
+                      OnValidSubmit="DeleteAsync"
+                      FormName="DeleteServiceDefinition">
+
+                <DataAnnotationsValidator />
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        disabled="@isDeleting">
+                    @(isDeleting
+                        ? L["Deleting"]
+                        : L["Delete"])
+                </button>
+
+                <a href="@($"/service-definitions/{Id}")"
+                   class="btn btn-outline-secondary ms-2">
+                    @L["Cancel"]
+                </a>
+
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "DeleteServiceDefinition")]
+    public DeleteServiceDefinitionFormModel? Model { get; set; }
+
+    private ServiceDefinitionDetailsDto? definition;
+
+    private bool isLoading = true;
+    private bool isDeleting;
+
+    private string? deleteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model ??= new DeleteServiceDefinitionFormModel();
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanDeleteServiceDefinitionAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        definition =
+            await ServiceDefinitionService
+                .GetServiceDefinitionAsync(
+                    accountId.Value,
+                    Id,
+                    CultureInfo.CurrentUICulture.Name);
+
+        isLoading = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanDeleteServiceDefinitionAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        deleteError = null;
+        isDeleting = true;
+
+        try
+        {
+            await ServiceDefinitionService
+                .DeleteServiceDefinitionAsync(
+                    accountId.Value,
+                    Id);
+
+            Navigation.NavigateTo("/service-definitions");
+        }
+        catch (ServiceDefinitionDeleteNotAllowedException ex)
+        {
+            deleteError = ex.Message;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    public sealed class DeleteServiceDefinitionFormModel
+    {
+    }
+}
+

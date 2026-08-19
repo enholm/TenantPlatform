@@ -25,6 +25,9 @@ public class ServiceDefinitionFieldTranslationConfiguration
         builder.Property(x => x.HelpText)
             .HasMaxLength(1000);
 
+        builder.Property(x => x.Placeholder)
+            .HasMaxLength(200);
+
         builder.HasOne<ServiceDefinitionField>()
             .WithMany()
             .HasForeignKey(x => x.ServiceDefinitionFieldId)

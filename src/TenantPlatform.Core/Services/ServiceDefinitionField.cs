@@ -14,5 +14,5 @@ public class ServiceDefinitionField
 
     public int SortOrder { get; set; }
 
-    public string? OptionsJson { get; set; }
+    public string? Options { get; set; }
 }

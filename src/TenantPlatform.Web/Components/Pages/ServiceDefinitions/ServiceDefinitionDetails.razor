@@ -218,6 +218,7 @@ else
                             <th>@L["FieldType"]</th>
                             <th>@L["Required"]</th>
                             <th>@L["SortOrder"]</th>
+                            <th></th>
                         </tr>
                     </thead>
 
@@ -255,6 +256,20 @@ else
                                 <td>
                                     @field.SortOrder
                                 </td>
+                                <td class="text-end">
+                                    @if (canEdit)
+                                    {
+                                        <a href="@($"/service-definitions/{definition.Id}/fields/{field.Id}/edit")"
+                                        class="btn btn-outline-secondary btn-sm">
+                                            @L["Edit"]
+                                        </a>
+
+                                        <a href="@($"/service-definitions/{definition.Id}/fields/{field.Id}/delete")"
+                                        class="btn btn-outline-danger btn-sm ms-1">
+                                            @L["Delete"]
+                                        </a>
+                                    }
+                                </td>                                
                             </tr>
                         }
                     </tbody>

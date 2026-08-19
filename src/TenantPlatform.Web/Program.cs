@@ -23,6 +23,8 @@ using TenantPlatform.Infrastructure.Auditing;
 using TenantPlatform.Web.Security.Auditing;
 using TenantPlatform.Web.Services.ServiceDefinitions;
 using TenantPlatform.Core.Localization;
+using TenantPlatform.Web.Services.ServiceDefinitionFields;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +76,7 @@ builder.Services.AddScoped<IOccupancyService, OccupancyService>();
 builder.Services.AddScoped<IAuditUserContext, AuditUserContext>();
 builder.Services.AddScoped<IServiceDefinitionService, ServiceDefinitionService>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+builder.Services.AddScoped<IServiceDefinitionFieldService, ServiceDefinitionFieldService>();
 
 builder.Services.AddHttpContextAccessor();
 

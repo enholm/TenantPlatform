@@ -632,4 +632,107 @@
   <value>Tjenesten kan ikke slettes.</value>
 </data>
 
+<data name="EditServiceDefinition" xml:space="preserve">
+  <value>Rediger tjeneste</value>
+</data>
+
+<data name="DeleteServiceDefinition" xml:space="preserve">
+  <value>Slett tjeneste</value>
+</data>
+
+<data name="DeleteServiceDefinitionConfirmation" xml:space="preserve">
+  <value>Er du sikker på at du vil slette denne tjenesten? Handlingen kan ikke angres.</value>
+</data>
+
+<data name="General" xml:space="preserve">
+  <value>Generelt</value>
+</data>
+
+<data name="Norwegian" xml:space="preserve">
+  <value>Norsk</value>
+</data>
+
+<data name="English" xml:space="preserve">
+  <value>Engelsk</value>
+</data>
+
+<data name="EditField" xml:space="preserve">
+  <value>Rediger felt</value>
+</data>
+
+<data name="DeleteField" xml:space="preserve">
+  <value>Slett felt</value>
+</data>
+
+<data name="DeleteFieldConfirmation" xml:space="preserve">
+  <value>Er du sikker på at du vil slette dette feltet? Handlingen kan ikke angres.</value>
+</data>
+
+<data name="ServiceDefinitionFieldNotFound" xml:space="preserve">
+  <value>Feltet ble ikke funnet.</value>
+</data>
+
+<data name="Options" xml:space="preserve">
+  <value>Alternativer</value>
+</data>
+
+<data name="Placeholder" xml:space="preserve">
+  <value>Plassholder</value>
+</data>
+
+<data name="HelpText" xml:space="preserve">
+  <value>Hjelpetekst</value>
+</data>
+
+<data name="ServiceFieldKeyHelp" xml:space="preserve">
+  <value>Teknisk nøkkel for feltet, for eksempel employee_name eller license_plate.</value>
+</data>
+
+<data name="ServiceFieldOptionsHelp" xml:space="preserve">
+  <value>Brukes kun for valgfelter. Skriv ett alternativ per linje.</value>
+</data>
+
+<data name="FieldTypeText" xml:space="preserve">
+  <value>Tekst</value>
+</data>
+
+<data name="FieldTypeTextArea" xml:space="preserve">
+  <value>Flere linjer tekst</value>
+</data>
+
+<data name="FieldTypeInteger" xml:space="preserve">
+  <value>Heltall</value>
+</data>
+
+<data name="FieldTypeDecimal" xml:space="preserve">
+  <value>Desimaltall</value>
+</data>
+
+<data name="FieldTypeBoolean" xml:space="preserve">
+  <value>Ja/nei</value>
+</data>
+
+<data name="FieldTypeDate" xml:space="preserve">
+  <value>Dato</value>
+</data>
+
+<data name="FieldTypeDateTime" xml:space="preserve">
+  <value>Dato og tid</value>
+</data>
+
+<data name="FieldTypeEmail" xml:space="preserve">
+  <value>E-postadresse</value>
+</data>
+
+<data name="FieldTypePhone" xml:space="preserve">
+  <value>Telefonnummer</value>
+</data>
+
+<data name="FieldTypeChoice" xml:space="preserve">
+  <value>Valg</value>
+</data>
+
+<data name="FieldTypeMultiChoice" xml:space="preserve">
+  <value>Flere valg</value>
+</data>
 </root>

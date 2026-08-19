@@ -1,0 +1,273 @@
+@page "/service-definitions/create"
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceDefinitions
+
+@inject IServiceDefinitionService ServiceDefinitionService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["CreateServiceDefinition"]</PageTitle>
+
+@if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="/service-definitions"
+           class="text-decoration-none">
+            ← @L["ServiceDefinitions"]
+        </a>
+    </div>
+
+    <h1>@L["CreateServiceDefinition"]</h1>
+
+    @if (!string.IsNullOrWhiteSpace(saveError))
+    {
+        <div class="alert alert-danger mt-3">
+            @saveError
+        </div>
+    }
+
+    <div class="card mt-4">
+        <div class="card-body">
+            <EditForm Model="Model"
+                      OnValidSubmit="CreateAsync"
+                      FormName="CreateServiceDefinition">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <h5 class="mb-3">@L["General"]</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Code"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.Code" />
+                    <ValidationMessage For="() => Model.Code" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Category"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.Category" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["HandlerType"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.HandlerType" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["EstimatedDuration"]</label>
+                    <InputNumber class="form-control"
+                                 @bind-Value="Model.EstimatedDurationMinutes" />
+                </div>
+
+                <div class="form-check mb-3">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.RequiresApproval" />
+                    <label class="form-check-label">
+                        @L["RequiresApproval"]
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.IsBookableByTenant" />
+                    <label class="form-check-label">
+                        @L["TenantBookable"]
+                    </label>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.IsActive" />
+                    <label class="form-check-label">
+                        @L["IsActive"]
+                    </label>
+                </div>
+
+                <hr />
+
+                <h5 class="mt-4">@L["Norwegian"]</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Name"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.NorwegianName" />
+                    <ValidationMessage For="() => Model.NorwegianName" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">@L["Description"]</label>
+                    <InputTextArea class="form-control"
+                                   rows="4"
+                                   @bind-Value="Model.NorwegianDescription" />
+                </div>
+
+                <h5>@L["English"]</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Name"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.EnglishName" />
+                    <ValidationMessage For="() => Model.EnglishName" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">@L["Description"]</label>
+                    <InputTextArea class="form-control"
+                                   rows="4"
+                                   @bind-Value="Model.EnglishDescription" />
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+                        @(isSaving ? L["Saving"] : L["Create"])
+                    </button>
+
+                    <a href="/service-definitions"
+                       class="btn btn-outline-secondary">
+                        @L["Cancel"]
+                    </a>
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromForm(FormName = "CreateServiceDefinition")]
+    public CreateServiceDefinitionFormModel? Model { get; set; }
+
+    private bool isSaving;
+    private string? saveError;
+
+    protected override void OnInitialized()
+    {
+        Model ??= new CreateServiceDefinitionFormModel();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId = UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanCreateServiceDefinitionAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId = UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanCreateServiceDefinitionAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            var id =
+                await ServiceDefinitionService
+                    .CreateServiceDefinitionAsync(
+                        accountId.Value,
+                        new CreateServiceDefinitionRequest
+                        {
+                            Code = Model.Code,
+                            Category = Model.Category,
+                            HandlerType = Model.HandlerType,
+                            RequiresApproval = Model.RequiresApproval,
+                            IsBookableByTenant = Model.IsBookableByTenant,
+                            EstimatedDurationMinutes =
+                                Model.EstimatedDurationMinutes,
+                            IsActive = Model.IsActive,
+                            NorwegianName = Model.NorwegianName,
+                            NorwegianDescription =
+                                Model.NorwegianDescription,
+                            EnglishName = Model.EnglishName,
+                            EnglishDescription =
+                                Model.EnglishDescription
+                        });
+
+            Navigation.NavigateTo(
+                $"/service-definitions/{id}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            saveError = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class CreateServiceDefinitionFormModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string Code { get; set; } = string.Empty;
+
+        [StringLength(100)]
+        public string? Category { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string HandlerType { get; set; } = "Generic";
+
+        public bool RequiresApproval { get; set; }
+
+        public bool IsBookableByTenant { get; set; } = true;
+
+        public int? EstimatedDurationMinutes { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        [Required]
+        [StringLength(200)]
+        public string NorwegianName { get; set; } = string.Empty;
+
+        [StringLength(2000)]
+        public string? NorwegianDescription { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string EnglishName { get; set; } = string.Empty;
+
+        [StringLength(2000)]
+        public string? EnglishDescription { get; set; }
+    }
+}
+

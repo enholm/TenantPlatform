@@ -10,6 +10,8 @@ public class ServiceDefinitionFieldDto
 
     public string Label { get; init; } = string.Empty;
 
+    public string? Placeholder { get; init; }
+
     public string? HelpText { get; init; }
 
     public ServiceFieldType FieldType { get; init; }
@@ -18,6 +20,6 @@ public class ServiceDefinitionFieldDto
 
     public int SortOrder { get; init; }
 
-    public string? OptionsJson { get; init; }
+    public string? Options { get; init; }
 }
 

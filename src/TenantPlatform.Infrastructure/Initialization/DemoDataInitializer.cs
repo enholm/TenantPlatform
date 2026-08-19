@@ -396,10 +396,10 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardAccessLevelField,
                 ServiceDefinitionId = SeedIds.AccessCardService,
                 Key = "access_level",
-                FieldType = ServiceFieldType.Select,
+                FieldType = ServiceFieldType.Choice,
                 IsRequired = true,
                 SortOrder = 50,
-                OptionsJson =
+                Options =
                     "[{\"value\": \"common\"},{\"value\": \"own_floor\"},{\"value\": \"extended\"}]"
             },
             new ServiceDefinitionField
@@ -490,6 +490,7 @@ public static class DemoDataInitializer
                     SeedIds.AccessCardEmployeeNameField,
                 LanguageCode = SupportedLanguages.NbNo,
                 Label = "Navn",
+                Placeholder = "Ola Nordmann",
                 HelpText = "Navnet på personen adgangskortet gjelder."
             },
             new ServiceDefinitionFieldTranslation
@@ -499,6 +500,7 @@ public static class DemoDataInitializer
                     SeedIds.AccessCardEmployeeNameField,
                 LanguageCode = SupportedLanguages.EnGb,
                 Label = "Name",
+                Placeholder = "John Smith",
                 HelpText = "Name of the person the access card is for."
             },
 
@@ -508,7 +510,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardEmployeeEmailField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "E-post"
+                Label = "E-post",
+                Placeholder = "ola.nordmann@firma.no",
+                HelpText = "E-postadressen til personen."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -516,7 +520,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardEmployeeEmailField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Email"
+                Label = "Email",
+                Placeholder = "john.smith@company.com",
+                HelpText = "Email address of the person."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -525,7 +531,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardValidFromField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Gyldig fra"
+                Label = "Gyldig fra",
+                Placeholder = "Velg dato",
+                HelpText = "Dato adgangskortet skal bli aktivt."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -533,7 +541,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardValidFromField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Valid from"
+                Label = "Valid from",
+                Placeholder = "Select date",
+                HelpText = "Date when the access card should become active."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -542,7 +552,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardValidToField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Gyldig til"
+                Label = "Gyldig til",
+                Placeholder = "Velg dato",
+                HelpText = "La stå tom dersom kortet ikke har sluttdato."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -550,7 +562,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardValidToField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Valid to"
+                Label = "Valid to",
+                Placeholder = "Select date",
+                HelpText = "Leave empty if no end date is required."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -559,7 +573,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardAccessLevelField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Tilgangsnivå"
+                Label = "Tilgangsnivå",
+                Placeholder = "Velg tilgangsnivå",
+                HelpText = "Velg ønsket tilgangsnivå."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -567,7 +583,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardAccessLevelField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Access level"
+                Label = "Access level",
+                Placeholder = "Select access level",
+                HelpText = "Select the requested access level."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -576,7 +594,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingLicensePlateField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Registreringsnummer"
+                Label = "Registreringsnummer",
+                Placeholder = "AB12345",
+                HelpText = "Bilens registreringsnummer."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -584,7 +604,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingLicensePlateField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Licence plate"
+                Label = "Licence plate",
+                Placeholder = "AB12345",
+                HelpText = "Vehicle registration number."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -593,7 +615,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingValidFromField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Gyldig fra"
+                Label = "Gyldig fra",
+                Placeholder = "Velg dato",
+                HelpText = "Dato parkeringstillatelsen skal starte."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -601,7 +625,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingValidFromField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Valid from"
+                Label = "Valid from",
+                Placeholder = "Select date",
+                HelpText = "Date when the parking permit should become active."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -610,7 +636,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingValidToField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Gyldig til"
+                Label = "Gyldig til",
+                Placeholder = "Velg dato",
+                HelpText = "La stå tom dersom parkeringstillatelsen er uten sluttdato."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -618,7 +646,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingValidToField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Valid to"
+                Label = "Valid to",
+                Placeholder = "Select date",
+                HelpText = "Leave empty if the permit has no end date."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -628,6 +658,7 @@ public static class DemoDataInitializer
                     SeedIds.FacilityFaultDescriptionField,
                 LanguageCode = SupportedLanguages.NbNo,
                 Label = "Beskrivelse",
+                Placeholder = "Beskriv feilen...",
                 HelpText = "Beskriv feilen så detaljert som mulig."
             },
             new ServiceDefinitionFieldTranslation
@@ -637,6 +668,7 @@ public static class DemoDataInitializer
                     SeedIds.FacilityFaultDescriptionField,
                 LanguageCode = SupportedLanguages.EnGb,
                 Label = "Description",
+                Placeholder = "Describe the issue...",
                 HelpText = "Describe the issue in as much detail as possible."
             },
 
@@ -646,7 +678,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.FacilityFaultUrgentField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Haster"
+                Label = "Haster",
+                Placeholder = "Angi om saken haster",
+                HelpText = "Kryss av dersom saken krever rask oppfølging."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -654,7 +688,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.FacilityFaultUrgentField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Urgent"
+                Label = "Urgent",
+                Placeholder = "Indicate whether this is urgent",
+                HelpText = "Tick this box if the issue requires immediate attention."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -663,7 +699,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ExtraCleaningDescriptionField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Beskrivelse"
+                Label = "Beskrivelse",
+                Placeholder = "Beskriv hva som ønskes rengjort...",
+                HelpText = "Beskriv omfanget av renholdsoppdraget."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -671,7 +709,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ExtraCleaningDescriptionField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Description"
+                Label = "Description",
+                Placeholder = "Describe the requested cleaning...",
+                HelpText = "Describe the scope of the requested cleaning."
             },
 
             new ServiceDefinitionFieldTranslation
@@ -680,7 +720,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ExtraCleaningRequestedDateField,
                 LanguageCode = SupportedLanguages.NbNo,
-                Label = "Ønsket dato"
+                Label = "Ønsket dato",
+                Placeholder = "Velg dato",
+                HelpText = "Ønsket dato for gjennomføring."
             },
             new ServiceDefinitionFieldTranslation
             {
@@ -688,7 +730,9 @@ public static class DemoDataInitializer
                 ServiceDefinitionFieldId =
                     SeedIds.ExtraCleaningRequestedDateField,
                 LanguageCode = SupportedLanguages.EnGb,
-                Label = "Requested date"
+                Label = "Requested date",
+                Placeholder = "Select date",
+                HelpText = "Preferred date for the cleaning service."
             }
         };
 

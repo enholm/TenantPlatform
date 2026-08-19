@@ -1,0 +1,356 @@
+@page "/service-definitions/{ServiceDefinitionId:guid}/fields/{Id:guid}/edit"
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Services
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceDefinitionFields
+
+@inject IServiceDefinitionFieldService FieldService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["EditField"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (notFound)
+{
+    <div class="alert alert-warning">
+        @L["ServiceDefinitionFieldNotFound"]
+    </div>
+}
+else if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="@($"/service-definitions/{ServiceDefinitionId}")"
+           class="text-decoration-none">
+            ← @L["ServiceDefinition"]
+        </a>
+    </div>
+
+    <h1>@L["EditField"]</h1>
+
+    @if (!string.IsNullOrWhiteSpace(saveError))
+    {
+        <div class="alert alert-danger mt-3">
+            @saveError
+        </div>
+    }
+
+    <div class="card mt-4">
+        <div class="card-body">
+
+            <EditForm Model="Model"
+                      OnValidSubmit="SaveAsync"
+                      FormName="EditServiceDefinitionField">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Key"]</label>
+
+                    <InputText class="form-control"
+                               @bind-Value="Model.Key" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["FieldType"]</label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="Model.FieldType">
+
+                        @foreach (var fieldType in Enum.GetValues<ServiceFieldType>())
+                        {
+                            <option value="@fieldType">
+                                @GetFieldTypeText(fieldType)
+                            </option>
+                        }
+
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["SortOrder"]</label>
+
+                    <InputNumber class="form-control"
+                                 @bind-Value="Model.SortOrder" />
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.IsRequired" />
+
+                    <label class="form-check-label">
+                        @L["Required"]
+                    </label>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">@L["Options"]</label>
+
+                    <InputTextArea class="form-control"
+                                   rows="5"
+                                   @bind-Value="Model.OptionsText" />
+
+                    <div class="form-text">
+                        @L["ServiceFieldOptionsHelp"]
+                    </div>
+                </div>
+
+                <hr />
+
+                <h5 class="mt-4">@L["Norwegian"]</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Label"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.NorwegianLabel" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Placeholder"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.NorwegianPlaceholder" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">@L["HelpText"]</label>
+                    <InputTextArea class="form-control"
+                                   rows="3"
+                                   @bind-Value="Model.NorwegianHelpText" />
+                </div>
+
+                <h5>@L["English"]</h5>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Label"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.EnglishLabel" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">@L["Placeholder"]</label>
+                    <InputText class="form-control"
+                               @bind-Value="Model.EnglishPlaceholder" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">@L["HelpText"]</label>
+                    <InputTextArea class="form-control"
+                                   rows="3"
+                                   @bind-Value="Model.EnglishHelpText" />
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+                        @(isSaving ? L["Saving"] : L["Save"])
+                    </button>
+
+                    <a href="@($"/service-definitions/{ServiceDefinitionId}")"
+                       class="btn btn-outline-secondary">
+                        @L["Cancel"]
+                    </a>
+                </div>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid ServiceDefinitionId { get; set; }
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "EditServiceDefinitionField")]
+    public EditFieldFormModel? Model { get; set; }
+
+    private bool isLoading = true;
+    private bool isSaving;
+    private bool notFound;
+
+    private string? saveError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId = UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEditServiceDefinitionAsync(ServiceDefinitionId))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        if (Model is not null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        var field =
+            await FieldService.GetFieldAsync(
+                accountId.Value,
+                ServiceDefinitionId,
+                Id);
+
+        if (field is null)
+        {
+            notFound = true;
+            isLoading = false;
+            return;
+        }
+
+        Model = new EditFieldFormModel
+        {
+            Key = field.Key,
+            FieldType = field.FieldType,
+            IsRequired = field.IsRequired,
+            SortOrder = field.SortOrder,
+            OptionsText = field.OptionsText,
+
+            NorwegianLabel = field.NorwegianLabel,
+            NorwegianPlaceholder = field.NorwegianPlaceholder,
+            NorwegianHelpText = field.NorwegianHelpText,
+
+            EnglishLabel = field.EnglishLabel,
+            EnglishPlaceholder = field.EnglishPlaceholder,
+            EnglishHelpText = field.EnglishHelpText
+        };
+
+        isLoading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        var accountId = UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEditServiceDefinitionAsync(ServiceDefinitionId))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            await FieldService.UpdateFieldAsync(
+                accountId.Value,
+                ServiceDefinitionId,
+                Id,
+                new UpdateServiceDefinitionFieldRequest
+                {
+                    Key = Model.Key,
+                    FieldType = Model.FieldType,
+                    IsRequired = Model.IsRequired,
+                    SortOrder = Model.SortOrder,
+                    OptionsText = Model.OptionsText,
+
+                    NorwegianLabel = Model.NorwegianLabel,
+                    NorwegianPlaceholder = Model.NorwegianPlaceholder,
+                    NorwegianHelpText = Model.NorwegianHelpText,
+
+                    EnglishLabel = Model.EnglishLabel,
+                    EnglishPlaceholder = Model.EnglishPlaceholder,
+                    EnglishHelpText = Model.EnglishHelpText
+                });
+
+            Navigation.NavigateTo(
+                $"/service-definitions/{ServiceDefinitionId}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            saveError = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private string GetFieldTypeText(ServiceFieldType fieldType)
+    {
+        return fieldType switch
+        {
+            ServiceFieldType.Text => L["FieldTypeText"],
+            ServiceFieldType.TextArea => L["FieldTypeTextArea"],
+            ServiceFieldType.Integer => L["FieldTypeInteger"],
+            ServiceFieldType.Decimal => L["FieldTypeDecimal"],
+            ServiceFieldType.Boolean => L["FieldTypeBoolean"],
+            ServiceFieldType.Date => L["FieldTypeDate"],
+            ServiceFieldType.DateTime => L["FieldTypeDateTime"],
+            ServiceFieldType.Email => L["FieldTypeEmail"],
+            ServiceFieldType.Phone => L["FieldTypePhone"],
+            ServiceFieldType.Choice => L["FieldTypeChoice"],
+            ServiceFieldType.MultiChoice => L["FieldTypeMultiChoice"],
+            _ => fieldType.ToString()
+        };
+    }
+
+    public sealed class EditFieldFormModel
+    {
+        [Required]
+        [StringLength(100)]
+        public string Key { get; set; } = string.Empty;
+
+        public ServiceFieldType FieldType { get; set; }
+
+        public bool IsRequired { get; set; }
+
+        public int SortOrder { get; set; }
+
+        public string? OptionsText { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string NorwegianLabel { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string? NorwegianPlaceholder { get; set; }
+
+        [StringLength(1000)]
+        public string? NorwegianHelpText { get; set; }
+
+        [Required]
+        [StringLength(200)]
+        public string EnglishLabel { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string? EnglishPlaceholder { get; set; }
+
+        [StringLength(1000)]
+        public string? EnglishHelpText { get; set; }
+    }
+}
+
