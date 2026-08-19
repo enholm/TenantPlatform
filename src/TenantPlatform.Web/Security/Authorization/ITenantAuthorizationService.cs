@@ -26,6 +26,9 @@ public interface ITenantAuthorizationService
         Guid buildingId,
         CancellationToken cancellationToken = default);
     
+    Task<bool> CanViewBuildingAsync(
+        Guid buildingId,
+        CancellationToken cancellationToken = default);
     
     /***************************************************************
      **                         Organizations                     **
@@ -41,8 +44,11 @@ public interface ITenantAuthorizationService
         Guid organizationId,
         CancellationToken cancellationToken = default);
 
-
     Task<bool> CanDeleteOrganizationAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanViewOrganizationAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default);
 
@@ -62,6 +68,9 @@ public interface ITenantAuthorizationService
         Guid unitId,
         CancellationToken cancellationToken = default);
 
+    Task<bool> CanViewUnitAsync(
+        Guid unitId,
+        CancellationToken cancellationToken = default);
 
     /***************************************************************
      **                        Occupancies                        **

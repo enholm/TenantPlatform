@@ -129,6 +129,21 @@ public class TenantAuthorizationService
                 cancellationToken);
     }
 
+    public async Task<bool> CanViewBuildingAsync(
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        if (await CanManageBuildingAsync(
+            buildingId,
+            cancellationToken))
+        {
+            return true;
+        }
+
+        return await HasTenantAccessToBuildingAsync(
+            buildingId,
+            cancellationToken);
+    }
 
     /***************************************************************
      **                         Organizations                     **
@@ -180,6 +195,30 @@ public class TenantAuthorizationService
             cancellationToken);
     }
 
+    public async Task<bool> CanViewOrganizationAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default)
+    {
+        if (await HasRoleAsync(
+            UserRole.AccountAdmin,
+            cancellationToken))
+        {
+            return true;
+        }
+
+        if (await HasRoleAsync(
+            UserRole.PropertyAdmin,
+            cancellationToken))
+        {
+            // Kan eventuelt strammes ytterligere senere,
+            // slik at PropertyAdmin bare ser tenants i egne bygg.
+            return true;
+        }
+
+        return await HasTenantAccessAsync(
+            organizationId,
+            cancellationToken);
+    }
 
 
     /***************************************************************
@@ -230,6 +269,22 @@ public class TenantAuthorizationService
         CancellationToken cancellationToken = default)
     {
         return await CanEditUnitAsync(
+            unitId,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanViewUnitAsync(
+        Guid unitId,
+        CancellationToken cancellationToken = default)
+    {
+        if (await CanEditUnitAsync(
+            unitId,
+            cancellationToken))
+        {
+            return true;
+        }
+
+        return await HasTenantAccessToUnitAsync(
             unitId,
             cancellationToken);
     }
@@ -318,4 +373,141 @@ public class TenantAuthorizationService
             occupancyId,
             cancellationToken);
     }    
+
+
+    /***************************************************************
+     **                        Tenant Helpers                     **
+     ***************************************************************/
+    private async Task<bool> HasTenantRoleAsync(
+        Guid organizationId,
+        UserRole role,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        return await _dbContext.UserAccountRoles
+            .AnyAsync(
+                x =>
+                    x.UserAccount.UserId == currentUser.UserId &&
+                    x.UserAccount.AccountId == accountId &&
+                    x.OrganizationId == organizationId &&
+                    x.Role == role,
+                cancellationToken);
+    }
+
+    private async Task<bool> HasTenantAccessAsync(
+        Guid organizationId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        return await _dbContext.UserAccountRoles
+            .AnyAsync(
+                x =>
+                    x.UserAccount.UserId == currentUser.UserId &&
+                    x.UserAccount.AccountId == accountId &&
+                    x.OrganizationId == organizationId &&
+                    (
+                        x.Role == UserRole.TenantAdmin ||
+                        x.Role == UserRole.TenantUser
+                    ),
+                cancellationToken);
+    }
+
+    private async Task<bool> HasTenantAccessToUnitAsync(
+        Guid unitId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        return await (
+            from role in _dbContext.UserAccountRoles
+            join occupancy in _dbContext.Occupancies
+                on role.OrganizationId equals occupancy.TenantOrganizationId
+            where
+                role.UserAccount.UserId == currentUser.UserId &&
+                role.UserAccount.AccountId == accountId &&
+                occupancy.AccountId == accountId &&
+                occupancy.UnitId == unitId &&
+                (
+                    role.Role == UserRole.TenantAdmin ||
+                    role.Role == UserRole.TenantUser
+                ) &&
+                occupancy.ValidFrom <= today &&
+                (
+                    occupancy.ValidTo == null ||
+                    occupancy.ValidTo >= today
+                )
+            select occupancy.Id)
+            .AnyAsync(cancellationToken);
+    }
+
+    private async Task<bool> HasTenantAccessToBuildingAsync(
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserContextService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        return await (
+            from role in _dbContext.UserAccountRoles
+            join occupancy in _dbContext.Occupancies
+                on role.OrganizationId equals occupancy.TenantOrganizationId
+            join unit in _dbContext.Units
+                on occupancy.UnitId equals unit.Id
+            where
+                role.UserAccount.UserId == currentUser.UserId &&
+                role.UserAccount.AccountId == accountId &&
+                occupancy.AccountId == accountId &&
+                unit.AccountId == accountId &&
+                unit.BuildingId == buildingId &&
+                (
+                    role.Role == UserRole.TenantAdmin ||
+                    role.Role == UserRole.TenantUser
+                ) &&
+                occupancy.ValidFrom <= today &&
+                (
+                    occupancy.ValidTo == null ||
+                    occupancy.ValidTo >= today
+                )
+            select occupancy.Id)
+            .AnyAsync(cancellationToken);
+    }
+
+
 }
