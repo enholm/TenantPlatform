@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using TenantPlatform.Core.Identity;
 using Microsoft.AspNetCore.Localization;
+using TenantPlatform.Core.Localization;
+
 
 namespace TenantPlatform.Web.Security;
 
@@ -60,9 +62,9 @@ public class AuthenticationCookieService
     string? cultureName)
     {
         var culture =
-            cultureName is "nb-NO" or "en-GB"
+            cultureName is SupportedLanguages.EnGb or SupportedLanguages.NbNo or SupportedLanguages.SvSe
                 ? cultureName
-                : "nb-NO";
+                : SupportedLanguages.NbNo;
 
         httpContext.Response.Cookies.Append(
             CookieRequestCultureProvider.DefaultCookieName,

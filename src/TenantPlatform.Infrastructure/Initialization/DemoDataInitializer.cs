@@ -8,6 +8,7 @@ using TenantPlatform.Core.Properties;
 using TenantPlatform.Core.Services;
 using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Infrastructure.Authentication;
+using TenantPlatform.Core.Localization;
 
 namespace TenantPlatform.Infrastructure.Initialization;
 
@@ -36,6 +37,9 @@ public static class DemoDataInitializer
                 dbContext,
                 cancellationToken);
             await SeedServiceDefinitionsAsync(
+                dbContext,
+                cancellationToken);
+            await SeedServiceDefinitionTranslationsAsync(
                 dbContext,
                 cancellationToken);
             await SeedServiceDefinitionFieldsAsync(
@@ -72,7 +76,7 @@ public static class DemoDataInitializer
             {
                 Id = SeedIds.NordicPropertyAccount,
                 Name = "Nordic Property",
-                DefaultLanguage = "nb-NO",
+                DefaultLanguage = SupportedLanguages.NbNo,
                 IsActive = true
             });
     }
@@ -484,7 +488,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardEmployeeNameFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardEmployeeNameField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Navn",
                 HelpText = "Navnet på personen adgangskortet gjelder."
             },
@@ -493,7 +497,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardEmployeeNameFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardEmployeeNameField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Name",
                 HelpText = "Name of the person the access card is for."
             },
@@ -503,7 +507,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardEmployeeEmailFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardEmployeeEmailField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "E-post"
             },
             new ServiceDefinitionFieldTranslation
@@ -511,7 +515,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardEmployeeEmailFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardEmployeeEmailField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Email"
             },
 
@@ -520,7 +524,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardValidFromFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardValidFromField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Gyldig fra"
             },
             new ServiceDefinitionFieldTranslation
@@ -528,7 +532,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardValidFromFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardValidFromField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Valid from"
             },
 
@@ -537,7 +541,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardValidToFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardValidToField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Gyldig til"
             },
             new ServiceDefinitionFieldTranslation
@@ -545,7 +549,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardValidToFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardValidToField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Valid to"
             },
 
@@ -554,7 +558,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardAccessLevelFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardAccessLevelField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Tilgangsnivå"
             },
             new ServiceDefinitionFieldTranslation
@@ -562,7 +566,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.AccessCardAccessLevelFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.AccessCardAccessLevelField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Access level"
             },
 
@@ -571,7 +575,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ParkingLicensePlateFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingLicensePlateField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Registreringsnummer"
             },
             new ServiceDefinitionFieldTranslation
@@ -579,7 +583,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ParkingLicensePlateFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingLicensePlateField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Licence plate"
             },
 
@@ -588,7 +592,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ParkingValidFromFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingValidFromField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Gyldig fra"
             },
             new ServiceDefinitionFieldTranslation
@@ -596,7 +600,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ParkingValidFromFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingValidFromField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Valid from"
             },
 
@@ -605,7 +609,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ParkingValidToFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingValidToField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Gyldig til"
             },
             new ServiceDefinitionFieldTranslation
@@ -613,7 +617,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ParkingValidToFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.ParkingValidToField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Valid to"
             },
 
@@ -622,7 +626,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.FacilityFaultDescriptionFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.FacilityFaultDescriptionField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Beskrivelse",
                 HelpText = "Beskriv feilen så detaljert som mulig."
             },
@@ -631,7 +635,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.FacilityFaultDescriptionFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.FacilityFaultDescriptionField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Description",
                 HelpText = "Describe the issue in as much detail as possible."
             },
@@ -641,7 +645,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.FacilityFaultUrgentFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.FacilityFaultUrgentField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Haster"
             },
             new ServiceDefinitionFieldTranslation
@@ -649,7 +653,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.FacilityFaultUrgentFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.FacilityFaultUrgentField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Urgent"
             },
 
@@ -658,7 +662,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ExtraCleaningDescriptionFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.ExtraCleaningDescriptionField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Beskrivelse"
             },
             new ServiceDefinitionFieldTranslation
@@ -666,7 +670,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ExtraCleaningDescriptionFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.ExtraCleaningDescriptionField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Description"
             },
 
@@ -675,7 +679,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ExtraCleaningRequestedDateFieldNb,
                 ServiceDefinitionFieldId =
                     SeedIds.ExtraCleaningRequestedDateField,
-                LanguageCode = "nb-NO",
+                LanguageCode = SupportedLanguages.NbNo,
                 Label = "Ønsket dato"
             },
             new ServiceDefinitionFieldTranslation
@@ -683,7 +687,7 @@ public static class DemoDataInitializer
                 Id = SeedIds.ExtraCleaningRequestedDateFieldEn,
                 ServiceDefinitionFieldId =
                     SeedIds.ExtraCleaningRequestedDateField,
-                LanguageCode = "en-GB",
+                LanguageCode = SupportedLanguages.EnGb,
                 Label = "Requested date"
             }
         };
@@ -869,7 +873,7 @@ public static class DemoDataInitializer
                 Email = "per@nordicproperty.example",
                 FirstName = "Per",
                 LastName = "Pedersen",
-                PreferredLanguage = "nb-NO",
+                PreferredLanguage = SupportedLanguages.NbNo,
                 IsActive = true
             });
         }
@@ -884,7 +888,7 @@ public static class DemoDataInitializer
                 Email = "ole@acme.example",
                 FirstName = "Ole",
                 LastName = "Olsen",
-                PreferredLanguage = "nb-NO",
+                PreferredLanguage = SupportedLanguages.NbNo,
                 IsActive = true
             });
         }
@@ -899,7 +903,7 @@ public static class DemoDataInitializer
                 Email = "kari@contoso.example",
                 FirstName = "Kari",
                 LastName = "Hansen",
-                PreferredLanguage = "en-GB",
+                PreferredLanguage = SupportedLanguages.EnGb,
                 IsActive = true
             });
         }
@@ -963,6 +967,125 @@ public static class DemoDataInitializer
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedServiceDefinitionTranslationsAsync(
+        TenantPlatformDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var translations = new[]
+        {
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.NewSsidServiceNorwegian,
+                ServiceDefinitionId = SeedIds.NewSsidService,
+                LanguageCode = SupportedLanguages.NbNo,
+                Name = "Bestill nytt Wi-Fi-nettverk",
+                Description =
+                    "Bestill et nytt trådløst nettverk for virksomheten."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.NewSsidServiceEnglish,
+                ServiceDefinitionId = SeedIds.NewSsidService,
+                LanguageCode = SupportedLanguages.EnGb,
+                Name = "Order new Wi-Fi network",
+                Description =
+                    "Order a new wireless network for your organisation."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.AccessCardServiceNorwegian,
+                ServiceDefinitionId = SeedIds.AccessCardService,
+                LanguageCode = SupportedLanguages.NbNo,
+                Name = "Bestill adgangskort",
+                Description =
+                    "Bestill nytt adgangskort eller endre tilgang."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.AccessCardServiceEnglish,
+                ServiceDefinitionId = SeedIds.AccessCardService,
+                LanguageCode = SupportedLanguages.EnGb,
+                Name = "Order access card",
+                Description =
+                    "Order a new access card or change access rights."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.ParkingServiceNorwegian,
+                ServiceDefinitionId = SeedIds.ParkingService,
+                LanguageCode = SupportedLanguages.NbNo,
+                Name = "Bestill parkeringsplass",
+                Description =
+                    "Bestill eller endre parkering."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.ParkingServiceEnglish,
+                ServiceDefinitionId = SeedIds.ParkingService,
+                LanguageCode = SupportedLanguages.EnGb,
+                Name = "Order parking",
+                Description =
+                    "Order or modify parking."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.FacilityFaultServiceNorwegian,
+                ServiceDefinitionId = SeedIds.FacilityFaultService,
+                LanguageCode = SupportedLanguages.NbNo,
+                Name = "Meld feil",
+                Description =
+                    "Rapporter feil eller mangler i bygget."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.FacilityFaultServiceEnglish,
+                ServiceDefinitionId = SeedIds.FacilityFaultService,
+                LanguageCode = SupportedLanguages.EnGb,
+                Name = "Report fault",
+                Description =
+                    "Report a building fault or maintenance issue."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.ExtraCleaningServiceNorwegian,
+                ServiceDefinitionId = SeedIds.ExtraCleaningService,
+                LanguageCode = SupportedLanguages.NbNo,
+                Name = "Bestill ekstra renhold",
+                Description =
+                    "Bestill ekstra renhold utover ordinær leveranse."
+            },
+
+            new ServiceDefinitionTranslation
+            {
+                Id = SeedIds.ExtraCleaningServiceEnglish,
+                ServiceDefinitionId = SeedIds.ExtraCleaningService,
+                LanguageCode = SupportedLanguages.EnGb,
+                Name = "Order extra cleaning",
+                Description =
+                    "Order additional cleaning services."
+            }
+        };
+
+        foreach (var translation in translations)
+        {
+            if (!await dbContext.ServiceDefinitionTranslations.AnyAsync(
+                    x => x.Id == translation.Id,
+                    cancellationToken))
+            {
+                dbContext.ServiceDefinitionTranslations.Add(
+                    translation);
+            }
+        }
     }
    
 }

@@ -1,4 +1,5 @@
 using TenantPlatform.Core.Identity;
+using TenantPlatform.Core.Localization;
 
 namespace TenantPlatform.Core.Accounts;
 
@@ -8,7 +9,7 @@ public class Account
 
     public string Name { get; set; } = string.Empty;
 
-    public string DefaultLanguage { get; set; } = "nb-NO";
+    public string DefaultLanguage { get; set; } = SupportedLanguages.NbNo;
 
     public bool IsActive { get; set; } = true;
     public ICollection<UserAccount> Users { get; set; }

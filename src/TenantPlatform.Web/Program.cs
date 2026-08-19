@@ -21,6 +21,8 @@ using TenantPlatform.Web.Services.Units;
 using TenantPlatform.Web.Services.Occupancies;
 using TenantPlatform.Infrastructure.Auditing;
 using TenantPlatform.Web.Security.Auditing;
+using TenantPlatform.Web.Services.ServiceDefinitions;
+using TenantPlatform.Core.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,14 +52,12 @@ builder.Services.AddLocalization(options =>
 
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
-    var cultures = new[]
-    {
-        new CultureInfo("nb-NO"),
-        new CultureInfo("en-GB")
-    };
+    var cultures = SupportedLanguages.All
+        .Select(x => new CultureInfo(x))
+        .ToArray();
 
     options.DefaultRequestCulture =
-        new RequestCulture("nb-NO");
+        new RequestCulture(SupportedLanguages.NbNo);
 
     options.SupportedCultures = cultures;
     options.SupportedUICultures = cultures;
@@ -72,7 +72,7 @@ builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 builder.Services.AddScoped<IUnitService, UnitService>();
 builder.Services.AddScoped<IOccupancyService, OccupancyService>();
 builder.Services.AddScoped<IAuditUserContext, AuditUserContext>();
-
+builder.Services.AddScoped<IServiceDefinitionService, ServiceDefinitionService>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 
 builder.Services.AddHttpContextAccessor();
@@ -356,7 +356,7 @@ app.MapPost("/preferences/language", async (
 {
     var culture = form["culture"].ToString();
 
-    if (culture is not ("nb-NO" or "en-GB"))
+    if (culture is not (SupportedLanguages.NbNo or SupportedLanguages.EnGb or SupportedLanguages.SvSe))
     {
         return Results.BadRequest("Unsupported language.");
     }

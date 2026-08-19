@@ -90,4 +90,24 @@ public interface ITenantAuthorizationService
     Task<bool> CanDeleteOccupancyAsync(
         Guid occupancyId,
         CancellationToken cancellationToken = default);
+
+
+    /***************************************************************
+     **                     Servicedefinitions.                   **
+     ***************************************************************/
+    Task<bool> CanCreateServiceDefinitionAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanEditServiceDefinitionAsync(
+        Guid serviceDefinitionId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanDeleteServiceDefinitionAsync(
+        Guid serviceDefinitionId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanViewServiceDefinitionAsync(
+        Guid serviceDefinitionId,
+        CancellationToken cancellationToken = default);
+
 }

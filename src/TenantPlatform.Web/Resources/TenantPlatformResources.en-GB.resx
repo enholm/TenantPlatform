@@ -504,4 +504,132 @@
   <value>Service Provider</value>
 </data>
 
+<data name="ServiceDefinition" xml:space="preserve">
+  <value>Service</value>
+</data>
+
+<data name="ServiceDefinitions" xml:space="preserve">
+  <value>Service catalogue</value>
+</data>
+
+<data name="ServiceDefinitionsDescription" xml:space="preserve">
+  <value>Services available for the current account.</value>
+</data>
+
+<data name="CreateServiceDefinition" xml:space="preserve">
+  <value>Create service</value>
+</data>
+
+<data name="NoServiceDefinitions" xml:space="preserve">
+  <value>No services have been registered.</value>
+</data>
+
+<data name="ServiceDefinitionNotFound" xml:space="preserve">
+  <value>The service could not be found.</value>
+</data>
+
+<data name="ServiceDefinitionInformation" xml:space="preserve">
+  <value>Service information</value>
+</data>
+
+<data name="Code" xml:space="preserve">
+  <value>Code</value>
+</data>
+
+<data name="Category" xml:space="preserve">
+  <value>Category</value>
+</data>
+
+<data name="HandlerType" xml:space="preserve">
+  <value>Handler type</value>
+</data>
+
+<data name="TenantBookable" xml:space="preserve">
+  <value>Bookable by tenant</value>
+</data>
+
+<data name="RequiresApproval" xml:space="preserve">
+  <value>Requires approval</value>
+</data>
+
+<data name="EstimatedDuration" xml:space="preserve">
+  <value>Estimated processing time</value>
+</data>
+
+<data name="Minutes" xml:space="preserve">
+  <value>minutes</value>
+</data>
+
+<data name="Fields" xml:space="preserve">
+  <value>Fields</value>
+</data>
+
+<data name="Providers" xml:space="preserve">
+  <value>Providers</value>
+</data>
+
+<data name="AddField" xml:space="preserve">
+  <value>Add field</value>
+</data>
+
+<data name="AddProvider" xml:space="preserve">
+  <value>Add provider</value>
+</data>
+
+<data name="NoServiceDefinitionFields" xml:space="preserve">
+  <value>This service has no custom fields.</value>
+</data>
+
+<data name="NoServiceDefinitionProviders" xml:space="preserve">
+  <value>No providers are linked to this service.</value>
+</data>
+
+<data name="Label" xml:space="preserve">
+  <value>Label</value>
+</data>
+
+<data name="Key" xml:space="preserve">
+  <value>Key</value>
+</data>
+
+<data name="FieldType" xml:space="preserve">
+  <value>Field type</value>
+</data>
+
+<data name="Required" xml:space="preserve">
+  <value>Required</value>
+</data>
+
+<data name="SortOrder" xml:space="preserve">
+  <value>Sort order</value>
+</data>
+
+<data name="Provider" xml:space="preserve">
+  <value>Provider</value>
+</data>
+
+<data name="IntegrationType" xml:space="preserve">
+  <value>Integration type</value>
+</data>
+
+<data name="Default" xml:space="preserve">
+  <value>Default</value>
+</data>
+
+<data name="Yes" xml:space="preserve">
+  <value>Yes</value>
+</data>
+
+<data name="No" xml:space="preserve">
+  <value>No</value>
+</data>
+
+<data name="ServiceDefinitionHasRequests" xml:space="preserve">
+  <value>The service cannot be deleted because it has service requests.</value>
+</data>
+
+<data name="ServiceDefinitionCannotBeDeleted" xml:space="preserve">
+  <value>The service cannot be deleted.</value>
+</data>
+
 </root>

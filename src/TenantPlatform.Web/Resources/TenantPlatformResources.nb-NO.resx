@@ -503,4 +503,133 @@
 <data name="OrganizationType_ServiceProvider" xml:space="preserve">
   <value>Tjenesteleverandør</value>
 </data>
+
+<data name="ServiceDefinition" xml:space="preserve">
+  <value>Tjeneste</value>
+</data>
+
+<data name="ServiceDefinitions" xml:space="preserve">
+  <value>Tjenestekatalog</value>
+</data>
+
+<data name="ServiceDefinitionsDescription" xml:space="preserve">
+  <value>Tjenester som kan bestilles i valgt konto.</value>
+</data>
+
+<data name="CreateServiceDefinition" xml:space="preserve">
+  <value>Opprett tjeneste</value>
+</data>
+
+<data name="NoServiceDefinitions" xml:space="preserve">
+  <value>Ingen tjenester er registrert.</value>
+</data>
+
+<data name="ServiceDefinitionNotFound" xml:space="preserve">
+  <value>Tjenesten ble ikke funnet.</value>
+</data>
+
+<data name="ServiceDefinitionInformation" xml:space="preserve">
+  <value>Tjenesteinformasjon</value>
+</data>
+
+<data name="Code" xml:space="preserve">
+  <value>Kode</value>
+</data>
+
+<data name="Category" xml:space="preserve">
+  <value>Kategori</value>
+</data>
+
+<data name="HandlerType" xml:space="preserve">
+  <value>Handler-type</value>
+</data>
+
+<data name="TenantBookable" xml:space="preserve">
+  <value>Kan bestilles av leietaker</value>
+</data>
+
+<data name="RequiresApproval" xml:space="preserve">
+  <value>Krever godkjenning</value>
+</data>
+
+<data name="EstimatedDuration" xml:space="preserve">
+  <value>Estimert behandlingstid</value>
+</data>
+
+<data name="Minutes" xml:space="preserve">
+  <value>minutter</value>
+</data>
+
+<data name="Fields" xml:space="preserve">
+  <value>Felt</value>
+</data>
+
+<data name="Providers" xml:space="preserve">
+  <value>Leverandører</value>
+</data>
+
+<data name="AddField" xml:space="preserve">
+  <value>Legg til felt</value>
+</data>
+
+<data name="AddProvider" xml:space="preserve">
+  <value>Legg til leverandør</value>
+</data>
+
+<data name="NoServiceDefinitionFields" xml:space="preserve">
+  <value>Denne tjenesten har ingen egendefinerte felt.</value>
+</data>
+
+<data name="NoServiceDefinitionProviders" xml:space="preserve">
+  <value>Ingen leverandører er knyttet til tjenesten.</value>
+</data>
+
+<data name="Label" xml:space="preserve">
+  <value>Ledetekst</value>
+</data>
+
+<data name="Key" xml:space="preserve">
+  <value>Nøkkel</value>
+</data>
+
+<data name="FieldType" xml:space="preserve">
+  <value>Felttype</value>
+</data>
+
+<data name="Required" xml:space="preserve">
+  <value>Obligatorisk</value>
+</data>
+
+<data name="SortOrder" xml:space="preserve">
+  <value>Rekkefølge</value>
+</data>
+
+<data name="Provider" xml:space="preserve">
+  <value>Leverandør</value>
+</data>
+
+<data name="IntegrationType" xml:space="preserve">
+  <value>Integrasjonstype</value>
+</data>
+
+<data name="Default" xml:space="preserve">
+  <value>Standard</value>
+</data>
+
+<data name="Yes" xml:space="preserve">
+  <value>Ja</value>
+</data>
+
+<data name="No" xml:space="preserve">
+  <value>Nei</value>
+</data>
+
+<data name="ServiceDefinitionHasRequests" xml:space="preserve">
+  <value>Tjenesten kan ikke slettes fordi den har bestillinger.</value>
+</data>
+
+<data name="ServiceDefinitionCannotBeDeleted" xml:space="preserve">
+  <value>Tjenesten kan ikke slettes.</value>
+</data>
+
 </root>

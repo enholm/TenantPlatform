@@ -1,3 +1,5 @@
+using TenantPlatform.Core.Localization;
+
 namespace TenantPlatform.Core.Identity;
 
 public class User
@@ -10,7 +12,7 @@ public class User
 
     public string LastName { get; set; } = string.Empty;
 
-    public string PreferredLanguage { get; set; } = "nb-NO";
+    public string PreferredLanguage { get; set; } = SupportedLanguages.NbNo;
 
     public bool IsActive { get; set; } = true;
     public LoginAccount? LoginAccount { get; set; }

@@ -1,0 +1,161 @@
+@page "/service-definitions"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using System.Globalization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceDefinitions
+
+@inject IServiceDefinitionService ServiceDefinitionService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@L["ServiceDefinitions"]</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1>@L["ServiceDefinitions"]</h1>
+
+        <p class="text-body-secondary mb-0">
+            @L["ServiceDefinitionsDescription"]
+        </p>
+    </div>
+
+    @if (canCreate)
+    {
+        <a href="/service-definitions/create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>
+            @L["CreateServiceDefinition"]
+        </a>
+    }
+</div>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (definitions.Count == 0)
+{
+    <div class="alert alert-info">
+        @L["NoServiceDefinitions"]
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@L["Name"]</th>
+                        <th>@L["Code"]</th>
+                        <th>@L["Category"]</th>
+                        <th>@L["HandlerType"]</th>
+                        <th>@L["TenantBookable"]</th>
+                        <th>@L["Status"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var definition in definitions)
+                    {
+                        <tr>
+                            <td class="fw-semibold">
+                                @definition.Name
+                            </td>
+
+                            <td>
+                                <code>@definition.Code</code>
+                            </td>
+
+                            <td>
+                                @(string.IsNullOrWhiteSpace(definition.Category)
+                                    ? "-"
+                                    : definition.Category)
+                            </td>
+
+                            <td>
+                                @definition.HandlerType
+                            </td>
+
+                            <td>
+                                @if (definition.IsBookableByTenant)
+                                {
+                                    <span class="badge text-bg-success">
+                                        @L["Yes"]
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        @L["No"]
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @if (definition.IsActive)
+                                {
+                                    <span class="badge text-bg-success">
+                                        @L["Active"]
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        @L["Inactive"]
+                                    </span>
+                                }
+                            </td>
+
+                            <td class="text-end">
+                                <a href="@($"/service-definitions/{definition.Id}")"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    @L["Open"]
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private bool canCreate;
+
+    private List<ServiceDefinitionListItemDto> definitions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        canCreate =
+            await AuthorizationService
+                .CanCreateServiceDefinitionAsync();
+
+        var languageCode =
+            CultureInfo.CurrentUICulture.Name;
+
+        definitions =
+            await ServiceDefinitionService
+                .GetServiceDefinitionsAsync(
+                    accountId.Value,
+                    languageCode);
+
+        isLoading = false;
+    }
+}
+

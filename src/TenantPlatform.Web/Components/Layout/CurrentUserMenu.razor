@@ -1,6 +1,7 @@
 @using Microsoft.EntityFrameworkCore
 @using TenantPlatform.Infrastructure.Persistence
 @using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Core.Localization
 
 @inject ICurrentUserContextService UserContext
 @inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
@@ -71,7 +72,7 @@
 
                     <input type="hidden"
                            name="culture"
-                           value="nb-NO" />
+                           value="@SupportedLanguages.NbNo" />
 
                     <button type="submit"
                             class="dropdown-item d-flex align-items-center gap-2">
@@ -79,6 +80,25 @@
                         <i class="bi bi-globe2"></i>
 
                         <span>Norsk</span>
+                    </button>
+                </form>
+            </li>
+            <li>
+                <form method="post"
+                      action="/preferences/language">
+
+                    <AntiforgeryToken />
+
+                    <input type="hidden"
+                           name="culture"
+                           value="@SupportedLanguages.SvSe" />
+
+                    <button type="submit"
+                            class="dropdown-item d-flex align-items-center gap-2">
+
+                        <i class="bi bi-globe2"></i>
+
+                        <span>English</span>
                     </button>
                 </form>
             </li>
@@ -91,7 +111,7 @@
 
                     <input type="hidden"
                            name="culture"
-                           value="en-GB" />
+                           value="@SupportedLanguages.EnGb" />
 
                     <button type="submit"
                             class="dropdown-item d-flex align-items-center gap-2">

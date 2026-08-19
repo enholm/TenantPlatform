@@ -509,5 +509,119 @@ public class TenantAuthorizationService
             .AnyAsync(cancellationToken);
     }
 
+    /***************************************************************
+    **                     Servicedefinitions.                   **
+    ***************************************************************/
+    public async Task<bool> CanCreateServiceDefinitionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await HasRoleAsync(
+            UserRole.AccountAdmin,
+            cancellationToken);
+    }
+    public async Task<bool> CanEditServiceDefinitionAsync(
+        Guid serviceDefinitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        var exists = await _dbContext.ServiceDefinitions
+            .AsNoTracking()
+            .AnyAsync(
+                x =>
+                    x.Id == serviceDefinitionId &&
+                    x.AccountId == accountId,
+                cancellationToken);
+
+        if (!exists)
+        {
+            return false;
+        }
+
+        return await HasRoleAsync(
+            UserRole.AccountAdmin,
+            cancellationToken);
+    }
+    public async Task<bool> CanDeleteServiceDefinitionAsync(
+        Guid serviceDefinitionId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanEditServiceDefinitionAsync(
+            serviceDefinitionId,
+            cancellationToken);
+    }
+    public async Task<bool> CanViewServiceDefinitionAsync(
+        Guid serviceDefinitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        var definition = await _dbContext.ServiceDefinitions
+            .AsNoTracking()
+            .Where(x =>
+                x.Id == serviceDefinitionId &&
+                x.AccountId == accountId)
+            .Select(x => new
+            {
+                x.IsActive,
+                x.IsBookableByTenant
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (definition is null)
+        {
+            return false;
+        }
+
+        if (await HasRoleAsync(
+            UserRole.AccountAdmin,
+            cancellationToken))
+        {
+            return true;
+        }
+
+        if (await HasRoleAsync(
+            UserRole.PropertyAdmin,
+            cancellationToken))
+        {
+            return true;
+        }
+
+        if (definition.IsActive &&
+            definition.IsBookableByTenant)
+        {
+            if (await HasRoleAsync(
+                UserRole.TenantAdmin,
+                cancellationToken))
+            {
+                return true;
+            }
+
+            if (await HasRoleAsync(
+                UserRole.TenantUser,
+                cancellationToken))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 }

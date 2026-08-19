@@ -1,0 +1,410 @@
+@page "/service-definitions/{Id:guid}"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using System.Globalization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceDefinitions
+
+@inject IServiceDefinitionService ServiceDefinitionService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@(definition?.Name ?? L["ServiceDefinition"])</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (definition is null)
+{
+    <div class="alert alert-warning">
+        @L["ServiceDefinitionNotFound"]
+    </div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="mb-2">
+                <a href="/service-definitions"
+                   class="text-decoration-none">
+                    ← @L["ServiceDefinitions"]
+                </a>
+            </div>
+
+            <h1 class="mb-1">
+                @definition.Name
+            </h1>
+
+            <div class="text-body-secondary">
+                <code>@definition.Code</code>
+
+                @if (!string.IsNullOrWhiteSpace(definition.Category))
+                {
+                    <span class="ms-2">
+                        · @definition.Category
+                    </span>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            @if (canEdit)
+            {
+                <a href="@($"/service-definitions/{definition.Id}/edit")"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>
+                    @L["Edit"]
+                </a>
+            }
+
+            @if (canDelete)
+            {
+                @if (deleteCheck?.CanDelete == true)
+                {
+                    <a href="@($"/service-definitions/{definition.Id}/delete")"
+                       class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>
+                        @L["Delete"]
+                    </a>
+                }
+                else
+                {
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            disabled>
+                        <i class="bi bi-trash me-1"></i>
+                        @L["Delete"]
+                    </button>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-body-secondary mb-1">
+                        @L["Fields"]
+                    </div>
+
+                    <div class="fs-2 fw-bold">
+                        @definition.Fields.Count
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="text-body-secondary mb-1">
+                        @L["Providers"]
+                    </div>
+
+                    <div class="fs-2 fw-bold">
+                        @definition.Providers.Count
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            @L["ServiceDefinitionInformation"]
+        </div>
+
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">@L["Name"]</dt>
+                <dd class="col-sm-9">@definition.Name</dd>
+
+                <dt class="col-sm-3">@L["Description"]</dt>
+                <dd class="col-sm-9">
+                    @(string.IsNullOrWhiteSpace(definition.Description)
+                        ? "-"
+                        : definition.Description)
+                </dd>
+
+                <dt class="col-sm-3">@L["Code"]</dt>
+                <dd class="col-sm-9">
+                    <code>@definition.Code</code>
+                </dd>
+
+                <dt class="col-sm-3">@L["Category"]</dt>
+                <dd class="col-sm-9">
+                    @(string.IsNullOrWhiteSpace(definition.Category)
+                        ? "-"
+                        : definition.Category)
+                </dd>
+
+                <dt class="col-sm-3">@L["HandlerType"]</dt>
+                <dd class="col-sm-9">
+                    <code>@definition.HandlerType</code>
+                </dd>
+
+                <dt class="col-sm-3">@L["RequiresApproval"]</dt>
+                <dd class="col-sm-9">
+                    @(definition.RequiresApproval
+                        ? L["Yes"]
+                        : L["No"])
+                </dd>
+
+                <dt class="col-sm-3">@L["TenantBookable"]</dt>
+                <dd class="col-sm-9">
+                    @(definition.IsBookableByTenant
+                        ? L["Yes"]
+                        : L["No"])
+                </dd>
+
+                <dt class="col-sm-3">@L["EstimatedDuration"]</dt>
+                <dd class="col-sm-9">
+                    @(definition.EstimatedDurationMinutes.HasValue
+                        ? $"{definition.EstimatedDurationMinutes} {L["Minutes"]}"
+                        : "-")
+                </dd>
+
+                <dt class="col-sm-3">@L["Status"]</dt>
+                <dd class="col-sm-9">
+                    @if (definition.IsActive)
+                    {
+                        <span class="badge text-bg-success">
+                            @L["Active"]
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">
+                            @L["Inactive"]
+                        </span>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>@L["Fields"]</span>
+
+            @if (canEdit)
+            {
+                <a href="@($"/service-definitions/{definition.Id}/fields/create")"
+                   class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>
+                    @L["AddField"]
+                </a>
+            }
+        </div>
+
+        @if (definition.Fields.Count == 0)
+        {
+            <div class="card-body text-body-secondary">
+                @L["NoServiceDefinitionFields"]
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>@L["Label"]</th>
+                            <th>@L["Key"]</th>
+                            <th>@L["FieldType"]</th>
+                            <th>@L["Required"]</th>
+                            <th>@L["SortOrder"]</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var field in definition.Fields)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">
+                                        @field.Label
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(field.HelpText))
+                                    {
+                                        <div class="small text-body-secondary">
+                                            @field.HelpText
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    <code>@field.Key</code>
+                                </td>
+
+                                <td>
+                                    @field.FieldType
+                                </td>
+
+                                <td>
+                                    @(field.IsRequired
+                                        ? L["Yes"]
+                                        : L["No"])
+                                </td>
+
+                                <td>
+                                    @field.SortOrder
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>@L["Providers"]</span>
+
+            @if (canEdit)
+            {
+                <a href="@($"/service-definitions/{definition.Id}/providers/create")"
+                   class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>
+                    @L["AddProvider"]
+                </a>
+            }
+        </div>
+
+        @if (definition.Providers.Count == 0)
+        {
+            <div class="card-body text-body-secondary">
+                @L["NoServiceDefinitionProviders"]
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>@L["Provider"]</th>
+                            <th>@L["IntegrationType"]</th>
+                            <th>@L["Email"]</th>
+                            <th>@L["Default"]</th>
+                            <th>@L["Status"]</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var provider in definition.Providers)
+                        {
+                            <tr>
+                                <td class="fw-semibold">
+                                    @provider.ServiceProviderOrganizationName
+                                </td>
+
+                                <td>
+                                    @provider.IntegrationType
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(
+                                        provider.RequestEmailAddress)
+                                        ? "-"
+                                        : provider.RequestEmailAddress)
+                                </td>
+
+                                <td>
+                                    @(provider.IsDefault
+                                        ? L["Yes"]
+                                        : L["No"])
+                                </td>
+
+                                <td>
+                                    @if (provider.IsActive)
+                                    {
+                                        <span class="badge text-bg-success">
+                                            @L["Active"]
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">
+                                            @L["Inactive"]
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private bool isLoading = true;
+    private bool canEdit;
+    private bool canDelete;
+
+    private ServiceDefinitionDetailsDto? definition;
+    private ServiceDefinitionDeleteCheckResult? deleteCheck;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanViewServiceDefinitionAsync(Id))
+        {
+            isLoading = false;
+            return;
+        }
+
+        var languageCode =
+            CultureInfo.CurrentUICulture.Name;
+
+        definition =
+            await ServiceDefinitionService
+                .GetServiceDefinitionAsync(
+                    accountId.Value,
+                    Id,
+                    languageCode);
+
+        if (definition is not null)
+        {
+            canEdit =
+                await AuthorizationService
+                    .CanEditServiceDefinitionAsync(Id);
+
+            canDelete =
+                await AuthorizationService
+                    .CanDeleteServiceDefinitionAsync(Id);
+
+            if (canDelete)
+            {
+                deleteCheck =
+                    await ServiceDefinitionService
+                        .CanDeleteServiceDefinitionAsync(
+                            accountId.Value,
+                            Id);
+            }
+        }
+
+        isLoading = false;
+    }
+}
+
