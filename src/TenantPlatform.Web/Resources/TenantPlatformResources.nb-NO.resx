@@ -743,4 +743,49 @@
 <data name="RequiresOccupancyHelp" xml:space="preserve">
   <value>Brukeren må ha et aktivt leieforhold for bygget eller enheten tjenesten bestilles for.</value>
 </data>
+
+<data name="AvailableServices" xml:space="preserve">
+  <value>Tilgjengelige tjenester</value>
+</data>
+
+<data name="AvailableServicesDescription" xml:space="preserve">
+  <value>Velg en tjeneste for å opprette en ny bestilling.</value>
+</data>
+
+<data name="NoAvailableServices" xml:space="preserve">
+  <value>Ingen tjenester er tilgjengelige.</value>
+</data>
+
+<data name="Other" xml:space="preserve">
+  <value>Annet</value>
+</data>
+
+<data name="ServiceNotFound" xml:space="preserve">
+  <value>Tjenesten ble ikke funnet.</value>
+</data>
+
+<data name="ServiceRequiresApproval" xml:space="preserve">
+  <value>Denne bestillingen må godkjennes før den behandles.</value>
+</data>
+
+<data name="SubmitRequest" xml:space="preserve">
+  <value>Send bestilling</value>
+</data>
+
+<data name="SelectOption" xml:space="preserve">
+  <value>Velg...</value>
+</data>
+
+<data name="ServiceFormTestSuccessful" xml:space="preserve">
+  <value>Skjemaet ble sendt inn. Verdiene nedenfor viser hva TenantPlatform mottok.</value>
+</data>
+
+<data name="SubmittedValues" xml:space="preserve">
+  <value>Innsendte verdier</value>
+</data>
+
+<data name="ServiceRequestInvalidOccupancy" xml:space="preserve">
+  <value>Det valgte leieforholdet er ikke gyldig.</value>
+</data>
+
 </root>

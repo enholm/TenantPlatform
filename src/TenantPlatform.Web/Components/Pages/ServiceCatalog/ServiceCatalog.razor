@@ -1,0 +1,98 @@
+@page "/portal/services"
+@attribute [Authorize]
+
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceCatalog
+
+@inject IServiceCatalogService ServiceCatalogService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@L["AvailableServices"]</PageTitle>
+
+<div class="mb-4">
+    <h1>@L["AvailableServices"]</h1>
+
+    <p class="text-body-secondary">
+        @L["AvailableServicesDescription"]
+    </p>
+</div>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (services.Count == 0)
+{
+    <div class="alert alert-info">
+        @L["NoAvailableServices"]
+    </div>
+}
+else
+{
+    @foreach (var category in services
+        .GroupBy(x => x.Category ?? L["Other"])
+        .OrderBy(x => x.Key))
+    {
+        <h4 class="mt-4 mb-3">@category.Key</h4>
+
+        <div class="row g-3">
+            @foreach (var service in category)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+
+                            <h5 class="card-title">
+                                @service.Name
+                            </h5>
+
+                            @if (!string.IsNullOrWhiteSpace(service.Description))
+                            {
+                                <p class="card-text text-body-secondary">
+                                    @service.Description
+                                </p>
+                            }
+
+                            <div class="mt-auto">
+                                <a href="@($"/portal/services/{service.Id}")"
+                                   class="btn btn-outline-primary">
+                                    @L["Open"]
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private bool isLoading = true;
+
+    private List<ServiceCatalogItemDto> services = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        services =
+            await ServiceCatalogService
+                .GetAvailableServicesAsync(
+                    accountId.Value,
+                    CultureInfo.CurrentUICulture.Name);
+
+        isLoading = false;
+    }
+}
+

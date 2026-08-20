@@ -6,6 +6,8 @@ public class ServiceRequestMessage
 
     public Guid ServiceRequestId { get; set; }
 
+    public ServiceRequestEventType? EventType { get; set; }
+
     public ServiceRequestMessageDirection Direction { get; set; }
 
     public ServiceRequestMessageType Type { get; set; }
@@ -38,5 +40,18 @@ public enum ServiceRequestMessageType
     Email = 1,
     Comment = 2,
     System = 3
+}
+
+
+public enum ServiceRequestEventType
+{
+    Created = 1,
+    Submitted = 2,
+    Approved = 3,
+    Rejected = 4,
+    Assigned = 5,
+    SentToProvider = 6,
+    Completed = 7,
+    Cancelled = 8
 }
 

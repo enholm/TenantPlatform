@@ -742,4 +742,49 @@
 <data name="RequiresOccupancyHelp" xml:space="preserve">
   <value>The user must have an active occupancy for the building or unit for which the service is requested.</value>
 </data>
+
+<data name="AvailableServices" xml:space="preserve">
+  <value>Available services</value>
+</data>
+
+<data name="AvailableServicesDescription" xml:space="preserve">
+  <value>Select a service to create a new request.</value>
+</data>
+
+<data name="NoAvailableServices" xml:space="preserve">
+  <value>No services are currently available.</value>
+</data>
+
+<data name="Other" xml:space="preserve">
+  <value>Other</value>
+</data>
+
+<data name="ServiceNotFound" xml:space="preserve">
+  <value>The service could not be found.</value>
+</data>
+
+<data name="ServiceRequiresApproval" xml:space="preserve">
+  <value>This request requires approval before it can be processed.</value>
+</data>
+
+<data name="SubmitRequest" xml:space="preserve">
+  <value>Submit request</value>
+</data>
+
+<data name="SelectOption" xml:space="preserve">
+  <value>Select...</value>
+</data>
+
+<data name="ServiceFormTestSuccessful" xml:space="preserve">
+  <value>The form was submitted. The values below show what TenantPlatform received.</value>
+</data>
+
+<data name="SubmittedValues" xml:space="preserve">
+  <value>Submitted values</value>
+</data>
+
+<data name="ServiceRequestInvalidOccupancy" xml:space="preserve">
+  <value>The selected occupancy is not valid.</value>
+</data>
+
 </root>

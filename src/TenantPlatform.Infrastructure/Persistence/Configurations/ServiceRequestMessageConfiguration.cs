@@ -23,6 +23,10 @@ public class ServiceRequestMessageConfiguration
             .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(x => x.EventType)
+            .HasConversion<int>()
+            .IsRequired(false);
+
         builder.Property(x => x.FromAddress)
             .HasMaxLength(320);
 

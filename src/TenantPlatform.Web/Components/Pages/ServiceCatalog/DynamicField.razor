@@ -1,0 +1,254 @@
+@using System.Text.Json
+@using TenantPlatform.Core.Services
+@using TenantPlatform.Web.Services.ServiceCatalog
+@using TenantPlatform.Web.Services.ServiceDefinitions
+
+<div class="mb-3">
+
+    @if (Field.FieldType != ServiceFieldType.Boolean)
+    {
+        <label class="form-label">
+            @Field.Label
+
+            @if (Field.IsRequired)
+            {
+                <span class="text-danger">*</span>
+            }
+        </label>
+    }
+
+    <input type="hidden"
+           name="@($"Model.Values[{Index}].FieldId")"
+           value="@Field.Id" />
+
+    @switch (Field.FieldType)
+    {
+        case ServiceFieldType.Text:
+        {
+            <input type="text"
+                   class="form-control"
+                   name="@ValueFieldName"
+                   value="@Value.Value"
+                   placeholder="@Field.Placeholder"
+                   required="@Field.IsRequired" />
+            break;
+        }
+
+        case ServiceFieldType.TextArea:
+        {
+            <textarea class="form-control"
+                      rows="4"
+                      name="@ValueFieldName"
+                      placeholder="@Field.Placeholder"
+                      required="@Field.IsRequired">@Value.Value</textarea>
+            break;
+        }
+
+        case ServiceFieldType.Integer:
+        {
+            <input type="number"
+                   step="1"
+                   class="form-control"
+                   name="@ValueFieldName"
+                   value="@Value.Value"
+                   placeholder="@Field.Placeholder"
+                   required="@Field.IsRequired" />
+            break;
+        }
+
+        case ServiceFieldType.Decimal:
+        {
+            <input type="number"
+                   step="any"
+                   class="form-control"
+                   name="@ValueFieldName"
+                   value="@Value.Value"
+                   placeholder="@Field.Placeholder"
+                   required="@Field.IsRequired" />
+            break;
+        }
+
+        case ServiceFieldType.Boolean:
+        {
+            <div class="form-check">
+                <input type="checkbox"
+                       class="form-check-input"
+                       name="@BoolFieldName"
+                       value="true"
+                       checked="@Value.BoolValue" />
+
+                <label class="form-check-label">
+                    @Field.Label
+
+                    @if (Field.IsRequired)
+                    {
+                        <span class="text-danger">*</span>
+                    }
+                </label>
+            </div>
+
+            break;
+        }
+
+        case ServiceFieldType.Date:
+        {
+            <input type="date"
+                   class="form-control"
+                   name="@ValueFieldName"
+                   value="@Value.Value"
+                   required="@Field.IsRequired" />
+            break;
+        }
+
+        case ServiceFieldType.DateTime:
+        {
+            <input type="datetime-local"
+                   class="form-control"
+                   name="@ValueFieldName"
+                   value="@Value.Value"
+                   required="@Field.IsRequired" />
+            break;
+        }
+
+        case ServiceFieldType.Email:
+        {
+            <input type="email"
+                   class="form-control"
+                   name="@ValueFieldName"
+                   value="@Value.Value"
+                   placeholder="@Field.Placeholder"
+                   required="@Field.IsRequired" />
+            break;
+        }
+
+        case ServiceFieldType.Phone:
+        {
+            <input type="tel"
+                   class="form-control"
+                   name="@ValueFieldName"
+                   value="@Value.Value"
+                   placeholder="@Field.Placeholder"
+                   required="@Field.IsRequired" />
+            break;
+        }
+
+        case ServiceFieldType.Choice:
+        {
+            <select class="form-select"
+                    name="@ValueFieldName"
+                    required="@Field.IsRequired">
+
+                <option value="">
+                    @(Field.Placeholder ?? L["SelectOption"])
+                </option>
+
+                @foreach (var option in GetOptions())
+                {
+                    if (Value.Value == option)
+                    {
+                        <option value="@option" selected>
+                            @option
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="@option">
+                            @option
+                        </option>
+                    }
+                }
+            </select>
+
+            break;
+        }
+
+        case ServiceFieldType.MultiChoice:
+        {
+            @foreach (var option in GetOptions())
+            {
+                var isChecked =
+                    Value.SelectedValues.Contains(
+                        option,
+                        StringComparer.OrdinalIgnoreCase);
+
+                <div class="form-check">
+                    <input type="checkbox"
+                           class="form-check-input"
+                           name="@SelectedValuesFieldName"
+                           value="@option"
+                           checked="@isChecked" />
+
+                    <label class="form-check-label">
+                        @option
+                    </label>
+                </div>
+            }
+
+            break;
+        }
+
+        default:
+        {
+            <div class="alert alert-warning">
+                Unsupported field type: @Field.FieldType
+            </div>
+            break;
+        }
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Field.HelpText))
+    {
+        <div class="form-text">
+            @Field.HelpText
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ServiceDefinitionFieldDto Field { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public ServiceRequestFieldInputModel Value { get; set; } = default!;
+
+    [Parameter]
+    public int Index { get; set; }
+
+    private string ValueFieldName =>
+        $"Model.Values[{Index}].Value";
+
+    private string BoolFieldName =>
+        $"Model.Values[{Index}].BoolValue";
+
+    private string SelectedValuesFieldName =>
+        $"Model.Values[{Index}].SelectedValues";
+
+    private IReadOnlyList<string> GetOptions()
+    {
+        if (string.IsNullOrWhiteSpace(Field.Options))
+        {
+            return [];
+        }
+
+        try
+        {
+            using var document =
+                JsonDocument.Parse(Field.Options);
+
+            return document.RootElement
+                .EnumerateArray()
+                .Select(x =>
+                    x.TryGetProperty("value", out var value)
+                        ? value.GetString()
+                        : null)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
+                .ToList();
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+}

@@ -1,0 +1,269 @@
+@page "/portal/services/{Id:guid}"
+@attribute [Authorize]
+
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Components.Pages.ServiceCatalog
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceCatalog
+@using TenantPlatform.Web.Services.ServiceRequests
+
+@inject IServiceCatalogService ServiceCatalogService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject IServiceRequestService ServiceRequestService
+
+<PageTitle>@(service?.Name ?? L["Service"])</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (service is null)
+{
+    <div class="alert alert-warning">
+        @L["ServiceNotFound"]
+    </div>
+}
+else if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="/portal/services"
+           class="text-decoration-none">
+            ← @L["AvailableServices"]
+        </a>
+    </div>
+
+    <div class="mb-4">
+        <h1>@service.Name</h1>
+
+        @if (!string.IsNullOrWhiteSpace(service.Description))
+        {
+            <p class="text-body-secondary">
+                @service.Description
+            </p>
+        }
+
+        @if (service.RequiresApproval)
+        {
+            <div class="alert alert-info">
+                @L["ServiceRequiresApproval"]
+            </div>
+        }
+    </div>
+
+
+
+    <div class="card">
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(saveError))
+            {
+                <div class="lert alert-danger mb-4">
+                    @L[saveError]
+                </div>
+            }
+            <EditForm Model="Model"
+                      OnSubmit="SubmitAsync"
+                      FormName="ServiceRequest">
+
+                <div class="mb-4">
+                    <label class="form-label">
+                        @L["Location"]
+                    </label>
+
+                    <InputSelect class="form-select"
+                                @bind-Value="Model.OccupancyId">
+
+                        @foreach (var location in locations)
+                        {
+                            <option value="@location.OccupancyId">
+                                @location.DisplayName
+                            </option>
+                        }
+
+                    </InputSelect>
+                </div>
+
+                @for (var i = 0; i < service.Fields.Count; i++)
+                {
+                    <DynamicField Field="service.Fields[i]"
+                                  Value="Model.Values[i]"
+                                  Index="i" />
+                }
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+                        @(isSaving
+                            ? L["Submitting"]
+                            : L["SubmitRequest"])
+                    </button>
+                    <a href="/portal/services"
+                       class="btn btn-outline-secondary">
+                        @L["Cancel"]
+                    </a>
+                </div>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "ServiceRequest")]
+    public ServiceRequestFormModel? Model { get; set; }
+
+    private ServiceCatalogDetailsDto? service;
+
+    private bool isLoading = true;
+    private List<ServiceRequestLocationDto> locations = [];
+
+    private string? saveError;
+    private bool isSaving;
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        service =
+            await ServiceCatalogService.GetServiceAsync(
+                accountId.Value,
+                Id,
+                CultureInfo.CurrentUICulture.Name);
+
+        if (service is null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        locations =
+            await ServiceCatalogService
+                .GetAvailableRequestLocationsAsync(
+                    accountId.Value,
+                    UserContext.Current.UserId);
+
+        if (Model is null)
+        {
+            var firstLocation =
+                locations.FirstOrDefault();
+
+            Model = new ServiceRequestFormModel
+            {
+                OccupancyId =
+                    firstLocation?.OccupancyId ?? Guid.Empty,
+
+                Values = service.Fields
+                    .Select(field =>
+                        new ServiceRequestFieldInputModel
+                        {
+                            FieldId = field.Id
+                        })
+                    .ToList()
+            };
+        }
+        isLoading = false;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (Model is null ||
+            service is null)
+        {
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        var values =
+            new List<CreateServiceRequestFieldValueRequest>();
+
+        for (var i = 0; i < service.Fields.Count; i++)
+        {
+            var field = service.Fields[i];
+            var input = Model.Values[i];
+
+            string? value;
+
+            if (field.FieldType ==
+                TenantPlatform.Core.Services.ServiceFieldType.Boolean)
+            {
+                value = input.BoolValue
+                    ? "true"
+                    : "false";
+            }
+            else if (field.FieldType ==
+                    TenantPlatform.Core.Services.ServiceFieldType.MultiChoice)
+            {
+                value = input.SelectedValues.Count == 0
+                    ? null
+                    : string.Join(",", input.SelectedValues);
+            }
+            else
+            {
+                value = input.Value;
+            }
+
+            values.Add(
+                new CreateServiceRequestFieldValueRequest
+                {
+                    ServiceDefinitionFieldId = field.Id,
+                    Value = value
+                });
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            var requestId =
+                await ServiceRequestService
+                    .CreateServiceRequestAsync(
+                        accountId.Value,
+                        UserContext.Current.UserId,
+                        new CreateServiceRequestRequest
+                        {
+                            ServiceDefinitionId = service.Id,
+                            OccupancyId = Model.OccupancyId,
+                            Values = values
+                        });
+
+            Navigation.NavigateTo(
+                $"/portal/requests/{requestId}");
+        }
+        catch (ServiceRequestValidationException ex)
+        {
+            saveError = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class ServiceRequestFormModel
+    {
+        public Guid OccupancyId { get; set; }
+
+        public List<ServiceRequestFieldInputModel> Values { get; set; } = [];    
+    }
+}
+
