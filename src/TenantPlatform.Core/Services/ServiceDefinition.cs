@@ -16,6 +16,8 @@ public class ServiceDefinition
 
     public bool IsBookableByTenant { get; set; } = true;
 
+    public bool RequiresOccupancy { get; set; } = true;
+    
     public int? EstimatedDurationMinutes { get; set; }
 
     public bool IsActive { get; set; } = true;

@@ -54,6 +54,7 @@ else
                         <th>@L["Category"]</th>
                         <th>@L["HandlerType"]</th>
                         <th>@L["TenantBookable"]</th>
+                        <th>@L["RequiresOccupancy"]</th>
                         <th>@L["Status"]</th>
                         <th></th>
                     </tr>
@@ -83,6 +84,20 @@ else
 
                             <td>
                                 @if (definition.IsBookableByTenant)
+                                {
+                                    <span class="badge text-bg-success">
+                                        @L["Yes"]
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        @L["No"]
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (definition.RequiresOccupancy)
                                 {
                                     <span class="badge text-bg-success">
                                         @L["Yes"]

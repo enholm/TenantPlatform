@@ -31,6 +31,9 @@ public class ServiceDefinitionConfiguration
         builder.Property(x => x.IsBookableByTenant)
             .IsRequired();
 
+        builder.Property(x => x.RequiresOccupancy)
+            .IsRequired();
+
         builder.Property(x => x.EstimatedDurationMinutes);
 
         builder.Property(x => x.IsActive)

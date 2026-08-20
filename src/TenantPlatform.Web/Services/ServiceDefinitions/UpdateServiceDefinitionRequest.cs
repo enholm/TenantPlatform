@@ -12,6 +12,8 @@ public class UpdateServiceDefinitionRequest
 
     public bool IsBookableByTenant { get; init; }
 
+    public bool RequiresOccupancy { get; init; }
+
     public int? EstimatedDurationMinutes { get; init; }
 
     public bool IsActive { get; init; }

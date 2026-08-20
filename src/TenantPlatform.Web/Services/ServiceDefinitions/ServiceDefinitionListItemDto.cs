@@ -16,6 +16,8 @@ public class ServiceDefinitionListItemDto
 
     public bool IsBookableByTenant { get; init; }
 
+    public bool RequiresOccupancy { get; init; }
+
     public bool IsActive { get; init; }
 }
 

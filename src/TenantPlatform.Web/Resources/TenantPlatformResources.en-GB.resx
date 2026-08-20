@@ -545,7 +545,7 @@
 </data>
 
 <data name="TenantBookable" xml:space="preserve">
-  <value>Bookable by tenant</value>
+  <value>Can be ordered by tenants</value>
 </data>
 
 <data name="RequiresApproval" xml:space="preserve">
@@ -735,4 +735,11 @@
   <value>Multiple choice</value>
 </data>
 
+<data name="RequiresOccupancy" xml:space="preserve">
+  <value>Requires active occupancy</value>
+</data>
+
+<data name="RequiresOccupancyHelp" xml:space="preserve">
+  <value>The user must have an active occupancy for the building or unit for which the service is requested.</value>
+</data>
 </root>

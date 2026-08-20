@@ -12,6 +12,9 @@ using TenantPlatform.Core.Localization;
 
 namespace TenantPlatform.Infrastructure.Initialization;
 
+
+// TODO: fikse så det blir en upsert og ikke bare insert av seed data. Se SeedBuildingsAsync for eksempel på upsert
+
 public static class DemoDataInitializer
 {
 
@@ -288,6 +291,7 @@ public static class DemoDataInitializer
                 HandlerType = "Networking.Ssid",
                 RequiresApproval = false,
                 IsBookableByTenant = true,
+                RequiresOccupancy  = true,
                 EstimatedDurationMinutes = 60,
                 IsActive = true
             },
@@ -300,6 +304,7 @@ public static class DemoDataInitializer
                 HandlerType = "Generic",
                 RequiresApproval = true,
                 IsBookableByTenant = true,
+                RequiresOccupancy  = true,
                 EstimatedDurationMinutes = 30,
                 IsActive = true
             },
@@ -312,6 +317,7 @@ public static class DemoDataInitializer
                 HandlerType = "Generic",
                 RequiresApproval = true,
                 IsBookableByTenant = true,
+                RequiresOccupancy  = true,
                 EstimatedDurationMinutes = 15,
                 IsActive = true
             },
@@ -324,6 +330,7 @@ public static class DemoDataInitializer
                 HandlerType = "Generic",
                 RequiresApproval = false,
                 IsBookableByTenant = true,
+                RequiresOccupancy  = false,
                 IsActive = true
             },
             new ServiceDefinition
@@ -335,18 +342,39 @@ public static class DemoDataInitializer
                 HandlerType = "Generic",
                 RequiresApproval = false,
                 IsBookableByTenant = true,
+                RequiresOccupancy  = true,
                 EstimatedDurationMinutes = 120,
                 IsActive = true
             }
         };
         foreach (var definition in definitions)
         {
-            if (!await dbContext.ServiceDefinitions.AnyAsync(
-                x => x.Id == definition.Id,
-                cancellationToken))
+            var existing =
+                await dbContext.ServiceDefinitions
+                    .SingleOrDefaultAsync(
+                        x => x.Id == definition.Id,
+                        cancellationToken);
+
+            if (existing is null)
             {
                 dbContext.ServiceDefinitions.Add(definition);
+                continue;
             }
+
+            if (existing.AccountId != definition.AccountId)
+            {
+                throw new InvalidOperationException(
+                    $"Seed definition '{definition.Code}' belongs to a different account.");
+            }
+
+            existing.Code = definition.Code;
+            existing.Category = definition.Category;
+            existing.HandlerType = definition.HandlerType;
+            existing.RequiresApproval = definition.RequiresApproval;
+            existing.IsBookableByTenant = definition.IsBookableByTenant;
+            existing.RequiresOccupancy = definition.RequiresOccupancy;
+            existing.EstimatedDurationMinutes = definition.EstimatedDurationMinutes;
+            existing.IsActive = definition.IsActive;
         }
     }
     private static async Task SeedServiceDefinitionFieldsAsync(

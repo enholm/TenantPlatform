@@ -51,7 +51,6 @@ else if (Model is not null)
 
                 <DataAnnotationsValidator />
                 <ValidationSummary />
-
                 <div class="mb-3">
                     <label class="form-label">@L["Code"]</label>
                     <InputText class="form-control"
@@ -90,6 +89,19 @@ else if (Model is not null)
                     <label class="form-check-label">
                         @L["TenantBookable"]
                     </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <InputCheckbox class="form-check-input"
+                                @bind-Value="Model.RequiresOccupancy" />
+
+                    <label class="form-check-label">
+                        @L["RequiresOccupancy"]
+                    </label>
+
+                    <div class="form-text">
+                        @L["RequiresOccupancyHelp"]
+                    </div>
                 </div>
 
                 <div class="form-check mb-4">
@@ -213,6 +225,7 @@ else if (Model is not null)
             HandlerType = definition.HandlerType,
             RequiresApproval = definition.RequiresApproval,
             IsBookableByTenant = definition.IsBookableByTenant,
+            RequiresOccupancy = definition.RequiresOccupancy,
             EstimatedDurationMinutes =
                 definition.EstimatedDurationMinutes,
             IsActive = definition.IsActive,
@@ -267,6 +280,7 @@ else if (Model is not null)
                         HandlerType = Model.HandlerType,
                         RequiresApproval = Model.RequiresApproval,
                         IsBookableByTenant = Model.IsBookableByTenant,
+                        RequiresOccupancy = Model.RequiresOccupancy,
                         EstimatedDurationMinutes =
                             Model.EstimatedDurationMinutes,
                         IsActive = Model.IsActive,
@@ -307,6 +321,8 @@ else if (Model is not null)
         public bool RequiresApproval { get; set; }
 
         public bool IsBookableByTenant { get; set; }
+
+        public bool RequiresOccupancy { get; set; } = true;
 
         public int? EstimatedDurationMinutes { get; set; }
 

@@ -69,6 +69,7 @@ public class ServiceDefinitionService : IServiceDefinitionService
                     RequiresApproval = definition.RequiresApproval,
                     IsBookableByTenant =
                         definition.IsBookableByTenant,
+                    RequiresOccupancy = definition.RequiresOccupancy,
                     IsActive = definition.IsActive
                 };
             })
@@ -173,6 +174,7 @@ public class ServiceDefinitionService : IServiceDefinitionService
             RequiresApproval = definition.RequiresApproval,
             IsBookableByTenant =
                 definition.IsBookableByTenant,
+            RequiresOccupancy = definition.RequiresOccupancy,
             EstimatedDurationMinutes =
                 definition.EstimatedDurationMinutes,
             IsActive = definition.IsActive,
@@ -222,6 +224,7 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 RequiresApproval = request.RequiresApproval,
                 IsBookableByTenant =
                     request.IsBookableByTenant,
+                RequiresOccupancy = request.RequiresOccupancy,
                 EstimatedDurationMinutes =
                     request.EstimatedDurationMinutes,
                 IsActive = request.IsActive
@@ -310,6 +313,9 @@ public class ServiceDefinitionService : IServiceDefinitionService
 
         definition.IsBookableByTenant =
             request.IsBookableByTenant;
+
+        definition.RequiresOccupancy =
+            request.RequiresOccupancy;
 
         definition.EstimatedDurationMinutes =
             request.EstimatedDurationMinutes;

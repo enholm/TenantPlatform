@@ -545,7 +545,7 @@
 </data>
 
 <data name="TenantBookable" xml:space="preserve">
-  <value>Kan bestilles av leietaker</value>
+  <value>Kan bestilles av leietakere</value>
 </data>
 
 <data name="RequiresApproval" xml:space="preserve">
@@ -734,5 +734,13 @@
 
 <data name="FieldTypeMultiChoice" xml:space="preserve">
   <value>Flere valg</value>
+</data>
+
+<data name="RequiresOccupancy" xml:space="preserve">
+  <value>Krever aktivt leieforhold</value>
+</data>
+
+<data name="RequiresOccupancyHelp" xml:space="preserve">
+  <value>Brukeren må ha et aktivt leieforhold for bygget eller enheten tjenesten bestilles for.</value>
 </data>
 </root>

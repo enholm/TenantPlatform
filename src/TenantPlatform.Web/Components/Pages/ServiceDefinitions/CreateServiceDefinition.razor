@@ -84,6 +84,20 @@
                     </label>
                 </div>
 
+                <div class="form-check mb-3">
+                    <InputCheckbox class="form-check-input"
+                                @bind-Value="Model.RequiresOccupancy" />
+
+                    <label class="form-check-label">
+                        @L["RequiresOccupancy"]
+                    </label>
+
+                    <div class="form-text">
+                        @L["RequiresOccupancyHelp"]
+                    </div>
+                </div>
+
+
                 <div class="form-check mb-4">
                     <InputCheckbox class="form-check-input"
                                    @bind-Value="Model.IsActive" />
@@ -210,6 +224,7 @@
                             HandlerType = Model.HandlerType,
                             RequiresApproval = Model.RequiresApproval,
                             IsBookableByTenant = Model.IsBookableByTenant,
+                            RequiresOccupancy = Model.RequiresOccupancy,
                             EstimatedDurationMinutes =
                                 Model.EstimatedDurationMinutes,
                             IsActive = Model.IsActive,
@@ -250,6 +265,8 @@
         public bool RequiresApproval { get; set; }
 
         public bool IsBookableByTenant { get; set; } = true;
+
+        public bool RequiresOccupancy { get; set; } = true;
 
         public int? EstimatedDurationMinutes { get; set; }
 
