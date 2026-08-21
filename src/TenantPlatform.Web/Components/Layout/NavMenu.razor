@@ -1,0 +1,152 @@
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+
+@if (UserContext.Current.IsAuthenticated)
+{
+    @if (permissions.CanSeeTenantPortal)
+    {
+        <div class="sidebar-section-title">
+            @L["Portal"]
+        </div>
+
+        <NavLink href="/portal/services"
+                 class="sidebar-link">
+            <i class="bi bi-grid"></i>
+            <span>@L["AvailableServices"]</span>
+        </NavLink>
+
+        @if (permissions.CanSeeMyRequests)
+        {
+            <NavLink href="/portal/requests"
+                     class="sidebar-link">
+                <i class="bi bi-list-check"></i>
+                <span>@L["MyServiceRequests"]</span>
+            </NavLink>
+        }
+
+        @if (permissions.CanSeeAllRequests)
+        {
+            <NavLink href="/admin/requests"
+                     class="sidebar-link">
+                <i class="bi bi-inboxes"></i>
+                <span>@L["AllServiceRequests"]</span>
+            </NavLink>
+        }
+    }
+
+    @if (permissions.CanSeeProviderPortal)
+    {
+        <div class="sidebar-section-title">
+            @L["Provider"]
+        </div>
+
+        <NavLink href="/provider/requests"
+                 class="sidebar-link">
+            <i class="bi bi-briefcase"></i>
+            <span>@L["AssignedRequests"]</span>
+        </NavLink>
+    }
+
+    @if (permissions.CanSeePropertyManagement)
+    {
+        <div class="sidebar-section-title">
+            @L["Property"]
+        </div>
+
+        @if (permissions.CanSeeBuildings)
+        {
+            <NavLink href="/buildings"
+                     class="sidebar-link">
+                <i class="bi bi-buildings"></i>
+                <span>@L["Buildings"]</span>
+            </NavLink>
+        }
+
+        @if (permissions.CanSeeUnits)
+        {
+            <NavLink href="/units"
+                     class="sidebar-link">
+                <i class="bi bi-diagram-3"></i>
+                <span>@L["Units"]</span>
+            </NavLink>
+        }
+
+        @if (permissions.CanSeeOccupancies)
+        {
+            <NavLink href="/occupancies"
+                     class="sidebar-link">
+                <i class="bi bi-people"></i>
+                <span>@L["Occupancies"]</span>
+            </NavLink>
+        }
+    }
+
+    @if (permissions.CanSeeAdministration)
+    {
+        <div class="sidebar-section-title">
+            @L["Administration"]
+        </div>
+
+        @if (permissions.CanSeeOrganizations)
+        {
+            <NavLink href="/organizations"
+                     class="sidebar-link">
+                <i class="bi bi-building"></i>
+                <span>@L["Organizations"]</span>
+            </NavLink>
+        }
+
+        @if (permissions.CanSeeUsers)
+        {
+            <NavLink href="/users"
+                     class="sidebar-link">
+                <i class="bi bi-person-gear"></i>
+                <span>@L["Users"]</span>
+            </NavLink>
+        }
+
+        @if (permissions.CanSeeServiceDefinitions)
+        {
+            <NavLink href="/service-definitions"
+                     class="sidebar-link">
+                <i class="bi bi-briefcase"></i>
+                <span>@L["ServiceDefinitions"]</span>
+            </NavLink>
+        }
+    }
+
+    @if (permissions.CanSeePlatformAdministration)
+    {
+        <div class="sidebar-section-title">
+            @L["Platform"]
+        </div>
+
+        @if (permissions.CanSeeAccounts)
+        {
+            <NavLink href="/accounts"
+                     class="sidebar-link">
+                <i class="bi bi-hdd-network"></i>
+                <span>@L["Accounts"]</span>
+            </NavLink>
+        }
+    }
+}
+
+@code {
+    private NavigationPermissions permissions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserContext.Current.IsAuthenticated)
+        {
+            return;
+        }
+
+        permissions =
+            await AuthorizationService
+                .GetNavigationPermissionsAsync();
+    }
+}

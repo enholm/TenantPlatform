@@ -10,6 +10,8 @@ public class CurrentUserContext
 
     public bool IsAuthenticated { get; init; }
 
+    public bool IsPlatformAdmin { get; init; }
+
     public Guid? CurrentAccountId { get; set; }
 
     public string? CurrentAccountName { get; init; }

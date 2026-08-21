@@ -88,6 +88,8 @@ public static class SeedIds
     public static readonly Guid ServiceProviderDemoUser =
         Guid.Parse("60000000-0000-0000-0000-000000000004");
 
+    public static readonly Guid MortenEnholm =
+        Guid.Parse("60000000-0000-0000-0000-000000000005");
 
     // ============================================================
     // User roles
@@ -138,6 +140,9 @@ public static class SeedIds
 
     public static readonly Guid ServiceProviderLoginAccount =
         Guid.Parse("72000000-0000-0000-0000-000000000004");
+
+    public static readonly Guid MortenLoginAccount =
+        Guid.Parse("72000000-0000-0000-0000-000000000005");
 
 
     // ============================================================

@@ -15,6 +15,7 @@ public class User
     public string PreferredLanguage { get; set; } = SupportedLanguages.NbNo;
 
     public bool IsActive { get; set; } = true;
+    public bool IsPlatformAdmin { get; set; }
     public LoginAccount? LoginAccount { get; set; }
 
     public ICollection<UserAccount> Accounts { get; set; }

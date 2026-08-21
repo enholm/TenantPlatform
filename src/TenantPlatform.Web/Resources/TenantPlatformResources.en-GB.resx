@@ -882,4 +882,33 @@
 <data name="ServiceRequestCompletionNotAllowed" xml:space="preserve">
   <value>You don't have the privileges to complete this request.</value>
 </data>
+
+<data name="Portal" xml:space="preserve">
+  <value>Portal</value>
+</data>
+
+<data name="Provider" xml:space="preserve">
+  <value>Provider</value>
+</data>
+
+<data name="Property" xml:space="preserve">
+  <value>Property</value>
+</data>
+
+<data name="Administration" xml:space="preserve">
+  <value>Administration</value>
+</data>
+
+<data name="Platform" xml:space="preserve">
+  <value>Platform</value>
+</data>
+
+<data name="AssignedRequests" xml:space="preserve">
+  <value>Assigned requests</value>
+</data>
+
+<data name="AllServiceRequests" xml:space="preserve">
+  <value>All requests</value>
+</data>
+
 </root>

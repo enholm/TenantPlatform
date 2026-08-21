@@ -28,6 +28,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(10)
             .IsRequired();
 
+        builder.Property(x => x.IsPlatformAdmin)
+            .IsRequired();
+
         builder.Property(x => x.IsActive)
             .IsRequired();
 

@@ -121,4 +121,10 @@ public interface ITenantAuthorizationService
         Guid requestId,
         CancellationToken cancellationToken = default);
 
+    /***************************************************************
+     **                     Navigationmenu.                       **
+     ***************************************************************/
+    Task<NavigationPermissions> GetNavigationPermissionsAsync(
+        CancellationToken cancellationToken = default);
+
 }

@@ -1,0 +1,12 @@
+
+
+.sidebar-section-title {
+    padding: 1rem 0.85rem 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--tp-sidebar-text);
+    opacity: 0.65;
+}
+

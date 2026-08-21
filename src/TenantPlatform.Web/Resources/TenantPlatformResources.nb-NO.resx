@@ -884,4 +884,32 @@
   <value>Du har ikke tilgang til å fullføre denne bestillingen.</value>
 </data>
 
+<data name="Portal" xml:space="preserve">
+  <value>Portal</value>
+</data>
+
+<data name="Provider" xml:space="preserve">
+  <value>Leverandør</value>
+</data>
+
+<data name="Property" xml:space="preserve">
+  <value>Eiendom</value>
+</data>
+
+<data name="Administration" xml:space="preserve">
+  <value>Administrasjon</value>
+</data>
+
+<data name="Platform" xml:space="preserve">
+  <value>Plattform</value>
+</data>
+
+<data name="AssignedRequests" xml:space="preserve">
+  <value>Tildelte bestillinger</value>
+</data>
+
+<data name="AllServiceRequests" xml:space="preserve">
+  <value>Alle bestillinger</value>
+</data>
+
 </root>

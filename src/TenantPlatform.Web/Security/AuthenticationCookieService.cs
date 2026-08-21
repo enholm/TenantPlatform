@@ -28,7 +28,11 @@ public class AuthenticationCookieService
 
             new(
                 ClaimTypes.Name,
-                $"{user.FirstName} {user.LastName}")
+                $"{user.FirstName} {user.LastName}"),
+
+            new(
+                TenantPlatformClaimTypes.IsPlatformAdmin,
+                user.IsPlatformAdmin.ToString())
         };
 
         if (currentAccountId.HasValue)

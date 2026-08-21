@@ -928,6 +928,51 @@ public static class DemoDataInitializer
         dbContext.LoginAccounts.Add(oleLoginAccount);
     }
 
+    if (!await dbContext.LoginAccounts.AnyAsync(
+            x => x.Id == SeedIds.KariLoginAccount,
+            cancellationToken))
+    {
+        var kariLoginAccount = new LoginAccount
+        {
+            Id = SeedIds.KariLoginAccount,
+            UserId = SeedIds.KariHansen,
+            Email = "kari@contoso.example",
+            IsEnabled = true,
+            FailedLoginCount = 0,
+            CreatedUtc = DateTimeOffset.UtcNow
+        };
+
+        kariLoginAccount.PasswordHash =
+            passwordService.HashPassword(
+                kariLoginAccount,
+                "ChangeMe123!");
+
+        dbContext.LoginAccounts.Add(kariLoginAccount);
+    }
+
+    if (!await dbContext.LoginAccounts.AnyAsync(
+            x => x.Id == SeedIds.MortenLoginAccount,
+            cancellationToken))
+    {
+        var mortenLoginAccount = new LoginAccount
+        {
+            Id = SeedIds.MortenLoginAccount,
+            UserId = SeedIds.MortenEnholm,
+            Email = "enholm@me.com",
+            IsEnabled = true,
+            FailedLoginCount = 0,
+            CreatedUtc = DateTimeOffset.UtcNow
+        };
+
+        mortenLoginAccount.PasswordHash =
+            passwordService.HashPassword(
+                mortenLoginAccount,
+                "JallaBalla24");
+
+        dbContext.LoginAccounts.Add(mortenLoginAccount);
+    }
+
+
     await dbContext.SaveChangesAsync(cancellationToken);
 }
 
@@ -945,6 +990,7 @@ public static class DemoDataInitializer
                 Email = "per@nordicproperty.example",
                 FirstName = "Per",
                 LastName = "Pedersen",
+                IsPlatformAdmin = false,
                 PreferredLanguage = SupportedLanguages.NbNo,
                 IsActive = true
             });
@@ -960,6 +1006,7 @@ public static class DemoDataInitializer
                 Email = "ole@acme.example",
                 FirstName = "Ole",
                 LastName = "Olsen",
+                IsPlatformAdmin = false,
                 PreferredLanguage = SupportedLanguages.NbNo,
                 IsActive = true
             });
@@ -975,6 +1022,23 @@ public static class DemoDataInitializer
                 Email = "kari@contoso.example",
                 FirstName = "Kari",
                 LastName = "Hansen",
+                IsPlatformAdmin = false,
+                PreferredLanguage = SupportedLanguages.EnGb,
+                IsActive = true
+            });
+        }
+
+        if (!await dbContext.Users.AnyAsync(
+                x => x.Id == SeedIds.MortenEnholm,
+                cancellationToken))
+        {
+            dbContext.Users.Add(new User
+            {
+                Id = SeedIds.MortenEnholm,
+                Email = "enholm@me.com",
+                FirstName = "Morten",
+                LastName = "Enholm",
+                IsPlatformAdmin = true,
                 PreferredLanguage = SupportedLanguages.EnGb,
                 IsActive = true
             });

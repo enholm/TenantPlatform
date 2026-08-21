@@ -212,6 +212,19 @@ app.MapPost("/auth/login", async (
         .Select(x => x.AccountId)
         .ToListAsync(cancellationToken);
 
+    if (user.IsPlatformAdmin && accountIds.Count == 0)
+    {
+        await cookieService.SignInAsync(
+            httpContext,
+            user,
+            currentAccountId: null,
+            rememberMe);
+        cookieService.SetCulture(
+            httpContext,
+            user.PreferredLanguage);
+        return Results.Redirect("/accounts");
+    }
+
     if (accountIds.Count == 0)
     {
         return Results.Redirect(

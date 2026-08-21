@@ -674,4 +674,134 @@ public class TenantAuthorizationService
             requestId,
             cancellationToken);
     }
+
+    /***************************************************************
+     **                     Navigationmenu.                       **
+     ***************************************************************/
+    public async Task<NavigationPermissions> GetNavigationPermissionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser =
+            _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated)
+        {
+            return new NavigationPermissions();
+        }
+
+        var isPlatformAdmin =
+            currentUser.IsPlatformAdmin;
+
+        //
+        // Ingen Account valgt.
+        // En PlatformAdmin kan fortsatt bruke plattformfunksjonene.
+        //
+        if (!currentUser.CurrentAccountId.HasValue)
+        {
+            return new NavigationPermissions
+            {
+                CanSeePlatformAdministration =
+                    isPlatformAdmin,
+
+                CanSeeAccounts =
+                    isPlatformAdmin
+            };
+        }
+
+        var accountId =
+            currentUser.CurrentAccountId.Value;
+
+        var roles =
+            await _dbContext.UserAccountRoles
+                .AsNoTracking()
+                .Where(x =>
+                    x.UserAccount.UserId ==
+                        currentUser.UserId &&
+                    x.UserAccount.AccountId ==
+                        accountId)
+                .Select(x => x.Role)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+        var isAccountAdmin =
+            roles.Contains(UserRole.AccountAdmin);
+
+        var isPropertyAdmin =
+            roles.Contains(UserRole.PropertyAdmin);
+
+        var isTenantAdmin =
+            roles.Contains(UserRole.TenantAdmin);
+
+        var isTenantUser =
+            roles.Contains(UserRole.TenantUser);
+
+        var isServiceProviderUser =
+            roles.Contains(UserRole.ServiceProviderUser);
+
+        var canManageProperty =
+            isAccountAdmin ||
+            isPropertyAdmin;
+
+        var canAdminister =
+            isAccountAdmin;
+
+        var canUseTenantPortal =
+            isAccountAdmin ||
+            isPropertyAdmin ||
+            isTenantAdmin ||
+            isTenantUser;
+
+        return new NavigationPermissions
+        {
+            CanSeeTenantPortal =
+                canUseTenantPortal,
+
+            CanSeeProviderPortal =
+                isServiceProviderUser,
+
+            CanSeePropertyManagement =
+                canManageProperty,
+
+            CanSeeAdministration =
+                canAdminister,
+
+            //
+            // Dette kommer fra GLOBAL rolle,
+            // uavhengig av account-rollene.
+            //
+            CanSeePlatformAdministration =
+                isPlatformAdmin,
+
+            CanSeeMyRequests =
+                canUseTenantPortal,
+
+            CanSeeAssignedRequests =
+                isServiceProviderUser,
+
+            CanSeeAllRequests =
+                canManageProperty,
+
+            CanSeeBuildings =
+                canManageProperty,
+
+            CanSeeUnits =
+                canManageProperty,
+
+            CanSeeOccupancies =
+                canManageProperty,
+
+            CanSeeOrganizations =
+                canAdminister,
+
+            CanSeeUsers =
+                canAdminister,
+
+            CanSeeServiceDefinitions =
+                canAdminister,
+
+            CanSeeAccounts =
+                isPlatformAdmin
+        };
+    }
+
 }

@@ -42,6 +42,13 @@ public class CurrentUserContextService : ICurrentUserContextService
             return new CurrentUserContext();
         }
 
+        var isPlatformAdmin =
+            bool.TryParse(
+                principal.FindFirstValue(
+                    TenantPlatformClaimTypes.IsPlatformAdmin),
+                out var parsedIsPlatformAdmin)
+            && parsedIsPlatformAdmin;
+
         return new CurrentUserContext
         {
             IsAuthenticated = true,
@@ -55,6 +62,9 @@ public class CurrentUserContextService : ICurrentUserContextService
             FullName =
                 principal.FindFirstValue(
                     ClaimTypes.Name) ?? string.Empty,
+
+            IsPlatformAdmin =
+                isPlatformAdmin,
 
             CurrentAccountId =
                 Guid.TryParse(
