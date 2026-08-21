@@ -28,6 +28,10 @@ public class ServiceRequestDetailsDto
 
     public string? UnitName { get; init; }
 
+    public Guid? AssignedServiceProviderOrganizationId { get; init; }
+
+    public string? AssignedServiceProviderOrganizationName { get; init; }
+
     public ServiceRequestStatus Status { get; init; }
 
     public DateTimeOffset CreatedAt { get; init; }

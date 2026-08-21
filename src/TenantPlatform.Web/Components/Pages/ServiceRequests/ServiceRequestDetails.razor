@@ -216,7 +216,14 @@ else
                             <dt>@L["Unit"]</dt>
                             <dd>@request.UnitName</dd>
                         }
-
+                        @if (!string.IsNullOrWhiteSpace(
+                            request.AssignedServiceProviderOrganizationName))
+                        {
+                            <dt>@L["Provider"]</dt>
+                            <dd>
+                                @request.AssignedServiceProviderOrganizationName
+                            </dd>
+                        }
                         <dt>@L["Created"]</dt>
                         <dd>
                             @(request.CreatedAt

@@ -911,4 +911,8 @@
   <value>All requests</value>
 </data>
 
+<data name="ServiceRequestEvent_Assigned" xml:space="preserve">
+  <value>Request assigned to provider</value>
+</data>
+
 </root>

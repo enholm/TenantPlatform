@@ -623,6 +623,20 @@ public class ServiceRequestService : IServiceRequestService
             return null;
         }
 
+        string? providerName = null;
+
+        if (request.Request.AssignedServiceProviderOrganizationId.HasValue)
+        {
+            providerName =
+                await dbContext.Organizations
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.Id ==
+                        request.Request.AssignedServiceProviderOrganizationId.Value)
+                    .Select(x => x.Name)
+                    .SingleOrDefaultAsync(cancellationToken);
+        }
+
         //
         // Authorization
         //
@@ -829,6 +843,12 @@ public class ServiceRequestService : IServiceRequestService
             UnitName =
                 request.UnitName,
 
+            AssignedServiceProviderOrganizationId =
+                request.Request.AssignedServiceProviderOrganizationId,
+
+            AssignedServiceProviderOrganizationName =
+                providerName,
+
             Status =
                 request.Request.Status,
 
@@ -899,6 +919,35 @@ public class ServiceRequestService : IServiceRequestService
         }
 
         request.Status = ServiceRequestStatus.Approved;
+
+        var defaultProvider =
+            await dbContext.ServiceDefinitionProviders
+                .AsNoTracking()
+                .Where(x =>
+                    x.ServiceDefinitionId == request.ServiceDefinitionId &&
+                    x.AccountId == accountId &&
+                    x.IsActive &&
+                    x.IsDefault)
+                .SingleOrDefaultAsync(cancellationToken);
+
+        if (defaultProvider is not null)
+        {
+            request.AssignedServiceProviderOrganizationId =
+                defaultProvider.ServiceProviderOrganizationId;
+
+            dbContext.ServiceRequestMessages.Add(
+                new ServiceRequestMessage
+                {
+                    Id = Guid.NewGuid(),
+                    ServiceRequestId = request.Id,
+                    Direction = ServiceRequestMessageDirection.Outbound,
+                    Type = ServiceRequestMessageType.System,
+                    EventType = ServiceRequestEventType.Assigned,
+                    CreatedByUserId = userId,
+                    Body = "Service request assigned to provider.",
+                    CreatedAt = DateTimeOffset.UtcNow
+                });
+        }
 
         dbContext.ServiceRequestMessages.Add(
             new ServiceRequestMessage

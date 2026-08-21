@@ -912,4 +912,8 @@
   <value>Alle bestillinger</value>
 </data>
 
+<data name="ServiceRequestEvent_Assigned" xml:space="preserve">
+  <value>Bestillingen ble tildelt leverandør</value>
+</data>
+
 </root>
