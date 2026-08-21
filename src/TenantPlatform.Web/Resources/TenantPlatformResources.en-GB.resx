@@ -787,4 +787,99 @@
   <value>The selected occupancy is not valid.</value>
 </data>
 
+<data name="MyServiceRequests" xml:space="preserve">
+  <value>My requests</value>
+</data>
+
+<data name="MyServiceRequestsDescription" xml:space="preserve">
+  <value>Service requests you have created.</value>
+</data>
+
+<data name="NewServiceRequest" xml:space="preserve">
+  <value>New request</value>
+</data>
+
+<data name="NoServiceRequests" xml:space="preserve">
+  <value>You have no service requests yet.</value>
+</data>
+
+<data name="ServiceRequest" xml:space="preserve">
+  <value>Service request</value>
+</data>
+
+<data name="ServiceRequestNotFound" xml:space="preserve">
+  <value>The request could not be found or you do not have access to it.</value>
+</data>
+
+<data name="RequestDetails" xml:space="preserve">
+  <value>Request details</value>
+</data>
+
+<data name="RequestInformation" xml:space="preserve">
+  <value>Request information</value>
+</data>
+
+<data name="NoRequestValues" xml:space="preserve">
+  <value>The request contains no additional information.</value>
+</data>
+
+<data name="Activity" xml:space="preserve">
+  <value>Activity</value>
+</data>
+
+<data name="NoActivity" xml:space="preserve">
+  <value>No activity has been recorded.</value>
+</data>
+
+<data name="Submitted" xml:space="preserve">
+  <value>Submitted</value>
+</data>
+
+<data name="ServiceRequestStatus_Submitted" xml:space="preserve">
+  <value>Submitted</value>
+</data>
+
+<data name="ServiceRequestEvent_Submitted" xml:space="preserve">
+  <value>Request submitted</value>
+</data>
+
+<data name="Comment" xml:space="preserve">
+  <value>Comment</value>
+</data>
+
+<data name="Created" xml:space="preserve">
+  <value>Created</value>
+</data>
+
+<data name="Approve" xml:space="preserve">
+  <value>Godkjenn</value>
+</data>
+
+<data name="Complete" xml:space="preserve">
+  <value>Complete</value>
+</data>
+
+<data name="ServiceRequestStatus_Approved" xml:space="preserve">
+  <value>Approved</value>
+</data>
+
+<data name="ServiceRequestStatus_Completed" xml:space="preserve">
+  <value>Completed</value>
+</data>
+
+<data name="ServiceRequestEvent_Approved" xml:space="preserve">
+  <value>Service request approved</value>
+</data>
+
+<data name="ServiceRequestEvent_Completed" xml:space="preserve">
+  <value>Service request completed</value>
+</data>
+
+<data name="ServiceRequestApprovalNotAllowed" xml:space="preserve">
+  <value>You don't have the privileges to approve this request.</value>
+</data>
+
+<data name="ServiceRequestCompletionNotAllowed" xml:space="preserve">
+  <value>You don't have the privileges to complete this request.</value>
+</data>
 </root>

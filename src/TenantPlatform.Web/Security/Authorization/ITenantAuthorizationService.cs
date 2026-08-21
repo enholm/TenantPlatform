@@ -110,4 +110,15 @@ public interface ITenantAuthorizationService
         Guid serviceDefinitionId,
         CancellationToken cancellationToken = default);
 
+    /***************************************************************
+     **                     ServiceRequests.                      **
+     ***************************************************************/
+    Task<bool> CanApproveServiceRequestAsync(
+        Guid requestId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanCompleteServiceRequestAsync(
+        Guid requestId,
+        CancellationToken cancellationToken = default);
+
 }

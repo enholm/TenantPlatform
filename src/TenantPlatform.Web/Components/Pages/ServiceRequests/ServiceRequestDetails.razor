@@ -1,0 +1,446 @@
+@page "/portal/requests/{Id:guid}"
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Services
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceRequests
+@using TenantPlatform.Web.Security.Authorization
+@inject IServiceRequestService ServiceRequestService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ITenantAuthorizationService AuthorizationService
+
+<PageTitle>@(request?.ServiceName ?? L["ServiceRequest"])</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (request is null)
+{
+    <div class="alert alert-warning">
+        @L["ServiceRequestNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="/portal/requests"
+           class="text-decoration-none">
+            ← @L["MyServiceRequests"]
+        </a>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="mb-1">
+                @request.ServiceName
+            </h1>
+
+            <div class="text-body-secondary">
+                @request.RequesterOrganizationName
+                ·
+                @request.BuildingName
+
+                @if (!string.IsNullOrWhiteSpace(request.UnitName))
+                {
+                    <span>
+                        · @request.UnitName
+                    </span>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+
+            @if (canApprove)
+            {
+                <button type="button"
+                        class="btn btn-success"
+                        disabled="@isProcessing"
+                        @onclick="ApproveAsync">
+
+                    @if (isProcessing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-check-lg me-2"></i>
+                    }
+                    @L["Approve"]
+                </button>
+            }
+
+            @if (canComplete)
+            {
+                <button type="button"
+                        class="btn btn-success"
+                        disabled="@isProcessing"
+                        @onclick="CompleteAsync">
+
+                    @if (isProcessing)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-check-circle me-1"></i>
+                    }
+                    @L["Complete"]
+                </button>
+            }
+
+            <span class="badge text-bg-secondary fs-6">
+                @GetStatusText(request.Status)
+            </span>
+
+        </div>
+
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(actionError))
+    {
+        <div class="alert alert-danger mb-4">
+            @L[actionError]
+        </div>
+    }                
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    @L["RequestDetails"]
+                </div>
+
+                <div class="card-body">
+                    @if (request.Values.Count == 0)
+                    {
+                        <span class="text-body-secondary">
+                            @L["NoRequestValues"]
+                        </span>
+                    }
+                    else
+                    {
+                        <dl class="row mb-0">
+                            @foreach (var value in request.Values)
+                            {
+                                <dt class="col-sm-4">
+                                    @value.Label
+                                </dt>
+
+                                <dd class="col-sm-8">
+                                    @GetDisplayValue(value)
+                                </dd>
+                            }
+                        </dl>
+                    }
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    @L["Activity"]
+                </div>
+
+                <div class="card-body">
+
+                    @if (request.Messages.Count == 0)
+                    {
+                        <div class="text-body-secondary">
+                            @L["NoActivity"]
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var message in request.Messages)
+                        {
+                            <div class="d-flex gap-3 mb-4">
+
+                                <div>
+                                    <i class="@GetMessageIcon(message) fs-5"></i>
+                                </div>
+
+                                <div class="flex-grow-1">
+
+                                    <div class="fw-semibold">
+                                        @GetMessageTitle(message)
+                                    </div>
+
+                                    <div class="small text-body-secondary mb-1">
+                                        @(message.CreatedAt
+                                            .ToLocalTime()
+                                            .ToString("g"))
+                                    </div>
+
+                                    @if (message.Type != ServiceRequestMessageType.System &&
+                                        !string.IsNullOrWhiteSpace(message.Body))
+                                    {
+                                        <div>
+                                            @message.Body
+                                        </div>
+                                    }
+
+                                </div>
+                            </div>
+                        }
+                    }
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card">
+                <div class="card-header">
+                    @L["RequestInformation"]
+                </div>
+
+                <div class="card-body">
+                    <dl class="mb-0">
+
+                        <dt>@L["Organization"]</dt>
+                        <dd>@request.RequesterOrganizationName</dd>
+
+                        <dt>@L["Building"]</dt>
+                        <dd>@request.BuildingName</dd>
+
+                        @if (!string.IsNullOrWhiteSpace(request.UnitName))
+                        {
+                            <dt>@L["Unit"]</dt>
+                            <dd>@request.UnitName</dd>
+                        }
+
+                        <dt>@L["Created"]</dt>
+                        <dd>
+                            @(request.CreatedAt
+                                .ToLocalTime()
+                                .ToString("g"))
+                        </dd>
+
+                        @if (request.SubmittedAt.HasValue)
+                        {
+                            <dt>@L["Submitted"]</dt>
+                            <dd>
+                                @(request.SubmittedAt.Value
+                                    .ToLocalTime()
+                                    .ToString("g"))
+                            </dd>
+                        }
+
+                    </dl>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private ServiceRequestDetailsDto? request;
+
+    private bool isLoading = true;
+    private bool canApprove;
+    private bool canComplete;
+    private bool isProcessing;
+    private string? actionError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        await ReloadAsync();
+
+        isLoading = false;
+    }
+
+    private string GetStatusText(ServiceRequestStatus status)
+    {
+        return L[$"ServiceRequestStatus_{status}"];
+    }
+
+    private string GetDisplayValue(
+        ServiceRequestFieldValueDto value)
+    {
+        if (string.IsNullOrWhiteSpace(value.Value))
+        {
+            return "-";
+        }
+
+        if (value.FieldType == ServiceFieldType.Boolean)
+        {
+            return string.Equals(
+                value.Value,
+                "true",
+                StringComparison.OrdinalIgnoreCase)
+                ? L["Yes"]
+                : L["No"];
+        }
+
+        if (value.FieldType == ServiceFieldType.MultiChoice)
+        {
+            return value.Value.Replace(",", ", ");
+        }
+
+        return value.Value;
+    }
+
+    private string GetMessageTitle(
+        ServiceRequestMessageDto message)
+    {
+        if (message.Type == ServiceRequestMessageType.System &&
+            message.EventType.HasValue)
+        {
+            return L[
+                $"ServiceRequestEvent_{message.EventType.Value}"];
+        }
+
+        return message.Type switch
+        {
+            ServiceRequestMessageType.Email =>
+                L["Email"],
+
+            ServiceRequestMessageType.Comment =>
+                L["Comment"],
+
+            _ =>
+                L["Activity"]
+        };
+    }
+
+    private static string GetMessageIcon(
+        ServiceRequestMessageDto message)
+    {
+        if (message.Type == ServiceRequestMessageType.Email)
+        {
+            return "bi bi-envelope";
+        }
+
+        if (message.Type == ServiceRequestMessageType.Comment)
+        {
+            return "bi bi-chat-left-text";
+        }
+
+        return "bi bi-check-circle";
+    }
+
+
+    private async Task ApproveAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        actionError = null;
+        isProcessing = true;
+
+        try
+        {
+            await ServiceRequestService
+                .ApproveRequestAsync(
+                    accountId.Value,
+                    Id,
+                    UserContext.Current.UserId);
+
+            await ReloadAsync();
+        }
+        catch (ServiceRequestValidationException ex)
+        {
+            actionError = ex.Message;
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+    private async Task CompleteAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        actionError = null;
+        isProcessing = true;
+
+        try
+        {
+            await ServiceRequestService
+                .CompleteRequestAsync(
+                    accountId.Value,
+                    Id,
+                    UserContext.Current.UserId);
+
+            await ReloadAsync();
+        }
+        catch (ServiceRequestValidationException ex)
+        {
+            actionError = ex.Message;
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        request =
+            await ServiceRequestService
+                .GetRequestAsync(
+                    accountId.Value,
+                    Id,
+                    UserContext.Current.UserId,
+                    CultureInfo.CurrentUICulture.Name);
+
+        if (request is null)
+        {
+            canApprove = false;
+            canComplete = false;
+            return;
+        }
+
+        canApprove =
+            request.Status == ServiceRequestStatus.Submitted &&
+            await AuthorizationService
+                .CanApproveServiceRequestAsync(Id);
+
+        canComplete =
+            request.Status == ServiceRequestStatus.Approved &&
+            await AuthorizationService
+                .CanCompleteServiceRequestAsync(Id);
+    }
+
+}
+

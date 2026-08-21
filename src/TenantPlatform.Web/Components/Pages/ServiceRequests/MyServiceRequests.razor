@@ -1,0 +1,148 @@
+@page "/portal/requests"
+@attribute [Authorize]
+
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceRequests
+
+@inject IServiceRequestService ServiceRequestService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@L["MyServiceRequests"]</PageTitle>
+
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1>@L["MyServiceRequests"]</h1>
+
+        <p class="text-body-secondary mb-0">
+            @L["MyServiceRequestsDescription"]
+        </p>
+    </div>
+
+    <a href="/portal/services"
+       class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>
+        @L["NewServiceRequest"]
+    </a>
+</div>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (requests.Count == 0)
+{
+    <div class="alert alert-info">
+        @L["NoServiceRequests"]
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@L["Service"]</th>
+                        <th>@L["Location"]</th>
+                        <th>@L["Organization"]</th>
+                        <th>@L["Status"]</th>
+                        <th>@L["Submitted"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var request in requests)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">
+                                    @request.ServiceName
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    request.Category))
+                                {
+                                    <div class="small text-body-secondary">
+                                        @request.Category
+                                    </div>
+                                }
+                            </td>
+
+                            <td>
+                                @request.BuildingName
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                    request.UnitName))
+                                {
+                                    <span>
+                                        — @request.UnitName
+                                    </span>
+                                }
+                            </td>
+
+                            <td>
+                                @request.RequesterOrganizationName
+                            </td>
+
+                            <td>
+                                <span class="badge text-bg-secondary">
+                                    @GetStatusText(request.Status)
+                                </span>
+                            </td>
+
+                            <td>
+                                @((request.SubmittedAt ??
+                                  request.CreatedAt)
+                                    .ToLocalTime()
+                                    .ToString("g"))
+                            </td>
+
+                            <td class="text-end">
+                                <a href="@($"/portal/requests/{request.Id}")"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    @L["Open"]
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+
+    private List<ServiceRequestListItemDto> requests = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        requests =
+            await ServiceRequestService.GetMyRequestsAsync(
+                accountId.Value,
+                UserContext.Current.UserId,
+                CultureInfo.CurrentUICulture.Name);
+
+        isLoading = false;
+    }
+
+    private string GetStatusText(
+        TenantPlatform.Core.Services.ServiceRequestStatus status)
+    {
+        return L[$"ServiceRequestStatus_{status}"];
+    }
+}
+

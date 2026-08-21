@@ -788,4 +788,100 @@
   <value>Det valgte leieforholdet er ikke gyldig.</value>
 </data>
 
+<data name="MyServiceRequests" xml:space="preserve">
+  <value>Mine bestillinger</value>
+</data>
+
+<data name="MyServiceRequestsDescription" xml:space="preserve">
+  <value>Oversikt over tjenestebestillinger du har opprettet.</value>
+</data>
+
+<data name="NewServiceRequest" xml:space="preserve">
+  <value>Ny bestilling</value>
+</data>
+
+<data name="NoServiceRequests" xml:space="preserve">
+  <value>Du har ingen tjenestebestillinger ennå.</value>
+</data>
+
+<data name="ServiceRequest" xml:space="preserve">
+  <value>Tjenestebestilling</value>
+</data>
+
+<data name="ServiceRequestNotFound" xml:space="preserve">
+  <value>Bestillingen ble ikke funnet, eller du har ikke tilgang til den.</value>
+</data>
+
+<data name="RequestDetails" xml:space="preserve">
+  <value>Bestillingsdetaljer</value>
+</data>
+
+<data name="RequestInformation" xml:space="preserve">
+  <value>Bestillingsinformasjon</value>
+</data>
+
+<data name="NoRequestValues" xml:space="preserve">
+  <value>Bestillingen inneholder ingen ekstra opplysninger.</value>
+</data>
+
+<data name="Activity" xml:space="preserve">
+  <value>Aktivitet</value>
+</data>
+
+<data name="NoActivity" xml:space="preserve">
+  <value>Ingen aktivitet er registrert.</value>
+</data>
+
+<data name="Submitted" xml:space="preserve">
+  <value>Sendt inn</value>
+</data>
+
+<data name="ServiceRequestStatus_Submitted" xml:space="preserve">
+  <value>Sendt inn</value>
+</data>
+
+<data name="ServiceRequestEvent_Submitted" xml:space="preserve">
+  <value>Bestillingen ble sendt inn</value>
+</data>
+
+<data name="Comment" xml:space="preserve">
+  <value>Kommentar</value>
+</data>
+
+<data name="Created" xml:space="preserve">
+  <value>Opprettet</value>
+</data>
+
+<data name="Approve" xml:space="preserve">
+  <value>Godkjenn</value>
+</data>
+
+<data name="Complete" xml:space="preserve">
+  <value>Fullfør</value>
+</data>
+
+<data name="ServiceRequestStatus_Approved" xml:space="preserve">
+  <value>Godkjent</value>
+</data>
+
+<data name="ServiceRequestStatus_Completed" xml:space="preserve">
+  <value>Fullført</value>
+</data>
+
+<data name="ServiceRequestEvent_Approved" xml:space="preserve">
+  <value>Bestillingen ble godkjent</value>
+</data>
+
+<data name="ServiceRequestEvent_Completed" xml:space="preserve">
+  <value>Bestillingen ble fullført</value>
+</data>
+
+<data name="ServiceRequestApprovalNotAllowed" xml:space="preserve">
+  <value>Du har ikke tilgang til å godkjenne denne bestillingen.</value>
+</data>
+
+<data name="ServiceRequestCompletionNotAllowed" xml:space="preserve">
+  <value>Du har ikke tilgang til å fullføre denne bestillingen.</value>
+</data>
+
 </root>

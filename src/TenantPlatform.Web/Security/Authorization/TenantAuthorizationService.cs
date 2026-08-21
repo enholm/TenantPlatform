@@ -624,4 +624,54 @@ public class TenantAuthorizationService
         return false;
     }
 
+
+
+    /***************************************************************
+     **                     ServiceRequests.                      **
+     ***************************************************************/
+    public async Task<bool> CanApproveServiceRequestAsync(
+        Guid requestId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId = currentUser.CurrentAccountId.Value;
+
+        var requestExists =
+            await _dbContext.ServiceRequests
+                .AsNoTracking()
+                .AnyAsync(
+                    x =>
+                        x.Id == requestId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (!requestExists)
+        {
+            return false;
+        }
+
+        return await HasRoleAsync(
+                UserRole.AccountAdmin,
+                cancellationToken)
+            ||
+            await HasRoleAsync(
+                UserRole.PropertyAdmin,
+                cancellationToken);
+    }
+
+    public async Task<bool> CanCompleteServiceRequestAsync(
+        Guid requestId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanApproveServiceRequestAsync(
+            requestId,
+            cancellationToken);
+    }
 }
