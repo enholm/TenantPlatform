@@ -90,6 +90,8 @@ public static class SeedIds
 
     public static readonly Guid MortenEnholm =
         Guid.Parse("60000000-0000-0000-0000-000000000005");
+    public static readonly Guid BravidaService =
+        Guid.Parse("60000000-0000-0000-0000-000000000006");
 
     // ============================================================
     // User roles
@@ -124,6 +126,8 @@ public static class SeedIds
     public static readonly Guid ServiceProviderNordicPropertyUserAccount =
         Guid.Parse("71000000-0000-0000-0000-000000000004");
 
+    public static readonly Guid BravidaServiceProviderUserAccount =
+        Guid.Parse("71000000-0000-0000-0000-000000000005");
 
     // ============================================================
     // Login accounts
@@ -144,6 +148,8 @@ public static class SeedIds
     public static readonly Guid MortenLoginAccount =
         Guid.Parse("72000000-0000-0000-0000-000000000005");
 
+    public static readonly Guid BravidaServiceLoginAccount =
+        Guid.Parse("72000000-0000-0000-0000-000000000006");
 
     // ============================================================
     // Account admin roles

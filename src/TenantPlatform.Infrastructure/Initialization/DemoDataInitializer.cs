@@ -56,6 +56,7 @@ public static class DemoDataInitializer
                 cancellationToken);
             await SeedLoginAccountsAsync(dbContext, passwordService, cancellationToken);
             await SeedUsersAsync(dbContext, cancellationToken);
+            await SeedUserAccountsAsync(dbContext, cancellationToken);
             await SeedUserRolesAsync(dbContext, cancellationToken);
 
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -972,6 +973,28 @@ public static class DemoDataInitializer
         dbContext.LoginAccounts.Add(mortenLoginAccount);
     }
 
+    if (!await dbContext.LoginAccounts.AnyAsync(
+            x => x.Id == SeedIds.BravidaServiceLoginAccount,
+            cancellationToken))
+    {
+        var bravidaLoginAccount = new LoginAccount
+        {
+            Id = SeedIds.BravidaServiceLoginAccount,
+            UserId = SeedIds.BravidaService,
+            Email = "service@magida.org",
+            IsEnabled = true,
+            FailedLoginCount = 0,
+            CreatedUtc = DateTimeOffset.UtcNow
+        };
+
+        bravidaLoginAccount.PasswordHash =
+            passwordService.HashPassword(
+                bravidaLoginAccount,
+                "JallaBalla24");
+
+        dbContext.LoginAccounts.Add(bravidaLoginAccount);
+    }
+
 
     await dbContext.SaveChangesAsync(cancellationToken);
 }
@@ -1044,6 +1067,22 @@ public static class DemoDataInitializer
             });
         }
 
+        if (!await dbContext.Users.AnyAsync(
+                x => x.Id == SeedIds.BravidaService,
+                cancellationToken))
+        {
+            dbContext.Users.Add(new User
+            {
+                Id = SeedIds.BravidaService,
+                Email = "service@magida.org",
+                FirstName = "Bravida",
+                LastName = "Service",
+                IsPlatformAdmin = false,
+                PreferredLanguage = SupportedLanguages.NbNo,
+                IsActive = true
+            });
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -1099,6 +1138,19 @@ public static class DemoDataInitializer
                 UserAccountId = SeedIds.KariNordicPropertyUserAccount,
                 OrganizationId = SeedIds.ContosoOrganization,
                 Role = UserRole.TenantUser
+            });
+        }
+
+        if (!await dbContext.UserAccountRoles.AnyAsync(
+                x => x.Id == SeedIds.BravidaServiceProviderUserRole,
+                cancellationToken))
+        {
+            dbContext.UserAccountRoles.Add(new UserAccountRole
+            {
+                Id = SeedIds.BravidaServiceProviderUserRole,
+                UserAccountId = SeedIds.BravidaServiceProviderUserAccount,
+                OrganizationId = SeedIds.BravidaOrganization,
+                Role = UserRole.ServiceProviderUser
             });
         }
 
@@ -1224,4 +1276,58 @@ public static class DemoDataInitializer
         }
     }
    
+    private static async Task SeedUserAccountsAsync(
+    TenantPlatformDbContext dbContext,
+    CancellationToken cancellationToken)
+    {
+        if (!await dbContext.UserAccounts.AnyAsync(
+                x => x.Id == SeedIds.PerNordicPropertyUserAccount,
+                cancellationToken))
+        {
+            dbContext.UserAccounts.Add(new UserAccount
+            {
+                Id = SeedIds.PerNordicPropertyUserAccount,
+                UserId = SeedIds.PerPedersen,
+                AccountId = SeedIds.NordicPropertyAccount
+            });
+        }
+
+        if (!await dbContext.UserAccounts.AnyAsync(
+                x => x.Id == SeedIds.OleNordicPropertyUserAccount,
+                cancellationToken))
+        {
+            dbContext.UserAccounts.Add(new UserAccount
+            {
+                Id = SeedIds.OleNordicPropertyUserAccount,
+                UserId = SeedIds.OleOlsen,
+                AccountId = SeedIds.NordicPropertyAccount
+            });
+        }
+
+        if (!await dbContext.UserAccounts.AnyAsync(
+                x => x.Id == SeedIds.KariNordicPropertyUserAccount,
+                cancellationToken))
+        {
+            dbContext.UserAccounts.Add(new UserAccount
+            {
+                Id = SeedIds.KariNordicPropertyUserAccount,
+                UserId = SeedIds.KariHansen,
+                AccountId = SeedIds.NordicPropertyAccount
+            });
+        }
+
+        if (!await dbContext.UserAccounts.AnyAsync(
+                x => x.Id == SeedIds.BravidaServiceProviderUserAccount,
+                cancellationToken))
+        {
+            dbContext.UserAccounts.Add(new UserAccount
+            {
+                Id = SeedIds.BravidaServiceProviderUserAccount,
+                UserId = SeedIds.BravidaService,
+                AccountId = SeedIds.NordicPropertyAccount
+            });
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
 }
