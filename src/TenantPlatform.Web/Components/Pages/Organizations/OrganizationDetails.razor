@@ -10,6 +10,7 @@
 @inject IOrganizationService OrganizationService
 @inject ITenantAuthorizationService AuthorizationService
 @inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
 
 <PageTitle>@(organization?.Name ?? L["Organization"])</PageTitle>
 
@@ -162,6 +163,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageOrganizationsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+        
         var accountId =
             UserContext.Current.CurrentAccountId;
 
@@ -212,7 +219,7 @@ else
 
             OrganizationType.ServiceProvider =>
                 L["OrganizationType_ServiceProvider"],
-                
+
             _ => type.ToString()
         };
     }

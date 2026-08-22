@@ -669,9 +669,17 @@ public class ServiceRequestService : IServiceRequestService
                 x.OrganizationId ==
                     request.Request.RequesterOrganizationId);
 
+        var hasProviderAccess =
+            request.Request.AssignedServiceProviderOrganizationId.HasValue &&
+            roles.Any(x =>
+                x.Role == UserRole.ServiceProviderUser &&
+                x.OrganizationId ==
+                    request.Request.AssignedServiceProviderOrganizationId);
+
         if (!isAdministrator &&
             !isRequester &&
-            !hasTenantAccess)
+            !hasTenantAccess &&
+            !hasProviderAccess)
         {
             return null;
         }
@@ -1031,6 +1039,132 @@ public class ServiceRequestService : IServiceRequestService
             });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<List<ServiceRequestListItemDto>> GetAssignedRequestsAsync(
+        Guid accountId,
+        Guid userId,
+        string languageCode,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var providerOrganizationIds =
+            await dbContext.UserAccountRoles
+                .AsNoTracking()
+                .Where(x =>
+                    x.UserAccount.UserId == userId &&
+                    x.UserAccount.AccountId == accountId &&
+                    x.Role == UserRole.ServiceProviderUser &&
+                    x.OrganizationId.HasValue)
+                .Select(x => x.OrganizationId!.Value)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+        if (providerOrganizationIds.Count == 0)
+        {
+            return [];
+        }
+
+        var defaultLanguage =
+            await dbContext.Accounts
+                .AsNoTracking()
+                .Where(x => x.Id == accountId)
+                .Select(x => x.DefaultLanguage)
+                .SingleAsync(cancellationToken);
+
+        var requests =
+            await (
+                from request in dbContext.ServiceRequests.AsNoTracking()
+
+                join definition in dbContext.ServiceDefinitions.AsNoTracking()
+                    on request.ServiceDefinitionId equals definition.Id
+
+                join organization in dbContext.Organizations.AsNoTracking()
+                    on request.RequesterOrganizationId equals organization.Id
+
+                join building in dbContext.Buildings.AsNoTracking()
+                    on request.BuildingId equals building.Id
+
+                join unitJoin in dbContext.Units.AsNoTracking()
+                    on request.UnitId equals unitJoin.Id
+                    into units
+
+                from unit in units.DefaultIfEmpty()
+
+                where
+                    request.AccountId == accountId &&
+                    request.AssignedServiceProviderOrganizationId.HasValue &&
+                    providerOrganizationIds.Contains(
+                        request.AssignedServiceProviderOrganizationId.Value)
+
+                orderby request.CreatedAt descending
+
+                select new
+                {
+                    Request = request,
+                    Definition = definition,
+                    OrganizationName = organization.Name,
+                    BuildingName = building.Name,
+                    UnitName = unit != null ? unit.Name : null
+                })
+                .ToListAsync(cancellationToken);
+
+        if (requests.Count == 0)
+        {
+            return [];
+        }
+
+        var definitionIds =
+            requests
+                .Select(x => x.Definition.Id)
+                .Distinct()
+                .ToList();
+
+        var translations =
+            await dbContext.ServiceDefinitionTranslations
+                .AsNoTracking()
+                .Where(x =>
+                    definitionIds.Contains(x.ServiceDefinitionId))
+                .ToListAsync(cancellationToken);
+
+        return requests
+            .Select(x =>
+            {
+                var translation =
+                    TranslationHelper.Select(
+                        translations.Where(t =>
+                            t.ServiceDefinitionId == x.Definition.Id),
+                        t => t.LanguageCode,
+                        languageCode,
+                        defaultLanguage);
+
+                return new ServiceRequestListItemDto
+                {
+                    Id = x.Request.Id,
+                    ServiceName =
+                        translation?.Name ?? x.Definition.Code,
+                    Category =
+                        x.Definition.Category,
+                    RequesterOrganizationName =
+                        x.OrganizationName,
+                    BuildingName =
+                        x.BuildingName,
+                    UnitName =
+                        x.UnitName,
+                    Status =
+                        x.Request.Status,
+                    CreatedAt =
+                        x.Request.CreatedAt,
+                    SubmittedAt =
+                        x.Request.SubmittedAt,
+                    CompletedAt =
+                        x.Request.CompletedAt
+                };
+            })
+            .ToList();
     }
 
 }

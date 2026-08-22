@@ -26,6 +26,7 @@ using TenantPlatform.Core.Localization;
 using TenantPlatform.Web.Services.ServiceDefinitionFields;
 using TenantPlatform.Web.Services.ServiceCatalog;
 using TenantPlatform.Web.Services.ServiceRequests;
+using TenantPlatform.Core.Identity;
 
 
 
@@ -271,6 +272,30 @@ app.MapPost("/auth/login", async (
 
     if (selectedAccountId.HasValue)
     {
+        var roles = await dbContext.UserAccountRoles
+            .AsNoTracking()
+            .Where(x =>
+                x.UserAccount.UserId == user.Id &&
+                x.UserAccount.AccountId == selectedAccountId.Value)
+            .Select(x => x.Role)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        if (roles.Contains(UserRole.ServiceProviderUser) &&
+            !roles.Contains(UserRole.AccountAdmin) &&
+            !roles.Contains(UserRole.PropertyAdmin) &&
+            !roles.Contains(UserRole.TenantAdmin) &&
+            !roles.Contains(UserRole.TenantUser))
+        {
+            return Results.Redirect("/provider/requests");
+        }
+
+        if (roles.Contains(UserRole.TenantAdmin) ||
+            roles.Contains(UserRole.TenantUser))
+        {
+            return Results.Redirect("/portal/services");
+        }
+
         return Results.Redirect("/");
     }
 

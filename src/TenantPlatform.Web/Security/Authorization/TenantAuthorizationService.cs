@@ -19,28 +19,6 @@ public class TenantAuthorizationService
         _currentUserService = currentUserService;
     }
 
-    public async Task<bool> HasRoleAsync(
-        UserRole role,
-        CancellationToken cancellationToken = default)
-    {
-        var currentUser = _currentUserService.Current;
-
-        if (!currentUser.IsAuthenticated ||
-            !currentUser.CurrentAccountId.HasValue)
-        {
-            return false;
-        }
-
-        return await _dbContext.UserAccountRoles
-            .AnyAsync(
-                x =>
-                    x.UserAccount.UserId == currentUser.UserId &&
-                    x.UserAccount.AccountId == currentUser.CurrentAccountId.Value &&
-                    x.Role == role &&
-                    x.OrganizationId == null &&
-                    x.BuildingId == null,
-                cancellationToken);
-    }
 
     /***************************************************************
      **                         Buildings                         **
@@ -78,9 +56,9 @@ public class TenantAuthorizationService
     public async Task<bool> CanCreateBuildingAsync(
         CancellationToken cancellationToken = default)
     {
-        return await HasRoleAsync(
-            UserRole.AccountAdmin,
-            cancellationToken);
+        return await HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin);
     }
 
     public async Task<bool> CanEditBuildingAsync(
@@ -100,6 +78,27 @@ public class TenantAuthorizationService
             buildingId,
             cancellationToken);
     }
+
+    public async Task<bool> CanViewBuildingAsync(
+        Guid buildingId,
+        CancellationToken cancellationToken = default)
+    {
+        if (await CanManageBuildingAsync(
+            buildingId,
+            cancellationToken))
+        {
+            return true;
+        }
+
+        return await HasTenantAccessToBuildingAsync(
+            buildingId,
+            cancellationToken);
+    }
+
+    /***************************************************************
+     **                         Organizations                     **
+     ***************************************************************/
+
     public async Task<bool> CanManageOrganizationAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default)
@@ -129,32 +128,12 @@ public class TenantAuthorizationService
                 cancellationToken);
     }
 
-    public async Task<bool> CanViewBuildingAsync(
-        Guid buildingId,
-        CancellationToken cancellationToken = default)
-    {
-        if (await CanManageBuildingAsync(
-            buildingId,
-            cancellationToken))
-        {
-            return true;
-        }
-
-        return await HasTenantAccessToBuildingAsync(
-            buildingId,
-            cancellationToken);
-    }
-
-    /***************************************************************
-     **                         Organizations                     **
-     ***************************************************************/
-
     public async Task<bool> CanCreateOrganizationAsync(
         CancellationToken cancellationToken = default)
     {
-        return await HasRoleAsync(
-            UserRole.AccountAdmin,
-            cancellationToken);
+        return await HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin);
     }
 
     public async Task<bool> CanEditOrganizationAsync(
@@ -190,25 +169,25 @@ public class TenantAuthorizationService
         Guid organizationId,
         CancellationToken cancellationToken = default)
     {
-        return await HasRoleAsync(
-            UserRole.AccountAdmin,
-            cancellationToken);
+        return await HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin);
     }
 
     public async Task<bool> CanViewOrganizationAsync(
         Guid organizationId,
         CancellationToken cancellationToken = default)
     {
-        if (await HasRoleAsync(
-            UserRole.AccountAdmin,
-            cancellationToken))
+        if (await HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin))
         {
             return true;
         }
 
-        if (await HasRoleAsync(
-            UserRole.PropertyAdmin,
-            cancellationToken))
+        if (await HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.PropertyAdmin))
         {
             // Kan eventuelt strammes ytterligere senere,
             // slik at PropertyAdmin bare ser tenants i egne bygg.
@@ -515,9 +494,9 @@ public class TenantAuthorizationService
     public async Task<bool> CanCreateServiceDefinitionAsync(
         CancellationToken cancellationToken = default)
     {
-        return await HasRoleAsync(
-            UserRole.AccountAdmin,
-            cancellationToken);
+        return await HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin);
     }
     public async Task<bool> CanEditServiceDefinitionAsync(
         Guid serviceDefinitionId,
@@ -546,9 +525,9 @@ public class TenantAuthorizationService
             return false;
         }
 
-        return await HasRoleAsync(
-            UserRole.AccountAdmin,
-            cancellationToken);
+        return await HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin);
     }
     public async Task<bool> CanDeleteServiceDefinitionAsync(
         Guid serviceDefinitionId,
@@ -589,16 +568,10 @@ public class TenantAuthorizationService
             return false;
         }
 
-        if (await HasRoleAsync(
+        if (await HasAnyRolesAsync(
+            cancellationToken,
             UserRole.AccountAdmin,
-            cancellationToken))
-        {
-            return true;
-        }
-
-        if (await HasRoleAsync(
-            UserRole.PropertyAdmin,
-            cancellationToken))
+            UserRole.PropertyAdmin))
         {
             return true;
         }
@@ -606,16 +579,10 @@ public class TenantAuthorizationService
         if (definition.IsActive &&
             definition.IsBookableByTenant)
         {
-            if (await HasRoleAsync(
+            if (await HasAnyRolesAsync(
+                cancellationToken,
                 UserRole.TenantAdmin,
-                cancellationToken))
-            {
-                return true;
-            }
-
-            if (await HasRoleAsync(
-                UserRole.TenantUser,
-                cancellationToken))
+                UserRole.TenantUser))
             {
                 return true;
             }
@@ -657,13 +624,11 @@ public class TenantAuthorizationService
             return false;
         }
 
-        return await HasRoleAsync(
-                UserRole.AccountAdmin,
-                cancellationToken)
-            ||
-            await HasRoleAsync(
-                UserRole.PropertyAdmin,
-                cancellationToken);
+        return await HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin,
+            UserRole.PropertyAdmin);
+
     }
 
     public async Task<bool> CanCompleteServiceRequestAsync(
@@ -803,5 +768,90 @@ public class TenantAuthorizationService
                 isPlatformAdmin
         };
     }
+
+
+
+    /***************************************************************
+     **                     Page Access.  .                       **
+     ***************************************************************/
+
+    private async Task<bool> HasAnyRolesAsync(
+        CancellationToken cancellationToken,
+        params UserRole[] roles)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.CurrentAccountId.HasValue)
+        {
+            return false;
+        }
+
+        var accountId =
+            currentUser.CurrentAccountId.Value;
+
+        return await _dbContext.UserAccountRoles
+            .AsNoTracking()
+            .AnyAsync(
+                x =>
+                    x.UserAccount.UserId == currentUser.UserId &&
+                    x.UserAccount.AccountId == accountId &&
+                    roles.Contains(x.Role),
+                cancellationToken);
+    }
+    public Task<bool> CanManageAccountsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+        return Task.FromResult(
+            currentUser.IsAuthenticated &&
+            currentUser.IsPlatformAdmin);
+    }
+
+    public async Task<bool> CanManageOrganizationsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await HasAnyRolesAsync(
+            cancellationToken, 
+            UserRole.AccountAdmin);
+    }
+
+    public async Task<bool> CanManageBuildingsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await HasAnyRolesAsync(
+            cancellationToken,
+             UserRole.AccountAdmin,
+             UserRole.PropertyAdmin);
+    }
+
+    public async Task<bool> CanManageUnitsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await HasAnyRolesAsync(
+            cancellationToken,
+             UserRole.AccountAdmin,
+             UserRole.PropertyAdmin);
+    }
+    public Task<bool> CanUseTenantPortalAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin,
+            UserRole.PropertyAdmin,
+            UserRole.TenantAdmin,
+            UserRole.TenantUser);
+    }
+
+    public Task<bool> CanUseProviderPortalAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.ServiceProviderUser);
+    }
+
+
 
 }

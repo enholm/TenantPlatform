@@ -114,6 +114,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageBuildingsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
         var accountId = UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)

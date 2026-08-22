@@ -915,4 +915,11 @@
   <value>Request assigned to provider</value>
 </data>
 
+<data name="AssignedRequestsDescription" xml:space="preserve">
+  <value>Requests assigned to your organisation.</value>
+</data>
+
+<data name="NoAssignedRequests" xml:space="preserve">
+  <value>No requests are assigned to your organisation.</value>
+</data>
 </root>

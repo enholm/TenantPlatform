@@ -1,0 +1,119 @@
+@page "/provider/requests"
+@attribute [Authorize]
+@rendermode InteractiveServer
+
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceRequests
+
+@inject IServiceRequestService ServiceRequestService
+@inject ICurrentUserContextService UserContext
+
+<PageTitle>@L["AssignedRequests"]</PageTitle>
+
+<div class="mb-4">
+    <h1>@L["AssignedRequests"]</h1>
+
+    <p class="text-body-secondary mb-0">
+        @L["AssignedRequestsDescription"]
+    </p>
+</div>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (requests.Count == 0)
+{
+    <div class="alert alert-info">
+        @L["NoAssignedRequests"]
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@L["Service"]</th>
+                        <th>@L["Organization"]</th>
+                        <th>@L["Location"]</th>
+                        <th>@L["Status"]</th>
+                        <th>@L["Submitted"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var request in requests)
+                    {
+                        <tr>
+                            <td class="fw-semibold">
+                                @request.ServiceName
+                            </td>
+
+                            <td>
+                                @request.RequesterOrganizationName
+                            </td>
+
+                            <td>
+                                @request.BuildingName
+                                @if (!string.IsNullOrWhiteSpace(request.UnitName))
+                                {
+                                    <span> — @request.UnitName</span>
+                                }
+                            </td>
+
+                            <td>
+                                <span class="badge text-bg-secondary">
+                                    @L[$"ServiceRequestStatus_{request.Status}"]
+                                </span>
+                            </td>
+
+                            <td>
+                                @((request.SubmittedAt ?? request.CreatedAt)
+                                    .ToLocalTime()
+                                    .ToString("g"))
+                            </td>
+
+                            <td class="text-end">
+                                <a href="@($"/portal/requests/{request.Id}")"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    @L["Open"]
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private List<ServiceRequestListItemDto> requests = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            isLoading = false;
+            return;
+        }
+
+        requests =
+            await ServiceRequestService.GetAssignedRequestsAsync(
+                accountId.Value,
+                UserContext.Current.UserId,
+                CultureInfo.CurrentUICulture.Name);
+
+        isLoading = false;
+    }
+}
+

@@ -33,5 +33,10 @@ public interface IServiceRequestService
         Guid userId,
         CancellationToken cancellationToken = default);
 
+    Task<List<ServiceRequestListItemDto>> GetAssignedRequestsAsync(
+        Guid accountId,
+        Guid userId,
+        string languageCode,
+        CancellationToken cancellationToken = default);
 }
 

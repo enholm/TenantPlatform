@@ -4,14 +4,9 @@ namespace TenantPlatform.Web.Security.Authorization;
 
 public interface ITenantAuthorizationService
 {
-    Task<bool> HasRoleAsync(
-        UserRole role,
-        CancellationToken cancellationToken = default);
-
     /***************************************************************
      **                         Buildings                         **
      ***************************************************************/
-
     Task<bool> CanManageBuildingAsync(
         Guid buildingId,
         CancellationToken cancellationToken = default);
@@ -126,5 +121,24 @@ public interface ITenantAuthorizationService
      ***************************************************************/
     Task<NavigationPermissions> GetNavigationPermissionsAsync(
         CancellationToken cancellationToken = default);
+
+    /***************************************************************
+     **                     Page Access.  .                       **
+     ***************************************************************/
+    Task<bool> CanManageBuildingsAsync(
+        CancellationToken cancellationToken = default);
+    Task<bool> CanManageAccountsAsync(
+        CancellationToken cancellationToken = default);
+    Task<bool> CanManageUnitsAsync(
+        CancellationToken cancellationToken = default);
+    Task<bool> CanUseTenantPortalAsync(
+        CancellationToken cancellationToken = default);
+    Task<bool> CanUseProviderPortalAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanManageOrganizationsAsync(
+        CancellationToken cancellationToken = default);
+
+
 
 }

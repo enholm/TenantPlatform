@@ -8,6 +8,7 @@
 @inject ITenantAuthorizationService AuthorizationService
 @inject IBuildingService BuildingService
 @inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
 
 <PageTitle>@(building?.Name ?? L["Building"])</PageTitle>
 
@@ -203,6 +204,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageBuildingsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
         var accountId = UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)

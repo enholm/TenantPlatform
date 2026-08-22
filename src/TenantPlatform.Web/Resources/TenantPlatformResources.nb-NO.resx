@@ -916,4 +916,12 @@
   <value>Bestillingen ble tildelt leverandør</value>
 </data>
 
+<data name="AssignedRequestsDescription" xml:space="preserve">
+  <value>Bestillinger som er tildelt din organisasjon.</value>
+</data>
+
+<data name="NoAssignedRequests" xml:space="preserve">
+  <value>Ingen bestillinger er tildelt din organisasjon.</value>
+</data>
+
 </root>

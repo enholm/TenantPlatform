@@ -9,6 +9,8 @@
 @inject IOrganizationService OrganizationService
 @inject ITenantAuthorizationService AuthorizationService
 @inject ICurrentUserContextService UserContext
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
 
 <PageTitle>@L["Organizations"]</PageTitle>
 
@@ -109,6 +111,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageOrganizationsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+        
         var accountId = UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)

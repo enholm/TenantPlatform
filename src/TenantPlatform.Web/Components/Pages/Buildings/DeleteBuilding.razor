@@ -103,6 +103,12 @@ else
     
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageBuildingsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
         Model ??= new DeleteBuildingFormModel();
 
         var accountId =
