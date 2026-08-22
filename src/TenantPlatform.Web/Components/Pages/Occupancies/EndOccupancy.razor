@@ -104,6 +104,12 @@ else if (Model is not null)
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageOccupanciesAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
         Model ??= new EndOccupancyFormModel
         {
             ValidTo =

@@ -131,6 +131,8 @@ public interface ITenantAuthorizationService
         CancellationToken cancellationToken = default);
     Task<bool> CanManageUnitsAsync(
         CancellationToken cancellationToken = default);
+    Task<bool> CanManageOccupanciesAsync(
+        CancellationToken cancellationToken = default);
     Task<bool> CanUseTenantPortalAsync(
         CancellationToken cancellationToken = default);
     Task<bool> CanUseProviderPortalAsync(

@@ -4,9 +4,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.Occupancies
-
+@using TenantPlatform.Web.Security.Authorization
 @inject IOccupancyService OccupancyService
 @inject ICurrentUserContextService UserContext
+@inject ITenantAuthorizationService AuthorizationService
+
+@inject NavigationManager Navigation
 
 <PageTitle>@L["Occupancies"]</PageTitle>
 
@@ -115,6 +118,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageOccupanciesAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
         var accountId =
             UserContext.Current.CurrentAccountId;
 

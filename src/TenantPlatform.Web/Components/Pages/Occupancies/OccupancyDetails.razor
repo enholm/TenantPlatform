@@ -9,6 +9,7 @@
 @inject IOccupancyService OccupancyService
 @inject ITenantAuthorizationService AuthorizationService
 @inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
 
 <PageTitle>@L["Occupancy"]</PageTitle>
 
@@ -162,6 +163,11 @@ else
     private OccupancyDeleteCheckResult? deleteCheck;
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageOccupanciesAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
         var accountId =
             UserContext.Current.CurrentAccountId;
 

@@ -833,6 +833,14 @@ public class TenantAuthorizationService
              UserRole.AccountAdmin,
              UserRole.PropertyAdmin);
     }
+    public async Task<bool> CanManageOccupanciesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await HasAnyRolesAsync(
+            cancellationToken,
+             UserRole.AccountAdmin,
+             UserRole.PropertyAdmin);
+    }
     public Task<bool> CanUseTenantPortalAsync(
         CancellationToken cancellationToken = default)
     {
