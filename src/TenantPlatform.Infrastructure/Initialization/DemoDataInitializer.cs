@@ -54,10 +54,10 @@ public static class DemoDataInitializer
             await SeedServiceProvidersAsync(
                 dbContext,
                 cancellationToken);
-            await SeedLoginAccountsAsync(dbContext, passwordService, cancellationToken);
             await SeedUsersAsync(dbContext, cancellationToken);
             await SeedUserAccountsAsync(dbContext, cancellationToken);
             await SeedUserRolesAsync(dbContext, cancellationToken);
+            await SeedLoginAccountsAsync(dbContext, passwordService, cancellationToken);
 
             await dbContext.SaveChangesAsync(cancellationToken);
     }

@@ -1,0 +1,654 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  TenantPlatform.Core -> /Users/morten/dev/TenantPlatform/src/TenantPlatform.Core/bin/Debug/net10.0/TenantPlatform.Core.dll
+  TenantPlatform.Infrastructure -> /Users/morten/dev/TenantPlatform/src/TenantPlatform.Infrastructure/bin/Debug/net10.0/TenantPlatform.Infrastructure.dll
+  TenantPlatform.Web -> /Users/morten/dev/TenantPlatform/src/TenantPlatform.Web/bin/Debug/net10.0/TenantPlatform.Web.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.08
+Using launch settings from src/TenantPlatform.Web/Properties/launchSettings.json...
+info: Program[0]
+      Initializing database.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (18ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Program[0]
+      Database schema is already up to date.
+info: Program[0]
+      Initializing platform data.
+info: Program[0]
+      Platform data initialization completed.
+info: Program[0]
+      Initializing demo data.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM accounts AS a
+          WHERE a."Id" = '10000000-0000-0000-0000-000000000001')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[@organization_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM organizations AS o
+          WHERE o."Id" = @organization_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@organization_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM organizations AS o
+          WHERE o."Id" = @organization_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@organization_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM organizations AS o
+          WHERE o."Id" = @organization_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@organization_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM organizations AS o
+          WHERE o."Id" = @organization_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@organization_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM organizations AS o
+          WHERE o."Id" = @organization_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@organization_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM organizations AS o
+          WHERE o."Id" = @organization_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM buildings AS b
+          WHERE b."Id" = '30000000-0000-0000-0000-000000000001')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@unit_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM units AS u
+          WHERE u."Id" = @unit_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@unit_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM units AS u
+          WHERE u."Id" = @unit_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@unit_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM units AS u
+          WHERE u."Id" = @unit_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@unit_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM units AS u
+          WHERE u."Id" = @unit_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@unit_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM units AS u
+          WHERE u."Id" = @unit_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@occupancy_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM occupancies AS o
+          WHERE o."Id" = @occupancy_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@occupancy_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM occupancies AS o
+          WHERE o."Id" = @occupancy_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@definition_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT s."Id", s."AccountId", s."Category", s."Code", s."EstimatedDurationMinutes", s."HandlerType", s."IsActive", s."IsBookableByTenant", s."RequiresApproval", s."RequiresOccupancy"
+      FROM service_definitions AS s
+      WHERE s."Id" = @definition_Id
+      LIMIT 2
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@definition_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT s."Id", s."AccountId", s."Category", s."Code", s."EstimatedDurationMinutes", s."HandlerType", s."IsActive", s."IsBookableByTenant", s."RequiresApproval", s."RequiresOccupancy"
+      FROM service_definitions AS s
+      WHERE s."Id" = @definition_Id
+      LIMIT 2
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@definition_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT s."Id", s."AccountId", s."Category", s."Code", s."EstimatedDurationMinutes", s."HandlerType", s."IsActive", s."IsBookableByTenant", s."RequiresApproval", s."RequiresOccupancy"
+      FROM service_definitions AS s
+      WHERE s."Id" = @definition_Id
+      LIMIT 2
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@definition_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT s."Id", s."AccountId", s."Category", s."Code", s."EstimatedDurationMinutes", s."HandlerType", s."IsActive", s."IsBookableByTenant", s."RequiresApproval", s."RequiresOccupancy"
+      FROM service_definitions AS s
+      WHERE s."Id" = @definition_Id
+      LIMIT 2
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@definition_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT s."Id", s."AccountId", s."Category", s."Code", s."EstimatedDurationMinutes", s."HandlerType", s."IsActive", s."IsBookableByTenant", s."RequiresApproval", s."RequiresOccupancy"
+      FROM service_definitions AS s
+      WHERE s."Id" = @definition_Id
+      LIMIT 2
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@field_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_fields AS s
+          WHERE s."Id" = @field_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@translation_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_field_translations AS s
+          WHERE s."Id" = @translation_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@provider_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_providers AS s
+          WHERE s."Id" = @provider_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@provider_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_providers AS s
+          WHERE s."Id" = @provider_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@provider_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_providers AS s
+          WHERE s."Id" = @provider_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@provider_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_providers AS s
+          WHERE s."Id" = @provider_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@provider_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_providers AS s
+          WHERE s."Id" = @provider_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@provider_Id='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM service_definition_providers AS s
+          WHERE s."Id" = @provider_Id)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM users AS u
+          WHERE u."Id" = '60000000-0000-0000-0000-000000000001')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM users AS u
+          WHERE u."Id" = '60000000-0000-0000-0000-000000000002')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM users AS u
+          WHERE u."Id" = '60000000-0000-0000-0000-000000000003')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM users AS u
+          WHERE u."Id" = '60000000-0000-0000-0000-000000000005')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM users AS u
+          WHERE u."Id" = '60000000-0000-0000-0000-000000000006')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_accounts AS u
+          WHERE u."Id" = '71000000-0000-0000-0000-000000000001')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_accounts AS u
+          WHERE u."Id" = '71000000-0000-0000-0000-000000000002')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_accounts AS u
+          WHERE u."Id" = '71000000-0000-0000-0000-000000000003')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_accounts AS u
+          WHERE u."Id" = '71000000-0000-0000-0000-000000000005')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_account_roles AS u
+          WHERE u."Id" = '70000000-0000-0000-0000-000000000001')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_account_roles AS u
+          WHERE u."Id" = '73000000-0000-0000-0000-000000000001')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_account_roles AS u
+          WHERE u."Id" = '70000000-0000-0000-0000-000000000002')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_account_roles AS u
+          WHERE u."Id" = '70000000-0000-0000-0000-000000000003')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM user_account_roles AS u
+          WHERE u."Id" = '70000000-0000-0000-0000-000000000004')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM login_accounts AS l
+          WHERE l."Id" = '72000000-0000-0000-0000-000000000001')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM login_accounts AS l
+          WHERE l."Id" = '72000000-0000-0000-0000-000000000002')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM login_accounts AS l
+          WHERE l."Id" = '72000000-0000-0000-0000-000000000003')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM login_accounts AS l
+          WHERE l."Id" = '72000000-0000-0000-0000-000000000005')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM login_accounts AS l
+          WHERE l."Id" = '72000000-0000-0000-0000-000000000006')
+info: Program[0]
+      Demo data initialization completed.
+info: Program[0]
+      Database initialization completed successfully.
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5046
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: /Users/morten/dev/TenantPlatform/src/TenantPlatform.Web
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@currentUser_UserId='?' (DbType = Guid), @accountId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT DISTINCT u."Role"
+      FROM user_account_roles AS u
+      INNER JOIN user_accounts AS u0 ON u."UserAccountId" = u0."Id"
+      WHERE u0."UserId" = @currentUser_UserId AND u0."AccountId" = @accountId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@accountId_Value='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT a."Name"
+      FROM accounts AS a
+      WHERE a."Id" = @accountId_Value
+      LIMIT 2
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@userId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT count(*)::int
+      FROM user_accounts AS u
+      WHERE u."UserId" = @userId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@accountId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT a."Name"
+      FROM accounts AS a
+      WHERE a."Id" = @accountId
+      LIMIT 2
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@accountId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT count(*)::int
+      FROM buildings AS b
+      WHERE b."AccountId" = @accountId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[@accountId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT count(*)::int
+      FROM organizations AS o
+      WHERE o."AccountId" = @accountId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@accountId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT count(*)::int
+      FROM units AS u
+      WHERE u."AccountId" = @accountId
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@accountId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT count(*)::int
+      FROM service_requests AS s
+      WHERE s."AccountId" = @accountId AND s."Status" <> 5 AND s."Status" <> 7 AND s."Status" <> 6 AND s."Status" <> 8
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@accountId='?' (DbType = Guid), @p='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
+      SELECT s0."CreatedAt", CASE s0."Status"
+          WHEN 1 THEN 'Draft'
+          WHEN 2 THEN 'Submitted'
+          WHEN 3 THEN 'Approved'
+          WHEN 4 THEN 'InProgress'
+          WHEN 5 THEN 'Completed'
+          WHEN 6 THEN 'Rejected'
+          WHEN 7 THEN 'Cancelled'
+          WHEN 8 THEN 'Failed'
+          ELSE s0."Status"::text
+      END AS "Status", u."FirstName" || ' ' || u."LastName" AS "RequesterName"
+      FROM (
+          SELECT s."CreatedAt", s."RequesterUserId", s."Status"
+          FROM service_requests AS s
+          WHERE s."AccountId" = @accountId
+          ORDER BY s."CreatedAt" DESC
+          LIMIT @p
+      ) AS s0
+      INNER JOIN users AS u ON s0."RequesterUserId" = u."Id"
+      ORDER BY s0."CreatedAt" DESC
+info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...
