@@ -1096,9 +1096,8 @@ public class ServiceRequestService : IServiceRequestService
 
                 where
                     request.AccountId == accountId &&
-                    request.AssignedServiceProviderOrganizationId.HasValue &&
                     providerOrganizationIds.Contains(
-                        request.AssignedServiceProviderOrganizationId.Value)
+                        request.AssignedServiceProviderOrganizationId ?? Guid.Empty)
 
                 orderby request.CreatedAt descending
 
