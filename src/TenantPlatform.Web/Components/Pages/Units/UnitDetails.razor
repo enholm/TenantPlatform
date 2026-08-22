@@ -10,6 +10,7 @@
 @inject IUnitService UnitService
 @inject ITenantAuthorizationService AuthorizationService
 @inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
 
 <PageTitle>@(unit?.Name ?? L["Unit"])</PageTitle>
 
@@ -165,6 +166,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageUnitsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
         var accountId =
             UserContext.Current.CurrentAccountId;
 

@@ -186,6 +186,11 @@ else if (Model is not null)
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageUnitsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
         var accountId =
             UserContext.Current.CurrentAccountId;
 

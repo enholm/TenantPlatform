@@ -99,6 +99,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageUnitsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
         Model ??= new DeleteUnitFormModel();
 
         var accountId =
