@@ -8,14 +8,14 @@ namespace TenantPlatform.Web.Security.Authorization;
 public class TenantAuthorizationService
     : ITenantAuthorizationService
 {
-    private readonly TenantPlatformDbContext _dbContext;
+    private readonly IDbContextFactory<TenantPlatformDbContext> _dbContextFactory;
     private readonly ICurrentUserContextService _currentUserService;
 
     public TenantAuthorizationService(
-        TenantPlatformDbContext dbContext,
+        IDbContextFactory<TenantPlatformDbContext> dbContextFactory,
         ICurrentUserContextService currentUserService)
     {
-        _dbContext = dbContext;
+        _dbContextFactory = dbContextFactory;
         _currentUserService = currentUserService;
     }
 
@@ -38,7 +38,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        return await _dbContext.UserAccountRoles
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await dbContext.UserAccountRoles
             .AnyAsync(
                 x =>
                     x.UserAccount.UserId == currentUser.UserId &&
@@ -113,7 +114,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        return await _dbContext.UserAccountRoles
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await dbContext.UserAccountRoles
             .AnyAsync(
                 x =>
                     x.UserAccount.UserId == currentUser.UserId &&
@@ -150,7 +152,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        return await _dbContext.UserAccountRoles
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await dbContext.UserAccountRoles
             .AnyAsync(
                 x =>
                     x.UserAccount.UserId == currentUser.UserId &&
@@ -226,7 +229,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        var buildingId = await _dbContext.Units
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var buildingId = await dbContext.Units
             .Where(x =>
                 x.Id == unitId &&
                 x.AccountId == accountId)
@@ -285,7 +289,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        var buildingId = await _dbContext.Units
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var buildingId = await dbContext.Units
             .Where(x =>
                 x.Id == unitId &&
                 x.AccountId == accountId)
@@ -316,9 +321,10 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var buildingId = await (
-            from occupancy in _dbContext.Occupancies
-            join unit in _dbContext.Units
+            from occupancy in dbContext.Occupancies
+            join unit in dbContext.Units
                 on occupancy.UnitId equals unit.Id
             where occupancy.Id == occupancyId
                 && occupancy.AccountId == accountId
@@ -372,7 +378,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        return await _dbContext.UserAccountRoles
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await dbContext.UserAccountRoles
             .AnyAsync(
                 x =>
                     x.UserAccount.UserId == currentUser.UserId &&
@@ -396,7 +403,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        return await _dbContext.UserAccountRoles
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await dbContext.UserAccountRoles
             .AnyAsync(
                 x =>
                     x.UserAccount.UserId == currentUser.UserId &&
@@ -425,9 +433,10 @@ public class TenantAuthorizationService
 
         var today = DateOnly.FromDateTime(DateTime.Today);
 
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         return await (
-            from role in _dbContext.UserAccountRoles
-            join occupancy in _dbContext.Occupancies
+            from role in dbContext.UserAccountRoles
+            join occupancy in dbContext.Occupancies
                 on role.OrganizationId equals occupancy.TenantOrganizationId
             where
                 role.UserAccount.UserId == currentUser.UserId &&
@@ -463,11 +472,12 @@ public class TenantAuthorizationService
 
         var today = DateOnly.FromDateTime(DateTime.Today);
 
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         return await (
-            from role in _dbContext.UserAccountRoles
-            join occupancy in _dbContext.Occupancies
+            from role in dbContext.UserAccountRoles
+            join occupancy in dbContext.Occupancies
                 on role.OrganizationId equals occupancy.TenantOrganizationId
-            join unit in _dbContext.Units
+            join unit in dbContext.Units
                 on occupancy.UnitId equals unit.Id
             where
                 role.UserAccount.UserId == currentUser.UserId &&
@@ -512,7 +522,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        var exists = await _dbContext.ServiceDefinitions
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var exists = await dbContext.ServiceDefinitions
             .AsNoTracking()
             .AnyAsync(
                 x =>
@@ -551,7 +562,8 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
-        var definition = await _dbContext.ServiceDefinitions
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var definition = await dbContext.ServiceDefinitions
             .AsNoTracking()
             .Where(x =>
                 x.Id == serviceDefinitionId &&
@@ -610,8 +622,9 @@ public class TenantAuthorizationService
 
         var accountId = currentUser.CurrentAccountId.Value;
 
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var requestExists =
-            await _dbContext.ServiceRequests
+            await dbContext.ServiceRequests
                 .AsNoTracking()
                 .AnyAsync(
                     x =>
@@ -676,8 +689,9 @@ public class TenantAuthorizationService
         var accountId =
             currentUser.CurrentAccountId.Value;
 
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         var roles =
-            await _dbContext.UserAccountRoles
+            await dbContext.UserAccountRoles
                 .AsNoTracking()
                 .Where(x =>
                     x.UserAccount.UserId ==
@@ -790,7 +804,8 @@ public class TenantAuthorizationService
         var accountId =
             currentUser.CurrentAccountId.Value;
 
-        return await _dbContext.UserAccountRoles
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await dbContext.UserAccountRoles
             .AsNoTracking()
             .AnyAsync(
                 x =>
