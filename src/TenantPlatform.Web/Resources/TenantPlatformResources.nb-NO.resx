@@ -924,4 +924,19 @@
   <value>Ingen bestillinger er tildelt din organisasjon.</value>
 </data>
 
+<data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Tilgang nektet</value>
+</data>
+
+<data name="AccessDeniedDescription" xml:space="preserve">
+    <value>Du har ikke nødvendige rettigheter for å åpne denne siden. Kontakt administrator dersom du mener dette er feil.</value>
+</data>
+
+<data name="GoToHome" xml:space="preserve">
+    <value>Gå til startsiden</value>
+</data>
+
+<data name="GoBack" xml:space="preserve">
+    <value>Gå tilbake</value>
+</data>
 </root>

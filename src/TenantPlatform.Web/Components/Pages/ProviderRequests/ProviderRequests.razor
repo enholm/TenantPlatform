@@ -6,9 +6,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.ServiceRequests
-
+@using TenantPlatform.Web.Security.Authorization
 @inject IServiceRequestService ServiceRequestService
 @inject ICurrentUserContextService UserContext
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
+
 
 <PageTitle>@L["AssignedRequests"]</PageTitle>
 
@@ -98,6 +101,11 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanUseProviderPortalAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }        
         var accountId =
             UserContext.Current.CurrentAccountId;
 

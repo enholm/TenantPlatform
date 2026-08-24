@@ -875,6 +875,11 @@ public class TenantAuthorizationService
             UserRole.ServiceProviderUser);
     }
 
-
-
+    public Task<bool> CanManageServiceDefinitionsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin);
+    }
 }

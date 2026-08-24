@@ -28,10 +28,20 @@ else if (request is null)
 else
 {
     <div class="mb-4">
-        <a href="/portal/requests"
-           class="text-decoration-none">
-            ← @L["MyServiceRequests"]
-        </a>
+        @if (isProviderUser)
+        {
+            <a href="/provider/requests"
+            class="text-decoration-none">
+                ← @L["AssignedRequests"]
+            </a>
+        }
+        else
+        {
+            <a href="/portal/requests"
+            class="text-decoration-none">
+                ← @L["MyServiceRequests"]
+            </a>
+        }
     </div>
 
     <div class="d-flex justify-content-between align-items-start mb-4">
@@ -260,6 +270,7 @@ else
     private bool canComplete;
     private bool isProcessing;
     private string? actionError;
+    private bool isProviderUser;
 
     protected override async Task OnInitializedAsync()
     {
@@ -271,7 +282,8 @@ else
             Navigation.NavigateTo("/");
             return;
         }
-
+        isProviderUser =
+            await AuthorizationService.CanUseProviderPortalAsync();
         await ReloadAsync();
 
         isLoading = false;
@@ -415,6 +427,7 @@ else
 
     private async Task ReloadAsync()
     {
+ 
         var accountId =
             UserContext.Current.CurrentAccountId;
 

@@ -10,6 +10,7 @@
 @inject IServiceDefinitionService ServiceDefinitionService
 @inject ITenantAuthorizationService AuthorizationService
 @inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
 
 <PageTitle>@L["ServiceDefinitions"]</PageTitle>
 
@@ -148,6 +149,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageServiceDefinitionsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }            
+
         var accountId =
             UserContext.Current.CurrentAccountId;
 

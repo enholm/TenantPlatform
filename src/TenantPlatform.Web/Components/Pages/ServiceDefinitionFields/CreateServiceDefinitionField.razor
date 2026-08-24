@@ -192,6 +192,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageServiceDefinitionsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }            
+
         if (!UserContext.Current.CurrentAccountId.HasValue)
         {
             Navigation.NavigateTo("/");

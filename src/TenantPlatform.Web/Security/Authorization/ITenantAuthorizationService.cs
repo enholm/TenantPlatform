@@ -137,10 +137,8 @@ public interface ITenantAuthorizationService
         CancellationToken cancellationToken = default);
     Task<bool> CanUseProviderPortalAsync(
         CancellationToken cancellationToken = default);
-
     Task<bool> CanManageOrganizationsAsync(
         CancellationToken cancellationToken = default);
-
-
-
+    Task<bool> CanManageServiceDefinitionsAsync(
+        CancellationToken cancellationToken = default);
 }

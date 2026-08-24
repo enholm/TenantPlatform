@@ -7,12 +7,14 @@
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.ServiceCatalog
 @using TenantPlatform.Web.Services.ServiceRequests
+@using TenantPlatform.Web.Security.Authorization
 
 @inject IServiceCatalogService ServiceCatalogService
 @inject ICurrentUserContextService UserContext
 @inject NavigationManager Navigation
 @inject IServiceRequestService ServiceRequestService
-
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
 <PageTitle>@(service?.Name ?? L["Service"])</PageTitle>
 
 @if (isLoading)
@@ -127,6 +129,12 @@ else if (Model is not null)
     private bool isSaving;
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanUseTenantPortalAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }            
+
         var accountId =
             UserContext.Current.CurrentAccountId;
 

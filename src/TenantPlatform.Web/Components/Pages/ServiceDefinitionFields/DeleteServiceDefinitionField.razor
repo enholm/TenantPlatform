@@ -100,6 +100,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanManageServiceDefinitionsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }            
+
         Model ??= new DeleteFieldFormModel();
 
         var accountId =

@@ -5,10 +5,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.ServiceCatalog
+@using TenantPlatform.Web.Security.Authorization
 
 @inject IServiceCatalogService ServiceCatalogService
 @inject ICurrentUserContextService UserContext
-
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
 <PageTitle>@L["AvailableServices"]</PageTitle>
 
 <div class="mb-4">
@@ -77,6 +79,11 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await AuthorizationService.CanUseTenantPortalAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }            
         var accountId =
             UserContext.Current.CurrentAccountId;
 

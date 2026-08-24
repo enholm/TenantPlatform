@@ -922,4 +922,20 @@
 <data name="NoAssignedRequests" xml:space="preserve">
   <value>No requests are assigned to your organisation.</value>
 </data>
+
+<data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Access denied</value>
+</data>
+
+<data name="AccessDeniedDescription" xml:space="preserve">
+    <value>You do not have permission to access this page. Contact your administrator if you believe this is incorrect.</value>
+</data>
+
+<data name="GoToHome" xml:space="preserve">
+    <value>Go to home</value>
+</data>
+
+<data name="GoBack" xml:space="preserve">
+    <value>Go back</value>
+</data>
 </root>
