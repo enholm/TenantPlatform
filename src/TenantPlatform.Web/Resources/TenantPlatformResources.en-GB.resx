@@ -29,10 +29,6 @@
     <value>Network</value>
   </data>
 
-  <data name="Administration" xml:space="preserve">
-    <value>Administration</value>
-  </data>
-
   <data name="Logout" xml:space="preserve">
     <value>Log out</value>
   </data>
@@ -602,10 +598,6 @@
 
 <data name="SortOrder" xml:space="preserve">
   <value>Sort order</value>
-</data>
-
-<data name="Provider" xml:space="preserve">
-  <value>Provider</value>
 </data>
 
 <data name="IntegrationType" xml:space="preserve">

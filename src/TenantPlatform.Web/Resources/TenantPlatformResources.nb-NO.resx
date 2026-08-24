@@ -29,9 +29,6 @@
     <value>Nettverk</value>
   </data>
 
-  <data name="Administration" xml:space="preserve">
-    <value>Administrasjon</value>
-  </data>
 
   <data name="Logout" xml:space="preserve">
     <value>Logg ut</value>
@@ -604,10 +601,6 @@
   <value>Rekkefølge</value>
 </data>
 
-<data name="Provider" xml:space="preserve">
-  <value>Leverandør</value>
-</data>
-
 <data name="IntegrationType" xml:space="preserve">
   <value>Integrasjonstype</value>
 </data>
@@ -925,7 +918,7 @@
 </data>
 
 <data name="AccessDeniedTitle" xml:space="preserve">
-    <value>Tilgang nektet</value>
+    <value>Ingen adgang</value>
 </data>
 
 <data name="AccessDeniedDescription" xml:space="preserve">
