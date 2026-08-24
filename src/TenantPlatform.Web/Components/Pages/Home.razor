@@ -1,111 +1,117 @@
 ﻿@page "/"
 @attribute [Authorize]
+@rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 
 @using TenantPlatform.Infrastructure.Persistence
 @using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Security.Authorization
 
+@inject ITenantAuthorizationService AuthorizationService
+
+@inject NavigationManager Navigation
 @inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
 @inject ICurrentUserContextService UserContext
 
 <PageTitle>Dashboard</PageTitle>
-
-@if (isLoading)
+@if (canShowHome)
 {
-    <p>Laster dashboard...</p>
-}
-else if (accountName is null)
-{
-    <div class="alert alert-warning">
-        Ingen aktiv Account er valgt.
-    </div>
-}
-else
-{
-    <div class="mb-4">
-        <h1>Dashboard</h1>
-        <p class="text-muted">@accountName</p>
-    </div>
+    @if (isLoading)
+    {
+        <p>Laster dashboard...</p>
+    }
+    else if (accountName is null)
+    {
+        <div class="alert alert-warning">
+            Ingen aktiv Account er valgt.
+        </div>
+    }
+    else
+    {
+        <div class="mb-4">
+            <h1>Dashboard</h1>
+            <p class="text-muted">@accountName</p>
+        </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="text-muted">Bygg</div>
-                    <div class="fs-2 fw-bold">@buildingCount</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6 col-xl-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted">Bygg</div>
+                        <div class="fs-2 fw-bold">@buildingCount</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted">Organisasjoner</div>
+                        <div class="fs-2 fw-bold">@organizationCount</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted">Seksjoner / enheter</div>
+                        <div class="fs-2 fw-bold">@unitCount</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="text-muted">Åpne bestillinger</div>
+                        <div class="fs-2 fw-bold">@openRequestCount</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="text-muted">Organisasjoner</div>
-                    <div class="fs-2 fw-bold">@organizationCount</div>
-                </div>
+        <div class="card">
+            <div class="card-header">
+                Siste bestillinger
             </div>
-        </div>
 
-        <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="text-muted">Seksjoner / enheter</div>
-                    <div class="fs-2 fw-bold">@unitCount</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="text-muted">Åpne bestillinger</div>
-                    <div class="fs-2 fw-bold">@openRequestCount</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-header">
-            Siste bestillinger
-        </div>
-
-        <div class="card-body p-0">
-            @if (recentRequests.Count == 0)
-            {
-                <div class="p-3 text-muted">
-                    Ingen bestillinger ennå.
-                </div>
-            }
-            else
-            {
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Opprettet</th>
-                            <th>Status</th>
-                            <th>Requester</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        @foreach (var request in recentRequests)
-                        {
+            <div class="card-body p-0">
+                @if (recentRequests.Count == 0)
+                {
+                    <div class="p-3 text-muted">
+                        Ingen bestillinger ennå.
+                    </div>
+                }
+                else
+                {
+                    <table class="table table-hover mb-0">
+                        <thead>
                             <tr>
-                                <td>@request.CreatedAt.LocalDateTime.ToString("g")</td>
-                                <td>@request.Status</td>
-                                <td>@request.RequesterName</td>
+                                <th>Opprettet</th>
+                                <th>Status</th>
+                                <th>Requester</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-        </div>
-    </div>
-}
+                        </thead>
 
+                        <tbody>
+                            @foreach (var request in recentRequests)
+                            {
+                                <tr>
+                                    <td>@request.CreatedAt.LocalDateTime.ToString("g")</td>
+                                    <td>@request.Status</td>
+                                    <td>@request.RequesterName</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    }
+}
 @code {
     private bool isLoading = true;
 
@@ -117,9 +123,18 @@ else
     private int openRequestCount;
 
     private List<RecentRequest> recentRequests = [];
-
+    private bool canShowHome;
    protected override async Task OnInitializedAsync()
 {
+    if (!await AuthorizationService.CanUseHomeAsync())
+    {
+        var startPage =
+            await AuthorizationService.GetStartPageAsync();
+        Navigation.NavigateTo(startPage);
+        return;
+    }
+
+    canShowHome = true;
     var currentAccountId = UserContext.Current.CurrentAccountId;
 
     if (!currentAccountId.HasValue)

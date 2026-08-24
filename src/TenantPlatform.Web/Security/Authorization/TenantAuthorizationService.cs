@@ -882,4 +882,89 @@ public class TenantAuthorizationService
             cancellationToken,
             UserRole.AccountAdmin);
     }
+
+    public async Task<string> GetStartPageAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser = _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated)
+        {
+            return "/login";
+        }
+
+        if (!currentUser.CurrentAccountId.HasValue)
+        {
+            return currentUser.IsPlatformAdmin
+                ? "/accounts"
+                : "/access-denied";
+        }
+
+        var accountId =
+            currentUser.CurrentAccountId.Value;
+
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        var roles = await dbContext.UserAccountRoles
+            .AsNoTracking()
+            .Where(x =>
+                x.UserAccount.UserId == currentUser.UserId &&
+                x.UserAccount.AccountId == accountId)
+            .Select(x => x.Role)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return GetStartPage(
+            currentUser.IsPlatformAdmin,
+            roles);
+    }
+
+    public string GetStartPage(
+        bool isPlatformAdmin,
+        IReadOnlyCollection<UserRole> roles)
+    {
+        // Administrativ rolle i Account.
+        if (roles.Contains(UserRole.AccountAdmin) ||
+            roles.Contains(UserRole.PropertyAdmin))
+        {
+            return "/";
+        }
+
+        // Tenant-rolle i Account.
+        if (roles.Contains(UserRole.TenantAdmin) ||
+            roles.Contains(UserRole.TenantUser))
+        {
+            return "/portal/services";
+        }
+
+        // Provider-rolle i Account.
+        if (roles.Contains(UserRole.ServiceProviderUser))
+        {
+            return "/provider/requests";
+        }
+
+        // Global PlatformAdmin uten en relevant Account-rolle.
+        if (isPlatformAdmin)
+        {
+            return "/accounts";
+        }
+
+        return "/access-denied";
+    }
+
+    public Task<bool> CanUseHomeAsync(
+
+        CancellationToken cancellationToken = default)
+
+    {
+
+        return HasAnyRolesAsync(
+
+            cancellationToken,
+
+            UserRole.AccountAdmin,
+
+            UserRole.PropertyAdmin);
+
+    }
 }

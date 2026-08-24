@@ -182,12 +182,16 @@ app.MapPost("/auth/login", async (
     HttpContext httpContext,
     ILocalAuthenticationService authenticationService,
     AuthenticationCookieService cookieService,
+    ITenantAuthorizationService authorizationService,
     TenantPlatformDbContext dbContext,
     IFormCollection form,
     CancellationToken cancellationToken) =>
 {
-    var email = form["email"].ToString();
-    var password = form["password"].ToString();
+    var email =
+        form["email"].ToString();
+
+    var password =
+        form["password"].ToString();
 
     var rememberMe =
         string.Equals(
@@ -195,56 +199,76 @@ app.MapPost("/auth/login", async (
             "true",
             StringComparison.OrdinalIgnoreCase);
 
-    var result = await authenticationService.AuthenticateAsync(
-        email,
-        password,
-        cancellationToken);
+    var result =
+        await authenticationService.AuthenticateAsync(
+            email,
+            password,
+            cancellationToken);
 
-    if (!result.Succeeded || result.User is null)
+    if (!result.Succeeded ||
+        result.User is null)
     {
         return Results.Redirect(
             "/login?error=invalid-login");
     }
 
-    var user = result.User;
+    var user =
+        result.User;
 
-    var accountIds = await dbContext.UserAccounts
-        .Where(x => x.UserId == user.Id)
-        .Select(x => x.AccountId)
-        .ToListAsync(cancellationToken);
+    var accountIds =
+        await dbContext.UserAccounts
+            .AsNoTracking()
+            .Where(x =>
+                x.UserId == user.Id)
+            .Select(x =>
+                x.AccountId)
+            .ToListAsync(cancellationToken);
 
-    if (user.IsPlatformAdmin && accountIds.Count == 0)
+    //
+    // En ren PlatformAdmin trenger ikke være
+    // knyttet til noen Account.
+    //
+    if (user.IsPlatformAdmin &&
+        accountIds.Count == 0)
     {
         await cookieService.SignInAsync(
             httpContext,
             user,
             currentAccountId: null,
             rememberMe);
+
         cookieService.SetCulture(
             httpContext,
             user.PreferredLanguage);
+
         return Results.Redirect("/accounts");
     }
 
+    //
+    // Vanlige brukere må ha tilgang
+    // til minst én Account.
+    //
     if (accountIds.Count == 0)
     {
         return Results.Redirect(
             "/login?error=no-account-access");
     }
 
-    var loginAccount = await dbContext.LoginAccounts
-        .SingleAsync(
-            x => x.UserId == user.Id,
-            cancellationToken);
+    var loginAccount =
+        await dbContext.LoginAccounts
+            .SingleAsync(
+                x => x.UserId == user.Id,
+                cancellationToken);
 
     Guid? selectedAccountId = null;
 
     if (accountIds.Count == 1)
     {
-        // Brukeren har bare én Account.
-        selectedAccountId = accountIds[0];
+        selectedAccountId =
+            accountIds[0];
 
-        loginAccount.LastAccountId = selectedAccountId;
+        loginAccount.LastAccountId =
+            selectedAccountId;
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
@@ -254,12 +278,13 @@ app.MapPost("/auth/login", async (
         accountIds.Contains(
             loginAccount.LastAccountId.Value))
     {
-        // Brukeren har flere Accounts,
-        // men vi kjenner siste gyldige valg.
         selectedAccountId =
             loginAccount.LastAccountId.Value;
     }
 
+    //
+    // Opprett authentication-cookie.
+    //
     await cookieService.SignInAsync(
         httpContext,
         user,
@@ -270,37 +295,40 @@ app.MapPost("/auth/login", async (
         httpContext,
         user.PreferredLanguage);
 
-    if (selectedAccountId.HasValue)
+    //
+    // Flere Accounts, men ingen tidligere
+    // valgt Account.
+    //
+    if (!selectedAccountId.HasValue)
     {
-        var roles = await dbContext.UserAccountRoles
+        return Results.Redirect(
+            "/select-account");
+    }
+
+    //
+    // Finn rollene brukeren faktisk har
+    // i valgt Account.
+    //
+    var roles =
+        await dbContext.UserAccountRoles
             .AsNoTracking()
             .Where(x =>
                 x.UserAccount.UserId == user.Id &&
-                x.UserAccount.AccountId == selectedAccountId.Value)
+                x.UserAccount.AccountId ==
+                    selectedAccountId.Value)
             .Select(x => x.Role)
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        if (roles.Contains(UserRole.ServiceProviderUser) &&
-            !roles.Contains(UserRole.AccountAdmin) &&
-            !roles.Contains(UserRole.PropertyAdmin) &&
-            !roles.Contains(UserRole.TenantAdmin) &&
-            !roles.Contains(UserRole.TenantUser))
-        {
-            return Results.Redirect("/provider/requests");
-        }
+    var startPage =
+        authorizationService.GetStartPage(
+            user.IsPlatformAdmin,
+            roles);
 
-        if (roles.Contains(UserRole.TenantAdmin) ||
-            roles.Contains(UserRole.TenantUser))
-        {
-            return Results.Redirect("/portal/services");
-        }
-
-        return Results.Redirect("/");
-    }
-
-    return Results.Redirect("/select-account");
+    return Results.Redirect(startPage);
 });
+
+
 
 //----------------
 // Endpoint logout
@@ -319,6 +347,7 @@ app.MapPost("/auth/logout", async (HttpContext httpContext) =>
 app.MapPost("/auth/select-account", async (
     HttpContext httpContext,
     AuthenticationCookieService cookieService,
+    ITenantAuthorizationService authorizationService,
     TenantPlatformDbContext dbContext,
     IFormCollection form,
     CancellationToken cancellationToken) =>
@@ -386,7 +415,22 @@ app.MapPost("/auth/select-account", async (
         accountId,
         rememberMe);
 
-    return Results.Redirect("/");
+    var roles =
+        await dbContext.UserAccountRoles
+            .AsNoTracking()
+            .Where(x =>
+                x.UserAccount.UserId == userId &&
+                x.UserAccount.AccountId == accountId)
+            .Select(x => x.Role)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+    var startPage =
+        authorizationService.GetStartPage(
+            user.IsPlatformAdmin,
+            roles);
+            
+    return Results.Redirect(startPage);
 });
 
 //------------------------------

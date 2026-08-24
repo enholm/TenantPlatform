@@ -141,4 +141,11 @@ public interface ITenantAuthorizationService
         CancellationToken cancellationToken = default);
     Task<bool> CanManageServiceDefinitionsAsync(
         CancellationToken cancellationToken = default);
+    Task<string> GetStartPageAsync(
+        CancellationToken cancellationToken = default);
+    string GetStartPage(
+        bool isPlatformAdmin,
+        IReadOnlyCollection<UserRole> roles);
+    Task<bool> CanUseHomeAsync(
+        CancellationToken cancellationToken = default);
 }

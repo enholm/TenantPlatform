@@ -1,4 +1,10 @@
 @page "/access-denied"
+@rendermode InteractiveServer
+
+@using TenantPlatform.Web.Security.Authorization
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 
 <PageTitle>@L["AccessDeniedTitle"]</PageTitle>
@@ -31,18 +37,14 @@
 
                     <div class="d-flex justify-content-center gap-3">
 
-                        <a href="/"
-                        class="btn btn-primary">
+                        <button type="button"
+                                class="btn btn-primary"
+                                @onclick="GoToStartPageAsync">
                             <i class="bi bi-house-door me-2"></i>
                             @L["GoToHome"]
-                        </a>
+                        </button>
 
-                        <a href="/"
-                        class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-2"></i>
-                            @L["GoBack"]
-                        </a>
-                    </div>
+                   </div>
 
                 </div>
 
@@ -54,5 +56,14 @@
 
 </div>
 
+@code {
+    private async Task GoToStartPageAsync()
+    {
+        var url =
+            await AuthorizationService.GetStartPageAsync();
 
+        Navigation.NavigateTo(url);
+    }    
+
+}
 
