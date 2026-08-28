@@ -52,6 +52,7 @@ public enum ServiceRequestEventType
     Assigned = 5,
     SentToProvider = 6,
     Completed = 7,
-    Cancelled = 8
+    Cancelled = 8,
+    InProgress = 9
 }
 

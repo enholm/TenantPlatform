@@ -43,5 +43,18 @@ public interface IServiceRequestService
         Guid accountId,
         Guid requestId,
         CancellationToken cancellationToken = default);
+
+    Task StartWorkAsync(
+        Guid accountId,
+        Guid requestId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task AddCommentAsync(
+        Guid accountId,
+        Guid requestId,
+        Guid userId,
+        string comment,
+        CancellationToken cancellationToken = default);
 }
 

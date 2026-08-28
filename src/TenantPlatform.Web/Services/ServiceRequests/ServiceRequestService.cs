@@ -1012,48 +1012,85 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                 "ServiceRequestNotFound");
         }
 
-        var canComplete =
+        var roles =
             await dbContext.UserAccountRoles
                 .AsNoTracking()
-                .AnyAsync(
-                    x =>
-                        x.UserAccount.UserId == userId &&
-                        x.UserAccount.AccountId == accountId &&
-                        (
-                            x.Role == UserRole.AccountAdmin ||
-                            x.Role == UserRole.PropertyAdmin
-                        ),
-                    cancellationToken);
+                .Where(x =>
+                    x.UserAccount.UserId == userId &&
+                    x.UserAccount.AccountId == accountId)
+                .Select(x => new
+                {
+                    x.Role,
+                    x.OrganizationId
+                })
+                .ToListAsync(cancellationToken);
 
-        if (!canComplete)
+        var isAdmin =
+            roles.Any(x =>
+                x.Role == UserRole.AccountAdmin ||
+                x.Role == UserRole.PropertyAdmin);
+
+        var isAssignedProvider =
+            request.AssignedServiceProviderOrganizationId.HasValue &&
+            roles.Any(x =>
+                x.Role == UserRole.ServiceProviderUser &&
+                x.OrganizationId ==
+                    request.AssignedServiceProviderOrganizationId.Value);
+
+        if (!isAdmin && !isAssignedProvider)
         {
             throw new ServiceRequestValidationException(
                 "ServiceRequestCompletionNotAllowed");
         }
 
-        if (request.Status != ServiceRequestStatus.Approved)
+        var canCompleteInCurrentStatus =
+            isAdmin
+                ? request.Status == ServiceRequestStatus.Approved ||
+                request.Status == ServiceRequestStatus.InProgress
+                : request.Status == ServiceRequestStatus.InProgress;
+
+        if (!canCompleteInCurrentStatus)
         {
             throw new ServiceRequestValidationException(
                 "ServiceRequestCannotBeCompleted");
         }
 
-        request.Status = ServiceRequestStatus.Completed;
-        request.CompletedAt = DateTimeOffset.UtcNow;
+        request.Status =
+            ServiceRequestStatus.Completed;
+
+        request.CompletedAt =
+            DateTimeOffset.UtcNow;
 
         dbContext.ServiceRequestMessages.Add(
             new ServiceRequestMessage
             {
-                Id = Guid.NewGuid(),
-                ServiceRequestId = request.Id,
-                Direction = ServiceRequestMessageDirection.Outbound,
-                Type = ServiceRequestMessageType.System,
-                EventType = ServiceRequestEventType.Completed,
-                CreatedByUserId = userId,
-                Body = "Service request completed.",
-                CreatedAt = DateTimeOffset.UtcNow
+                Id =
+                    Guid.NewGuid(),
+
+                ServiceRequestId =
+                    request.Id,
+
+                Direction =
+                    ServiceRequestMessageDirection.Outbound,
+
+                Type =
+                    ServiceRequestMessageType.System,
+
+                EventType =
+                    ServiceRequestEventType.Completed,
+
+                CreatedByUserId =
+                    userId,
+
+                Body =
+                    "Service request completed.",
+
+                CreatedAt =
+                    DateTimeOffset.UtcNow
             });
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
     }
 
     public async Task<List<ServiceRequestListItemDto>> GetAssignedRequestsAsync(
@@ -1292,6 +1329,219 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
 
                 NextAttemptAt =
                     DateTimeOffset.UtcNow
+            });
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+    }
+
+    public async Task StartWorkAsync(
+        Guid accountId,
+        Guid requestId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var request =
+            await dbContext.ServiceRequests
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.Id == requestId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (request is null)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestNotFound");
+        }
+
+        if (!request
+            .AssignedServiceProviderOrganizationId
+            .HasValue)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestNotAssigned");
+        }
+
+        var hasProviderAccess =
+            await dbContext.UserAccountRoles
+                .AsNoTracking()
+                .AnyAsync(
+                    x =>
+                        x.UserAccount.UserId ==
+                            userId &&
+                        x.UserAccount.AccountId ==
+                            accountId &&
+                        x.Role ==
+                            UserRole.ServiceProviderUser &&
+                        x.OrganizationId ==
+                            request
+                                .AssignedServiceProviderOrganizationId,
+                    cancellationToken);
+
+        if (!hasProviderAccess)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestActionNotAllowed");
+        }
+
+        if (request.Status !=
+            ServiceRequestStatus.Approved)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestCannotStart");
+        }
+
+        request.Status =
+            ServiceRequestStatus.InProgress;
+
+        dbContext.ServiceRequestMessages.Add(
+            new ServiceRequestMessage
+            {
+                Id =
+                    Guid.NewGuid(),
+
+                ServiceRequestId =
+                    request.Id,
+
+                Direction =
+                    ServiceRequestMessageDirection.Outbound,
+
+                Type =
+                    ServiceRequestMessageType.System,
+
+                EventType =
+                    ServiceRequestEventType.InProgress,
+
+                CreatedByUserId =
+                    userId,
+
+                Body =
+                    "Work started.",
+
+                CreatedAt =
+                    DateTimeOffset.UtcNow
+            });
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+    }
+
+    public async Task AddCommentAsync(
+        Guid accountId,
+        Guid requestId,
+        Guid userId,
+        string comment,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(comment))
+        {
+            throw new ServiceRequestValidationException(
+                "CommentRequired");
+        }
+
+        comment = comment.Trim();
+
+        if (comment.Length > 4000)
+        {
+            throw new ServiceRequestValidationException(
+                "CommentTooLong");
+        }
+
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        //
+        // Bruk samme objekt-autorisasjon som GetRequestAsync.
+        // Ideelt flytter vi denne senere til en felles helper.
+        //
+
+        var request =
+            await dbContext.ServiceRequests
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.Id == requestId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (request is null)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestNotFound");
+        }
+
+        var roles =
+            await dbContext.UserAccountRoles
+                .AsNoTracking()
+                .Where(x =>
+                    x.UserAccount.UserId == userId &&
+                    x.UserAccount.AccountId == accountId)
+                .Select(x => new
+                {
+                    x.Role,
+                    x.OrganizationId
+                })
+                .ToListAsync(cancellationToken);
+
+        var allowed =
+            request.RequesterUserId == userId ||
+
+            roles.Any(x =>
+                x.Role == UserRole.AccountAdmin ||
+                x.Role == UserRole.PropertyAdmin) ||
+
+            roles.Any(x =>
+                (x.Role == UserRole.TenantAdmin ||
+                x.Role == UserRole.TenantUser) &&
+                x.OrganizationId ==
+                    request.RequesterOrganizationId) ||
+
+            (
+                request.AssignedServiceProviderOrganizationId
+                    .HasValue &&
+                roles.Any(x =>
+                    x.Role ==
+                        UserRole.ServiceProviderUser &&
+                    x.OrganizationId ==
+                        request
+                            .AssignedServiceProviderOrganizationId)
+            );
+
+        if (!allowed)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestActionNotAllowed");
+        }
+
+        dbContext.ServiceRequestMessages.Add(
+            new ServiceRequestMessage
+            {
+                Id =
+                    Guid.NewGuid(),
+
+                ServiceRequestId =
+                    requestId,
+
+                Type =
+                    ServiceRequestMessageType.Comment,
+
+                CreatedByUserId =
+                    userId,
+
+                Body =
+                    comment,
+
+                CreatedAt =
+                    DateTimeOffset.UtcNow,
+
+                Direction =
+                    ServiceRequestMessageDirection.Outbound
             });
 
         await dbContext.SaveChangesAsync(
