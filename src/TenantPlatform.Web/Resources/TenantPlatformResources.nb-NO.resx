@@ -1017,4 +1017,16 @@
 <data name="DeleteProviderConfirmation" xml:space="preserve">
   <value>Er du sikker på at du vil slette denne leverandøren fra tjenesten?</value>
 </data>
+
+<data name="CannotDeleteProvider" xml:space="preserve">
+  <value>Leverandøren kan ikke slettes</value>
+</data>
+
+<data name="ProviderHasOpenRequests" xml:space="preserve">
+  <value>Leverandøren har {0} åpne forespørsler for denne tjenesten. Deaktiver leverandøren i stedet, eller ferdigstill de åpne forespørslene før leverandøren slettes.</value>
+</data>
+
+<data name="ServiceProviderHasOpenRequests" xml:space="preserve">
+  <value>Leverandøren kan ikke slettes fordi den har åpne forespørsler for denne tjenesten.</value>
+</data>
 </root>

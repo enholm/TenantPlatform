@@ -69,6 +69,13 @@ public interface IServiceDefinitionService
         Guid accountId,
         Guid serviceDefinitionId,
         Guid providerId,
-        CancellationToken cancellationToken = default);        
+        CancellationToken cancellationToken = default);
+
+    Task<ServiceDefinitionProviderDeleteCheckResult>
+        CanDeleteProviderAsync(
+            Guid accountId,
+            Guid serviceDefinitionId,
+            Guid providerId,
+            CancellationToken cancellationToken = default);
 }
 

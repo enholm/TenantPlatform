@@ -973,4 +973,16 @@
 <data name="DeleteProviderConfirmation" xml:space="preserve">
   <value>Are you sure you want to remove this provider from the service?</value>
 </data>
+
+<data name="CannotDeleteProvider" xml:space="preserve">
+  <value>The provider cannot be deleted</value>
+</data>
+
+<data name="ProviderHasOpenRequests" xml:space="preserve">
+  <value>The provider has {0} open requests for this service. Deactivate the provider instead, or complete the open requests before deleting the provider.</value>
+</data>
+
+<data name="ServiceProviderHasOpenRequests" xml:space="preserve">
+  <value>The provider cannot be deleted because it has open requests for this service.</value>
+</data>
 </root>

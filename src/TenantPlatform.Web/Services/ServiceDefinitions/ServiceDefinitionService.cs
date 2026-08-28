@@ -910,13 +910,87 @@ public class ServiceDefinitionService : IServiceDefinitionService
             return;
         }
 
-        dbContext.ServiceDefinitionProviders.Remove(
-            provider);
+        var hasOpenRequests =
+            await dbContext.ServiceRequests
+                .AsNoTracking()
+                .AnyAsync(
+                    x =>
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId == serviceDefinitionId &&
+                        x.AssignedServiceProviderOrganizationId ==
+                            provider.ServiceProviderOrganizationId &&
+                        (
+                            x.Status == ServiceRequestStatus.Approved ||
+                            x.Status == ServiceRequestStatus.InProgress
+                        ),
+                    cancellationToken);
+
+        if (hasOpenRequests)
+        {
+            throw new InvalidOperationException(
+                "ServiceProviderHasOpenRequests");
+        }
+
+        dbContext.ServiceDefinitionProviders.Remove(provider);
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
     }
 
+    public async Task<ServiceDefinitionProviderDeleteCheckResult>
+        CanDeleteProviderAsync(
+            Guid accountId,
+            Guid serviceDefinitionId,
+            Guid providerId,
+            CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var provider =
+            await dbContext.ServiceDefinitionProviders
+                .AsNoTracking()
+                .Where(x =>
+                    x.Id == providerId &&
+                    x.AccountId == accountId &&
+                    x.ServiceDefinitionId == serviceDefinitionId)
+                .Select(x => new
+                {
+                    x.ServiceProviderOrganizationId
+                })
+                .SingleOrDefaultAsync(cancellationToken);
+
+        if (provider is null)
+        {
+            return new ServiceDefinitionProviderDeleteCheckResult
+            {
+                CanDelete = false,
+                OpenRequestCount = 0
+            };
+        }
+
+        var openRequestCount =
+            await dbContext.ServiceRequests
+                .AsNoTracking()
+                .CountAsync(
+                    x =>
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId == serviceDefinitionId &&
+                        x.AssignedServiceProviderOrganizationId ==
+                            provider.ServiceProviderOrganizationId &&
+                        (
+                            x.Status == ServiceRequestStatus.Approved ||
+                            x.Status == ServiceRequestStatus.InProgress
+                        ),
+                    cancellationToken);
+
+        return new ServiceDefinitionProviderDeleteCheckResult
+        {
+            CanDelete = openRequestCount == 0,
+            OpenRequestCount = openRequestCount
+        };
+    }
     private static void ValidateProviderModel(
         ServiceDefinitionProviderEditDto model)
     {
