@@ -66,7 +66,7 @@ public class ServiceRequestMessageConfiguration
             x.CreatedAt
         });
 
-        builder.HasIndex(x => x.ExternalMessageId);
+        builder.HasIndex(x => x.ExternalMessageId).IsUnique();
     }
 }
 

@@ -89,6 +89,8 @@ builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
 builder.Services.AddScoped<IServiceRequestEmailAddressService, ServiceRequestEmailAddressService>();
 builder.Services.AddScoped<IServiceRequestEmailComposer, ServiceRequestEmailComposer>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
+builder.Services.AddScoped<IInboundServiceRequestEmailService, InboundServiceRequestEmailService>();
+builder.Services.AddScoped<IServiceRequestReplyAddressParser, ServiceRequestReplyAddressParser>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<
@@ -119,7 +121,12 @@ builder.Services
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
     });
+builder.Services.Configure<ImapOptions>(
+    builder.Configuration.GetSection("InboundEmail"));
 
+builder.Services.AddHostedService<
+    ImapInboundEmailWorker>();
+    
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 

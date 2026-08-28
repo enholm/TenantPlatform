@@ -932,4 +932,40 @@
 <data name="GoBack" xml:space="preserve">
     <value>Gå tilbake</value>
 </data>
+
+<data name="StartWork" xml:space="preserve">
+  <value>Start behandling</value>
+</data>
+
+<data name="AddComment" xml:space="preserve">
+  <value>Legg til kommentar</value>
+</data>
+
+<data name="ServiceRequestStatus_InProgress" xml:space="preserve">
+  <value>Under behandling</value>
+</data>
+
+<data name="ServiceRequestEvent_InProgress" xml:space="preserve">
+  <value>Behandling av bestillingen startet</value>
+</data>
+
+<data name="ServiceRequestNotAssigned" xml:space="preserve">
+  <value>Bestillingen er ikke tildelt en leverandør.</value>
+</data>
+
+<data name="ServiceRequestActionNotAllowed" xml:space="preserve">
+  <value>Du har ikke tilgang til å utføre denne handlingen.</value>
+</data>
+
+<data name="ServiceRequestCannotStart" xml:space="preserve">
+  <value>Bestillingen kan ikke startes i nåværende status.</value>
+</data>
+
+<data name="CommentRequired" xml:space="preserve">
+  <value>Skriv inn en kommentar.</value>
+</data>
+
+<data name="CommentTooLong" xml:space="preserve">
+  <value>Kommentaren er for lang.</value>
+</data>
 </root>
