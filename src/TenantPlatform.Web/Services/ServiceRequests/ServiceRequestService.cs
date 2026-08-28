@@ -1548,5 +1548,158 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             cancellationToken);
     }
 
+
+    public async Task<IReadOnlyList<ServiceRequestProviderOptionDto>>
+        GetAvailableProvidersAsync(
+            Guid accountId,
+            Guid serviceRequestId,
+            CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var request =
+            await dbContext.ServiceRequests
+                .AsNoTracking()
+                .Where(x =>
+                    x.Id == serviceRequestId &&
+                    x.AccountId == accountId)
+                .Select(x => new
+                {
+                    x.ServiceDefinitionId
+                })
+                .SingleOrDefaultAsync(cancellationToken);
+
+        if (request is null)
+        {
+            return Array.Empty<ServiceRequestProviderOptionDto>();
+        }
+
+        return await dbContext.ServiceDefinitionProviders
+            .AsNoTracking()
+            .Where(x =>
+                x.AccountId == accountId &&
+                x.ServiceDefinitionId == request.ServiceDefinitionId &&
+                x.IsActive)
+            .Join(
+                dbContext.Organizations,
+                provider => provider.ServiceProviderOrganizationId,
+                organization => organization.Id,
+                (provider, organization) =>
+                    new ServiceRequestProviderOptionDto
+                    {
+                        OrganizationId = organization.Id,
+                        OrganizationName = organization.Name,
+                        IntegrationType = provider.IntegrationType,
+                        RequestEmailAddress = provider.RequestEmailAddress
+                    })
+            .OrderBy(x => x.OrganizationName)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task AssignProviderAsync(
+        Guid accountId,
+        Guid serviceRequestId,
+        Guid providerOrganizationId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var request =
+            await dbContext.ServiceRequests
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.Id == serviceRequestId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (request is null)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestNotFound");
+        }
+
+        var canAssign =
+            await dbContext.UserAccountRoles
+                .AsNoTracking()
+                .AnyAsync(
+                    x =>
+                        x.UserAccount.UserId == userId &&
+                        x.UserAccount.AccountId == accountId &&
+                        (
+                            x.Role == UserRole.AccountAdmin ||
+                            x.Role == UserRole.PropertyAdmin
+                        ),
+                    cancellationToken);
+
+        if (!canAssign)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestProviderAssignmentNotAllowed");
+        }
+
+        if (request.Status != ServiceRequestStatus.Approved)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestProviderAssignmentNotAllowed");
+        }
+
+        if (request.AssignedServiceProviderOrganizationId.HasValue)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestAlreadyAssigned");
+        }
+
+        var provider =
+            await dbContext.ServiceDefinitionProviders
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId ==
+                            request.ServiceDefinitionId &&
+                        x.ServiceProviderOrganizationId ==
+                            providerOrganizationId &&
+                        x.IsActive,
+                    cancellationToken);
+
+        if (provider is null)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestProviderNotAvailable");
+        }
+
+        request.AssignedServiceProviderOrganizationId =
+            providerOrganizationId;
+
+        dbContext.ServiceRequestMessages.Add(
+            new ServiceRequestMessage
+            {
+                Id = Guid.NewGuid(),
+                ServiceRequestId = request.Id,
+                Direction = ServiceRequestMessageDirection.Internal,
+                Type = ServiceRequestMessageType.System,
+                EventType = ServiceRequestEventType.Assigned,
+                CreatedByUserId = userId,
+                Body = "Service request assigned to provider.",
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        if (provider.IntegrationType ==
+            ServiceProviderIntegrationType.Email)
+        {
+            await QueueProviderEmailAsync(
+                accountId,
+                serviceRequestId,
+                cancellationToken);
+        }
+    }
+
 }
 

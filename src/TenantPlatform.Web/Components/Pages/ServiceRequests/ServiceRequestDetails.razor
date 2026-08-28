@@ -10,14 +10,11 @@
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.ServiceRequests
 @using TenantPlatform.Web.Security.Authorization
-
 @inject IServiceRequestService ServiceRequestService
 @inject ICurrentUserContextService UserContext
 @inject NavigationManager Navigation
 @inject ITenantAuthorizationService AuthorizationService
-
 <PageTitle>@(request?.ServiceName ?? L["ServiceRequest"])</PageTitle>
-
 @if (isLoading)
 {
     <p>@L["Loading"]</p>
@@ -31,7 +28,6 @@ else if (request is null)
 else
 {
     <div class="mb-4">
-
         @if (isProviderUser)
         {
             <a href="/provider/requests"
@@ -46,21 +42,16 @@ else
                 ← @L["MyServiceRequests"]
             </a>
         }
-
     </div>
-
     <div class="d-flex justify-content-between align-items-start mb-4">
-
         <div>
             <h1 class="mb-1">
                 @request.ServiceName
             </h1>
-
             <div class="text-body-secondary">
                 @request.RequesterOrganizationName
                 ·
                 @request.BuildingName
-
                 @if (!string.IsNullOrWhiteSpace(request.UnitName))
                 {
                     <span>
@@ -69,16 +60,13 @@ else
                 }
             </div>
         </div>
-
         <div class="d-flex gap-2 align-items-center">
-
             @if (canApprove)
             {
                 <button type="button"
                         class="btn btn-success"
                         disabled="@isProcessing"
                         @onclick="ApproveAsync">
-
                     @if (isProcessing)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
@@ -87,11 +75,17 @@ else
                     {
                         <i class="bi bi-check-lg me-2"></i>
                     }
-
                     @L["Approve"]
                 </button>
             }
-
+            @if (canAssignProvider)
+           {
+               <a class="btn btn-primary"
+                  href="@($"/portal/requests/{request.Id}/assign-provider")">
+                   <i class="bi bi-person-check me-1"></i>
+                   @L["AssignProvider"]
+               </a>
+           }
             @* NEW: Provider can start an approved request *@
             @if (canStartWork)
             {
@@ -99,7 +93,6 @@ else
                         class="btn btn-primary"
                         disabled="@isProcessing"
                         @onclick="StartWorkAsync">
-
                     @if (isProcessing)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
@@ -108,18 +101,15 @@ else
                     {
                         <i class="bi bi-play-fill me-1"></i>
                     }
-
                     @L["StartWork"]
                 </button>
             }
-
             @if (canComplete)
             {
                 <button type="button"
                         class="btn btn-success"
                         disabled="@isProcessing"
                         @onclick="CompleteAsync">
-
                     @if (isProcessing)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
@@ -128,38 +118,35 @@ else
                     {
                         <i class="bi bi-check-circle me-1"></i>
                     }
-
                     @L["Complete"]
                 </button>
             }
-
             <span class="badge text-bg-secondary fs-6">
                 @GetStatusText(request.Status)
             </span>
-
         </div>
-
     </div>
-
     @if (!string.IsNullOrWhiteSpace(actionError))
     {
         <div class="alert alert-danger mb-4">
             @L[actionError]
         </div>
     }
-
+    @if (request.Status == ServiceRequestStatus.Approved &&
+        string.IsNullOrWhiteSpace(request.AssignedServiceProviderOrganizationName))
+   {
+       <div class="alert alert-warning mb-4">
+           <i class="bi bi-exclamation-triangle me-1"></i>
+           @L["ServiceRequestAwaitingProviderAssignment"]
+       </div>
+   }
     <div class="row g-4">
-
         <div class="col-lg-8">
-
             <div class="card mb-4">
-
                 <div class="card-header">
                     @L["RequestDetails"]
                 </div>
-
                 <div class="card-body">
-
                     @if (request.Values.Count == 0)
                     {
                         <span class="text-body-secondary">
@@ -169,33 +156,24 @@ else
                     else
                     {
                         <dl class="row mb-0">
-
                             @foreach (var value in request.Values)
                             {
                                 <dt class="col-sm-4">
                                     @value.Label
                                 </dt>
-
                                 <dd class="col-sm-8">
                                     @GetDisplayValue(value)
                                 </dd>
                             }
-
                         </dl>
                     }
-
                 </div>
-
             </div>
-
             <div class="card">
-
                 <div class="card-header">
                     @L["Activity"]
                 </div>
-
                 <div class="card-body">
-
                     @if (request.Messages.Count == 0)
                     {
                         <div class="text-body-secondary">
@@ -207,23 +185,18 @@ else
                         @foreach (var message in request.Messages)
                         {
                             <div class="d-flex gap-3 mb-4">
-
                                 <div>
                                     <i class="@GetMessageIcon(message) fs-5"></i>
                                 </div>
-
                                 <div class="flex-grow-1">
-
                                     <div class="fw-semibold">
                                         @GetMessageTitle(message)
                                     </div>
-
                                     <div class="small text-body-secondary mb-1">
                                         @(message.CreatedAt
                                             .ToLocalTime()
                                             .ToString("g"))
                                     </div>
-
                                     @if (message.Type != ServiceRequestMessageType.System &&
                                          !string.IsNullOrWhiteSpace(message.Body))
                                     {
@@ -231,36 +204,27 @@ else
                                             @message.Body
                                         </div>
                                     }
-
                                 </div>
-
                             </div>
                         }
                     }
-
                     @* NEW: Comment entry *@
                     <hr class="my-4" />
-
                     <div>
-
                         <label class="form-label fw-semibold">
                             @L["AddComment"]
                         </label>
-
                         <textarea class="form-control"
                                   rows="3"
                                   maxlength="4000"
                                   @bind="commentText"
                                   placeholder="@L["AddComment"]">
                         </textarea>
-
                         <div class="mt-2">
-
                             <button type="button"
                                     class="btn btn-outline-primary"
                                     disabled="@(isAddingComment || string.IsNullOrWhiteSpace(commentText))"
                                     @onclick="AddCommentAsync">
-
                                 @if (isAddingComment)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2"></span>
@@ -269,137 +233,99 @@ else
                                 {
                                     <i class="bi bi-chat-left-text me-1"></i>
                                 }
-
                                 @L["AddComment"]
                             </button>
-
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
         <div class="col-lg-4">
-
             <div class="card">
-
                 <div class="card-header">
                     @L["RequestInformation"]
                 </div>
-
                 <div class="card-body">
-
                     <dl class="mb-0">
-
                         <dt>@L["Organization"]</dt>
                         <dd>@request.RequesterOrganizationName</dd>
-
                         <dt>@L["Building"]</dt>
                         <dd>@request.BuildingName</dd>
-
                         @if (!string.IsNullOrWhiteSpace(request.UnitName))
                         {
                             <dt>@L["Unit"]</dt>
                             <dd>@request.UnitName</dd>
                         }
-
-                        @if (!string.IsNullOrWhiteSpace(
-                            request.AssignedServiceProviderOrganizationName))
-                        {
-                            <dt>@L["Provider"]</dt>
-
-                            <dd>
-                                @request.AssignedServiceProviderOrganizationName
-                            </dd>
-                        }
-
+                        <dt>@L["Provider"]</dt>
+                        <dd>
+                           @if (!string.IsNullOrWhiteSpace(
+                               request.AssignedServiceProviderOrganizationName))
+                           {
+                               @request.AssignedServiceProviderOrganizationName
+                           }
+                           else
+                           {
+                               <span class="text-body-secondary">
+                                   @L["NotAssigned"]
+                               </span>
+                           }
+                       </dd>
                         <dt>@L["Created"]</dt>
-
                         <dd>
                             @(request.CreatedAt
                                 .ToLocalTime()
                                 .ToString("g"))
                         </dd>
-
                         @if (request.SubmittedAt.HasValue)
                         {
                             <dt>@L["Submitted"]</dt>
-
                             <dd>
                                 @(request.SubmittedAt.Value
                                     .ToLocalTime()
                                     .ToString("g"))
                             </dd>
                         }
-
                     </dl>
-
                 </div>
-
             </div>
-
         </div>
-
     </div>
 }
-
 @code {
-
     [Parameter]
     public Guid Id { get; set; }
-
     private ServiceRequestDetailsDto? request;
-
     private bool isLoading = true;
-
     private bool canApprove;
-
+    private bool canAssignProvider;
     private bool canStartWork;
-
     private bool canComplete;
-
     private bool isProcessing;
-
     private string? actionError;
-
     private bool isProviderUser;
-
     private bool canUseProviderPortal;
-
     private bool isAddingComment;
-
     private string commentText = string.Empty;
-
     protected override async Task OnInitializedAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
-
         if (!accountId.HasValue)
         {
             Navigation.NavigateTo("/");
             return;
         }
-
         isProviderUser =
             await AuthorizationService
                 .CanUseProviderPortalAsync();
-
         await ReloadAsync();
-
         isLoading = false;
     }
-
     private string GetStatusText(
         ServiceRequestStatus status)
     {
         return L[$"ServiceRequestStatus_{status}"];
     }
-
     private string GetDisplayValue(
         ServiceRequestFieldValueDto value)
     {
@@ -407,7 +333,6 @@ else
         {
             return "-";
         }
-
         if (value.FieldType == ServiceFieldType.Boolean)
         {
             return string.Equals(
@@ -417,15 +342,12 @@ else
                 ? L["Yes"]
                 : L["No"];
         }
-
         if (value.FieldType == ServiceFieldType.MultiChoice)
         {
             return value.Value.Replace(",", ", ");
         }
-
         return value.Value;
     }
-
     private string GetMessageTitle(
         ServiceRequestMessageDto message)
     {
@@ -435,20 +357,16 @@ else
             return L[
                 $"ServiceRequestEvent_{message.EventType.Value}"];
         }
-
         return message.Type switch
         {
             ServiceRequestMessageType.Email =>
                 L["Email"],
-
             ServiceRequestMessageType.Comment =>
                 L["Comment"],
-
             _ =>
                 L["Activity"]
         };
     }
-
     private static string GetMessageIcon(
         ServiceRequestMessageDto message)
     {
@@ -456,28 +374,22 @@ else
         {
             return "bi bi-envelope";
         }
-
         if (message.Type == ServiceRequestMessageType.Comment)
         {
             return "bi bi-chat-left-text";
         }
-
         return "bi bi-check-circle";
     }
-
     private async Task ApproveAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
-
         if (!accountId.HasValue)
         {
             return;
         }
-
         actionError = null;
         isProcessing = true;
-
         try
         {
             await ServiceRequestService
@@ -485,7 +397,6 @@ else
                     accountId.Value,
                     Id,
                     UserContext.Current.UserId);
-
             await ReloadAsync();
         }
         catch (ServiceRequestValidationException ex)
@@ -497,21 +408,17 @@ else
             isProcessing = false;
         }
     }
-
     // NEW
     private async Task StartWorkAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
-
         if (!accountId.HasValue)
         {
             return;
         }
-
         actionError = null;
         isProcessing = true;
-
         try
         {
             await ServiceRequestService
@@ -519,7 +426,6 @@ else
                     accountId.Value,
                     Id,
                     UserContext.Current.UserId);
-
             await ReloadAsync();
         }
         catch (ServiceRequestValidationException ex)
@@ -531,20 +437,16 @@ else
             isProcessing = false;
         }
     }
-
     private async Task CompleteAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
-
         if (!accountId.HasValue)
         {
             return;
         }
-
         actionError = null;
         isProcessing = true;
-
         try
         {
             await ServiceRequestService
@@ -552,7 +454,6 @@ else
                     accountId.Value,
                     Id,
                     UserContext.Current.UserId);
-
             await ReloadAsync();
         }
         catch (ServiceRequestValidationException ex)
@@ -564,22 +465,18 @@ else
             isProcessing = false;
         }
     }
-
     // NEW
     private async Task AddCommentAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
-
         if (!accountId.HasValue ||
             string.IsNullOrWhiteSpace(commentText))
         {
             return;
         }
-
         actionError = null;
         isAddingComment = true;
-
         try
         {
             await ServiceRequestService
@@ -588,9 +485,7 @@ else
                     Id,
                     UserContext.Current.UserId,
                     commentText);
-
             commentText = string.Empty;
-
             await ReloadAsync();
         }
         catch (ServiceRequestValidationException ex)
@@ -602,21 +497,17 @@ else
             isAddingComment = false;
         }
     }
-
     private async Task ReloadAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
-
         if (!accountId.HasValue)
         {
             return;
         }
-
         canUseProviderPortal =
             await AuthorizationService
                 .CanUseProviderPortalAsync();
-
         request =
             await ServiceRequestService
                 .GetRequestAsync(
@@ -624,45 +515,46 @@ else
                     Id,
                     UserContext.Current.UserId,
                     CultureInfo.CurrentUICulture.Name);
-
         if (request is null)
         {
             canApprove = false;
+            canAssignProvider = false;
             canStartWork = false;
             canComplete = false;
             return;
         }
-
         canApprove =
             request.Status == ServiceRequestStatus.Submitted &&
             await AuthorizationService
                 .CanApproveServiceRequestAsync(Id);
-
+        canAssignProvider =
+            request.Status == ServiceRequestStatus.Approved &&
+            string.IsNullOrWhiteSpace(
+               request.AssignedServiceProviderOrganizationName) &&
+            await AuthorizationService
+                .CanApproveServiceRequestAsync(Id);
         // Provider starts an Approved request
         canStartWork =
             canUseProviderPortal &&
             request.Status == ServiceRequestStatus.Approved;
-
         /*
-         * Admin:
-         *   Approved   -> Completed
-         *   InProgress -> Completed
-         *
-         * Provider:
-         *   InProgress -> Completed
-         *
-         * CanCompleteServiceRequestAsync handles the admin case.
+         \* Admin:
+         \*   Approved   -> Completed
+         \*   InProgress -> Completed
+         \*
+         \* Provider:
+         \*   InProgress -> Completed
+         \*
+         \* CanCompleteServiceRequestAsync handles the admin case.
          */
         var canAdminComplete =
             (request.Status == ServiceRequestStatus.Approved ||
              request.Status == ServiceRequestStatus.InProgress) &&
             await AuthorizationService
                 .CanCompleteServiceRequestAsync(Id);
-
         var canProviderComplete =
             canUseProviderPortal &&
             request.Status == ServiceRequestStatus.InProgress;
-
         canComplete =
             canAdminComplete ||
             canProviderComplete;

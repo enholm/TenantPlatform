@@ -1029,4 +1029,52 @@
 <data name="ServiceProviderHasOpenRequests" xml:space="preserve">
   <value>Leverandøren kan ikke slettes fordi den har åpne forespørsler for denne tjenesten.</value>
 </data>
+
+<data name="AssignProvider" xml:space="preserve">
+  <value>Tildel leverandør</value>
+</data>
+
+<data name="NotAssigned" xml:space="preserve">
+  <value>Ikke tildelt</value>
+</data>
+
+<data name="ServiceRequestAwaitingProviderAssignment" xml:space="preserve">
+  <value>Forespørselen er godkjent, men har ikke blitt tildelt en leverandør.</value>
+</data>
+
+<data name="BackToRequest" xml:space="preserve">
+  <value>Tilbake til forespørselen</value>
+</data>
+
+<data name="AccessDenied" xml:space="preserve">
+  <value>Du har ikke tilgang til denne funksjonen.</value>
+</data>
+
+<data name="ProviderAssignmentCannotBeChanged" xml:space="preserve">
+  <value>Leverandøren kan ikke endres etter at forespørselen er tildelt.</value>
+</data>
+
+<data name="NoAvailableProviders" xml:space="preserve">
+  <value>Det finnes ingen aktive leverandører tilgjengelig for denne tjenesten.</value>
+</data>
+
+<data name="SelectProvider" xml:space="preserve">
+  <value>Velg leverandør</value>
+</data>
+
+<data name="ServiceProviderRequired" xml:space="preserve">
+  <value>Du må velge en leverandør.</value>
+</data>
+
+<data name="ServiceRequestProviderAssignmentNotAllowed" xml:space="preserve">
+  <value>Denne forespørselen kan ikke tildeles en leverandør.</value>
+</data>
+
+<data name="ServiceRequestAlreadyAssigned" xml:space="preserve">
+  <value>Forespørselen er allerede tildelt en leverandør.</value>
+</data>
+
+<data name="ServiceRequestProviderNotAvailable" xml:space="preserve">
+  <value>Den valgte leverandøren er ikke tilgjengelig for denne tjenesten.</value>
+</data>
 </root>

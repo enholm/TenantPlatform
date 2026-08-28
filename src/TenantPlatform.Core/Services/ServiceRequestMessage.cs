@@ -32,7 +32,8 @@ public class ServiceRequestMessage
 public enum ServiceRequestMessageDirection
 {
     Outbound = 1,
-    Inbound = 2
+    Inbound = 2,
+    Internal = 3
 }
 
 public enum ServiceRequestMessageType

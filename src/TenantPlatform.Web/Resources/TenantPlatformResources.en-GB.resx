@@ -985,4 +985,53 @@
 <data name="ServiceProviderHasOpenRequests" xml:space="preserve">
   <value>The provider cannot be deleted because it has open requests for this service.</value>
 </data>
+
+<data name="AssignProvider" xml:space="preserve">
+  <value>Assign provider</value>
+</data>
+
+<data name="NotAssigned" xml:space="preserve">
+  <value>Not assigned</value>
+</data>
+
+<data name="ServiceRequestAwaitingProviderAssignment" xml:space="preserve">
+  <value>The request has been approved but has not been assigned to a provider.</value>
+</data>
+
+<data name="BackToRequest" xml:space="preserve">
+  <value>Back to request</value>
+</data>
+
+<data name="AccessDenied" xml:space="preserve">
+  <value>You do not have access to this function.</value>
+</data>
+
+<data name="ProviderAssignmentCannotBeChanged" xml:space="preserve">
+  <value>The provider cannot be changed after the request has been assigned.</value>
+</data>
+
+<data name="NoAvailableProviders" xml:space="preserve">
+  <value>There are no active providers available for this service.</value>
+</data>
+
+<data name="SelectProvider" xml:space="preserve">
+  <value>Select provider</value>
+</data>
+
+<data name="ServiceProviderRequired" xml:space="preserve">
+  <value>You must select a provider.</value>
+</data>
+
+<data name="ServiceRequestProviderAssignmentNotAllowed" xml:space="preserve">
+  <value>This request cannot be assigned to a provider.</value>
+</data>
+
+<data name="ServiceRequestAlreadyAssigned" xml:space="preserve">
+  <value>The request has already been assigned to a provider.</value>
+</data>
+
+<data name="ServiceRequestProviderNotAvailable" xml:space="preserve">
+  <value>The selected provider is not available for this service.</value>
+</data>
+
 </root>

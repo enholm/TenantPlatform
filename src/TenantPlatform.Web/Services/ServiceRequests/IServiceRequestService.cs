@@ -56,5 +56,18 @@ public interface IServiceRequestService
         Guid userId,
         string comment,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<ServiceRequestProviderOptionDto>>
+        GetAvailableProvidersAsync(
+            Guid accountId,
+            Guid serviceRequestId,
+            CancellationToken cancellationToken = default);
+
+    Task AssignProviderAsync(
+        Guid accountId,
+        Guid serviceRequestId,
+        Guid providerOrganizationId,
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }
 
