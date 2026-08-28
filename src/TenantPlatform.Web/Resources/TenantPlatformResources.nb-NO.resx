@@ -968,4 +968,53 @@
 <data name="CommentTooLong" xml:space="preserve">
   <value>Kommentaren er for lang.</value>
 </data>
+
+<data name="ServiceProviders" xml:space="preserve">
+  <value>Tjenesteleverandører</value>
+</data>
+<data name="ServiceProvidersDescription" xml:space="preserve">
+  <value>Leverandører som kan håndtere denne tjenesten</value>
+</data>
+
+<data name="NoServiceProviders" xml:space="preserve">
+  <value>Ingen leverandører er konfigurert for denne tjenesten.</value>
+</data>
+
+<data name="Integration" xml:space="preserve">
+  <value>Integrasjon</value>
+</data>
+<data name="RequestEmailAddress" xml:space="preserve">
+  <value>E-postadresse for bestillinger</value>
+</data>
+
+<data name="DefaultProvider" xml:space="preserve">
+  <value>Standardleverandør</value>
+</data>
+
+<data name="SelectProvider" xml:space="preserve">
+  <value>Velg leverandør</value>
+</data>
+
+<data name="ServiceProviderRequired" xml:space="preserve">
+  <value>Du må velge en leverandør.</value>
+</data>
+<data name="ServiceProviderEmailRequired" xml:space="preserve">
+  <value>E-postadresse må angis for e-postintegrasjon.</value>
+</data>
+<data name="ServiceProviderOrganizationNotFound" xml:space="preserve">
+  <value>Leverandørorganisasjonen finnes ikke.</value>
+</data>
+<data name="ServiceProviderAlreadyExists" xml:space="preserve">
+  <value>Denne leverandøren er allerede lagt til for tjenesten.</value>
+</data>
+<data name="ServiceProviderNotFound" xml:space="preserve">
+  <value>Leverandøren finnes ikke.</value>
+</data>
+
+<data name="DeleteProvider" xml:space="preserve">
+  <value>Slett leverandør</value>
+</data>
+<data name="DeleteProviderConfirmation" xml:space="preserve">
+  <value>Er du sikker på at du vil slette denne leverandøren fra tjenesten?</value>
+</data>
 </root>

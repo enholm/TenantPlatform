@@ -51,6 +51,14 @@ public class ServiceDefinitionProviderConfiguration
         })
         .IsUnique();
 
+        builder.HasIndex(x => new
+            {
+                x.AccountId,
+                x.ServiceDefinitionId,
+                x.ServiceProviderOrganizationId
+            })
+            .IsUnique();
+
         builder.HasIndex(x => x.AccountId);
         builder.HasIndex(x => x.ServiceProviderOrganizationId);
     }

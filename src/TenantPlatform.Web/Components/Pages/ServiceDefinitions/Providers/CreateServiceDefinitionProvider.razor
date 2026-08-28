@@ -1,0 +1,237 @@
+@page "/service-definitions/{ServiceDefinitionId:guid}/providers/create"
+
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using TenantPlatform.Core.Services
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceDefinitions
+
+@inject IServiceDefinitionService ServiceDefinitionService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["AddProvider"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else
+{
+    <div class="mb-4">
+
+        <a href="@($"/service-definitions/{ServiceDefinitionId}")"
+           class="text-decoration-none">
+            ← @L["ServiceProviders"]
+        </a>
+
+    </div>
+
+    <h1 class="mb-4">
+        @L["AddProvider"]
+    </h1>
+
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="alert alert-danger">
+            @L[error]
+        </div>
+    }
+
+    <EditForm Model="model"
+              OnValidSubmit="SaveAsync">
+
+        <DataAnnotationsValidator />
+
+        <div class="card">
+            <div class="card-body">
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        @L["Provider"]
+                    </label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="model.ServiceProviderOrganizationId">
+
+                        <option value="@Guid.Empty">
+                            @L["SelectProvider"]
+                        </option>
+
+                        @foreach (var organization in organizations)
+                        {
+                            <option value="@organization.Id">
+                                @organization.Name
+                            </option>
+                        }
+
+                    </InputSelect>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        @L["Integration"]
+                    </label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="model.IntegrationType">
+
+                        @foreach (var type in Enum
+                            .GetValues<ServiceProviderIntegrationType>())
+                        {
+                            <option value="@type">
+                                @type
+                            </option>
+                        }
+
+                    </InputSelect>
+
+                </div>
+
+                @if (model.IntegrationType ==
+                    ServiceProviderIntegrationType.Email)
+                {
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            @L["RequestEmailAddress"]
+                        </label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="model.RequestEmailAddress" />
+
+                    </div>
+                }
+
+                <div class="form-check mb-3">
+
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="model.IsDefault" />
+
+                    <label class="form-check-label">
+                        @L["DefaultProvider"]
+                    </label>
+
+                </div>
+
+                <div class="form-check">
+
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="model.IsActive" />
+
+                    <label class="form-check-label">
+                        @L["Active"]
+                    </label>
+
+                </div>
+
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+
+            <a class="btn btn-outline-secondary"
+               href="@($"/service-definitions/{ServiceDefinitionId}")">
+                @L["Cancel"]
+            </a>
+
+            <button type="submit"
+                    class="btn btn-primary"
+                    disabled="@isSaving">
+                @L["AddProvider"]
+            </button>
+
+        </div>
+
+    </EditForm>
+}
+
+@code {
+
+    [Parameter]
+    public Guid ServiceDefinitionId { get; set; }
+
+    private readonly ServiceDefinitionProviderEditDto model =
+        new();
+
+    private IReadOnlyList<ServiceProviderOrganizationOptionDto> organizations =
+        Array.Empty<ServiceProviderOrganizationOptionDto>();
+
+    private bool isLoading = true;
+
+    private bool isSaving;
+
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService
+            .CanManageServiceDefinitionsAsync())
+        {
+            Navigation.NavigateTo(
+                "/access-denied");
+
+            return;
+        }
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        organizations =
+            await ServiceDefinitionService
+                .GetProviderOrganizationOptionsAsync(
+                    accountId.Value);
+
+        isLoading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        error = null;
+        isSaving = true;
+
+        try
+        {
+            await ServiceDefinitionService
+                .CreateProviderAsync(
+                    accountId.Value,
+                    ServiceDefinitionId,
+                    model);
+
+            Navigation.NavigateTo(
+                $"/service-definitions/{ServiceDefinitionId}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}
+

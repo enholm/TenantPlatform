@@ -315,6 +315,7 @@ else
                             <th>@L["Email"]</th>
                             <th>@L["Default"]</th>
                             <th>@L["Status"]</th>
+                            <th></th>
                         </tr>
                     </thead>
 
@@ -357,6 +358,20 @@ else
                                         </span>
                                     }
                                 </td>
+                                <td class="text-end">
+                                    @if (canEdit)
+                                    {
+                                        <a href="@($"/service-definitions/{definition.Id}/providers/{provider.Id}/edit")"
+                                        class="btn btn-outline-secondary btn-sm">
+                                            @L["Edit"]
+                                        </a>
+
+                                        <a href="@($"/service-definitions/{definition.Id}/providers/{provider.Id}/delete")"
+                                        class="btn btn-outline-danger btn-sm ms-1">
+                                            @L["Delete"]
+                                        </a>
+                                    }
+                                </td>                              
                             </tr>
                         }
                     </tbody>

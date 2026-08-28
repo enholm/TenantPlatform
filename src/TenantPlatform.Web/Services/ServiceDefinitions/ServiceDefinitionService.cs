@@ -546,5 +546,411 @@ public class ServiceDefinitionService : IServiceDefinitionService
             ? null
             : value.Trim();
     }
+
+
+    public async Task<IReadOnlyList<ServiceDefinitionProviderDto>>
+        GetProvidersAsync(
+            Guid accountId,
+            Guid serviceDefinitionId,
+            CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var serviceExists =
+            await dbContext.ServiceDefinitions
+                .AsNoTracking()
+                .AnyAsync(
+                    x =>
+                        x.Id == serviceDefinitionId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (!serviceExists)
+        {
+            return Array.Empty<ServiceDefinitionProviderDto>();
+        }
+
+        return await dbContext.ServiceDefinitionProviders
+            .AsNoTracking()
+            .Where(x =>
+                x.AccountId == accountId &&
+                x.ServiceDefinitionId == serviceDefinitionId)
+            .Join(
+                dbContext.Organizations,
+                provider =>
+                    provider.ServiceProviderOrganizationId,
+                organization =>
+                    organization.Id,
+                (provider, organization) =>
+                    new ServiceDefinitionProviderDto
+                    {
+                        Id =
+                            provider.Id,
+
+                        ServiceProviderOrganizationId =
+                            provider.ServiceProviderOrganizationId,
+
+                        ServiceProviderOrganizationName =
+                            organization.Name,
+
+                        IntegrationType =
+                            provider.IntegrationType,
+
+                        RequestEmailAddress =
+                            provider.RequestEmailAddress,
+
+                        IsDefault =
+                            provider.IsDefault,
+
+                        IsActive =
+                            provider.IsActive
+                    })
+            .OrderByDescending(x => x.IsDefault)
+            .ThenBy(x => x.ServiceProviderOrganizationName)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ServiceDefinitionProviderEditDto?>
+        GetProviderAsync(
+            Guid accountId,
+            Guid serviceDefinitionId,
+            Guid providerId,
+            CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        return await dbContext.ServiceDefinitionProviders
+            .AsNoTracking()
+            .Where(x =>
+                x.Id == providerId &&
+                x.AccountId == accountId &&
+                x.ServiceDefinitionId == serviceDefinitionId)
+            .Select(x =>
+                new ServiceDefinitionProviderEditDto
+                {
+                    ServiceProviderOrganizationId =
+                        x.ServiceProviderOrganizationId,
+
+                    IntegrationType =
+                        x.IntegrationType,
+
+                    RequestEmailAddress =
+                        x.RequestEmailAddress,
+
+                    IsDefault =
+                        x.IsDefault,
+
+                    IsActive =
+                        x.IsActive
+                })
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<ServiceProviderOrganizationOptionDto>>
+        GetProviderOrganizationOptionsAsync(
+            Guid accountId,
+            CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        return await dbContext.Organizations
+            .AsNoTracking()
+            .Where(x =>
+                x.AccountId == accountId &&
+                x.IsActive)
+            .OrderBy(x => x.Name)
+            .Select(x =>
+                new ServiceProviderOrganizationOptionDto
+                {
+                    Id = x.Id,
+                    Name = x.Name
+                })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Guid> CreateProviderAsync(
+        Guid accountId,
+        Guid serviceDefinitionId,
+        ServiceDefinitionProviderEditDto model,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateProviderModel(model);
+
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var serviceExists =
+            await dbContext.ServiceDefinitions
+                .AnyAsync(
+                    x =>
+                        x.Id == serviceDefinitionId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (!serviceExists)
+        {
+            throw new InvalidOperationException(
+                "ServiceDefinitionNotFound");
+        }
+
+        var organizationExists =
+            await dbContext.Organizations
+                .AnyAsync(
+                    x =>
+                        x.Id ==
+                            model.ServiceProviderOrganizationId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (!organizationExists)
+        {
+            throw new InvalidOperationException(
+                "ServiceProviderOrganizationNotFound");
+        }
+
+        var duplicateExists =
+            await dbContext.ServiceDefinitionProviders
+                .AnyAsync(
+                    x =>
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId ==
+                            serviceDefinitionId &&
+                        x.ServiceProviderOrganizationId ==
+                            model.ServiceProviderOrganizationId,
+                    cancellationToken);
+
+        if (duplicateExists)
+        {
+            throw new InvalidOperationException(
+                "ServiceProviderAlreadyExists");
+        }
+
+        if (model.IsDefault)
+        {
+            var existingDefaults =
+                await dbContext.ServiceDefinitionProviders
+                    .Where(x =>
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId ==
+                            serviceDefinitionId &&
+                        x.IsDefault)
+                    .ToListAsync(cancellationToken);
+
+            foreach (var provider in existingDefaults)
+            {
+                provider.IsDefault = false;
+            }
+        }
+
+        var entity =
+            new ServiceDefinitionProvider
+            {
+                Id =
+                    Guid.NewGuid(),
+
+                AccountId =
+                    accountId,
+
+                ServiceDefinitionId =
+                    serviceDefinitionId,
+
+                ServiceProviderOrganizationId =
+                    model.ServiceProviderOrganizationId,
+
+                IntegrationType =
+                    model.IntegrationType,
+
+                RequestEmailAddress =
+                    model.RequestEmailAddress,
+
+                IsDefault =
+                    model.IsDefault,
+
+                IsActive =
+                    model.IsActive
+            };
+
+        dbContext.ServiceDefinitionProviders.Add(
+            entity);
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+
+        return entity.Id;
+    }
+
+    public async Task UpdateProviderAsync(
+        Guid accountId,
+        Guid serviceDefinitionId,
+        Guid providerId,
+        ServiceDefinitionProviderEditDto model,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateProviderModel(model);
+
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var provider =
+            await dbContext.ServiceDefinitionProviders
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.Id == providerId &&
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId ==
+                            serviceDefinitionId,
+                    cancellationToken);
+
+        if (provider is null)
+        {
+            throw new InvalidOperationException(
+                "ServiceProviderNotFound");
+        }
+
+        var organizationExists =
+            await dbContext.Organizations
+                .AnyAsync(
+                    x =>
+                        x.Id ==
+                            model.ServiceProviderOrganizationId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (!organizationExists)
+        {
+            throw new InvalidOperationException(
+                "ServiceProviderOrganizationNotFound");
+        }
+
+        var duplicateExists =
+            await dbContext.ServiceDefinitionProviders
+                .AnyAsync(
+                    x =>
+                        x.Id != providerId &&
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId ==
+                            serviceDefinitionId &&
+                        x.ServiceProviderOrganizationId ==
+                            model.ServiceProviderOrganizationId,
+                    cancellationToken);
+
+        if (duplicateExists)
+        {
+            throw new InvalidOperationException(
+                "ServiceProviderAlreadyExists");
+        }
+
+        if (model.IsDefault)
+        {
+            var existingDefaults =
+                await dbContext.ServiceDefinitionProviders
+                    .Where(x =>
+                        x.Id != providerId &&
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId ==
+                            serviceDefinitionId &&
+                        x.IsDefault)
+                    .ToListAsync(cancellationToken);
+
+            foreach (var existing in existingDefaults)
+            {
+                existing.IsDefault = false;
+            }
+        }
+
+        provider.ServiceProviderOrganizationId =
+            model.ServiceProviderOrganizationId;
+
+        provider.IntegrationType =
+            model.IntegrationType;
+
+        provider.RequestEmailAddress =
+            model.RequestEmailAddress;
+
+        provider.IsDefault =
+            model.IsDefault;
+
+        provider.IsActive =
+            model.IsActive;
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+    }
+
+    public async Task DeleteProviderAsync(
+        Guid accountId,
+        Guid serviceDefinitionId,
+        Guid providerId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var provider =
+            await dbContext.ServiceDefinitionProviders
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.Id == providerId &&
+                        x.AccountId == accountId &&
+                        x.ServiceDefinitionId ==
+                            serviceDefinitionId,
+                    cancellationToken);
+
+        if (provider is null)
+        {
+            return;
+        }
+
+        dbContext.ServiceDefinitionProviders.Remove(
+            provider);
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+    }
+
+    private static void ValidateProviderModel(
+        ServiceDefinitionProviderEditDto model)
+    {
+        if (model.ServiceProviderOrganizationId == Guid.Empty)
+        {
+            throw new InvalidOperationException(
+                "ServiceProviderRequired");
+        }
+
+        if (model.IntegrationType ==
+                ServiceProviderIntegrationType.Email &&
+            string.IsNullOrWhiteSpace(
+                model.RequestEmailAddress))
+        {
+            throw new InvalidOperationException(
+                "ServiceProviderEmailRequired");
+        }
+
+        if (!model.IsActive)
+        {
+            model.IsDefault = false;
+        }
+
+        if (model.IntegrationType !=
+            ServiceProviderIntegrationType.Email)
+        {
+            model.RequestEmailAddress = null;
+        }
+        else
+        {
+            model.RequestEmailAddress =
+                model.RequestEmailAddress?.Trim();
+        }
+    }
+
 }
 

@@ -966,4 +966,11 @@
 <data name="CommentTooLong" xml:space="preserve">
   <value>The comment is too long.</value>
 </data>
+
+<data name="DeleteProvider" xml:space="preserve">
+  <value>Delete provider</value>
+</data>
+<data name="DeleteProviderConfirmation" xml:space="preserve">
+  <value>Are you sure you want to remove this provider from the service?</value>
+</data>
 </root>

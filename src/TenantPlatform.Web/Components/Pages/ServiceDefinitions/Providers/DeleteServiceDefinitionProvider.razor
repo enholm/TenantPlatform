@@ -1,0 +1,198 @@
+@page "/service-definitions/{ServiceDefinitionId:guid}/providers/{Id:guid}/delete"
+
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceDefinitions
+
+@inject IServiceDefinitionService ServiceDefinitionService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["DeleteProvider"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (provider is null)
+{
+    <div class="alert alert-warning">
+        @L["ServiceProviderNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/service-definitions/{ServiceDefinitionId}")"
+           class="text-decoration-none">
+            ← @L["ServiceDefinition"]
+        </a>
+    </div>
+
+    <h1>@L["DeleteProvider"]</h1>
+
+    <div class="alert alert-danger mt-4">
+        <strong>@L["Warning"]</strong>
+
+        <div class="mt-2">
+            @L["DeleteProviderConfirmation"]
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(deleteError))
+    {
+        <div class="alert alert-danger">
+            @deleteError
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+
+            <h5>
+                @provider.ServiceProviderOrganizationName
+            </h5>
+
+            <div class="text-body-secondary mb-4">
+                @L["Integration"]:
+                @provider.IntegrationType
+
+                @if (!string.IsNullOrWhiteSpace(
+                    provider.RequestEmailAddress))
+                {
+                    <span class="ms-2">
+                        · @provider.RequestEmailAddress
+                    </span>
+                }
+            </div>
+
+            <EditForm Model="Model!"
+                      OnValidSubmit="DeleteAsync"
+                      FormName="DeleteServiceDefinitionProvider">
+
+                <DataAnnotationsValidator />
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        disabled="@isDeleting">
+
+                    @(isDeleting
+                        ? L["Deleting"]
+                        : L["Delete"])
+                </button>
+
+                <a href="@($"/service-definitions/{ServiceDefinitionId}")"
+                   class="btn btn-outline-secondary ms-2">
+                    @L["Cancel"]
+                </a>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public Guid ServiceDefinitionId { get; set; }
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(
+        FormName = "DeleteServiceDefinitionProvider")]
+    public DeleteProviderFormModel? Model { get; set; }
+
+    private ServiceDefinitionProviderDto? provider;
+
+    private bool isLoading = true;
+
+    private bool isDeleting;
+
+    private string? deleteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService
+            .CanManageServiceDefinitionsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        Model ??= new DeleteProviderFormModel();
+
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEditServiceDefinitionAsync(
+                ServiceDefinitionId))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        var providers =
+            await ServiceDefinitionService
+                .GetProvidersAsync(
+                    accountId.Value,
+                    ServiceDefinitionId);
+
+        provider =
+            providers.SingleOrDefault(
+                x => x.Id == Id);
+
+        isLoading = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue)
+        {
+            return;
+        }
+
+        deleteError = null;
+        isDeleting = true;
+
+        try
+        {
+            await ServiceDefinitionService
+                .DeleteProviderAsync(
+                    accountId.Value,
+                    ServiceDefinitionId,
+                    Id);
+
+            Navigation.NavigateTo(
+                $"/service-definitions/{ServiceDefinitionId}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            deleteError = ex.Message;
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    public sealed class DeleteProviderFormModel
+    {
+    }
+}
+
