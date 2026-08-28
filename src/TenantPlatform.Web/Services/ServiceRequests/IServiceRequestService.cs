@@ -38,5 +38,10 @@ public interface IServiceRequestService
         Guid userId,
         string languageCode,
         CancellationToken cancellationToken = default);
+
+    Task QueueProviderEmailAsync(
+        Guid accountId,
+        Guid requestId,
+        CancellationToken cancellationToken = default);
 }
 

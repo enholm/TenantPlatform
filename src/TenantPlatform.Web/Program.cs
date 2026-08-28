@@ -27,6 +27,7 @@ using TenantPlatform.Web.Services.ServiceDefinitionFields;
 using TenantPlatform.Web.Services.ServiceCatalog;
 using TenantPlatform.Web.Services.ServiceRequests;
 using TenantPlatform.Core.Identity;
+using TenantPlatform.Web.Email;
 
 
 
@@ -55,6 +56,8 @@ builder.Services
 builder.Services.AddLocalization(options =>
     options.ResourcesPath = "Resources");
 
+builder.Services.Configure<SmtpOptions>(
+    builder.Configuration.GetSection("Email"));
 
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
@@ -83,11 +86,16 @@ builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<IServiceDefinitionFieldService, ServiceDefinitionFieldService>();
 builder.Services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
 builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
+builder.Services.AddScoped<IServiceRequestEmailAddressService, ServiceRequestEmailAddressService>();
+builder.Services.AddScoped<IServiceRequestEmailComposer, ServiceRequestEmailComposer>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<
     ICurrentUserContextService,
     CurrentUserContextService>();
+
+builder.Services.AddHostedService<EmailOutboxWorker>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

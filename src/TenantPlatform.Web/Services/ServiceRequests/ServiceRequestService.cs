@@ -5,19 +5,26 @@ using TenantPlatform.Core.Services;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Core.Localization;
+using TenantPlatform.Web.Email;
 
 
 namespace TenantPlatform.Web.Services.ServiceRequests;
 
 public class ServiceRequestService : IServiceRequestService
 {
-    private readonly IDbContextFactory<TenantPlatformDbContext>
-        _dbContextFactory;
+    private readonly IDbContextFactory<TenantPlatformDbContext> _dbContextFactory;
+private readonly IServiceRequestEmailComposer _emailComposer;
+
+private readonly IServiceRequestEmailAddressService _emailAddressService;
 
     public ServiceRequestService(
-        IDbContextFactory<TenantPlatformDbContext> dbContextFactory)
+        IDbContextFactory<TenantPlatformDbContext> dbContextFactory,
+        IServiceRequestEmailComposer emailComposer,
+        IServiceRequestEmailAddressService emailAddressService)
     {
         _dbContextFactory = dbContextFactory;
+        _emailComposer = emailComposer;
+        _emailAddressService = emailAddressService;
     }
 
     public async Task<Guid> CreateServiceRequestAsync(
@@ -971,6 +978,14 @@ public class ServiceRequestService : IServiceRequestService
             });
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        
+        if (defaultProvider is not null)
+        {
+            await QueueProviderEmailAsync(
+                accountId,
+                requestId,
+                cancellationToken);
+        }
     }
 
     public async Task CompleteRequestAsync(
@@ -1164,6 +1179,123 @@ public class ServiceRequestService : IServiceRequestService
                 };
             })
             .ToList();
+    }
+
+    public async Task QueueProviderEmailAsync(
+        Guid accountId,
+        Guid requestId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var request =
+            await dbContext.ServiceRequests
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.Id == requestId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (request is null ||
+            !request.AssignedServiceProviderOrganizationId.HasValue)
+        {
+            return;
+        }
+
+        var provider =
+            await dbContext.ServiceDefinitionProviders
+                .AsNoTracking()
+                .Where(x =>
+                    x.AccountId == accountId &&
+                    x.ServiceDefinitionId ==
+                        request.ServiceDefinitionId &&
+                    x.ServiceProviderOrganizationId ==
+                        request.AssignedServiceProviderOrganizationId.Value &&
+                    x.IsActive)
+                .OrderByDescending(x => x.IsDefault)
+                .FirstOrDefaultAsync(cancellationToken);
+
+        if (provider is null)
+        {
+            return;
+        }
+
+        if (provider.IntegrationType !=
+            ServiceProviderIntegrationType.Email)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(
+            provider.RequestEmailAddress))
+        {
+            return;
+        }
+
+        var alreadyQueued =
+            await dbContext.EmailOutboxMessages
+                .AsNoTracking()
+                .AnyAsync(
+                    x =>
+                        x.ServiceRequestId == requestId &&
+                        x.Status != EmailOutboxStatus.Failed,
+                    cancellationToken);
+
+        if (alreadyQueued)
+        {
+            return;
+        }
+
+        var email =
+            await _emailComposer
+                .ComposeProviderRequestAsync(
+                    accountId,
+                    requestId,
+                    cancellationToken);
+
+        dbContext.EmailOutboxMessages.Add(
+            new EmailOutboxMessage
+            {
+                Id = Guid.NewGuid(),
+
+                AccountId =
+                    accountId,
+
+                ServiceRequestId =
+                    requestId,
+
+                ToAddress =
+                    provider.RequestEmailAddress,
+
+                ReplyToAddress =
+                    _emailAddressService
+                        .GetReplyAddress(
+                            request.ReplyToken),
+
+                Subject =
+                    email.Subject,
+
+                Body =
+                    email.Body,
+
+                Status =
+                    EmailOutboxStatus.Pending,
+
+                AttemptCount =
+                    0,
+
+                CreatedAt =
+                    DateTimeOffset.UtcNow,
+
+                NextAttemptAt =
+                    DateTimeOffset.UtcNow
+            });
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
     }
 
 }

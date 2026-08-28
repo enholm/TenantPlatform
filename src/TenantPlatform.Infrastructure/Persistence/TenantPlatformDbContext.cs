@@ -48,6 +48,10 @@ public class TenantPlatformDbContext : DbContext
 
     public DbSet<ServiceDefinitionFieldTranslation> ServiceDefinitionFieldTranslations =>
             Set<ServiceDefinitionFieldTranslation>();
+
+    public DbSet<EmailOutboxMessage> EmailOutboxMessages =>
+        Set<EmailOutboxMessage>();
+
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
