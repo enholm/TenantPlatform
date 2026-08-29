@@ -14,16 +14,6 @@ public class CreateServiceDefinitionFieldRequest
 
     public string? OptionsText { get; init; }
 
-    public string NorwegianLabel { get; init; } = string.Empty;
-
-    public string? NorwegianPlaceholder { get; init; }
-
-    public string? NorwegianHelpText { get; init; }
-
-    public string EnglishLabel { get; init; } = string.Empty;
-
-    public string? EnglishPlaceholder { get; init; }
-
-    public string? EnglishHelpText { get; init; }
+    public List<ServiceDefinitionFieldTranslationRequest> Translations { get; init; } = [];
 }
 

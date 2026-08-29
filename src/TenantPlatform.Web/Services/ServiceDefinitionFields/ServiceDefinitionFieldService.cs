@@ -48,13 +48,16 @@ public class ServiceDefinitionFieldService
                 .AsNoTracking()
                 .Where(x =>
                     x.ServiceDefinitionFieldId == fieldId)
+                .OrderBy(x => x.LanguageCode)
+                .Select(x =>
+                    new ServiceDefinitionFieldTranslationDto
+                    {
+                        LanguageCode = x.LanguageCode,
+                        Label = x.Label,
+                        Placeholder = x.Placeholder,
+                        HelpText = x.HelpText
+                    })
                 .ToListAsync(cancellationToken);
-
-        var norwegian = translations.SingleOrDefault(
-            x => x.LanguageCode == SupportedLanguages.NbNo);
-
-        var english = translations.SingleOrDefault(
-            x => x.LanguageCode == SupportedLanguages.EnGb);
 
         return new ServiceDefinitionFieldDetailsDto
         {
@@ -65,14 +68,7 @@ public class ServiceDefinitionFieldService
             IsRequired = field.IsRequired,
             SortOrder = field.SortOrder,
             OptionsText = DeserializeOptions(field.Options),
-
-            NorwegianLabel = norwegian?.Label ?? string.Empty,
-            NorwegianPlaceholder = norwegian?.Placeholder,
-            NorwegianHelpText = norwegian?.HelpText,
-
-            EnglishLabel = english?.Label ?? string.Empty,
-            EnglishPlaceholder = english?.Placeholder,
-            EnglishHelpText = english?.HelpText
+            Translations = translations
         };
     }
 
@@ -108,6 +104,8 @@ public class ServiceDefinitionFieldService
                 "Service definition field key already exists.");
         }
 
+        ValidateTranslations(request.Translations);
+
         var fieldId = Guid.NewGuid();
 
         dbContext.ServiceDefinitionFields.Add(
@@ -124,27 +122,27 @@ public class ServiceDefinitionFieldService
                     request.OptionsText)
             });
 
-        dbContext.ServiceDefinitionFieldTranslations.AddRange(
-            CreateTranslation(
-                fieldId,
-                SupportedLanguages.NbNo,
-                request.NorwegianLabel,
-                request.NorwegianPlaceholder,
-                request.NorwegianHelpText),
+        foreach (var translation in request.Translations)
+        {
+            if (string.IsNullOrWhiteSpace(translation.Label))
+            {
+                continue;
+            }
 
-            CreateTranslation(
-                fieldId,
-                SupportedLanguages.EnGb,
-                request.EnglishLabel,
-                request.EnglishPlaceholder,
-                request.EnglishHelpText));
+            dbContext.ServiceDefinitionFieldTranslations.Add(
+                CreateTranslation(
+                    fieldId,
+                    translation.LanguageCode.Trim(),
+                    translation.Label,
+                    translation.Placeholder,
+                    translation.HelpText));
+        }
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
 
         return fieldId;
     }
-
     public async Task UpdateFieldAsync(
         Guid accountId,
         Guid serviceDefinitionId,
@@ -193,6 +191,8 @@ public class ServiceDefinitionFieldService
                 "Service definition field key already exists.");
         }
 
+        ValidateTranslations(request.Translations);
+
         field.Key = normalizedKey;
         field.FieldType = request.FieldType;
         field.IsRequired = request.IsRequired;
@@ -201,23 +201,68 @@ public class ServiceDefinitionFieldService
             request.FieldType,
             request.OptionsText);
 
-        await UpsertTranslationAsync(
-            dbContext,
-            fieldId,
-            SupportedLanguages.NbNo,
-            request.NorwegianLabel,
-            request.NorwegianPlaceholder,
-            request.NorwegianHelpText,
-            cancellationToken);
+        var existingTranslations =
+            await dbContext.ServiceDefinitionFieldTranslations
+                .Where(x =>
+                    x.ServiceDefinitionFieldId == fieldId)
+                .ToListAsync(cancellationToken);
 
-        await UpsertTranslationAsync(
-            dbContext,
-            fieldId,
-            SupportedLanguages.EnGb,
-            request.EnglishLabel,
-            request.EnglishPlaceholder,
-            request.EnglishHelpText,
-            cancellationToken);
+        foreach (var translationRequest in request.Translations)
+        {
+            var languageCode =
+                translationRequest.LanguageCode.Trim();
+
+            var existingTranslation =
+                existingTranslations.SingleOrDefault(
+                    x => string.Equals(
+                        x.LanguageCode,
+                        languageCode,
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (string.IsNullOrWhiteSpace(
+                    translationRequest.Label))
+            {
+                if (existingTranslation is not null)
+                {
+                    dbContext.ServiceDefinitionFieldTranslations
+                        .Remove(existingTranslation);
+
+                    existingTranslations.Remove(
+                        existingTranslation);
+                }
+
+                continue;
+            }
+
+            if (existingTranslation is null)
+            {
+                var newTranslation =
+                    CreateTranslation(
+                        fieldId,
+                        languageCode,
+                        translationRequest.Label,
+                        translationRequest.Placeholder,
+                        translationRequest.HelpText);
+
+                dbContext.ServiceDefinitionFieldTranslations.Add(
+                    newTranslation);
+
+                existingTranslations.Add(newTranslation);
+
+                continue;
+            }
+
+            existingTranslation.Label =
+                translationRequest.Label.Trim();
+
+            existingTranslation.Placeholder =
+                NormalizeOptional(
+                    translationRequest.Placeholder);
+
+            existingTranslation.HelpText =
+                NormalizeOptional(
+                    translationRequest.HelpText);
+        }
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
@@ -301,6 +346,48 @@ public class ServiceDefinitionFieldService
         {
             throw new InvalidOperationException(
                 "Service definition was not found.");
+        }
+    }
+
+    private static void ValidateTranslations(
+        IReadOnlyCollection<ServiceDefinitionFieldTranslationRequest>
+            translations)
+    {
+        var duplicateLanguageCode =
+            translations
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(
+                        x.LanguageCode))
+                .GroupBy(
+                    x => x.LanguageCode.Trim(),
+                    StringComparer.OrdinalIgnoreCase)
+                .Any(x => x.Count() > 1);
+
+        if (duplicateLanguageCode)
+        {
+            throw new InvalidOperationException(
+                "A language can only occur once.");
+        }
+
+        var unsupportedLanguage =
+            translations
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(
+                        x.LanguageCode))
+                .Select(x =>
+                    x.LanguageCode.Trim())
+                .FirstOrDefault(languageCode =>
+                    !SupportedLanguages.All.Any(
+                        language =>
+                            string.Equals(
+                                language.Code,
+                                languageCode,
+                                StringComparison.OrdinalIgnoreCase)));
+
+        if (unsupportedLanguage is not null)
+        {
+            throw new InvalidOperationException(
+                $"Language '{unsupportedLanguage}' is not supported.");
         }
     }
 
@@ -399,43 +486,6 @@ public class ServiceDefinitionFieldService
             Placeholder = NormalizeOptional(placeholder),
             HelpText = NormalizeOptional(helpText)
         };
-    }
-
-    private static async Task UpsertTranslationAsync(
-        TenantPlatformDbContext dbContext,
-        Guid fieldId,
-        string languageCode,
-        string label,
-        string? placeholder,
-        string? helpText,
-        CancellationToken cancellationToken)
-    {
-        var translation =
-            await dbContext.ServiceDefinitionFieldTranslations
-                .SingleOrDefaultAsync(
-                    x =>
-                        x.ServiceDefinitionFieldId == fieldId &&
-                        x.LanguageCode == languageCode,
-                    cancellationToken);
-
-        if (translation is null)
-        {
-            dbContext.ServiceDefinitionFieldTranslations.Add(
-                CreateTranslation(
-                    fieldId,
-                    languageCode,
-                    label,
-                    placeholder,
-                    helpText));
-
-            return;
-        }
-
-        translation.Label = label.Trim();
-        translation.Placeholder =
-            NormalizeOptional(placeholder);
-        translation.HelpText =
-            NormalizeOptional(helpText);
     }
 
     private static string? NormalizeOptional(

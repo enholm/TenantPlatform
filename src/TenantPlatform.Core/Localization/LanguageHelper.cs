@@ -14,13 +14,13 @@ public static class LanguageHelper
         var exactMatch = SupportedLanguages.All
             .FirstOrDefault(x =>
                 string.Equals(
-                    x,
+                    x.Code,
                     value,
                     StringComparison.OrdinalIgnoreCase));
 
         if (exactMatch is not null)
         {
-            return exactMatch;
+            return exactMatch.Code;
         }
 
         if (value.StartsWith(
@@ -63,7 +63,7 @@ public static class LanguageHelper
 
         return SupportedLanguages.All.Any(x =>
             string.Equals(
-                x,
+                x.Code,
                 languageCode,
                 StringComparison.OrdinalIgnoreCase));
     }

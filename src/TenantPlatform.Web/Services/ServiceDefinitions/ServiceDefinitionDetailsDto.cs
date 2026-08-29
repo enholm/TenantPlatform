@@ -24,8 +24,19 @@ public class ServiceDefinitionDetailsDto
 
     public bool IsActive { get; init; }
 
+    public List<ServiceDefinitionTranslationDto> Translations { get; init; } = [];
+
     public List<ServiceDefinitionFieldDto> Fields { get; init; } = [];
 
     public List<ServiceDefinitionProviderDto> Providers { get; init; } = [];
+}
+
+public class ServiceDefinitionTranslationDto
+{
+    public string LanguageCode { get; init; } = string.Empty;
+
+    public string Name { get; init; } = string.Empty;
+
+    public string? Description { get; init; }
 }
 

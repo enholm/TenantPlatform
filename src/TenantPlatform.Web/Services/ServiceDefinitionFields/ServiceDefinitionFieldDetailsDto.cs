@@ -18,15 +18,17 @@ public class ServiceDefinitionFieldDetailsDto
 
     public string? OptionsText { get; init; }
 
-    public string NorwegianLabel { get; init; } = string.Empty;
-
-    public string? NorwegianPlaceholder { get; init; }
-
-    public string? NorwegianHelpText { get; init; }
-
-    public string EnglishLabel { get; init; } = string.Empty;
-
-    public string? EnglishPlaceholder { get; init; }
-
-    public string? EnglishHelpText { get; init; }
+    public List<ServiceDefinitionFieldTranslationDto> Translations { get; init; } = [];
 }
+
+public class ServiceDefinitionFieldTranslationDto
+{
+    public string LanguageCode { get; init; } = string.Empty;
+
+    public string Label { get; init; } = string.Empty;
+
+    public string? Placeholder { get; init; }
+
+    public string? HelpText { get; init; }
+}
+

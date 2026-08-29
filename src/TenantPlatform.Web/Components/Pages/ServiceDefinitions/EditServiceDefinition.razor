@@ -1,4 +1,7 @@
 @page "/service-definitions/{Id:guid}/edit"
+
+@rendermode InteractiveServer
+
 @attribute [Authorize]
 
 @using System.ComponentModel.DataAnnotations
@@ -45,32 +48,42 @@ else if (Model is not null)
 
     <div class="card mt-4">
         <div class="card-body">
+
             <EditForm Model="Model"
                       OnValidSubmit="SaveAsync"
                       FormName="EditServiceDefinition">
 
                 <DataAnnotationsValidator />
                 <ValidationSummary />
+
+                <h5 class="mb-3">@L["General"]</h5>
+
                 <div class="mb-3">
                     <label class="form-label">@L["Code"]</label>
+
                     <InputText class="form-control"
                                @bind-Value="Model.Code" />
+
+                    <ValidationMessage For="() => Model.Code" />
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">@L["Category"]</label>
+
                     <InputText class="form-control"
                                @bind-Value="Model.Category" />
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">@L["HandlerType"]</label>
+
                     <InputText class="form-control"
                                @bind-Value="Model.HandlerType" />
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">@L["EstimatedDuration"]</label>
+
                     <InputNumber class="form-control"
                                  @bind-Value="Model.EstimatedDurationMinutes" />
                 </div>
@@ -78,6 +91,7 @@ else if (Model is not null)
                 <div class="form-check mb-3">
                     <InputCheckbox class="form-check-input"
                                    @bind-Value="Model.RequiresApproval" />
+
                     <label class="form-check-label">
                         @L["RequiresApproval"]
                     </label>
@@ -86,6 +100,7 @@ else if (Model is not null)
                 <div class="form-check mb-3">
                     <InputCheckbox class="form-check-input"
                                    @bind-Value="Model.IsBookableByTenant" />
+
                     <label class="form-check-label">
                         @L["TenantBookable"]
                     </label>
@@ -93,7 +108,7 @@ else if (Model is not null)
 
                 <div class="form-check mb-3">
                     <InputCheckbox class="form-check-input"
-                                @bind-Value="Model.RequiresOccupancy" />
+                                   @bind-Value="Model.RequiresOccupancy" />
 
                     <label class="form-check-label">
                         @L["RequiresOccupancy"]
@@ -107,6 +122,7 @@ else if (Model is not null)
                 <div class="form-check mb-4">
                     <InputCheckbox class="form-check-input"
                                    @bind-Value="Model.IsActive" />
+
                     <label class="form-check-label">
                         @L["IsActive"]
                     </label>
@@ -114,41 +130,71 @@ else if (Model is not null)
 
                 <hr />
 
-                <h5 class="mt-4">@L["Norwegian"]</h5>
+                <ul class="nav nav-tabs mt-4 mb-3">
+                    @for (var i = 0; i < Model.Translations.Count; i++)
+                    {
+                        var index = i;
+                        var translation = Model.Translations[index];
 
-                <div class="mb-3">
-                    <label class="form-label">@L["Name"]</label>
-                    <InputText class="form-control"
-                               @bind-Value="Model.NorwegianName" />
-                </div>
+                        var language =
+                            SupportedLanguages.All.First(x =>
+                                string.Equals(
+                                    x.Code,
+                                    translation.LanguageCode,
+                                    StringComparison.OrdinalIgnoreCase));
 
-                <div class="mb-4">
-                    <label class="form-label">@L["Description"]</label>
-                    <InputTextArea class="form-control"
-                                   rows="4"
-                                   @bind-Value="Model.NorwegianDescription" />
-                </div>
+                        <li class="nav-item">
+                            <button type="button"
+                                    class="@GetLanguageTabClass(index)"
+                                    @onclick="() => activeLanguageIndex = index">
 
-                <h5>@L["English"]</h5>
+                                @language.DisplayName
 
-                <div class="mb-3">
-                    <label class="form-label">@L["Name"]</label>
-                    <InputText class="form-control"
-                               @bind-Value="Model.EnglishName" />
-                </div>
+                                @if (!string.IsNullOrWhiteSpace(
+                                    translation.Name))
+                                {
+                                    <span class="ms-1">✓</span>
+                                }
 
-                <div class="mb-4">
-                    <label class="form-label">@L["Description"]</label>
-                    <InputTextArea class="form-control"
-                                   rows="4"
-                                   @bind-Value="Model.EnglishDescription" />
-                </div>
+                            </button>
+                        </li>
+                    }
+                </ul>
+
+                @if (Model.Translations.Count > 0)
+                {
+                    var translation =
+                        Model.Translations[activeLanguageIndex];
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            @L["Name"]
+                        </label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="translation.Name" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            @L["Description"]
+                        </label>
+
+                        <InputTextArea class="form-control"
+                                       rows="4"
+                                       @bind-Value="translation.Description" />
+                    </div>
+                }
 
                 <div class="d-flex gap-2">
                     <button type="submit"
                             class="btn btn-primary"
                             disabled="@isSaving">
-                        @(isSaving ? L["Saving"] : L["Save"])
+
+                        @(isSaving
+                            ? L["Saving"]
+                            : L["Save"])
+
                     </button>
 
                     <a href="@($"/service-definitions/{Id}")"
@@ -158,11 +204,13 @@ else if (Model is not null)
                 </div>
 
             </EditForm>
+
         </div>
     </div>
 }
 
 @code {
+
     [Parameter]
     public Guid Id { get; set; }
 
@@ -170,19 +218,26 @@ else if (Model is not null)
     public EditServiceDefinitionFormModel? Model { get; set; }
 
     private bool isLoading = true;
+
     private bool isSaving;
+
     private bool notFound;
+
     private string? saveError;
+
+    private int activeLanguageIndex;
 
     protected override async Task OnInitializedAsync()
     {
-        if (!await AuthorizationService.CanManageServiceDefinitionsAsync())
+        if (!await AuthorizationService
+            .CanManageServiceDefinitionsAsync())
         {
             Navigation.NavigateTo("/access-denied");
             return;
-        }            
+        }
 
-        var accountId = UserContext.Current.CurrentAccountId;
+        var accountId =
+            UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)
         {
@@ -199,16 +254,21 @@ else if (Model is not null)
 
         if (Model is not null)
         {
+            EnsureTranslations();
+
             isLoading = false;
             return;
         }
+
+        var requestedLanguage =
+            SupportedLanguages.All.First().Code;
 
         var definition =
             await ServiceDefinitionService
                 .GetServiceDefinitionAsync(
                     accountId.Value,
                     Id,
-                    SupportedLanguages.NbNo);
+                    requestedLanguage);
 
         if (definition is null)
         {
@@ -217,36 +277,104 @@ else if (Model is not null)
             return;
         }
 
-        var englishDefinition =
-            await ServiceDefinitionService
-                .GetServiceDefinitionAsync(
-                    accountId.Value,
-                    Id,
-                    SupportedLanguages.EnGb);
+        Model =
+            new EditServiceDefinitionFormModel
+            {
+                Code =
+                    definition.Code,
 
-        Model = new EditServiceDefinitionFormModel
-        {
-            Code = definition.Code,
-            Category = definition.Category,
-            HandlerType = definition.HandlerType,
-            RequiresApproval = definition.RequiresApproval,
-            IsBookableByTenant = definition.IsBookableByTenant,
-            RequiresOccupancy = definition.RequiresOccupancy,
-            EstimatedDurationMinutes =
-                definition.EstimatedDurationMinutes,
-            IsActive = definition.IsActive,
+                Category =
+                    definition.Category,
 
-            NorwegianName = definition.Name,
-            NorwegianDescription = definition.Description,
+                HandlerType =
+                    definition.HandlerType,
 
-            EnglishName =
-                englishDefinition?.Name ?? definition.Name,
+                RequiresApproval =
+                    definition.RequiresApproval,
 
-            EnglishDescription =
-                englishDefinition?.Description
-        };
+                IsBookableByTenant =
+                    definition.IsBookableByTenant,
+
+                RequiresOccupancy =
+                    definition.RequiresOccupancy,
+
+                EstimatedDurationMinutes =
+                    definition.EstimatedDurationMinutes,
+
+                IsActive =
+                    definition.IsActive,
+
+                Translations =
+                    definition.Translations
+                        .Select(x =>
+                            new TranslationFormModel
+                            {
+                                LanguageCode =
+                                    x.LanguageCode,
+
+                                Name =
+                                    x.Name,
+
+                                Description =
+                                    x.Description
+                            })
+                        .ToList()
+            };
+
+        EnsureTranslations();
 
         isLoading = false;
+    }
+
+    private void EnsureTranslations()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        foreach (var language in SupportedLanguages.All)
+        {
+            if (Model.Translations.Any(
+                x => string.Equals(
+                    x.LanguageCode,
+                    language.Code,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            Model.Translations.Add(
+                new TranslationFormModel
+                {
+                    LanguageCode =
+                        language.Code
+                });
+        }
+
+        Model.Translations =
+            SupportedLanguages.All
+                .Select(language =>
+                    Model.Translations.First(
+                        translation =>
+                            string.Equals(
+                                translation.LanguageCode,
+                                language.Code,
+                                StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+        if (activeLanguageIndex >=
+            Model.Translations.Count)
+        {
+            activeLanguageIndex = 0;
+        }
+    }
+
+    private string GetLanguageTabClass(int index)
+    {
+        return index == activeLanguageIndex
+            ? "nav-link active"
+            : "nav-link";
     }
 
     private async Task SaveAsync()
@@ -256,7 +384,8 @@ else if (Model is not null)
             return;
         }
 
-        var accountId = UserContext.Current.CurrentAccountId;
+        var accountId =
+            UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)
         {
@@ -270,7 +399,17 @@ else if (Model is not null)
             return;
         }
 
+        if (!Model.Translations.Any(
+            x => !string.IsNullOrWhiteSpace(x.Name)))
+        {
+            saveError =
+                "At least one language must have a name.";
+
+            return;
+        }
+
         saveError = null;
+
         isSaving = true;
 
         try
@@ -281,21 +420,45 @@ else if (Model is not null)
                     Id,
                     new UpdateServiceDefinitionRequest
                     {
-                        Code = Model.Code,
-                        Category = Model.Category,
-                        HandlerType = Model.HandlerType,
-                        RequiresApproval = Model.RequiresApproval,
-                        IsBookableByTenant = Model.IsBookableByTenant,
-                        RequiresOccupancy = Model.RequiresOccupancy,
+                        Code =
+                            Model.Code,
+
+                        Category =
+                            Model.Category,
+
+                        HandlerType =
+                            Model.HandlerType,
+
+                        RequiresApproval =
+                            Model.RequiresApproval,
+
+                        IsBookableByTenant =
+                            Model.IsBookableByTenant,
+
+                        RequiresOccupancy =
+                            Model.RequiresOccupancy,
+
                         EstimatedDurationMinutes =
                             Model.EstimatedDurationMinutes,
-                        IsActive = Model.IsActive,
-                        NorwegianName = Model.NorwegianName,
-                        NorwegianDescription =
-                            Model.NorwegianDescription,
-                        EnglishName = Model.EnglishName,
-                        EnglishDescription =
-                            Model.EnglishDescription
+
+                        IsActive =
+                            Model.IsActive,
+
+                        Translations =
+                            Model.Translations
+                                .Select(x =>
+                                    new ServiceDefinitionTranslationRequest
+                                    {
+                                        LanguageCode =
+                                            x.LanguageCode,
+
+                                        Name =
+                                            x.Name,
+
+                                        Description =
+                                            x.Description
+                                    })
+                                .ToList()
                     });
 
             Navigation.NavigateTo(
@@ -334,19 +497,19 @@ else if (Model is not null)
 
         public bool IsActive { get; set; }
 
-        [Required]
+        public List<TranslationFormModel>
+            Translations { get; set; } = [];
+    }
+
+    public sealed class TranslationFormModel
+    {
+        public string LanguageCode { get; set; } = string.Empty;
+
         [StringLength(200)]
-        public string NorwegianName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
         [StringLength(2000)]
-        public string? NorwegianDescription { get; set; }
-
-        [Required]
-        [StringLength(200)]
-        public string EnglishName { get; set; } = string.Empty;
-
-        [StringLength(2000)]
-        public string? EnglishDescription { get; set; }
+        public string? Description { get; set; }
     }
 }
 

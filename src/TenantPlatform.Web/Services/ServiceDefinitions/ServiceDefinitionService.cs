@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using TenantPlatform.Core.Localization;
 using TenantPlatform.Core.Services;
 using TenantPlatform.Infrastructure.Persistence;
-using TenantPlatform.Core.Localization;
+
 namespace TenantPlatform.Web.Services.ServiceDefinitions;
-using TenantPlatform.Core.Localization;
 
 public class ServiceDefinitionService : IServiceDefinitionService
 {
@@ -69,7 +69,8 @@ public class ServiceDefinitionService : IServiceDefinitionService
                     RequiresApproval = definition.RequiresApproval,
                     IsBookableByTenant =
                         definition.IsBookableByTenant,
-                    RequiresOccupancy = definition.RequiresOccupancy,
+                    RequiresOccupancy =
+                        definition.RequiresOccupancy,
                     IsActive = definition.IsActive
                 };
             })
@@ -106,18 +107,19 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 .AsNoTracking()
                 .Where(x =>
                     x.ServiceDefinitionId == serviceDefinitionId)
+                .OrderBy(x => x.LanguageCode)
                 .ToListAsync(cancellationToken);
 
-        var defaultLanguage = await dbContext.Accounts
-            .AsNoTracking()
-            .Where(x => x.Id == accountId)
-            .Select(x => x.DefaultLanguage)
-            .SingleAsync(cancellationToken);
+        var defaultLanguage =
+            await dbContext.Accounts
+                .AsNoTracking()
+                .Where(x => x.Id == accountId)
+                .Select(x => x.DefaultLanguage)
+                .SingleAsync(cancellationToken);
 
         var translation =
             TranslationHelper.Select(
-                translations.Where(x =>
-                    x.ServiceDefinitionId == serviceDefinitionId),
+                translations,
                 x => x.LanguageCode,
                 languageCode,
                 defaultLanguage);
@@ -167,17 +169,51 @@ public class ServiceDefinitionService : IServiceDefinitionService
         {
             Id = definition.Id,
             Code = definition.Code,
-            Name = translation?.Name ?? definition.Code,
-            Description = translation?.Description,
-            Category = definition.Category,
-            HandlerType = definition.HandlerType,
-            RequiresApproval = definition.RequiresApproval,
+
+            Name =
+                translation?.Name ??
+                definition.Code,
+
+            Description =
+                translation?.Description,
+
+            Category =
+                definition.Category,
+
+            HandlerType =
+                definition.HandlerType,
+
+            RequiresApproval =
+                definition.RequiresApproval,
+
             IsBookableByTenant =
                 definition.IsBookableByTenant,
-            RequiresOccupancy = definition.RequiresOccupancy,
+
+            RequiresOccupancy =
+                definition.RequiresOccupancy,
+
             EstimatedDurationMinutes =
                 definition.EstimatedDurationMinutes,
-            IsActive = definition.IsActive,
+
+            IsActive =
+                definition.IsActive,
+
+            Translations =
+                translations
+                    .Select(x =>
+                        new ServiceDefinitionTranslationDto
+                        {
+                            LanguageCode =
+                                x.LanguageCode,
+
+                            Name =
+                                x.Name,
+
+                            Description =
+                                x.Description
+                        })
+                    .ToList(),
+
             Fields = fields,
             Providers = providers
         };
@@ -208,6 +244,8 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 "Service definition code already exists.");
         }
 
+        ValidateTranslations(request.Translations);
+
         var id = Guid.NewGuid();
 
         dbContext.ServiceDefinitions.Add(
@@ -216,41 +254,57 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 Id = id,
                 AccountId = accountId,
                 Code = normalizedCode,
-                Category = NormalizeOptional(request.Category),
+
+                Category =
+                    NormalizeOptional(request.Category),
+
                 HandlerType =
                     string.IsNullOrWhiteSpace(request.HandlerType)
                         ? "Generic"
                         : request.HandlerType.Trim(),
-                RequiresApproval = request.RequiresApproval,
+
+                RequiresApproval =
+                    request.RequiresApproval,
+
                 IsBookableByTenant =
                     request.IsBookableByTenant,
-                RequiresOccupancy = request.RequiresOccupancy,
+
+                RequiresOccupancy =
+                    request.RequiresOccupancy,
+
                 EstimatedDurationMinutes =
                     request.EstimatedDurationMinutes,
-                IsActive = request.IsActive
+
+                IsActive =
+                    request.IsActive
             });
 
-        dbContext.ServiceDefinitionTranslations.AddRange(
-            new ServiceDefinitionTranslation
+        foreach (var translation in request.Translations)
+        {
+            if (string.IsNullOrWhiteSpace(translation.Name))
             {
-                Id = Guid.NewGuid(),
-                ServiceDefinitionId = id,
-                LanguageCode = SupportedLanguages.NbNo,
-                Name = request.NorwegianName.Trim(),
-                Description =
-                    NormalizeOptional(
-                        request.NorwegianDescription)
-            },
-            new ServiceDefinitionTranslation
-            {
-                Id = Guid.NewGuid(),
-                ServiceDefinitionId = id,
-                LanguageCode = SupportedLanguages.EnGb,
-                Name = request.EnglishName.Trim(),
-                Description =
-                    NormalizeOptional(
-                        request.EnglishDescription)
-            });
+                continue;
+            }
+
+            dbContext.ServiceDefinitionTranslations.Add(
+                new ServiceDefinitionTranslation
+                {
+                    Id = Guid.NewGuid(),
+
+                    ServiceDefinitionId =
+                        id,
+
+                    LanguageCode =
+                        translation.LanguageCode.Trim(),
+
+                    Name =
+                        translation.Name.Trim(),
+
+                    Description =
+                        NormalizeOptional(
+                            translation.Description)
+                });
+        }
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
@@ -299,7 +353,11 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 "Service definition code already exists.");
         }
 
-        definition.Code = normalizedCode;
+        ValidateTranslations(request.Translations);
+
+        definition.Code =
+            normalizedCode;
+
         definition.Category =
             NormalizeOptional(request.Category);
 
@@ -323,21 +381,79 @@ public class ServiceDefinitionService : IServiceDefinitionService
         definition.IsActive =
             request.IsActive;
 
-        await UpsertTranslationAsync(
-            dbContext,
-            serviceDefinitionId,
-            SupportedLanguages.NbNo,
-            request.NorwegianName,
-            request.NorwegianDescription,
-            cancellationToken);
+        var existingTranslations =
+            await dbContext.ServiceDefinitionTranslations
+                .Where(x =>
+                    x.ServiceDefinitionId ==
+                    serviceDefinitionId)
+                .ToListAsync(cancellationToken);
 
-        await UpsertTranslationAsync(
-            dbContext,
-            serviceDefinitionId,
-            SupportedLanguages.EnGb,
-            request.EnglishName,
-            request.EnglishDescription,
-            cancellationToken);
+        foreach (var translationRequest
+                 in request.Translations)
+        {
+            var languageCode =
+                translationRequest.LanguageCode.Trim();
+
+            var existingTranslation =
+                existingTranslations
+                    .SingleOrDefault(x =>
+                        string.Equals(
+                            x.LanguageCode,
+                            languageCode,
+                            StringComparison.OrdinalIgnoreCase));
+
+            if (string.IsNullOrWhiteSpace(
+                    translationRequest.Name))
+            {
+                if (existingTranslation is not null)
+                {
+                    dbContext.ServiceDefinitionTranslations
+                        .Remove(existingTranslation);
+
+                    existingTranslations.Remove(
+                        existingTranslation);
+                }
+
+                continue;
+            }
+
+            if (existingTranslation is null)
+            {
+                var newTranslation =
+                    new ServiceDefinitionTranslation
+                    {
+                        Id = Guid.NewGuid(),
+
+                        ServiceDefinitionId =
+                            serviceDefinitionId,
+
+                        LanguageCode =
+                            languageCode,
+
+                        Name =
+                            translationRequest.Name.Trim(),
+
+                        Description =
+                            NormalizeOptional(
+                                translationRequest.Description)
+                    };
+
+                dbContext.ServiceDefinitionTranslations.Add(
+                    newTranslation);
+
+                existingTranslations.Add(
+                    newTranslation);
+
+                continue;
+            }
+
+            existingTranslation.Name =
+                translationRequest.Name.Trim();
+
+            existingTranslation.Description =
+                NormalizeOptional(
+                    translationRequest.Description);
+        }
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
@@ -385,7 +501,8 @@ public class ServiceDefinitionService : IServiceDefinitionService
                     "ServiceDefinitionHasRequests");
         }
 
-        return ServiceDefinitionDeleteCheckResult.Allowed();
+        return ServiceDefinitionDeleteCheckResult
+            .Allowed();
     }
 
     public async Task DeleteServiceDefinitionAsync(
@@ -424,18 +541,18 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 "Service definition was not found.");
         }
 
-        // Translation-configen din bruker Restrict,
-        // så disse må slettes eksplisitt.
         var translations =
             await dbContext.ServiceDefinitionTranslations
                 .Where(x =>
-                    x.ServiceDefinitionId == serviceDefinitionId)
+                    x.ServiceDefinitionId ==
+                    serviceDefinitionId)
                 .ToListAsync(cancellationToken);
 
         dbContext.ServiceDefinitionTranslations
             .RemoveRange(translations);
 
-        dbContext.ServiceDefinitions.Remove(definition);
+        dbContext.ServiceDefinitions.Remove(
+            definition);
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
@@ -453,7 +570,8 @@ public class ServiceDefinitionService : IServiceDefinitionService
             await dbContext.ServiceDefinitionFields
                 .AsNoTracking()
                 .Where(x =>
-                    x.ServiceDefinitionId == serviceDefinitionId)
+                    x.ServiceDefinitionId ==
+                    serviceDefinitionId)
                 .OrderBy(x => x.SortOrder)
                 .ToListAsync(cancellationToken);
 
@@ -463,80 +581,109 @@ public class ServiceDefinitionService : IServiceDefinitionService
         }
 
         var fieldIds =
-            fields.Select(x => x.Id).ToList();
+            fields
+                .Select(x => x.Id)
+                .ToList();
 
         var translations =
-            await dbContext.ServiceDefinitionFieldTranslations
+            await dbContext
+                .ServiceDefinitionFieldTranslations
                 .AsNoTracking()
                 .Where(x =>
                     fieldIds.Contains(
                         x.ServiceDefinitionFieldId))
                 .ToListAsync(cancellationToken);
 
-        return fields.Select(field =>
-        {
-            var translation =
-                TranslationHelper.Select(
-                    translations.Where(x =>
-                        x.ServiceDefinitionFieldId == field.Id),
-                    x => x.LanguageCode,
-                    languageCode,
-                    defaultLanguage);
-
-            return new ServiceDefinitionFieldDto
+        return fields
+            .Select(field =>
             {
-                Id = field.Id,
-                Key = field.Key,
-                Label = translation?.Label ?? field.Key,
-                Placeholder = translation?.Placeholder,
-                HelpText = translation?.HelpText,
-                FieldType = field.FieldType,
-                IsRequired = field.IsRequired,
-                SortOrder = field.SortOrder,
-                Options = field.Options
-            };
-        }).ToList();
+                var translation =
+                    TranslationHelper.Select(
+                        translations.Where(x =>
+                            x.ServiceDefinitionFieldId ==
+                            field.Id),
+                        x => x.LanguageCode,
+                        languageCode,
+                        defaultLanguage);
+
+                return new ServiceDefinitionFieldDto
+                {
+                    Id = field.Id,
+                    Key = field.Key,
+
+                    Label =
+                        translation?.Label ??
+                        field.Key,
+
+                    Placeholder =
+                        translation?.Placeholder,
+
+                    HelpText =
+                        translation?.HelpText,
+
+                    FieldType =
+                        field.FieldType,
+
+                    IsRequired =
+                        field.IsRequired,
+
+                    SortOrder =
+                        field.SortOrder,
+
+                    Options =
+                        field.Options
+                };
+            })
+            .ToList();
     }
 
-
-
-    private static async Task UpsertTranslationAsync(
-        TenantPlatformDbContext dbContext,
-        Guid serviceDefinitionId,
-        string languageCode,
-        string name,
-        string? description,
-        CancellationToken cancellationToken)
+    private static void ValidateTranslations(
+        IReadOnlyCollection<ServiceDefinitionTranslationRequest>
+            translations)
     {
-        var translation =
-            await dbContext.ServiceDefinitionTranslations
-                .SingleOrDefaultAsync(
-                    x =>
-                        x.ServiceDefinitionId ==
-                        serviceDefinitionId &&
-                        x.LanguageCode == languageCode,
-                    cancellationToken);
+        var duplicateLanguageCode =
+            translations
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(
+                        x.LanguageCode))
+                .GroupBy(
+                    x => x.LanguageCode.Trim(),
+                    StringComparer.OrdinalIgnoreCase)
+                .Any(x => x.Count() > 1);
 
-        if (translation is null)
+        if (duplicateLanguageCode)
         {
-            dbContext.ServiceDefinitionTranslations.Add(
-                new ServiceDefinitionTranslation
-                {
-                    Id = Guid.NewGuid(),
-                    ServiceDefinitionId =
-                        serviceDefinitionId,
-                    LanguageCode = languageCode,
-                    Name = name.Trim(),
-                    Description =
-                        NormalizeOptional(description)
-                });
-
-            return;
+            throw new InvalidOperationException(
+                "A language can only occur once.");
         }
 
-        translation.Name = name.Trim();
-        translation.Description =
-            NormalizeOptional(description);
+        var unsupportedLanguage =
+            translations
+                .Where(x =>
+                    !string.IsNullOrWhiteSpace(
+                        x.LanguageCode))
+                .Select(x =>
+                    x.LanguageCode.Trim())
+                .FirstOrDefault(languageCode =>
+                    !SupportedLanguages.All.Any(
+                        language =>
+                            string.Equals(
+                                language.Code,
+                                languageCode,
+                                StringComparison.OrdinalIgnoreCase)));
+
+        if (unsupportedLanguage is not null)
+        {
+            throw new InvalidOperationException(
+                $"Language '{unsupportedLanguage}' is not supported.");
+        }
+
+        if (!translations.Any(x =>
+                !string.IsNullOrWhiteSpace(x.Name)))
+        {
+            throw new InvalidOperationException(
+                "At least one language must have a name.");
+        }
     }
 
     private static string? NormalizeOptional(
@@ -546,7 +693,6 @@ public class ServiceDefinitionService : IServiceDefinitionService
             ? null
             : value.Trim();
     }
-
 
     public async Task<IReadOnlyList<ServiceDefinitionProviderDto>>
         GetProvidersAsync(
@@ -608,7 +754,8 @@ public class ServiceDefinitionService : IServiceDefinitionService
                             provider.IsActive
                     })
             .OrderByDescending(x => x.IsDefault)
-            .ThenBy(x => x.ServiceProviderOrganizationName)
+            .ThenBy(x =>
+                x.ServiceProviderOrganizationName)
             .ToListAsync(cancellationToken);
     }
 
@@ -628,7 +775,8 @@ public class ServiceDefinitionService : IServiceDefinitionService
             .Where(x =>
                 x.Id == providerId &&
                 x.AccountId == accountId &&
-                x.ServiceDefinitionId == serviceDefinitionId)
+                x.ServiceDefinitionId ==
+                    serviceDefinitionId)
             .Select(x =>
                 new ServiceDefinitionProviderEditDto
                 {
@@ -752,8 +900,7 @@ public class ServiceDefinitionService : IServiceDefinitionService
         var entity =
             new ServiceDefinitionProvider
             {
-                Id =
-                    Guid.NewGuid(),
+                Id = Guid.NewGuid(),
 
                 AccountId =
                     accountId,
@@ -916,12 +1063,15 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 .AnyAsync(
                     x =>
                         x.AccountId == accountId &&
-                        x.ServiceDefinitionId == serviceDefinitionId &&
+                        x.ServiceDefinitionId ==
+                            serviceDefinitionId &&
                         x.AssignedServiceProviderOrganizationId ==
                             provider.ServiceProviderOrganizationId &&
                         (
-                            x.Status == ServiceRequestStatus.Approved ||
-                            x.Status == ServiceRequestStatus.InProgress
+                            x.Status ==
+                                ServiceRequestStatus.Approved ||
+                            x.Status ==
+                                ServiceRequestStatus.InProgress
                         ),
                     cancellationToken);
 
@@ -931,7 +1081,8 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 "ServiceProviderHasOpenRequests");
         }
 
-        dbContext.ServiceDefinitionProviders.Remove(provider);
+        dbContext.ServiceDefinitionProviders.Remove(
+            provider);
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
@@ -954,7 +1105,8 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 .Where(x =>
                     x.Id == providerId &&
                     x.AccountId == accountId &&
-                    x.ServiceDefinitionId == serviceDefinitionId)
+                    x.ServiceDefinitionId ==
+                        serviceDefinitionId)
                 .Select(x => new
                 {
                     x.ServiceProviderOrganizationId
@@ -976,25 +1128,33 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 .CountAsync(
                     x =>
                         x.AccountId == accountId &&
-                        x.ServiceDefinitionId == serviceDefinitionId &&
+                        x.ServiceDefinitionId ==
+                            serviceDefinitionId &&
                         x.AssignedServiceProviderOrganizationId ==
                             provider.ServiceProviderOrganizationId &&
                         (
-                            x.Status == ServiceRequestStatus.Approved ||
-                            x.Status == ServiceRequestStatus.InProgress
+                            x.Status ==
+                                ServiceRequestStatus.Approved ||
+                            x.Status ==
+                                ServiceRequestStatus.InProgress
                         ),
                     cancellationToken);
 
         return new ServiceDefinitionProviderDeleteCheckResult
         {
-            CanDelete = openRequestCount == 0,
-            OpenRequestCount = openRequestCount
+            CanDelete =
+                openRequestCount == 0,
+
+            OpenRequestCount =
+                openRequestCount
         };
     }
+
     private static void ValidateProviderModel(
         ServiceDefinitionProviderEditDto model)
     {
-        if (model.ServiceProviderOrganizationId == Guid.Empty)
+        if (model.ServiceProviderOrganizationId ==
+            Guid.Empty)
         {
             throw new InvalidOperationException(
                 "ServiceProviderRequired");
@@ -1025,6 +1185,5 @@ public class ServiceDefinitionService : IServiceDefinitionService
                 model.RequestEmailAddress?.Trim();
         }
     }
-
 }
 

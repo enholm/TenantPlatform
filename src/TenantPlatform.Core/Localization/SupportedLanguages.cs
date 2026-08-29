@@ -6,11 +6,14 @@ public static class SupportedLanguages
     public const string EnGb = "en-GB";
     public const string SvSe = "sv-SE";
 
-    public static readonly IReadOnlyList<string> All =
+    public static readonly IReadOnlyList<SupportedLanguage> All =
     [
-        NbNo,
-        EnGb,
-        SvSe
+        new (NbNo, "Norsk"),
+        new (EnGb, "English"),
+        new (SvSe, "Svenska")
     ];
 }
 
+public record SupportedLanguage(
+    string Code,
+    string DisplayName);

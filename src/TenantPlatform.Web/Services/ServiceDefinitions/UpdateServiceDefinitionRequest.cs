@@ -18,12 +18,15 @@ public class UpdateServiceDefinitionRequest
 
     public bool IsActive { get; init; }
 
-    public string NorwegianName { get; init; } = string.Empty;
+    public List<ServiceDefinitionTranslationRequest> Translations { get; init; } = [];
+}
 
-    public string? NorwegianDescription { get; init; }
+public class ServiceDefinitionTranslationRequest
+{
+    public string LanguageCode { get; init; } = string.Empty;
 
-    public string EnglishName { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
 
-    public string? EnglishDescription { get; init; }
+    public string? Description { get; init; }
 }
 

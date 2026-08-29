@@ -62,7 +62,7 @@ builder.Services.Configure<SmtpOptions>(
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     var cultures = SupportedLanguages.All
-        .Select(x => new CultureInfo(x))
+        .Select(x => new CultureInfo(x.Code))
         .ToArray();
 
     options.DefaultRequestCulture =

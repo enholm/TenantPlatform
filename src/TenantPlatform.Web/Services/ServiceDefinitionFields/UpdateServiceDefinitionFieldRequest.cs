@@ -14,16 +14,17 @@ public class UpdateServiceDefinitionFieldRequest
 
     public string? OptionsText { get; init; }
 
-    public string NorwegianLabel { get; init; } = string.Empty;
+    public List<ServiceDefinitionFieldTranslationRequest> Translations { get; init; } = [];
+}
 
-    public string? NorwegianPlaceholder { get; init; }
+public class ServiceDefinitionFieldTranslationRequest
+{
+    public string LanguageCode { get; init; } = string.Empty;
 
-    public string? NorwegianHelpText { get; init; }
+    public string Label { get; init; } = string.Empty;
 
-    public string EnglishLabel { get; init; } = string.Empty;
+    public string? Placeholder { get; init; }
 
-    public string? EnglishPlaceholder { get; init; }
-
-    public string? EnglishHelpText { get; init; }
+    public string? HelpText { get; init; }
 }
 

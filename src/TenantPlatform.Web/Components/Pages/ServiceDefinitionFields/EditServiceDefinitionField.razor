@@ -1,8 +1,10 @@
 @page "/service-definitions/{ServiceDefinitionId:guid}/fields/{Id:guid}/edit"
+@rendermode InteractiveServer
 @attribute [Authorize]
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Localization
 @using TenantPlatform.Core.Services
 @using TenantPlatform.Web.Security.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
@@ -53,11 +55,15 @@ else if (Model is not null)
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 
+                <h5 class="mb-3">@L["General"]</h5>
+
                 <div class="mb-3">
                     <label class="form-label">@L["Key"]</label>
 
                     <InputText class="form-control"
                                @bind-Value="Model.Key" />
+
+                    <ValidationMessage For="() => Model.Key" />
                 </div>
 
                 <div class="mb-3">
@@ -106,47 +112,62 @@ else if (Model is not null)
 
                 <hr />
 
-                <h5 class="mt-4">@L["Norwegian"]</h5>
+                <ul class="nav nav-tabs mt-4 mb-3">
+                    @for (var i = 0; i < Model.Translations.Count; i++)
+                    {
+                        var index = i;
+                        var translation = Model.Translations[index];
+                        var language = SupportedLanguages.All
+                            .First(x => x.Code == translation.LanguageCode);
 
-                <div class="mb-3">
-                    <label class="form-label">@L["Label"]</label>
-                    <InputText class="form-control"
-                               @bind-Value="Model.NorwegianLabel" />
-                </div>
+                        <li class="nav-item">
+                            <button type="button"
+                                    class="@GetLanguageTabClass(index)"
+                                    @onclick="() => activeLanguageIndex = index">
+                                @language.DisplayName
 
-                <div class="mb-3">
-                    <label class="form-label">@L["Placeholder"]</label>
-                    <InputText class="form-control"
-                               @bind-Value="Model.NorwegianPlaceholder" />
-                </div>
+                                @if (!string.IsNullOrWhiteSpace(translation.Label))
+                                {
+                                    <span class="ms-1">✓</span>
+                                }
+                            </button>
+                        </li>
+                    }
+                </ul>
 
-                <div class="mb-4">
-                    <label class="form-label">@L["HelpText"]</label>
-                    <InputTextArea class="form-control"
-                                   rows="3"
-                                   @bind-Value="Model.NorwegianHelpText" />
-                </div>
+                @if (Model.Translations.Count > 0)
+                {
+                    var translation =
+                        Model.Translations[activeLanguageIndex];
 
-                <h5>@L["English"]</h5>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            @L["Label"]
+                        </label>
 
-                <div class="mb-3">
-                    <label class="form-label">@L["Label"]</label>
-                    <InputText class="form-control"
-                               @bind-Value="Model.EnglishLabel" />
-                </div>
+                        <InputText class="form-control"
+                                   @bind-Value="translation.Label" />
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label">@L["Placeholder"]</label>
-                    <InputText class="form-control"
-                               @bind-Value="Model.EnglishPlaceholder" />
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label">
+                            @L["Placeholder"]
+                        </label>
 
-                <div class="mb-4">
-                    <label class="form-label">@L["HelpText"]</label>
-                    <InputTextArea class="form-control"
-                                   rows="3"
-                                   @bind-Value="Model.EnglishHelpText" />
-                </div>
+                        <InputText class="form-control"
+                                   @bind-Value="translation.Placeholder" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">
+                            @L["HelpText"]
+                        </label>
+
+                        <InputTextArea class="form-control"
+                                       rows="3"
+                                       @bind-Value="translation.HelpText" />
+                    </div>
+                }
 
                 <div class="d-flex gap-2">
                     <button type="submit"
@@ -162,7 +183,6 @@ else if (Model is not null)
                 </div>
 
             </EditForm>
-
         </div>
     </div>
 }
@@ -174,24 +194,27 @@ else if (Model is not null)
     [Parameter]
     public Guid Id { get; set; }
 
-    [SupplyParameterFromForm(FormName = "EditServiceDefinitionField")]
+    [SupplyParameterFromForm(
+        FormName = "EditServiceDefinitionField")]
     public EditFieldFormModel? Model { get; set; }
 
     private bool isLoading = true;
     private bool isSaving;
     private bool notFound;
-
     private string? saveError;
+    private int activeLanguageIndex;
 
     protected override async Task OnInitializedAsync()
     {
-        if (!await AuthorizationService.CanManageServiceDefinitionsAsync())
+        if (!await AuthorizationService
+            .CanManageServiceDefinitionsAsync())
         {
             Navigation.NavigateTo("/access-denied");
             return;
-        }            
+        }
 
-        var accountId = UserContext.Current.CurrentAccountId;
+        var accountId =
+            UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)
         {
@@ -208,6 +231,8 @@ else if (Model is not null)
 
         if (Model is not null)
         {
+            EnsureTranslations();
+
             isLoading = false;
             return;
         }
@@ -233,16 +258,72 @@ else if (Model is not null)
             SortOrder = field.SortOrder,
             OptionsText = field.OptionsText,
 
-            NorwegianLabel = field.NorwegianLabel,
-            NorwegianPlaceholder = field.NorwegianPlaceholder,
-            NorwegianHelpText = field.NorwegianHelpText,
+            Translations =
+                field.Translations
+                    .Select(x =>
+                        new TranslationFormModel
+                        {
+                            LanguageCode =
+                                x.LanguageCode,
 
-            EnglishLabel = field.EnglishLabel,
-            EnglishPlaceholder = field.EnglishPlaceholder,
-            EnglishHelpText = field.EnglishHelpText
+                            Label =
+                                x.Label,
+
+                            Placeholder =
+                                x.Placeholder,
+
+                            HelpText =
+                                x.HelpText
+                        })
+                    .ToList()
         };
 
+        EnsureTranslations();
+
         isLoading = false;
+    }
+
+    private void EnsureTranslations()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        foreach (var language in SupportedLanguages.All)
+        {
+            if (Model.Translations.Any(
+                x => string.Equals(
+                    x.LanguageCode,
+                    language.Code,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            Model.Translations.Add(
+                new TranslationFormModel
+                {
+                    LanguageCode = language.Code
+                });
+        }
+
+        Model.Translations =
+            SupportedLanguages.All
+                .Select(language =>
+                    Model.Translations.First(
+                        translation =>
+                            string.Equals(
+                                translation.LanguageCode,
+                                language.Code,
+                                StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+        if (activeLanguageIndex >=
+            Model.Translations.Count)
+        {
+            activeLanguageIndex = 0;
+        }
     }
 
     private async Task SaveAsync()
@@ -252,7 +333,8 @@ else if (Model is not null)
             return;
         }
 
-        var accountId = UserContext.Current.CurrentAccountId;
+        var accountId =
+            UserContext.Current.CurrentAccountId;
 
         if (!accountId.HasValue)
         {
@@ -263,6 +345,15 @@ else if (Model is not null)
             .CanEditServiceDefinitionAsync(ServiceDefinitionId))
         {
             Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        if (!Model.Translations.Any(
+            x => !string.IsNullOrWhiteSpace(x.Label)))
+        {
+            saveError =
+                "At least one language must have a label.";
+
             return;
         }
 
@@ -283,13 +374,24 @@ else if (Model is not null)
                     SortOrder = Model.SortOrder,
                     OptionsText = Model.OptionsText,
 
-                    NorwegianLabel = Model.NorwegianLabel,
-                    NorwegianPlaceholder = Model.NorwegianPlaceholder,
-                    NorwegianHelpText = Model.NorwegianHelpText,
+                    Translations =
+                        Model.Translations
+                            .Select(x =>
+                                new ServiceDefinitionFieldTranslationRequest
+                                {
+                                    LanguageCode =
+                                        x.LanguageCode,
 
-                    EnglishLabel = Model.EnglishLabel,
-                    EnglishPlaceholder = Model.EnglishPlaceholder,
-                    EnglishHelpText = Model.EnglishHelpText
+                                    Label =
+                                        x.Label,
+
+                                    Placeholder =
+                                        x.Placeholder,
+
+                                    HelpText =
+                                        x.HelpText
+                                })
+                            .ToList()
                 });
 
             Navigation.NavigateTo(
@@ -305,21 +407,52 @@ else if (Model is not null)
         }
     }
 
-    private string GetFieldTypeText(ServiceFieldType fieldType)
+    private string GetLanguageTabClass(
+        int index)
+    {
+        return index == activeLanguageIndex
+            ? "nav-link active"
+            : "nav-link";
+    }
+
+    private string GetFieldTypeText(
+        ServiceFieldType fieldType)
     {
         return fieldType switch
         {
-            ServiceFieldType.Text => L["FieldTypeText"],
-            ServiceFieldType.TextArea => L["FieldTypeTextArea"],
-            ServiceFieldType.Integer => L["FieldTypeInteger"],
-            ServiceFieldType.Decimal => L["FieldTypeDecimal"],
-            ServiceFieldType.Boolean => L["FieldTypeBoolean"],
-            ServiceFieldType.Date => L["FieldTypeDate"],
-            ServiceFieldType.DateTime => L["FieldTypeDateTime"],
-            ServiceFieldType.Email => L["FieldTypeEmail"],
-            ServiceFieldType.Phone => L["FieldTypePhone"],
-            ServiceFieldType.Choice => L["FieldTypeChoice"],
-            ServiceFieldType.MultiChoice => L["FieldTypeMultiChoice"],
+            ServiceFieldType.Text =>
+                L["FieldTypeText"],
+
+            ServiceFieldType.TextArea =>
+                L["FieldTypeTextArea"],
+
+            ServiceFieldType.Integer =>
+                L["FieldTypeInteger"],
+
+            ServiceFieldType.Decimal =>
+                L["FieldTypeDecimal"],
+
+            ServiceFieldType.Boolean =>
+                L["FieldTypeBoolean"],
+
+            ServiceFieldType.Date =>
+                L["FieldTypeDate"],
+
+            ServiceFieldType.DateTime =>
+                L["FieldTypeDateTime"],
+
+            ServiceFieldType.Email =>
+                L["FieldTypeEmail"],
+
+            ServiceFieldType.Phone =>
+                L["FieldTypePhone"],
+
+            ServiceFieldType.Choice =>
+                L["FieldTypeChoice"],
+
+            ServiceFieldType.MultiChoice =>
+                L["FieldTypeMultiChoice"],
+
             _ => fieldType.ToString()
         };
     }
@@ -328,7 +461,8 @@ else if (Model is not null)
     {
         [Required]
         [StringLength(100)]
-        public string Key { get; set; } = string.Empty;
+        public string Key { get; set; } =
+            string.Empty;
 
         public ServiceFieldType FieldType { get; set; }
 
@@ -338,25 +472,23 @@ else if (Model is not null)
 
         public string? OptionsText { get; set; }
 
-        [Required]
-        [StringLength(200)]
-        public string NorwegianLabel { get; set; } = string.Empty;
+        public List<TranslationFormModel>
+            Translations { get; set; } = [];
+    }
+
+    public sealed class TranslationFormModel
+    {
+        public string LanguageCode { get; set; } =
+            string.Empty;
 
         [StringLength(200)]
-        public string? NorwegianPlaceholder { get; set; }
+        public string Label { get; set; } =
+            string.Empty;
+
+        [StringLength(200)]
+        public string? Placeholder { get; set; }
 
         [StringLength(1000)]
-        public string? NorwegianHelpText { get; set; }
-
-        [Required]
-        [StringLength(200)]
-        public string EnglishLabel { get; set; } = string.Empty;
-
-        [StringLength(200)]
-        public string? EnglishPlaceholder { get; set; }
-
-        [StringLength(1000)]
-        public string? EnglishHelpText { get; set; }
+        public string? HelpText { get; set; }
     }
 }
-

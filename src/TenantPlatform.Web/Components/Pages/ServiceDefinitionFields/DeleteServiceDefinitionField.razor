@@ -1,7 +1,9 @@
 @page "/service-definitions/{ServiceDefinitionId:guid}/fields/{Id:guid}/delete"
+
 @attribute [Authorize]
 
 @using Microsoft.AspNetCore.Authorization
+@using System.Globalization
 @using TenantPlatform.Web.Security.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.ServiceDefinitionFields
@@ -52,7 +54,7 @@ else
     <div class="card">
         <div class="card-body">
 
-            <h5>@field.NorwegianLabel</h5>
+            <h5>@GetFieldLabel()</h5>
 
             <div class="text-body-secondary mb-4">
                 <code>@field.Key</code>
@@ -88,23 +90,24 @@ else
     [Parameter]
     public Guid Id { get; set; }
 
-    [SupplyParameterFromForm(FormName = "DeleteServiceDefinitionField")]
+    [SupplyParameterFromForm(
+        FormName = "DeleteServiceDefinitionField")]
     public DeleteFieldFormModel? Model { get; set; }
 
     private ServiceDefinitionFieldDetailsDto? field;
 
     private bool isLoading = true;
     private bool isDeleting;
-
     private string? deleteError;
 
     protected override async Task OnInitializedAsync()
     {
-        if (!await AuthorizationService.CanManageServiceDefinitionsAsync())
+        if (!await AuthorizationService
+            .CanManageServiceDefinitionsAsync())
         {
             Navigation.NavigateTo("/access-denied");
             return;
-        }            
+        }
 
         Model ??= new DeleteFieldFormModel();
 
@@ -131,6 +134,33 @@ else
                 Id);
 
         isLoading = false;
+    }
+
+    private string GetFieldLabel()
+    {
+        if (field is null)
+        {
+            return string.Empty;
+        }
+
+        var currentLanguage =
+            CultureInfo.CurrentUICulture.Name;
+
+        var translation =
+            field.Translations
+                .FirstOrDefault(x =>
+                    string.Equals(
+                        x.LanguageCode,
+                        currentLanguage,
+                        StringComparison.OrdinalIgnoreCase));
+
+        translation ??=
+            field.Translations
+                .FirstOrDefault(x =>
+                    !string.IsNullOrWhiteSpace(x.Label));
+
+        return translation?.Label
+            ?? field.Key;
     }
 
     private async Task DeleteAsync()
@@ -170,4 +200,3 @@ else
     {
     }
 }
-
