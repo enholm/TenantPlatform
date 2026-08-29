@@ -93,6 +93,8 @@ public class EmailOutboxWorker
                 message.ReplyToAddress,
                 message.Subject,
                 message.Body,
+                message.InReplyToMessageId,
+                message.References,
                 cancellationToken);
 
             message.Status =
@@ -128,13 +130,18 @@ public class EmailOutboxWorker
                     Body =
                         message.Body,
 
+                    InReplyToMessageId =
+                        message.InReplyToMessageId,
+
+                    References =
+                        message.References,
+
                     CreatedAt =
                         DateTimeOffset.UtcNow
                 });
         }
         catch (Exception ex)
         {
-            var error = ex.ToString();
             message.LastError =
                 ex.Message.Length > 4000
                     ? ex.Message[..4000]

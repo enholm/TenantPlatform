@@ -75,6 +75,7 @@ public class ImapInboundEmailWorker : BackgroundService
         CancellationToken cancellationToken)
     {
         using var client = new ImapClient();
+
         client.CheckCertificateRevocation = false;
 
         try
@@ -98,6 +99,7 @@ public class ImapInboundEmailWorker : BackgroundService
 
                 throw;
             }
+
             await client.AuthenticateAsync(
                 _options.Username,
                 _options.Password,
@@ -177,7 +179,10 @@ public class ImapInboundEmailWorker : BackgroundService
             return;
         }
 
-        var inboundMessage = MapMessage(message, messageId);
+        var inboundMessage =
+            MapMessage(
+                message,
+                messageId);
 
         if (inboundMessage is null)
         {
@@ -235,7 +240,9 @@ public class ImapInboundEmailWorker : BackgroundService
             inboundMessage.ExternalMessageId);
     }
 
-    private InboundEmailMessage? MapMessage(MimeMessage message, UniqueId uid)
+    private InboundEmailMessage? MapMessage(
+        MimeMessage message,
+        UniqueId uid)
     {
         var externalMessageId =
             !string.IsNullOrWhiteSpace(
@@ -280,6 +287,19 @@ public class ImapInboundEmailWorker : BackgroundService
         var body =
             GetMessageBody(message);
 
+        var inReplyToMessageId =
+            !string.IsNullOrWhiteSpace(
+                message.InReplyTo)
+                ? message.InReplyTo
+                : null;
+
+        var references =
+            message.References.Count > 0
+                ? string.Join(
+                    " ",
+                    message.References)
+                : null;
+
         return new InboundEmailMessage
         {
             ExternalMessageId =
@@ -296,6 +316,12 @@ public class ImapInboundEmailWorker : BackgroundService
 
             Body =
                 body,
+
+            InReplyToMessageId =
+                inReplyToMessageId,
+
+            References =
+                references,
 
             ReceivedAt =
                 message.Date != DateTimeOffset.MinValue

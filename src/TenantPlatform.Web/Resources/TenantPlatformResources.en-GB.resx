@@ -1041,4 +1041,37 @@
 <data name="HideFullMessage" xml:space="preserve">
   <value>Hide full message</value>
 </data>
+
+<data name="Reply" xml:space="preserve">
+  <value>Reply</value>
+</data>
+
+<data name="SendReply" xml:space="preserve">
+  <value>Send reply</value>
+</data>
+
+<data name="ReplyRequired" xml:space="preserve">
+  <value>You must enter a reply.</value>
+</data>
+
+<data name="ReplyTooLong" xml:space="preserve">
+  <value>The reply is too long.</value>
+</data>
+
+<data name="ServiceRequestReplyNotAllowed" xml:space="preserve">
+  <value>You are not allowed to reply to this email.</value>
+</data>
+
+<data name="ServiceRequestEmailNotFound" xml:space="preserve">
+  <value>The email could not be found.</value>
+</data>
+
+<data name="ServiceRequestCanOnlyReplyToLatestEmail" xml:space="preserve">
+  <value>You can only reply to the latest received email.</value>
+</data>
+
+<data name="ServiceRequestReplyClosed" xml:space="preserve">
+  <value>You cannot reply to emails after the request has been closed.</value>
+</data>
+
 </root>

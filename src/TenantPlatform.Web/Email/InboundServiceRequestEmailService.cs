@@ -101,6 +101,12 @@ public class InboundServiceRequestEmailService
                 ExternalMessageId =
                     message.ExternalMessageId,
 
+                InReplyToMessageId =
+                    message.InReplyToMessageId,
+
+                References =
+                    message.References,
+
                 FromAddress =
                     message.FromAddress,
 

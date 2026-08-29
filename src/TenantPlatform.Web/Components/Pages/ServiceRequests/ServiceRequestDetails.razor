@@ -1,6 +1,9 @@
 @page "/portal/requests/{Id:guid}"
+
 @rendermode InteractiveServer
+
 @attribute [Authorize]
+
 @using System.Globalization
 @using System.Text.RegularExpressions
 @using Microsoft.AspNetCore.Authorization
@@ -8,11 +11,14 @@
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Services.ServiceRequests
 @using TenantPlatform.Web.Security.Authorization
+
 @inject IServiceRequestService ServiceRequestService
 @inject ICurrentUserContextService UserContext
 @inject NavigationManager Navigation
 @inject ITenantAuthorizationService AuthorizationService
+
 <PageTitle>@(request?.ServiceName ?? L["ServiceRequest"])</PageTitle>
+
 @if (isLoading)
 {
     <p>@L["Loading"]</p>
@@ -41,15 +47,18 @@ else
             </a>
         }
     </div>
+
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
             <h1 class="mb-1">
                 @request.ServiceName
             </h1>
+
             <div class="text-body-secondary">
                 @request.RequesterOrganizationName
                 ·
                 @request.BuildingName
+
                 @if (!string.IsNullOrWhiteSpace(request.UnitName))
                 {
                     <span>
@@ -58,6 +67,7 @@ else
                 }
             </div>
         </div>
+
         <div class="d-flex gap-2 align-items-center">
             @if (canApprove)
             {
@@ -65,6 +75,7 @@ else
                         class="btn btn-success"
                         disabled="@isProcessing"
                         @onclick="ApproveAsync">
+
                     @if (isProcessing)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
@@ -73,24 +84,28 @@ else
                     {
                         <i class="bi bi-check-lg me-2"></i>
                     }
+
                     @L["Approve"]
                 </button>
             }
+
             @if (canAssignProvider)
-           {
-               <a class="btn btn-primary"
-                  href="@($"/portal/requests/{request.Id}/assign-provider")">
-                   <i class="bi bi-person-check me-1"></i>
-                   @L["AssignProvider"]
-               </a>
-           }
-            @* NEW: Provider can start an approved request *@
+            {
+                <a class="btn btn-primary"
+                   href="@($"/portal/requests/{request.Id}/assign-provider")">
+
+                    <i class="bi bi-person-check me-1"></i>
+                    @L["AssignProvider"]
+                </a>
+            }
+
             @if (canStartWork)
             {
                 <button type="button"
                         class="btn btn-primary"
                         disabled="@isProcessing"
                         @onclick="StartWorkAsync">
+
                     @if (isProcessing)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
@@ -99,15 +114,18 @@ else
                     {
                         <i class="bi bi-play-fill me-1"></i>
                     }
+
                     @L["StartWork"]
                 </button>
             }
+
             @if (canComplete)
             {
                 <button type="button"
                         class="btn btn-success"
                         disabled="@isProcessing"
                         @onclick="CompleteAsync">
+
                     @if (isProcessing)
                     {
                         <span class="spinner-border spinner-border-sm me-2"></span>
@@ -116,34 +134,43 @@ else
                     {
                         <i class="bi bi-check-circle me-1"></i>
                     }
+
                     @L["Complete"]
                 </button>
             }
+
             <span class="badge text-bg-secondary fs-6">
                 @GetStatusText(request.Status)
             </span>
         </div>
     </div>
+
     @if (!string.IsNullOrWhiteSpace(actionError))
     {
         <div class="alert alert-danger mb-4">
             @L[actionError]
         </div>
     }
+
     @if (request.Status == ServiceRequestStatus.Approved &&
-        string.IsNullOrWhiteSpace(request.AssignedServiceProviderOrganizationName))
-   {
-       <div class="alert alert-warning mb-4">
-           <i class="bi bi-exclamation-triangle me-1"></i>
-           @L["ServiceRequestAwaitingProviderAssignment"]
-       </div>
-   }
+         string.IsNullOrWhiteSpace(
+             request.AssignedServiceProviderOrganizationName))
+    {
+        <div class="alert alert-warning mb-4">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            @L["ServiceRequestAwaitingProviderAssignment"]
+        </div>
+    }
+
     <div class="row g-4">
+
         <div class="col-lg-8">
+
             <div class="card mb-4">
                 <div class="card-header">
                     @L["RequestDetails"]
                 </div>
+
                 <div class="card-body">
                     @if (request.Values.Count == 0)
                     {
@@ -159,6 +186,7 @@ else
                                 <dt class="col-sm-4">
                                     @value.Label
                                 </dt>
+
                                 <dd class="col-sm-8">
                                     @GetDisplayValue(value)
                                 </dd>
@@ -167,11 +195,14 @@ else
                     }
                 </div>
             </div>
+
             <div class="card">
                 <div class="card-header">
                     @L["Activity"]
                 </div>
+
                 <div class="card-body">
+
                     @if (request.Messages.Count == 0)
                     {
                         <div class="text-body-secondary">
@@ -183,64 +214,140 @@ else
                         @foreach (var message in request.Messages)
                         {
                             <div class="d-flex gap-3 mb-4">
+
                                 <div>
                                     <i class="@GetMessageIcon(message) fs-5"></i>
                                 </div>
+
                                 <div class="flex-grow-1">
+
                                     <div class="fw-semibold">
                                         @GetMessageTitle(message)
                                     </div>
+
                                     <div class="small text-body-secondary mb-1">
                                         @(message.CreatedAt
                                             .ToLocalTime()
                                             .ToString("g"))
                                     </div>
+
                                     @if (message.Type != ServiceRequestMessageType.System &&
                                          !string.IsNullOrWhiteSpace(message.Body))
                                     {
-                                        var visibleBody = GetVisibleMessageBody(message.Body);
-                                        var isExpanded = expandedMessages.Contains(message.Id);
-                                        var hasHiddenContent = HasHiddenQuotedContent(
-                                            message.Body,
-                                            visibleBody);
-                                        <div style="white-space: pre-wrap;">
-                                            @(isExpanded
-                                                ? message.Body.Trim()
-                                                : visibleBody)
-                                        </div>
-                                        @if (message.Type == ServiceRequestMessageType.Email &&
+                                        var visibleBody =
+                                            GetVisibleMessageBody(
+                                                message.Body);
+
+                                        var isExpanded =
+                                            expandedMessages.Contains(
+                                                message.Id);
+
+                                        var hasHiddenContent =
+                                            HasHiddenQuotedContent(
+                                                message.Body,
+                                                visibleBody);
+
+                                        <div style="white-space: pre-wrap;">@(isExpanded
+                                            ? message.Body.Trim()
+                                            : visibleBody)</div>
+
+                                        @if (message.Type ==
+                                                ServiceRequestMessageType.Email &&
                                              hasHiddenContent)
                                         {
                                             <button type="button"
                                                     class="btn btn-link btn-sm p-0 mt-1"
                                                     @onclick="() => ToggleMessage(message.Id)">
+
                                                 @(isExpanded
                                                     ? L["HideFullMessage"]
                                                     : L["ShowFullMessage"])
                                             </button>
                                         }
                                     }
+
+                                    @if (CanReplyToMessage(message))
+                                    {
+                                        @if (replyingToMessageId != message.Id)
+                                        {
+                                            <div class="mt-2">
+                                                <button type="button"
+                                                        class="btn btn-outline-primary btn-sm"
+                                                        @onclick="() => StartReply(message.Id)">
+
+                                                    <i class="bi bi-reply me-1"></i>
+                                                    @L["Reply"]
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="mt-3">
+
+                                                <textarea class="form-control"
+                                                          rows="4"
+                                                          maxlength="4000"
+                                                          @bind="replyText"
+                                                          placeholder="@L["Reply"]">
+                                                </textarea>
+
+                                                <div class="d-flex gap-2 mt-2">
+
+                                                    <button type="button"
+                                                            class="btn btn-primary btn-sm"
+                                                            disabled="@(isSendingReply || string.IsNullOrWhiteSpace(replyText))"
+                                                            @onclick="SendReplyAsync">
+
+                                                        @if (isSendingReply)
+                                                        {
+                                                            <span class="spinner-border spinner-border-sm me-2"></span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="bi bi-send me-1"></i>
+                                                        }
+
+                                                        @L["SendReply"]
+                                                    </button>
+
+                                                    <button type="button"
+                                                            class="btn btn-outline-secondary btn-sm"
+                                                            disabled="@isSendingReply"
+                                                            @onclick="CancelReply">
+
+                                                        @L["Cancel"]
+                                                    </button>
+
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+
                                 </div>
                             </div>
                         }
                     }
-                    @* NEW: Comment entry *@
+
                     <hr class="my-4" />
+
                     <div>
                         <label class="form-label fw-semibold">
                             @L["AddComment"]
                         </label>
+
                         <textarea class="form-control"
                                   rows="3"
                                   maxlength="4000"
                                   @bind="commentText"
                                   placeholder="@L["AddComment"]">
                         </textarea>
+
                         <div class="mt-2">
                             <button type="button"
                                     class="btn btn-outline-primary"
                                     disabled="@(isAddingComment || string.IsNullOrWhiteSpace(commentText))"
                                     @onclick="AddCommentAsync">
+
                                 @if (isAddingComment)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2"></span>
@@ -249,49 +356,63 @@ else
                                 {
                                     <i class="bi bi-chat-left-text me-1"></i>
                                 }
+
                                 @L["AddComment"]
                             </button>
                         </div>
                     </div>
+
                 </div>
             </div>
+
         </div>
+
         <div class="col-lg-4">
+
             <div class="card">
+
                 <div class="card-header">
                     @L["RequestInformation"]
                 </div>
+
                 <div class="card-body">
+
                     <dl class="mb-0">
+
                         <dt>@L["Organization"]</dt>
                         <dd>@request.RequesterOrganizationName</dd>
+
                         <dt>@L["Building"]</dt>
                         <dd>@request.BuildingName</dd>
+
                         @if (!string.IsNullOrWhiteSpace(request.UnitName))
                         {
                             <dt>@L["Unit"]</dt>
                             <dd>@request.UnitName</dd>
                         }
+
                         <dt>@L["Provider"]</dt>
                         <dd>
-                           @if (!string.IsNullOrWhiteSpace(
-                               request.AssignedServiceProviderOrganizationName))
-                           {
-                               @request.AssignedServiceProviderOrganizationName
-                           }
-                           else
-                           {
-                               <span class="text-body-secondary">
-                                   @L["NotAssigned"]
-                               </span>
-                           }
-                       </dd>
+                            @if (!string.IsNullOrWhiteSpace(
+                                request.AssignedServiceProviderOrganizationName))
+                            {
+                                @request.AssignedServiceProviderOrganizationName
+                            }
+                            else
+                            {
+                                <span class="text-body-secondary">
+                                    @L["NotAssigned"]
+                                </span>
+                            }
+                        </dd>
+
                         <dt>@L["Created"]</dt>
                         <dd>
                             @(request.CreatedAt
                                 .ToLocalTime()
                                 .ToString("g"))
                         </dd>
+
                         @if (request.SubmittedAt.HasValue)
                         {
                             <dt>@L["Submitted"]</dt>
@@ -301,48 +422,74 @@ else
                                     .ToString("g"))
                             </dd>
                         }
+
                     </dl>
+
                 </div>
             </div>
+
         </div>
     </div>
 }
+
 @code {
+
     [Parameter]
     public Guid Id { get; set; }
+
     private ServiceRequestDetailsDto? request;
+
     private bool isLoading = true;
+
     private bool canApprove;
     private bool canAssignProvider;
     private bool canStartWork;
     private bool canComplete;
+
     private bool isProcessing;
+
     private string? actionError;
+
     private bool isProviderUser;
     private bool canUseProviderPortal;
+
     private bool isAddingComment;
     private string commentText = string.Empty;
+
+    private Guid? latestInboundEmailId;
+
+    private Guid? replyingToMessageId;
+    private string replyText = string.Empty;
+    private bool isSendingReply;
+
     private readonly HashSet<Guid> expandedMessages = [];
+
     protected override async Task OnInitializedAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
+
         if (!accountId.HasValue)
         {
             Navigation.NavigateTo("/");
             return;
         }
+
         isProviderUser =
             await AuthorizationService
                 .CanUseProviderPortalAsync();
+
         await ReloadAsync();
+
         isLoading = false;
     }
+
     private string GetStatusText(
         ServiceRequestStatus status)
     {
         return L[$"ServiceRequestStatus_{status}"];
     }
+
     private string GetDisplayValue(
         ServiceRequestFieldValueDto value)
     {
@@ -350,6 +497,7 @@ else
         {
             return "-";
         }
+
         if (value.FieldType == ServiceFieldType.Boolean)
         {
             return string.Equals(
@@ -359,12 +507,15 @@ else
                 ? L["Yes"]
                 : L["No"];
         }
+
         if (value.FieldType == ServiceFieldType.MultiChoice)
         {
             return value.Value.Replace(",", ", ");
         }
+
         return value.Value;
     }
+
     private string GetMessageTitle(
         ServiceRequestMessageDto message)
     {
@@ -374,39 +525,146 @@ else
             return L[
                 $"ServiceRequestEvent_{message.EventType.Value}"];
         }
+
         return message.Type switch
         {
             ServiceRequestMessageType.Email =>
                 L["Email"],
+
             ServiceRequestMessageType.Comment =>
                 L["Comment"],
+
             _ =>
                 L["Activity"]
         };
     }
+
     private static string GetMessageIcon(
         ServiceRequestMessageDto message)
     {
         if (message.Type == ServiceRequestMessageType.Email)
         {
-            return "bi bi-envelope";
+            return message.Direction ==
+                    ServiceRequestMessageDirection.Inbound
+                ? "bi bi-envelope-arrow-down"
+                : "bi bi-envelope-arrow-up";
         }
+
         if (message.Type == ServiceRequestMessageType.Comment)
         {
             return "bi bi-chat-left-text";
         }
+
         return "bi bi-check-circle";
     }
+
+    private bool CanReplyToMessage(
+        ServiceRequestMessageDto message)
+    {
+        if (request is null ||
+            IsClosedStatus(request.Status))
+        {
+            return false;
+        }
+
+        return
+            !isProviderUser &&
+            latestInboundEmailId.HasValue &&
+            latestInboundEmailId.Value == message.Id &&
+            message.Type == ServiceRequestMessageType.Email &&
+            message.Direction ==
+                ServiceRequestMessageDirection.Inbound;
+    }
+
+    private static bool IsClosedStatus(
+        ServiceRequestStatus status)
+    {
+        return status is
+            ServiceRequestStatus.Completed or
+            ServiceRequestStatus.Rejected or
+            ServiceRequestStatus.Cancelled or
+            ServiceRequestStatus.Failed;
+    }
+
+    private void StartReply(
+        Guid messageId)
+    {
+        actionError = null;
+
+        replyingToMessageId =
+            messageId;
+
+        replyText =
+            string.Empty;
+    }
+
+    private void CancelReply()
+    {
+        replyingToMessageId =
+            null;
+
+        replyText =
+            string.Empty;
+    }
+
+    private async Task SendReplyAsync()
+    {
+        var accountId =
+            UserContext.Current.CurrentAccountId;
+
+        if (!accountId.HasValue ||
+            !replyingToMessageId.HasValue ||
+            string.IsNullOrWhiteSpace(replyText))
+        {
+            return;
+        }
+
+        actionError = null;
+        isSendingReply = true;
+
+        try
+        {
+            await ServiceRequestService
+                .ReplyToEmailAsync(
+                    accountId.Value,
+                    Id,
+                    replyingToMessageId.Value,
+                    UserContext.Current.UserId,
+                    replyText);
+
+            replyingToMessageId =
+                null;
+
+            replyText =
+                string.Empty;
+
+            await ReloadAsync();
+        }
+        catch (ServiceRequestValidationException ex)
+        {
+            actionError =
+                ex.Message;
+        }
+        finally
+        {
+            isSendingReply =
+                false;
+        }
+    }
+
     private async Task ApproveAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
+
         if (!accountId.HasValue)
         {
             return;
         }
+
         actionError = null;
         isProcessing = true;
+
         try
         {
             await ServiceRequestService
@@ -414,6 +672,7 @@ else
                     accountId.Value,
                     Id,
                     UserContext.Current.UserId);
+
             await ReloadAsync();
         }
         catch (ServiceRequestValidationException ex)
@@ -425,17 +684,20 @@ else
             isProcessing = false;
         }
     }
-    // NEW
+
     private async Task StartWorkAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
+
         if (!accountId.HasValue)
         {
             return;
         }
+
         actionError = null;
         isProcessing = true;
+
         try
         {
             await ServiceRequestService
@@ -443,6 +705,7 @@ else
                     accountId.Value,
                     Id,
                     UserContext.Current.UserId);
+
             await ReloadAsync();
         }
         catch (ServiceRequestValidationException ex)
@@ -454,16 +717,20 @@ else
             isProcessing = false;
         }
     }
+
     private async Task CompleteAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
+
         if (!accountId.HasValue)
         {
             return;
         }
+
         actionError = null;
         isProcessing = true;
+
         try
         {
             await ServiceRequestService
@@ -471,6 +738,7 @@ else
                     accountId.Value,
                     Id,
                     UserContext.Current.UserId);
+
             await ReloadAsync();
         }
         catch (ServiceRequestValidationException ex)
@@ -482,18 +750,21 @@ else
             isProcessing = false;
         }
     }
-    // NEW
+
     private async Task AddCommentAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
+
         if (!accountId.HasValue ||
             string.IsNullOrWhiteSpace(commentText))
         {
             return;
         }
+
         actionError = null;
         isAddingComment = true;
+
         try
         {
             await ServiceRequestService
@@ -502,7 +773,10 @@ else
                     Id,
                     UserContext.Current.UserId,
                     commentText);
-            commentText = string.Empty;
+
+            commentText =
+                string.Empty;
+
             await ReloadAsync();
         }
         catch (ServiceRequestValidationException ex)
@@ -514,13 +788,16 @@ else
             isAddingComment = false;
         }
     }
-    private void ToggleMessage(Guid messageId)
+
+    private void ToggleMessage(
+        Guid messageId)
     {
         if (!expandedMessages.Add(messageId))
         {
             expandedMessages.Remove(messageId);
         }
     }
+
     private static bool HasHiddenQuotedContent(
         string fullBody,
         string visibleBody)
@@ -530,80 +807,113 @@ else
             visibleBody.Trim(),
             StringComparison.Ordinal);
     }
-    private static string GetVisibleMessageBody(string body)
+
+    private static string GetVisibleMessageBody(
+        string body)
     {
         if (string.IsNullOrWhiteSpace(body))
         {
             return string.Empty;
         }
-        var normalized = body
-            .Replace("\r\n", "\n")
-            .Replace('\r', '\n')
-            .Trim();
-        var cutAt = normalized.Length;
-        var fixedMarkers = new[]
-        {
-            "\n-----Original Message-----",
-            "\n-----Opprinnelig melding-----",
-            "\n________________________________",
-            "\nFrom:",
-            "\nFra:",
-            "\nSent:",
-            "\nSendt:",
-            "\nTo:",
-            "\nTil:",
-            "\nSubject:",
-            "\nEmne:"
-        };
+
+        var normalized =
+            body
+                .Replace("\r\n", "\n")
+                .Replace('\r', '\n')
+                .Trim();
+
+        var cutAt =
+            normalized.Length;
+
+        var fixedMarkers =
+            new[]
+            {
+                "\n-----Original Message-----",
+                "\n-----Opprinnelig melding-----",
+                "\n________________________________",
+                "\nFrom:",
+                "\nFra:",
+                "\nSent:",
+                "\nSendt:",
+                "\nTo:",
+                "\nTil:",
+                "\nSubject:",
+                "\nEmne:"
+            };
+
         foreach (var marker in fixedMarkers)
         {
-            var index = normalized.IndexOf(
-                marker,
-                StringComparison.OrdinalIgnoreCase);
-            if (index >= 0 && index < cutAt)
+            var index =
+                normalized.IndexOf(
+                    marker,
+                    StringComparison.OrdinalIgnoreCase);
+
+            if (index >= 0 &&
+                index < cutAt)
             {
-                cutAt = index;
+                cutAt =
+                    index;
             }
         }
-        var replyHeaderPatterns = new[]
-        {
-            @"(?im)^\s*On .+ wrote:\s*$",
-            @"(?im)^\s*On .+ skrev:\s*$",
-            @"(?im)^\s*Den .+ skrev .+:\s*$",
-            @"(?im)^\s*Le .+ a écrit\s*:\s*$"
-        };
+
+        var replyHeaderPatterns =
+            new[]
+            {
+                @"(?im)^\s*On .+ wrote:\s*$",
+                @"(?im)^\s*On .+ skrev:\s*$",
+                @"(?im)^\s*Den .+ skrev .+:\s*$",
+                @"(?im)^\s*Le .+ a écrit\s*:\s*$"
+            };
+
         foreach (var pattern in replyHeaderPatterns)
         {
-            var match = Regex.Match(normalized, pattern);
-            if (match.Success && match.Index < cutAt)
+            var match =
+                Regex.Match(
+                    normalized,
+                    pattern);
+
+            if (match.Success &&
+                match.Index < cutAt)
             {
-                cutAt = match.Index;
+                cutAt =
+                    match.Index;
             }
         }
-        var quotedLine = Regex.Match(
-            normalized,
-            @"(?m)^\s*>");
+
+        var quotedLine =
+            Regex.Match(
+                normalized,
+                @"(?m)^\s*>");
+
         if (quotedLine.Success &&
             quotedLine.Index < cutAt)
         {
-            cutAt = quotedLine.Index;
+            cutAt =
+                quotedLine.Index;
         }
-        var visible = normalized[..cutAt].Trim();
+
+        var visible =
+            normalized[..cutAt].Trim();
+
         return string.IsNullOrWhiteSpace(visible)
             ? normalized
             : visible;
     }
+
     private async Task ReloadAsync()
     {
         var accountId =
             UserContext.Current.CurrentAccountId;
+
         if (!accountId.HasValue)
         {
             return;
         }
+
         canUseProviderPortal =
             await AuthorizationService
                 .CanUseProviderPortalAsync();
+
         request =
             await ServiceRequestService
                 .GetRequestAsync(
@@ -611,48 +921,69 @@ else
                     Id,
                     UserContext.Current.UserId,
                     CultureInfo.CurrentUICulture.Name);
+
         if (request is null)
         {
             canApprove = false;
             canAssignProvider = false;
             canStartWork = false;
             canComplete = false;
+
+            latestInboundEmailId =
+                null;
+
             return;
         }
+
+        latestInboundEmailId =
+            request.Messages
+                .Where(x =>
+                    x.Type ==
+                        ServiceRequestMessageType.Email &&
+                    x.Direction ==
+                        ServiceRequestMessageDirection.Inbound)
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.Id)
+                .Select(x => (Guid?)x.Id)
+                .FirstOrDefault();
+
         canApprove =
-            request.Status == ServiceRequestStatus.Submitted &&
+            request.Status ==
+                ServiceRequestStatus.Submitted &&
             await AuthorizationService
                 .CanApproveServiceRequestAsync(Id);
+
         canAssignProvider =
-            request.Status == ServiceRequestStatus.Approved &&
+            request.Status ==
+                ServiceRequestStatus.Approved &&
             string.IsNullOrWhiteSpace(
-               request.AssignedServiceProviderOrganizationName) &&
+                request.AssignedServiceProviderOrganizationName) &&
             await AuthorizationService
                 .CanApproveServiceRequestAsync(Id);
-        // Provider starts an Approved request
+
         canStartWork =
             canUseProviderPortal &&
-            request.Status == ServiceRequestStatus.Approved;
-        /*
-         \* Admin:
-         \*   Approved   -> Completed
-         \*   InProgress -> Completed
-         \*
-         \* Provider:
-         \*   InProgress -> Completed
-         \*
-         \* CanCompleteServiceRequestAsync handles the admin case.
-         */
+            request.Status ==
+                ServiceRequestStatus.Approved;
+
         var canAdminComplete =
-            (request.Status == ServiceRequestStatus.Approved ||
-             request.Status == ServiceRequestStatus.InProgress) &&
+            (
+                request.Status ==
+                    ServiceRequestStatus.Approved ||
+                request.Status ==
+                    ServiceRequestStatus.InProgress
+            ) &&
             await AuthorizationService
                 .CanCompleteServiceRequestAsync(Id);
+
         var canProviderComplete =
             canUseProviderPortal &&
-            request.Status == ServiceRequestStatus.InProgress;
+            request.Status ==
+                ServiceRequestStatus.InProgress;
+
         canComplete =
             canAdminComplete ||
             canProviderComplete;
     }
 }
+

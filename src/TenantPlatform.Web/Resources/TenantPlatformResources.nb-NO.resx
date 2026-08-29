@@ -1077,4 +1077,37 @@
 <data name="HideFullMessage" xml:space="preserve">
   <value>Skjul hele meldingen</value>
 </data>
+
+<data name="Reply" xml:space="preserve">
+  <value>Svar</value>
+</data>
+
+<data name="SendReply" xml:space="preserve">
+  <value>Send svar</value>
+</data>
+
+<data name="ReplyRequired" xml:space="preserve">
+  <value>Du må skrive et svar.</value>
+</data>
+
+<data name="ReplyTooLong" xml:space="preserve">
+  <value>Svaret er for langt.</value>
+</data>
+
+<data name="ServiceRequestReplyNotAllowed" xml:space="preserve">
+  <value>Du har ikke tilgang til å svare på denne e-posten.</value>
+</data>
+
+<data name="ServiceRequestEmailNotFound" xml:space="preserve">
+  <value>E-posten ble ikke funnet.</value>
+</data>
+
+<data name="ServiceRequestCanOnlyReplyToLatestEmail" xml:space="preserve">
+  <value>Du kan bare svare på den siste mottatte e-posten.</value>
+</data>
+
+<data name="ServiceRequestReplyClosed" xml:space="preserve">
+  <value>Du kan ikke svare på e-post etter at saken er lukket.</value>
+</data>
+
 </root>

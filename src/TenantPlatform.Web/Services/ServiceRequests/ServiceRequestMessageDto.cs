@@ -22,6 +22,14 @@ public class ServiceRequestMessageDto
 
     public string? Body { get; init; }
 
+    public string? ExternalMessageId { get; init; }
+
+    public string? ExternalThreadId { get; init; }
+
+    public string? InReplyToMessageId { get; init; }
+
+    public string? References { get; init; }
+
     public DateTimeOffset CreatedAt { get; init; }
 }
 

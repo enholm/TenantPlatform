@@ -57,6 +57,14 @@ public interface IServiceRequestService
         string comment,
         CancellationToken cancellationToken = default);
 
+    Task ReplyToEmailAsync(
+        Guid accountId,
+        Guid requestId,
+        Guid messageId,
+        Guid userId,
+        string reply,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<ServiceRequestProviderOptionDto>>
         GetAvailableProvidersAsync(
             Guid accountId,

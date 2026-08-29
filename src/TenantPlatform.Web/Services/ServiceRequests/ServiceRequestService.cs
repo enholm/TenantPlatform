@@ -7,15 +7,13 @@ using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Core.Localization;
 using TenantPlatform.Web.Email;
 
-
 namespace TenantPlatform.Web.Services.ServiceRequests;
 
 public class ServiceRequestService : IServiceRequestService
 {
     private readonly IDbContextFactory<TenantPlatformDbContext> _dbContextFactory;
-private readonly IServiceRequestEmailComposer _emailComposer;
-
-private readonly IServiceRequestEmailAddressService _emailAddressService;
+    private readonly IServiceRequestEmailComposer _emailComposer;
+    private readonly IServiceRequestEmailAddressService _emailAddressService;
 
     public ServiceRequestService(
         IDbContextFactory<TenantPlatformDbContext> dbContextFactory,
@@ -67,7 +65,7 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                     o.AccountId == accountId &&
                     o.ValidFrom <= today &&
                     (!o.ValidTo.HasValue ||
-                    o.ValidTo.Value >= today)
+                     o.ValidTo.Value >= today)
                 select new
                 {
                     Occupancy = o,
@@ -102,7 +100,7 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
         var hasTenantAccess =
             userRoles.Any(x =>
                 (x.Role == UserRole.TenantAdmin ||
-                x.Role == UserRole.TenantUser) &&
+                 x.Role == UserRole.TenantUser) &&
                 x.OrganizationId ==
                     occupancy.Occupancy.TenantOrganizationId);
 
@@ -132,33 +130,23 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             new ServiceRequest
             {
                 Id = serviceRequestId,
-
                 AccountId = accountId,
-
                 ServiceDefinitionId =
                     request.ServiceDefinitionId,
-
                 RequesterUserId =
                     requesterUserId,
-
                 RequesterOrganizationId =
                     occupancy.Occupancy.TenantOrganizationId,
-
                 BuildingId =
                     occupancy.BuildingId,
-
                 UnitId =
                     occupancy.Occupancy.UnitId,
-
                 Status =
                     ServiceRequestStatus.Submitted,
-
                 CreatedAt =
                     DateTimeOffset.UtcNow,
-
                 SubmittedAt =
                     DateTimeOffset.UtcNow,
-
                 ReplyToken =
                     CreateReplyToken()
             };
@@ -184,7 +172,7 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                 Id = Guid.NewGuid(),
                 ServiceRequestId = serviceRequestId,
                 Direction =
-                    ServiceRequestMessageDirection.Outbound,
+                    ServiceRequestMessageDirection.Internal,
                 Type =
                     ServiceRequestMessageType.System,
                 EventType =
@@ -532,39 +520,29 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                 return new ServiceRequestListItemDto
                 {
                     Id = x.Request.Id,
-
                     ServiceName =
                         translation?.Name ??
                         x.Definition.Code,
-
                     Category =
                         x.Definition.Category,
-
                     RequesterOrganizationName =
                         x.OrganizationName,
-
                     BuildingName =
                         x.BuildingName,
-
                     UnitName =
                         x.UnitName,
-
                     Status =
                         x.Request.Status,
-
                     CreatedAt =
                         x.Request.CreatedAt,
-
                     SubmittedAt =
                         x.Request.SubmittedAt,
-
                     CompletedAt =
                         x.Request.CompletedAt
                 };
             })
             .ToList();
     }
-
 
     public async Task<ServiceRequestDetailsDto?> GetRequestAsync(
         Guid accountId,
@@ -611,13 +589,10 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                 {
                     Request = r,
                     Definition = definition,
-
                     OrganizationName =
                         organization.Name,
-
                     BuildingName =
                         building.Name,
-
                     UnitName =
                         unit != null
                             ? unit.Name
@@ -644,10 +619,6 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                     .SingleOrDefaultAsync(cancellationToken);
         }
 
-        //
-        // Authorization
-        //
-
         var roles =
             await dbContext.UserAccountRoles
                 .AsNoTracking()
@@ -672,7 +643,7 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
         var hasTenantAccess =
             roles.Any(x =>
                 (x.Role == UserRole.TenantAdmin ||
-                x.Role == UserRole.TenantUser) &&
+                 x.Role == UserRole.TenantUser) &&
                 x.OrganizationId ==
                     request.Request.RequesterOrganizationId);
 
@@ -691,10 +662,6 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             return null;
         }
 
-        //
-        // Service translation
-        //
-
         var translations =
             await dbContext.ServiceDefinitionTranslations
                 .AsNoTracking()
@@ -709,10 +676,6 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                 x => x.LanguageCode,
                 languageCode,
                 defaultLanguage);
-
-        //
-        // Values
-        //
 
         var rawValues =
             await (
@@ -767,29 +730,20 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                     {
                         FieldId =
                             x.Field.Id,
-
                         Key =
                             x.Field.Key,
-
                         Label =
                             fieldTranslation?.Label ??
                             x.Field.Key,
-
                         FieldType =
                             x.Field.FieldType,
-
                         SortOrder =
                             x.Field.SortOrder,
-
                         Value =
                             x.Value.Value
                     };
                 })
                 .ToList();
-
-        //
-        // Timeline/messages
-        //
 
         var messages =
             await dbContext.ServiceRequestMessages
@@ -814,6 +768,14 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                             x.Subject,
                         Body =
                             x.Body,
+                        ExternalMessageId =
+                            x.ExternalMessageId,
+                        ExternalThreadId =
+                            x.ExternalThreadId,
+                        InReplyToMessageId =
+                            x.InReplyToMessageId,
+                        References =
+                            x.References,
                         CreatedAt =
                             x.CreatedAt
                     })
@@ -823,62 +785,43 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
         {
             Id =
                 request.Request.Id,
-
             ServiceDefinitionId =
                 request.Definition.Id,
-
             ServiceName =
                 translation?.Name ??
                 request.Definition.Code,
-
             ServiceDescription =
                 translation?.Description,
-
             Category =
                 request.Definition.Category,
-
             RequesterUserId =
                 request.Request.RequesterUserId,
-
             RequesterOrganizationId =
                 request.Request.RequesterOrganizationId,
-
             RequesterOrganizationName =
                 request.OrganizationName,
-
             BuildingId =
                 request.Request.BuildingId,
-
             BuildingName =
                 request.BuildingName,
-
             UnitId =
                 request.Request.UnitId,
-
             UnitName =
                 request.UnitName,
-
             AssignedServiceProviderOrganizationId =
                 request.Request.AssignedServiceProviderOrganizationId,
-
             AssignedServiceProviderOrganizationName =
                 providerName,
-
             Status =
                 request.Request.Status,
-
             CreatedAt =
                 request.Request.CreatedAt,
-
             SubmittedAt =
                 request.Request.SubmittedAt,
-
             CompletedAt =
                 request.Request.CompletedAt,
-
             Values =
                 values,
-
             Messages =
                 messages
         };
@@ -955,9 +898,12 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                 {
                     Id = Guid.NewGuid(),
                     ServiceRequestId = request.Id,
-                    Direction = ServiceRequestMessageDirection.Outbound,
-                    Type = ServiceRequestMessageType.System,
-                    EventType = ServiceRequestEventType.Assigned,
+                    Direction =
+                        ServiceRequestMessageDirection.Internal,
+                    Type =
+                        ServiceRequestMessageType.System,
+                    EventType =
+                        ServiceRequestEventType.Assigned,
                     CreatedByUserId = userId,
                     Body = "Service request assigned to provider.",
                     CreatedAt = DateTimeOffset.UtcNow
@@ -969,16 +915,19 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             {
                 Id = Guid.NewGuid(),
                 ServiceRequestId = request.Id,
-                Direction = ServiceRequestMessageDirection.Outbound,
-                Type = ServiceRequestMessageType.System,
-                EventType = ServiceRequestEventType.Approved,
+                Direction =
+                    ServiceRequestMessageDirection.Internal,
+                Type =
+                    ServiceRequestMessageType.System,
+                EventType =
+                    ServiceRequestEventType.Approved,
                 CreatedByUserId = userId,
                 Body = "Service request approved.",
                 CreatedAt = DateTimeOffset.UtcNow
             });
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        
+
         if (defaultProvider is not null)
         {
             await QueueProviderEmailAsync(
@@ -1046,7 +995,7 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
         var canCompleteInCurrentStatus =
             isAdmin
                 ? request.Status == ServiceRequestStatus.Approved ||
-                request.Status == ServiceRequestStatus.InProgress
+                  request.Status == ServiceRequestStatus.InProgress
                 : request.Status == ServiceRequestStatus.InProgress;
 
         if (!canCompleteInCurrentStatus)
@@ -1066,25 +1015,18 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             {
                 Id =
                     Guid.NewGuid(),
-
                 ServiceRequestId =
                     request.Id,
-
                 Direction =
-                    ServiceRequestMessageDirection.Outbound,
-
+                    ServiceRequestMessageDirection.Internal,
                 Type =
                     ServiceRequestMessageType.System,
-
                 EventType =
                     ServiceRequestEventType.Completed,
-
                 CreatedByUserId =
                     userId,
-
                 Body =
                     "Service request completed.",
-
                 CreatedAt =
                     DateTimeOffset.UtcNow
             });
@@ -1297,36 +1239,26 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             new EmailOutboxMessage
             {
                 Id = Guid.NewGuid(),
-
                 AccountId =
                     accountId,
-
                 ServiceRequestId =
                     requestId,
-
                 ToAddress =
                     provider.RequestEmailAddress,
-
                 ReplyToAddress =
                     _emailAddressService
                         .GetReplyAddress(
                             request.ReplyToken),
-
                 Subject =
                     email.Subject,
-
                 Body =
                     email.Body,
-
                 Status =
                     EmailOutboxStatus.Pending,
-
                 AttemptCount =
                     0,
-
                 CreatedAt =
                     DateTimeOffset.UtcNow,
-
                 NextAttemptAt =
                     DateTimeOffset.UtcNow
             });
@@ -1404,25 +1336,18 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             {
                 Id =
                     Guid.NewGuid(),
-
                 ServiceRequestId =
                     request.Id,
-
                 Direction =
-                    ServiceRequestMessageDirection.Outbound,
-
+                    ServiceRequestMessageDirection.Internal,
                 Type =
                     ServiceRequestMessageType.System,
-
                 EventType =
                     ServiceRequestEventType.InProgress,
-
                 CreatedByUserId =
                     userId,
-
                 Body =
                     "Work started.",
-
                 CreatedAt =
                     DateTimeOffset.UtcNow
             });
@@ -1455,11 +1380,6 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
         await using var dbContext =
             await _dbContextFactory.CreateDbContextAsync(
                 cancellationToken);
-
-        //
-        // Bruk samme objekt-autorisasjon som GetRequestAsync.
-        // Ideelt flytter vi denne senere til en felles helper.
-        //
 
         var request =
             await dbContext.ServiceRequests
@@ -1498,7 +1418,7 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
 
             roles.Any(x =>
                 (x.Role == UserRole.TenantAdmin ||
-                x.Role == UserRole.TenantUser) &&
+                 x.Role == UserRole.TenantUser) &&
                 x.OrganizationId ==
                     request.RequesterOrganizationId) ||
 
@@ -1524,30 +1444,304 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             {
                 Id =
                     Guid.NewGuid(),
-
                 ServiceRequestId =
                     requestId,
-
                 Type =
                     ServiceRequestMessageType.Comment,
-
                 CreatedByUserId =
                     userId,
-
                 Body =
                     comment,
-
                 CreatedAt =
                     DateTimeOffset.UtcNow,
-
                 Direction =
-                    ServiceRequestMessageDirection.Outbound
+                    ServiceRequestMessageDirection.Internal
             });
 
         await dbContext.SaveChangesAsync(
             cancellationToken);
     }
 
+    public async Task ReplyToEmailAsync(
+        Guid accountId,
+        Guid requestId,
+        Guid messageId,
+        Guid userId,
+        string reply,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(reply))
+        {
+            throw new ServiceRequestValidationException(
+                "ReplyRequired");
+        }
+
+        reply = reply.Trim();
+
+        if (reply.Length > 4000)
+        {
+            throw new ServiceRequestValidationException(
+                "ReplyTooLong");
+        }
+
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var request =
+            await dbContext.ServiceRequests
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    x =>
+                        x.Id == requestId &&
+                        x.AccountId == accountId,
+                    cancellationToken);
+
+        if (request is null)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestNotFound");
+        }
+
+        if (IsClosedStatus(request.Status))
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestReplyClosed");
+        }
+
+        var roles =
+            await dbContext.UserAccountRoles
+                .AsNoTracking()
+                .Where(x =>
+                    x.UserAccount.UserId == userId &&
+                    x.UserAccount.AccountId == accountId)
+                .Select(x => new
+                {
+                    x.Role,
+                    x.OrganizationId
+                })
+                .ToListAsync(cancellationToken);
+
+        var allowed =
+            request.RequesterUserId == userId ||
+
+            roles.Any(x =>
+                x.Role == UserRole.AccountAdmin ||
+                x.Role == UserRole.PropertyAdmin) ||
+
+            roles.Any(x =>
+                (x.Role == UserRole.TenantAdmin ||
+                 x.Role == UserRole.TenantUser) &&
+                x.OrganizationId ==
+                    request.RequesterOrganizationId);
+
+        if (!allowed)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestReplyNotAllowed");
+        }
+
+        var latestInboundMessage =
+            await dbContext.ServiceRequestMessages
+                .AsNoTracking()
+                .Where(x =>
+                    x.ServiceRequestId == requestId &&
+                    x.Type == ServiceRequestMessageType.Email &&
+                    x.Direction ==
+                        ServiceRequestMessageDirection.Inbound)
+                .OrderByDescending(x => x.CreatedAt)
+                .ThenByDescending(x => x.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+        if (latestInboundMessage is null)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestEmailNotFound");
+        }
+
+        if (latestInboundMessage.Id != messageId)
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestCanOnlyReplyToLatestEmail");
+        }
+
+        if (string.IsNullOrWhiteSpace(
+            latestInboundMessage.FromAddress))
+        {
+            throw new ServiceRequestValidationException(
+                "ServiceRequestEmailNotFound");
+        }
+
+        var subject =
+            CreateReplySubject(
+                latestInboundMessage.Subject);
+
+        var inReplyToMessageId =
+            latestInboundMessage.ExternalMessageId;
+
+        var references =
+            BuildReferences(
+                latestInboundMessage.References,
+                latestInboundMessage.ExternalMessageId);
+
+        var body =
+            CreateReplyBody(
+                reply,
+                latestInboundMessage);
+
+        dbContext.EmailOutboxMessages.Add(
+            new EmailOutboxMessage
+            {
+                Id =
+                    Guid.NewGuid(),
+
+                AccountId =
+                    accountId,
+
+                ServiceRequestId =
+                    requestId,
+
+                ToAddress =
+                    latestInboundMessage.FromAddress,
+
+                ReplyToAddress =
+                    _emailAddressService.GetReplyAddress(
+                        request.ReplyToken),
+
+                Subject =
+                    subject,
+
+                Body =
+                    body,
+
+                InReplyToMessageId =
+                    inReplyToMessageId,
+
+                References =
+                    references,
+
+                Status =
+                    EmailOutboxStatus.Pending,
+
+                AttemptCount =
+                    0,
+
+                CreatedAt =
+                    DateTimeOffset.UtcNow,
+
+                NextAttemptAt =
+                    DateTimeOffset.UtcNow
+            });
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
+    }
+
+    private static bool IsClosedStatus(
+        ServiceRequestStatus status)
+    {
+        return status is
+            ServiceRequestStatus.Completed or
+            ServiceRequestStatus.Rejected or
+            ServiceRequestStatus.Cancelled or
+            ServiceRequestStatus.Failed;
+    }
+
+    private static string CreateReplySubject(
+        string? subject)
+    {
+        subject = subject?.Trim();
+
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            return "Re:";
+        }
+
+        if (subject.StartsWith(
+            "Re:",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return subject;
+        }
+
+        return $"Re: {subject}";
+    }
+
+    private static string CreateReplyBody(
+        string reply,
+        ServiceRequestMessage originalMessage)
+    {
+        var sent =
+            originalMessage.CreatedAt
+                .ToLocalTime()
+                .ToString("g");
+
+        return $"""
+{reply.Trim()}
+
+-----Original Message-----
+From: {originalMessage.FromAddress}
+Sent: {sent}
+To: {originalMessage.ToAddress}
+Subject: {originalMessage.Subject}
+
+{originalMessage.Body}
+""";
+    }
+
+    private static string? BuildReferences(
+        string? existingReferences,
+        string? messageId)
+    {
+        var references =
+            new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(
+            existingReferences))
+        {
+            references.AddRange(
+                existingReferences
+                    .Split(
+                        ' ',
+                        StringSplitOptions.RemoveEmptyEntries |
+                        StringSplitOptions.TrimEntries));
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            messageId))
+        {
+            var normalizedMessageId =
+                NormalizeMessageId(messageId);
+
+            if (!references.Any(x =>
+                string.Equals(
+                    NormalizeMessageId(x),
+                    normalizedMessageId,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                references.Add(
+                    normalizedMessageId);
+            }
+        }
+
+        return references.Count == 0
+            ? null
+            : string.Join(" ", references);
+    }
+
+    private static string NormalizeMessageId(
+        string messageId)
+    {
+        messageId = messageId.Trim();
+
+        if (messageId.StartsWith("<") &&
+            messageId.EndsWith(">"))
+        {
+            return messageId;
+        }
+
+        return $"<{messageId}>";
+    }
 
     public async Task<IReadOnlyList<ServiceRequestProviderOptionDto>>
         GetAvailableProvidersAsync(
@@ -1681,9 +1875,12 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
             {
                 Id = Guid.NewGuid(),
                 ServiceRequestId = request.Id,
-                Direction = ServiceRequestMessageDirection.Internal,
-                Type = ServiceRequestMessageType.System,
-                EventType = ServiceRequestEventType.Assigned,
+                Direction =
+                    ServiceRequestMessageDirection.Internal,
+                Type =
+                    ServiceRequestMessageType.System,
+                EventType =
+                    ServiceRequestEventType.Assigned,
                 CreatedByUserId = userId,
                 Body = "Service request assigned to provider.",
                 CreatedAt = DateTimeOffset.UtcNow
@@ -1700,6 +1897,5 @@ private readonly IServiceRequestEmailAddressService _emailAddressService;
                 cancellationToken);
         }
     }
-
 }
 

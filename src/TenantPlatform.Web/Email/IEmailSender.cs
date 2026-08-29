@@ -7,6 +7,7 @@ public interface IEmailSender
         string? replyToAddress,
         string subject,
         string body,
+        string? inReplyToMessageId = null,
+        string? references = null,
         CancellationToken cancellationToken = default);
 }
-

@@ -19,6 +19,8 @@ public class SmtpEmailSender : IEmailSender
         string? replyToAddress,
         string subject,
         string body,
+        string? inReplyToMessageId = null,
+        string? references = null,
         CancellationToken cancellationToken = default)
     {
         using var message =
@@ -49,6 +51,23 @@ public class SmtpEmailSender : IEmailSender
                 new MailAddress(replyToAddress));
         }
 
+        if (!string.IsNullOrWhiteSpace(
+            inReplyToMessageId))
+        {
+            message.Headers.Add(
+                "In-Reply-To",
+                NormalizeMessageId(
+                    inReplyToMessageId));
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            references))
+        {
+            message.Headers.Add(
+                "References",
+                references);
+        }
+
         using var client =
             new SmtpClient(
                 _options.Host,
@@ -67,6 +86,20 @@ public class SmtpEmailSender : IEmailSender
             .ThrowIfCancellationRequested();
 
         await client.SendMailAsync(message);
+    }
+
+    private static string NormalizeMessageId(
+        string messageId)
+    {
+        messageId = messageId.Trim();
+
+        if (messageId.StartsWith("<") &&
+            messageId.EndsWith(">"))
+        {
+            return messageId;
+        }
+
+        return $"<{messageId}>";
     }
 }
 

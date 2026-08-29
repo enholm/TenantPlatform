@@ -22,9 +22,17 @@ public class ServiceRequestMessage
 
     public string? Body { get; set; }
 
+    // Message-ID for this email as assigned by the external mail system.
     public string? ExternalMessageId { get; set; }
 
+    // Optional external conversation/thread identifier.
     public string? ExternalThreadId { get; set; }
+
+    // Message-ID of the email this message is replying to.
+    public string? InReplyToMessageId { get; set; }
+
+    // Full References header used to preserve the email thread.
+    public string? References { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 }
@@ -42,7 +50,6 @@ public enum ServiceRequestMessageType
     Comment = 2,
     System = 3
 }
-
 
 public enum ServiceRequestEventType
 {

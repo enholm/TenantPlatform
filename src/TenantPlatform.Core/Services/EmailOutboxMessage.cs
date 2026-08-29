@@ -16,6 +16,12 @@ public class EmailOutboxMessage
 
     public string Body { get; set; } = string.Empty;
 
+    // Message-ID of the incoming email this message is replying to.
+    public string? InReplyToMessageId { get; set; }
+
+    // References header used to preserve the existing email thread.
+    public string? References { get; set; }
+
     public EmailOutboxStatus Status { get; set; }
 
     public int AttemptCount { get; set; }
