@@ -1,0 +1,1113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+
+  <data name="ApplicationName" xml:space="preserve">
+    <value>TenantPlatform</value>
+  </data>
+
+  <data name="Dashboard" xml:space="preserve">
+    <value>Översikt</value>
+  </data>
+
+  <data name="Buildings" xml:space="preserve">
+    <value>Byggnader</value>
+  </data>
+
+  <data name="Organizations" xml:space="preserve">
+    <value>Organisationer</value>
+  </data>
+
+  <data name="Users" xml:space="preserve">
+    <value>Användare</value>
+  </data>
+
+  <data name="Services" xml:space="preserve">
+    <value>Tjänster</value>
+  </data>
+
+  <data name="Network" xml:space="preserve">
+    <value>Nätverk</value>
+  </data>
+
+
+  <data name="Logout" xml:space="preserve">
+    <value>Logga ut</value>
+  </data>
+
+  <data name="SelectAccount" xml:space="preserve">
+    <value>Välj konto</value>
+  </data>
+
+  <data name="CurrentAccount" xml:space="preserve">
+    <value>Aktivt konto</value>
+  </data>
+
+  <data name="Welcome" xml:space="preserve">
+    <value>Välkommen</value>
+  </data>
+
+  <data name="Loading" xml:space="preserve">
+    <value>Laddar...</value>
+  </data>
+
+  <data name="Save" xml:space="preserve">
+    <value>Spara</value>
+  </data>
+
+  <data name="Cancel" xml:space="preserve">
+    <value>Avbryt</value>
+  </data>
+
+  <data name="Delete" xml:space="preserve">
+    <value>Ta bort</value>
+  </data>
+
+  <data name="Edit" xml:space="preserve">
+    <value>Redigera</value>
+  </data>
+
+  <data name="Create" xml:space="preserve">
+    <value>Skapa</value>
+  </data>
+
+    <data name="BuildingsDescription" xml:space="preserve">
+    <value>Byggnader registrerade för valt konto.</value>
+    </data>
+
+    <data name="CreateBuilding" xml:space="preserve">
+    <value>Skapa byggnad</value>
+    </data>
+
+    <data name="NoBuildings" xml:space="preserve">
+    <value>Inga byggnader är registrerade.</value>
+    </data>
+
+    <data name="Name" xml:space="preserve">
+    <value>Namn</value>
+    </data>
+
+    <data name="Address" xml:space="preserve">
+    <value>Adress</value>
+    </data>
+
+    <data name="PostalCode" xml:space="preserve">
+    <value>Postnummer</value>
+    </data>
+
+    <data name="City" xml:space="preserve">
+    <value>Ort</value>
+    </data>
+
+    <data name="Open" xml:space="preserve">
+    <value>Öppna</value>
+    </data>
+
+<data name="Building" xml:space="preserve">
+  <value>Byggnad</value>
+</data>
+
+<data name="BuildingNotFound" xml:space="preserve">
+  <value>Byggnaden kunde inte hittas.</value>
+</data>
+
+<data name="BuildingInformation" xml:space="preserve">
+  <value>Byggnadsinformation</value>
+</data>
+
+<data name="Units" xml:space="preserve">
+  <value>Enheter</value>
+</data>
+
+<data name="Tenants" xml:space="preserve">
+  <value>Hyresgäster</value>
+</data>
+
+<data name="OpenRequests" xml:space="preserve">
+  <value>Öppna beställningar</value>
+</data>
+
+<data name="Country" xml:space="preserve">
+  <value>Land</value>
+</data>
+
+<data name="Type" xml:space="preserve">
+  <value>Typ</value>
+</data>
+
+<data name="NoUnits" xml:space="preserve">
+  <value>Inga enheter är registrerade.</value>
+</data>
+
+<data name="Saving" xml:space="preserve">
+  <value>Sparar...</value>
+</data>
+
+<data name="EditBuilding" xml:space="preserve">
+  <value>Redigera byggnad</value>
+</data>
+
+<data name="DeleteBuilding" xml:space="preserve">
+    <value>Ta bort byggnad</value>
+</data>
+
+<data name="DeleteBuildingConfirmation" xml:space="preserve">
+    <value>Är du säker på att du vill ta bort den här byggnaden? Åtgärden kan inte ångras.</value>
+</data>
+
+<data name="Deleting" xml:space="preserve">
+    <value>Tar bort...</value>
+</data>
+
+<data name="Warning" xml:space="preserve">
+    <value>Varning</value>
+</data>
+
+<data name="BuildingContainsUnits" xml:space="preserve">
+    <value>Byggnaden kan inte tas bort eftersom den innehåller enheter.</value>
+</data>
+
+<data name="BuildingContainsServiceRequests" xml:space="preserve">
+    <value>Byggnaden kan inte tas bort eftersom det finns servicebeställningar kopplade till byggnaden.</value>
+</data>
+
+<data name="BuildingContainsNetworkEnvironments" xml:space="preserve">
+    <value>Byggnaden kan inte tas bort eftersom det finns nätverksmiljöer kopplade till byggnaden.</value>
+</data>
+
+<data name="BuildingCannotBeDeleted" xml:space="preserve">
+    <value>Byggnaden kan inte tas bort.</value>
+</data>
+<data name="Language" xml:space="preserve">
+  <value>Språk</value>
+</data>
+
+<data name="Appearance" xml:space="preserve">
+  <value>Utseende</value>
+</data>
+
+<data name="SystemTheme" xml:space="preserve">
+  <value>Följ systemet</value>
+</data>
+
+<data name="LightTheme" xml:space="preserve">
+  <value>Ljus</value>
+</data>
+
+<data name="DarkTheme" xml:space="preserve">
+  <value>Mörk</value>
+</data>
+
+<data name="Organization" xml:space="preserve">
+  <value>Organisation</value>
+</data>
+
+<data name="OrganizationsDescription" xml:space="preserve">
+  <value>Organisationer registrerade för valt konto.</value>
+</data>
+
+<data name="CreateOrganization" xml:space="preserve">
+  <value>Skapa organisation</value>
+</data>
+
+<data name="NoOrganizations" xml:space="preserve">
+  <value>Inga organisationer är registrerade.</value>
+</data>
+
+<data name="OrganizationNumber" xml:space="preserve">
+  <value>Organisationsnummer</value>
+</data>
+
+<data name="Status" xml:space="preserve">
+  <value>Status</value>
+</data>
+
+<data name="Active" xml:space="preserve">
+  <value>Aktiv</value>
+</data>
+
+<data name="Inactive" xml:space="preserve">
+  <value>Inaktiv</value>
+</data>
+
+<data name="OrganizationInformation" xml:space="preserve">
+  <value>Organisationsinformation</value>
+</data>
+
+<data name="OrganizationNotFound" xml:space="preserve">
+  <value>Organisationen kunde inte hittas.</value>
+</data>
+
+<data name="OrganizationTypePropertyManager" xml:space="preserve">
+  <value>Fastighetsförvaltare</value>
+</data>
+
+<data name="OrganizationTypeTenant" xml:space="preserve">
+  <value>Hyresgäst</value>
+</data>
+
+<data name="Occupancies" xml:space="preserve">
+  <value>Hyresförhållanden</value>
+</data>
+
+<data name="OrganizationCannotBeDeleted" xml:space="preserve">
+  <value>Organisationen kan inte tas bort.</value>
+</data>
+
+<data name="OrganizationContainsOccupancies" xml:space="preserve">
+  <value>Organisationen kan inte tas bort eftersom den har hyresförhållanden.</value>
+</data>
+
+<data name="OrganizationContainsNetworkSsids" xml:space="preserve">
+  <value>Organisationen kan inte tas bort eftersom trådlösa nätverk är kopplade till den.</value>
+</data>
+
+<data name="OrganizationContainsServiceRequests" xml:space="preserve">
+  <value>Organisationen kan inte tas bort eftersom den har servicebeställningar.</value>
+</data>
+
+<data name="OrganizationContainsUserRoles" xml:space="preserve">
+  <value>Organisationen kan inte tas bort eftersom användare har roller kopplade till den.</value>
+</data>
+
+<data name="EditOrganization" xml:space="preserve">
+  <value>Redigera organisation</value>
+</data>
+
+<data name="OrganizationType" xml:space="preserve">
+  <value>Organisationstyp</value>
+</data>
+
+<data name="IsActive" xml:space="preserve">
+  <value>Aktiv</value>
+</data>
+
+<data name="DeleteOrganization" xml:space="preserve">
+  <value>Ta bort organisation</value>
+</data>
+
+<data name="DeleteOrganizationConfirmation" xml:space="preserve">
+  <value>Är du säker på att du vill ta bort den här organisationen? Åtgärden kan inte ångras.</value>
+</data>
+
+<data name="Unit" xml:space="preserve">
+  <value>Enhet</value>
+</data>
+
+<data name="UnitsDescription" xml:space="preserve">
+  <value>Enheter registrerade för valt konto.</value>
+</data>
+
+<data name="CreateUnit" xml:space="preserve">
+  <value>Skapa enhet</value>
+</data>
+
+<data name="ParentUnit" xml:space="preserve">
+  <value>Överordnad enhet</value>
+</data>
+
+<data name="ChildUnits" xml:space="preserve">
+  <value>Underenheter</value>
+</data>
+
+<data name="UnitInformation" xml:space="preserve">
+  <value>Enhetsinformation</value>
+</data>
+
+<data name="UnitNotFound" xml:space="preserve">
+  <value>Enheten kunde inte hittas.</value>
+</data>
+
+<data name="UnitTypeSection" xml:space="preserve">
+  <value>Sektion</value>
+</data>
+
+<data name="UnitTypeFloor" xml:space="preserve">
+  <value>Våning</value>
+</data>
+
+<data name="UnitTypeOffice" xml:space="preserve">
+  <value>Kontor</value>
+</data>
+
+<data name="UnitTypeOther" xml:space="preserve">
+  <value>Annat</value>
+</data>
+
+<data name="UnitCannotBeDeleted" xml:space="preserve">
+  <value>Enheten kan inte tas bort.</value>
+</data>
+
+<data name="UnitContainsChildUnits" xml:space="preserve">
+  <value>Enheten kan inte tas bort eftersom den har underenheter.</value>
+</data>
+
+<data name="UnitContainsOccupancies" xml:space="preserve">
+  <value>Enheten kan inte tas bort eftersom den har hyresförhållanden.</value>
+</data>
+
+<data name="EditUnit" xml:space="preserve">
+  <value>Redigera enhet</value>
+</data>
+
+<data name="NoParentUnit" xml:space="preserve">
+  <value>Ingen överordnad enhet</value>
+</data>
+
+<data name="NoBuildingsAvailableForUnit" xml:space="preserve">
+  <value>Det finns inga byggnader där du har behörighet att skapa enheter.</value>
+</data>
+
+<data name="UnitParentCreatesCircularHierarchy" xml:space="preserve">
+  <value>Den valda överordnade enheten skulle skapa en cirkulär struktur.</value>
+</data>
+
+<data name="UnitParentNotInSelectedAccount" xml:space="preserve">
+  <value>Den överordnade enheten finns inte för det aktuella kontot.</value>
+</data>
+
+<data name="UnitParentNotInSelectedBuilding" xml:space="preserve">
+  <value>Den överordnade enheten finns inte i den valda byggnaden.</value>
+</data>
+
+<data name="UnitCannotBeOwnParent" xml:space="preserve">
+  <value>En enhet kan inte vara sin egen överordnade enhet.</value>
+</data>
+
+<data name="UnitHierarchyContainsCircularReference" xml:space="preserve">
+  <value>Den befintliga enhetshierarkin innehåller en cirkulär referens.</value>
+</data>
+
+<data name="DeleteUnit" xml:space="preserve">
+  <value>Ta bort enhet</value>
+</data>
+
+<data name="DeleteUnitConfirmation" xml:space="preserve">
+  <value>Är du säker på att du vill ta bort den här enheten? Åtgärden kan inte ångras.</value>
+</data>
+
+<data name="OccupancyValidToBeforeValidFrom" xml:space="preserve">
+  <value>Slutdatum kan inte vara före startdatum.</value>
+</data>
+
+<data name="OccupancyTenantOrganizationNotFound" xml:space="preserve">
+  <value>Den valda hyresgästorganisationen kunde inte hittas.</value>
+</data>
+
+<data name="OccupancyOrganizationMustBeTenant" xml:space="preserve">
+  <value>Den valda organisationen är inte registrerad som hyresgäst.</value>
+</data>
+
+<data name="OccupancyTenantOrganizationInactive" xml:space="preserve">
+  <value>Den valda hyresgästorganisationen är inaktiv.</value>
+</data>
+
+<data name="OccupancyUnitNotFound" xml:space="preserve">
+  <value>Den valda enheten kunde inte hittas.</value>
+</data>
+
+<data name="OccupancyUnitInactive" xml:space="preserve">
+  <value>Den valda enheten är inaktiv.</value>
+</data>
+
+<data name="OccupancyOverlapsExisting" xml:space="preserve">
+  <value>Enheten har redan ett hyresförhållande som överlappar den valda perioden.</value>
+</data>
+
+<data name="Occupancy" xml:space="preserve">
+  <value>Hyresförhållande</value>
+</data>
+
+<data name="OccupanciesDescription" xml:space="preserve">
+  <value>Översikt över hyresförhållanden för valt konto.</value>
+</data>
+
+<data name="CreateOccupancy" xml:space="preserve">
+  <value>Skapa hyresförhållande</value>
+</data>
+
+<data name="EditOccupancy" xml:space="preserve">
+  <value>Redigera hyresförhållande</value>
+</data>
+
+<data name="EndOccupancy" xml:space="preserve">
+  <value>Avsluta hyresförhållande</value>
+</data>
+
+<data name="EndOccupancyExplanation" xml:space="preserve">
+  <value>Välj datumet då hyresförhållandet ska avslutas.</value>
+</data>
+
+<data name="OccupancyInformation" xml:space="preserve">
+  <value>Information om hyresförhållande</value>
+</data>
+
+<data name="OccupancyNotFound" xml:space="preserve">
+  <value>Hyresförhållandet kunde inte hittas.</value>
+</data>
+
+<data name="NoOccupancies" xml:space="preserve">
+  <value>Inga hyresförhållanden är registrerade.</value>
+</data>
+
+<data name="Tenant" xml:space="preserve">
+  <value>Hyresgäst</value>
+</data>
+
+<data name="ValidFrom" xml:space="preserve">
+  <value>Giltig från</value>
+</data>
+
+<data name="ValidTo" xml:space="preserve">
+  <value>Giltig till</value>
+</data>
+
+<data name="OccupancyHierarchyConflictWarning" xml:space="preserve">
+  <value>Det finns överlappande hyresförhållanden på överordnade eller underordnade enheter.</value>
+</data>
+
+<data name="OccupancyHierarchyConflictContinue" xml:space="preserve">
+  <value>Kontrollera hyresförhållandena nedan. Du kan fortsätta om överlappningen är avsiktlig.</value>
+</data>
+
+<data name="CreateAnyway" xml:space="preserve">
+  <value>Skapa ändå</value>
+</data>
+
+<data name="SaveAnyway" xml:space="preserve">
+  <value>Spara ändå</value>
+</data>
+
+<data name="ChildUnit" xml:space="preserve">
+  <value>Underenhet</value>
+</data>
+
+<data name="DeleteOccupancy" xml:space="preserve">
+  <value>Ta bort hyresförhållande</value>
+</data>
+
+<data name="DeleteOccupancyConfirmation" xml:space="preserve">
+  <value>Är du säker på att du vill ta bort det här hyresförhållandet? Åtgärden kan inte ångras.</value>
+</data>
+
+<data name="OccupancyCannotBeDeleted" xml:space="preserve">
+  <value>Hyresförhållandet kan inte tas bort.</value>
+</data>
+
+<data name="OccupancyHistoricalCannotBeDeleted" xml:space="preserve">
+  <value>Historiska hyresförhållanden kan inte tas bort.</value>
+</data>
+
+<data name="OrganizationType_ServiceProvider" xml:space="preserve">
+  <value>Tjänsteleverantör</value>
+</data>
+
+<data name="ServiceDefinition" xml:space="preserve">
+  <value>Tjänst</value>
+</data>
+
+<data name="ServiceDefinitions" xml:space="preserve">
+  <value>Tjänstekatalog</value>
+</data>
+
+<data name="ServiceDefinitionsDescription" xml:space="preserve">
+  <value>Tjänster som kan beställas i valt konto.</value>
+</data>
+
+<data name="CreateServiceDefinition" xml:space="preserve">
+  <value>Skapa tjänst</value>
+</data>
+
+<data name="NoServiceDefinitions" xml:space="preserve">
+  <value>Inga tjänster är registrerade.</value>
+</data>
+
+<data name="ServiceDefinitionNotFound" xml:space="preserve">
+  <value>Tjänsten kunde inte hittas.</value>
+</data>
+
+<data name="ServiceDefinitionInformation" xml:space="preserve">
+  <value>Tjänsteinformation</value>
+</data>
+
+<data name="Code" xml:space="preserve">
+  <value>Kod</value>
+</data>
+
+<data name="Category" xml:space="preserve">
+  <value>Kategori</value>
+</data>
+
+<data name="HandlerType" xml:space="preserve">
+  <value>Hanterartyp</value>
+</data>
+
+<data name="TenantBookable" xml:space="preserve">
+  <value>Kan beställas av hyresgäster</value>
+</data>
+
+<data name="RequiresApproval" xml:space="preserve">
+  <value>Kräver godkännande</value>
+</data>
+
+<data name="EstimatedDuration" xml:space="preserve">
+  <value>Beräknad behandlingstid</value>
+</data>
+
+<data name="Minutes" xml:space="preserve">
+  <value>minuter</value>
+</data>
+
+<data name="Fields" xml:space="preserve">
+  <value>Fält</value>
+</data>
+
+<data name="Providers" xml:space="preserve">
+  <value>Leverantörer</value>
+</data>
+
+<data name="AddField" xml:space="preserve">
+  <value>Lägg till fält</value>
+</data>
+
+<data name="AddProvider" xml:space="preserve">
+  <value>Lägg till leverantör</value>
+</data>
+
+<data name="NoServiceDefinitionFields" xml:space="preserve">
+  <value>Den här tjänsten har inga anpassade fält.</value>
+</data>
+
+<data name="NoServiceDefinitionProviders" xml:space="preserve">
+  <value>Inga leverantörer är kopplade till tjänsten.</value>
+</data>
+
+<data name="Label" xml:space="preserve">
+  <value>Etikett</value>
+</data>
+
+<data name="Key" xml:space="preserve">
+  <value>Nyckel</value>
+</data>
+
+<data name="FieldType" xml:space="preserve">
+  <value>Fälttyp</value>
+</data>
+
+<data name="Required" xml:space="preserve">
+  <value>Obligatorisk</value>
+</data>
+
+<data name="SortOrder" xml:space="preserve">
+  <value>Sorteringsordning</value>
+</data>
+
+<data name="IntegrationType" xml:space="preserve">
+  <value>Integrationstyp</value>
+</data>
+
+<data name="Default" xml:space="preserve">
+  <value>Standard</value>
+</data>
+
+<data name="Yes" xml:space="preserve">
+  <value>Ja</value>
+</data>
+
+<data name="No" xml:space="preserve">
+  <value>Nej</value>
+</data>
+
+<data name="ServiceDefinitionHasRequests" xml:space="preserve">
+  <value>Tjänsten kan inte tas bort eftersom den har beställningar.</value>
+</data>
+
+<data name="ServiceDefinitionCannotBeDeleted" xml:space="preserve">
+  <value>Tjänsten kan inte tas bort.</value>
+</data>
+
+<data name="EditServiceDefinition" xml:space="preserve">
+  <value>Redigera tjänst</value>
+</data>
+
+<data name="DeleteServiceDefinition" xml:space="preserve">
+  <value>Ta bort tjänst</value>
+</data>
+
+<data name="DeleteServiceDefinitionConfirmation" xml:space="preserve">
+  <value>Är du säker på att du vill ta bort den här tjänsten? Åtgärden kan inte ångras.</value>
+</data>
+
+<data name="General" xml:space="preserve">
+  <value>Allmänt</value>
+</data>
+
+<data name="Norwegian" xml:space="preserve">
+  <value>Norska</value>
+</data>
+
+<data name="English" xml:space="preserve">
+  <value>Engelska</value>
+</data>
+
+<data name="EditField" xml:space="preserve">
+  <value>Redigera fält</value>
+</data>
+
+<data name="DeleteField" xml:space="preserve">
+  <value>Ta bort fält</value>
+</data>
+
+<data name="DeleteFieldConfirmation" xml:space="preserve">
+  <value>Är du säker på att du vill ta bort det här fältet? Åtgärden kan inte ångras.</value>
+</data>
+
+<data name="ServiceDefinitionFieldNotFound" xml:space="preserve">
+  <value>Fältet kunde inte hittas.</value>
+</data>
+
+<data name="Options" xml:space="preserve">
+  <value>Alternativ</value>
+</data>
+
+<data name="Placeholder" xml:space="preserve">
+  <value>Platshållare</value>
+</data>
+
+<data name="HelpText" xml:space="preserve">
+  <value>Hjälptext</value>
+</data>
+
+<data name="ServiceFieldKeyHelp" xml:space="preserve">
+  <value>Teknisk nyckel för fältet, till exempel employee_name eller license_plate.</value>
+</data>
+
+<data name="ServiceFieldOptionsHelp" xml:space="preserve">
+  <value>Används endast för valfält. Ange ett alternativ per rad.</value>
+</data>
+
+<data name="FieldTypeText" xml:space="preserve">
+  <value>Text</value>
+</data>
+
+<data name="FieldTypeTextArea" xml:space="preserve">
+  <value>Text med flera rader</value>
+</data>
+
+<data name="FieldTypeInteger" xml:space="preserve">
+  <value>Heltal</value>
+</data>
+
+<data name="FieldTypeDecimal" xml:space="preserve">
+  <value>Decimaltal</value>
+</data>
+
+<data name="FieldTypeBoolean" xml:space="preserve">
+  <value>Ja/nej</value>
+</data>
+
+<data name="FieldTypeDate" xml:space="preserve">
+  <value>Datum</value>
+</data>
+
+<data name="FieldTypeDateTime" xml:space="preserve">
+  <value>Datum och tid</value>
+</data>
+
+<data name="FieldTypeEmail" xml:space="preserve">
+  <value>E-postadress</value>
+</data>
+
+<data name="FieldTypePhone" xml:space="preserve">
+  <value>Telefonnummer</value>
+</data>
+
+<data name="FieldTypeChoice" xml:space="preserve">
+  <value>Val</value>
+</data>
+
+<data name="FieldTypeMultiChoice" xml:space="preserve">
+  <value>Flera val</value>
+</data>
+
+<data name="RequiresOccupancy" xml:space="preserve">
+  <value>Kräver aktivt hyresförhållande</value>
+</data>
+
+<data name="RequiresOccupancyHelp" xml:space="preserve">
+  <value>Användaren måste ha ett aktivt hyresförhållande för byggnaden eller enheten som tjänsten beställs för.</value>
+</data>
+
+<data name="AvailableServices" xml:space="preserve">
+  <value>Tillgängliga tjänster</value>
+</data>
+
+<data name="AvailableServicesDescription" xml:space="preserve">
+  <value>Välj en tjänst för att skapa en ny beställning.</value>
+</data>
+
+<data name="NoAvailableServices" xml:space="preserve">
+  <value>Inga tjänster är tillgängliga.</value>
+</data>
+
+<data name="Other" xml:space="preserve">
+  <value>Annat</value>
+</data>
+
+<data name="ServiceNotFound" xml:space="preserve">
+  <value>Tjänsten kunde inte hittas.</value>
+</data>
+
+<data name="ServiceRequiresApproval" xml:space="preserve">
+  <value>Den här beställningen måste godkännas innan den behandlas.</value>
+</data>
+
+<data name="SubmitRequest" xml:space="preserve">
+  <value>Skicka beställning</value>
+</data>
+
+<data name="SelectOption" xml:space="preserve">
+  <value>Välj...</value>
+</data>
+
+<data name="ServiceFormTestSuccessful" xml:space="preserve">
+  <value>Formuläret skickades in. Värdena nedan visar vad TenantPlatform tog emot.</value>
+</data>
+
+<data name="SubmittedValues" xml:space="preserve">
+  <value>Inskickade värden</value>
+</data>
+
+<data name="ServiceRequestInvalidOccupancy" xml:space="preserve">
+  <value>Det valda hyresförhållandet är inte giltigt.</value>
+</data>
+
+<data name="MyServiceRequests" xml:space="preserve">
+  <value>Mina beställningar</value>
+</data>
+
+<data name="MyServiceRequestsDescription" xml:space="preserve">
+  <value>Översikt över tjänstebeställningar som du har skapat.</value>
+</data>
+
+<data name="NewServiceRequest" xml:space="preserve">
+  <value>Ny beställning</value>
+</data>
+
+<data name="NoServiceRequests" xml:space="preserve">
+  <value>Du har inga tjänstebeställningar ännu.</value>
+</data>
+
+<data name="ServiceRequest" xml:space="preserve">
+  <value>Tjänstebeställning</value>
+</data>
+
+<data name="ServiceRequestNotFound" xml:space="preserve">
+  <value>Beställningen kunde inte hittas, eller så har du inte åtkomst till den.</value>
+</data>
+
+<data name="RequestDetails" xml:space="preserve">
+  <value>Beställningsdetaljer</value>
+</data>
+
+<data name="RequestInformation" xml:space="preserve">
+  <value>Beställningsinformation</value>
+</data>
+
+<data name="NoRequestValues" xml:space="preserve">
+  <value>Beställningen innehåller inga ytterligare uppgifter.</value>
+</data>
+
+<data name="Activity" xml:space="preserve">
+  <value>Aktivitet</value>
+</data>
+
+<data name="NoActivity" xml:space="preserve">
+  <value>Ingen aktivitet har registrerats.</value>
+</data>
+
+<data name="Submitted" xml:space="preserve">
+  <value>Inskickad</value>
+</data>
+
+<data name="ServiceRequestStatus_Submitted" xml:space="preserve">
+  <value>Inskickad</value>
+</data>
+
+<data name="ServiceRequestEvent_Submitted" xml:space="preserve">
+  <value>Beställningen skickades in</value>
+</data>
+
+<data name="Comment" xml:space="preserve">
+  <value>Kommentar</value>
+</data>
+
+<data name="Created" xml:space="preserve">
+  <value>Skapad</value>
+</data>
+
+<data name="Approve" xml:space="preserve">
+  <value>Godkänn</value>
+</data>
+
+<data name="Complete" xml:space="preserve">
+  <value>Slutför</value>
+</data>
+
+<data name="ServiceRequestStatus_Approved" xml:space="preserve">
+  <value>Godkänd</value>
+</data>
+
+<data name="ServiceRequestStatus_Completed" xml:space="preserve">
+  <value>Slutförd</value>
+</data>
+
+<data name="ServiceRequestEvent_Approved" xml:space="preserve">
+  <value>Beställningen godkändes</value>
+</data>
+
+<data name="ServiceRequestEvent_Completed" xml:space="preserve">
+  <value>Beställningen slutfördes</value>
+</data>
+
+<data name="ServiceRequestApprovalNotAllowed" xml:space="preserve">
+  <value>Du har inte behörighet att godkänna den här beställningen.</value>
+</data>
+
+<data name="ServiceRequestCompletionNotAllowed" xml:space="preserve">
+  <value>Du har inte behörighet att slutföra den här beställningen.</value>
+</data>
+
+<data name="Portal" xml:space="preserve">
+  <value>Portal</value>
+</data>
+
+<data name="Provider" xml:space="preserve">
+  <value>Leverantör</value>
+</data>
+
+<data name="Property" xml:space="preserve">
+  <value>Fastighet</value>
+</data>
+
+<data name="Administration" xml:space="preserve">
+  <value>Administration</value>
+</data>
+
+<data name="Platform" xml:space="preserve">
+  <value>Plattform</value>
+</data>
+
+<data name="AssignedRequests" xml:space="preserve">
+  <value>Tilldelade beställningar</value>
+</data>
+
+<data name="AllServiceRequests" xml:space="preserve">
+  <value>Alla beställningar</value>
+</data>
+
+<data name="ServiceRequestEvent_Assigned" xml:space="preserve">
+  <value>Beställningen tilldelades en leverantör</value>
+</data>
+
+<data name="AssignedRequestsDescription" xml:space="preserve">
+  <value>Beställningar som har tilldelats din organisation.</value>
+</data>
+
+<data name="NoAssignedRequests" xml:space="preserve">
+  <value>Inga beställningar har tilldelats din organisation.</value>
+</data>
+
+<data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Åtkomst nekad</value>
+</data>
+
+<data name="AccessDeniedDescription" xml:space="preserve">
+    <value>Du har inte nödvändiga behörigheter för att öppna den här sidan. Kontakta administratören om du tror att detta är fel.</value>
+</data>
+
+<data name="GoToHome" xml:space="preserve">
+    <value>Gå till min startsida</value>
+</data>
+
+<data name="GoBack" xml:space="preserve">
+    <value>Gå tillbaka</value>
+</data>
+
+<data name="StartWork" xml:space="preserve">
+  <value>Starta behandling</value>
+</data>
+
+<data name="AddComment" xml:space="preserve">
+  <value>Lägg till kommentar</value>
+</data>
+
+<data name="ServiceRequestStatus_InProgress" xml:space="preserve">
+  <value>Under behandling</value>
+</data>
+
+<data name="ServiceRequestEvent_InProgress" xml:space="preserve">
+  <value>Behandlingen av beställningen startade</value>
+</data>
+
+<data name="ServiceRequestNotAssigned" xml:space="preserve">
+  <value>Beställningen har inte tilldelats en leverantör.</value>
+</data>
+
+<data name="ServiceRequestActionNotAllowed" xml:space="preserve">
+  <value>Du har inte behörighet att utföra den här åtgärden.</value>
+</data>
+
+<data name="ServiceRequestCannotStart" xml:space="preserve">
+  <value>Beställningen kan inte startas i nuvarande status.</value>
+</data>
+
+<data name="CommentRequired" xml:space="preserve">
+  <value>Skriv en kommentar.</value>
+</data>
+
+<data name="CommentTooLong" xml:space="preserve">
+  <value>Kommentaren är för lång.</value>
+</data>
+
+<data name="ServiceProviders" xml:space="preserve">
+  <value>Tjänsteleverantörer</value>
+</data>
+<data name="ServiceProvidersDescription" xml:space="preserve">
+  <value>Leverantörer som kan hantera den här tjänsten</value>
+</data>
+
+<data name="NoServiceProviders" xml:space="preserve">
+  <value>Inga leverantörer är konfigurerade för den här tjänsten.</value>
+</data>
+
+<data name="Integration" xml:space="preserve">
+  <value>Integration</value>
+</data>
+<data name="RequestEmailAddress" xml:space="preserve">
+  <value>E-postadress för beställningar</value>
+</data>
+
+<data name="DefaultProvider" xml:space="preserve">
+  <value>Standardleverantör</value>
+</data>
+
+<data name="SelectProvider" xml:space="preserve">
+  <value>Välj leverantör</value>
+</data>
+
+<data name="ServiceProviderRequired" xml:space="preserve">
+  <value>Du måste välja en leverantör.</value>
+</data>
+<data name="ServiceProviderEmailRequired" xml:space="preserve">
+  <value>E-postadress måste anges för e-postintegration.</value>
+</data>
+<data name="ServiceProviderOrganizationNotFound" xml:space="preserve">
+  <value>Leverantörsorganisationen finns inte.</value>
+</data>
+<data name="ServiceProviderAlreadyExists" xml:space="preserve">
+  <value>Den här leverantören har redan lagts till för tjänsten.</value>
+</data>
+<data name="ServiceProviderNotFound" xml:space="preserve">
+  <value>Leverantören finns inte.</value>
+</data>
+
+<data name="DeleteProvider" xml:space="preserve">
+  <value>Ta bort leverantör</value>
+</data>
+<data name="DeleteProviderConfirmation" xml:space="preserve">
+  <value>Är du säker på att du vill ta bort den här leverantören från tjänsten?</value>
+</data>
+
+<data name="CannotDeleteProvider" xml:space="preserve">
+  <value>Leverantören kan inte tas bort</value>
+</data>
+
+<data name="ProviderHasOpenRequests" xml:space="preserve">
+  <value>Leverantören har {0} öppna förfrågningar för den här tjänsten. Inaktivera leverantören i stället, eller slutför de öppna förfrågningarna innan leverantören tas bort.</value>
+</data>
+
+<data name="ServiceProviderHasOpenRequests" xml:space="preserve">
+  <value>Leverantören kan inte tas bort eftersom den har öppna förfrågningar för den här tjänsten.</value>
+</data>
+
+<data name="AssignProvider" xml:space="preserve">
+  <value>Tilldela leverantör</value>
+</data>
+
+<data name="NotAssigned" xml:space="preserve">
+  <value>Inte tilldelad</value>
+</data>
+
+<data name="ServiceRequestAwaitingProviderAssignment" xml:space="preserve">
+  <value>Förfrågan är godkänd men har inte tilldelats en leverantör.</value>
+</data>
+
+<data name="BackToRequest" xml:space="preserve">
+  <value>Tillbaka till förfrågan</value>
+</data>
+
+<data name="AccessDenied" xml:space="preserve">
+  <value>Du har inte åtkomst till den här funktionen.</value>
+</data>
+
+<data name="ProviderAssignmentCannotBeChanged" xml:space="preserve">
+  <value>Leverantören kan inte ändras efter att förfrågan har tilldelats.</value>
+</data>
+
+<data name="NoAvailableProviders" xml:space="preserve">
+  <value>Det finns inga aktiva leverantörer tillgängliga för den här tjänsten.</value>
+</data>
+
+<data name="ServiceRequestProviderAssignmentNotAllowed" xml:space="preserve">
+  <value>Den här förfrågan kan inte tilldelas en leverantör.</value>
+</data>
+
+<data name="ServiceRequestAlreadyAssigned" xml:space="preserve">
+  <value>Förfrågan har redan tilldelats en leverantör.</value>
+</data>
+
+<data name="ServiceRequestProviderNotAvailable" xml:space="preserve">
+  <value>Den valda leverantören är inte tillgänglig för den här tjänsten.</value>
+</data>
+
+<data name="ShowFullMessage" xml:space="preserve">
+  <value>Visa hela meddelandet</value>
+</data>
+
+<data name="HideFullMessage" xml:space="preserve">
+  <value>Dölj hela meddelandet</value>
+</data>
+
+<data name="Reply" xml:space="preserve">
+  <value>Svara</value>
+</data>
+
+<data name="SendReply" xml:space="preserve">
+  <value>Skicka svar</value>
+</data>
+
+<data name="ReplyRequired" xml:space="preserve">
+  <value>Du måste skriva ett svar.</value>
+</data>
+
+<data name="ReplyTooLong" xml:space="preserve">
+  <value>Svaret är för långt.</value>
+</data>
+
+<data name="ServiceRequestReplyNotAllowed" xml:space="preserve">
+  <value>Du har inte behörighet att svara på det här e-postmeddelandet.</value>
+</data>
+
+<data name="ServiceRequestEmailNotFound" xml:space="preserve">
+  <value>E-postmeddelandet kunde inte hittas.</value>
+</data>
+
+<data name="ServiceRequestCanOnlyReplyToLatestEmail" xml:space="preserve">
+  <value>Du kan bara svara på det senast mottagna e-postmeddelandet.</value>
+</data>
+
+<data name="ServiceRequestReplyClosed" xml:space="preserve">
+  <value>Du kan inte svara på e-post efter att ärendet har stängts.</value>
+</data>
+
+</root>
