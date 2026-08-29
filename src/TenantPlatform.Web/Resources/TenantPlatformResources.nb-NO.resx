@@ -1058,14 +1058,6 @@
   <value>Det finnes ingen aktive leverandører tilgjengelig for denne tjenesten.</value>
 </data>
 
-<data name="SelectProvider" xml:space="preserve">
-  <value>Velg leverandør</value>
-</data>
-
-<data name="ServiceProviderRequired" xml:space="preserve">
-  <value>Du må velge en leverandør.</value>
-</data>
-
 <data name="ServiceRequestProviderAssignmentNotAllowed" xml:space="preserve">
   <value>Denne forespørselen kan ikke tildeles en leverandør.</value>
 </data>
@@ -1076,5 +1068,13 @@
 
 <data name="ServiceRequestProviderNotAvailable" xml:space="preserve">
   <value>Den valgte leverandøren er ikke tilgjengelig for denne tjenesten.</value>
+</data>
+
+<data name="ShowFullMessage" xml:space="preserve">
+  <value>Se hele meldingen</value>
+</data>
+
+<data name="HideFullMessage" xml:space="preserve">
+  <value>Skjul hele meldingen</value>
 </data>
 </root>

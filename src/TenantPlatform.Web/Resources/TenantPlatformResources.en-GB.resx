@@ -1034,4 +1034,11 @@
   <value>The selected provider is not available for this service.</value>
 </data>
 
+<data name="ShowFullMessage" xml:space="preserve">
+  <value>Show full message</value>
+</data>
+
+<data name="HideFullMessage" xml:space="preserve">
+  <value>Hide full message</value>
+</data>
 </root>

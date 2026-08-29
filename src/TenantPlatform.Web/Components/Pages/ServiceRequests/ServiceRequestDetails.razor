@@ -1,10 +1,8 @@
 @page "/portal/requests/{Id:guid}"
-
 @rendermode InteractiveServer
-
 @attribute [Authorize]
-
 @using System.Globalization
+@using System.Text.RegularExpressions
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Core.Services
 @using TenantPlatform.Web.Security.CurrentUserContext
@@ -200,9 +198,27 @@ else
                                     @if (message.Type != ServiceRequestMessageType.System &&
                                          !string.IsNullOrWhiteSpace(message.Body))
                                     {
+                                        var visibleBody = GetVisibleMessageBody(message.Body);
+                                        var isExpanded = expandedMessages.Contains(message.Id);
+                                        var hasHiddenContent = HasHiddenQuotedContent(
+                                            message.Body,
+                                            visibleBody);
                                         <div style="white-space: pre-wrap;">
-                                            @message.Body
+                                            @(isExpanded
+                                                ? message.Body.Trim()
+                                                : visibleBody)
                                         </div>
+                                        @if (message.Type == ServiceRequestMessageType.Email &&
+                                             hasHiddenContent)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-link btn-sm p-0 mt-1"
+                                                    @onclick="() => ToggleMessage(message.Id)">
+                                                @(isExpanded
+                                                    ? L["HideFullMessage"]
+                                                    : L["ShowFullMessage"])
+                                            </button>
+                                        }
                                     }
                                 </div>
                             </div>
@@ -306,6 +322,7 @@ else
     private bool canUseProviderPortal;
     private bool isAddingComment;
     private string commentText = string.Empty;
+    private readonly HashSet<Guid> expandedMessages = [];
     protected override async Task OnInitializedAsync()
     {
         var accountId =
@@ -497,6 +514,85 @@ else
             isAddingComment = false;
         }
     }
+    private void ToggleMessage(Guid messageId)
+    {
+        if (!expandedMessages.Add(messageId))
+        {
+            expandedMessages.Remove(messageId);
+        }
+    }
+    private static bool HasHiddenQuotedContent(
+        string fullBody,
+        string visibleBody)
+    {
+        return !string.Equals(
+            fullBody.Trim(),
+            visibleBody.Trim(),
+            StringComparison.Ordinal);
+    }
+    private static string GetVisibleMessageBody(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return string.Empty;
+        }
+        var normalized = body
+            .Replace("\r\n", "\n")
+            .Replace('\r', '\n')
+            .Trim();
+        var cutAt = normalized.Length;
+        var fixedMarkers = new[]
+        {
+            "\n-----Original Message-----",
+            "\n-----Opprinnelig melding-----",
+            "\n________________________________",
+            "\nFrom:",
+            "\nFra:",
+            "\nSent:",
+            "\nSendt:",
+            "\nTo:",
+            "\nTil:",
+            "\nSubject:",
+            "\nEmne:"
+        };
+        foreach (var marker in fixedMarkers)
+        {
+            var index = normalized.IndexOf(
+                marker,
+                StringComparison.OrdinalIgnoreCase);
+            if (index >= 0 && index < cutAt)
+            {
+                cutAt = index;
+            }
+        }
+        var replyHeaderPatterns = new[]
+        {
+            @"(?im)^\s*On .+ wrote:\s*$",
+            @"(?im)^\s*On .+ skrev:\s*$",
+            @"(?im)^\s*Den .+ skrev .+:\s*$",
+            @"(?im)^\s*Le .+ a écrit\s*:\s*$"
+        };
+        foreach (var pattern in replyHeaderPatterns)
+        {
+            var match = Regex.Match(normalized, pattern);
+            if (match.Success && match.Index < cutAt)
+            {
+                cutAt = match.Index;
+            }
+        }
+        var quotedLine = Regex.Match(
+            normalized,
+            @"(?m)^\s*>");
+        if (quotedLine.Success &&
+            quotedLine.Index < cutAt)
+        {
+            cutAt = quotedLine.Index;
+        }
+        var visible = normalized[..cutAt].Trim();
+        return string.IsNullOrWhiteSpace(visible)
+            ? normalized
+            : visible;
+    }
     private async Task ReloadAsync()
     {
         var accountId =
@@ -560,4 +656,3 @@ else
             canProviderComplete;
     }
 }
-
