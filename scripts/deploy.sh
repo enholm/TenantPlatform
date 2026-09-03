@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 
 REMOTE_USER="morten"
-REMOTE_HOST="10.150.100.242"
+REMOTE_HOST="192.168.123.105"
 REMOTE_PATH="/opt/tenantplatform"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

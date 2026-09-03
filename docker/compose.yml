@@ -20,7 +20,7 @@ services:
         Include Error Detail=false
 
     ports:
-      - "10.150.100.242:8080:8080"
+      - "192.168.123.105:8080:8080"
 
     depends_on:
       postgres:

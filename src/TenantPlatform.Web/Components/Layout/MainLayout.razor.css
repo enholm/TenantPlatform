@@ -6,6 +6,23 @@
     color: var(--bs-body-color);
 }
 
+.brand-logo {
+    height: 62px;
+    width: auto;
+}
+
+.brand-logo-dark {
+    display: none;
+}
+
+[data-bs-theme="dark"] .brand-logo-light {
+    display: none;
+}
+
+[data-bs-theme="dark"] .brand-logo-dark {
+    display: inline-block;
+}
+
 .sidebar {
     width: var(--tp-sidebar-width);
     flex-shrink: 0;
