@@ -99,7 +99,8 @@
             </NavLink>
         }
 
-        @if (permissions.CanSeeUsers)
+        @if (permissions.CanSeeUsers &&
+             !UserContext.Current.IsPlatformAdmin)
         {
             <NavLink href="/users"
                      class="sidebar-link">
@@ -130,6 +131,15 @@
                      class="sidebar-link">
                 <i class="bi bi-hdd-network"></i>
                 <span>@L["Accounts"]</span>
+            </NavLink>
+        }
+
+        @if (permissions.CanSeeUsers)
+        {
+            <NavLink href="/users"
+                     class="sidebar-link">
+                <i class="bi bi-people"></i>
+                <span>@L["Users"]</span>
             </NavLink>
         }
     }

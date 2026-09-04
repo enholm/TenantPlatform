@@ -739,9 +739,12 @@ public class TenantAuthorizationService
                     isPlatformAdmin,
 
                 CanSeeAccounts =
+                    isPlatformAdmin,
+
+                CanSeeUsers =
                     isPlatformAdmin
             };
-        }
+        }       
 
         var accountId =
             currentUser.CurrentAccountId.Value;
@@ -830,7 +833,7 @@ public class TenantAuthorizationService
                 canAdminister,
 
             CanSeeUsers =
-                canAdminister,
+                isPlatformAdmin || canAdminister,
 
             CanSeeServiceDefinitions =
                 canAdminister,

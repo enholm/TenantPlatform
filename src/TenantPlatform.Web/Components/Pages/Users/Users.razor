@@ -1,0 +1,228 @@
+@page "/users"
+
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Localization
+@using TenantPlatform.Web.Services.UserAdministration
+
+@inject IUserAdministrationService UserAdministrationService
+@inject NavigationManager Navigation
+
+<PageTitle>@L["Users"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h1 class="mb-1">
+                @L["Users"]
+            </h1>
+
+            <div class="text-body-secondary">
+                @L["UsersDescription"]
+            </div>
+        </div>
+
+        <a class="btn btn-primary"
+           href="/users/create">
+
+            <i class="bi bi-person-plus me-1"></i>
+            @L["CreateUser"]
+
+        </a>
+
+    </div>
+
+    @if (users.Count == 0)
+    {
+        <div class="alert alert-light border">
+            @L["NoUsers"]
+        </div>
+    }
+    else
+    {
+        <div class="card">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>@L["Name"]</th>
+                            <th>@L["Email"]</th>
+                            <th>@L["PreferredLanguage"]</th>
+                            <th>@L["Authentication"]</th>
+                            <th>@L["Status"]</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var user in users)
+                        {
+                            <tr>
+
+                                <td class="fw-semibold">
+
+                                    <div class="d-flex align-items-center gap-2">
+
+                                        <span>
+                                            @GetDisplayName(user)
+                                        </span>
+
+                                        @if (user.IsPlatformAdmin)
+                                        {
+                                            <span class="badge text-bg-info">
+                                                @L["PlatformAdmin"]
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+                                    @user.Email
+                                </td>
+
+                                <td>
+                                    @GetLanguageDisplayName(
+                                        user.PreferredLanguage)
+                                </td>
+
+                                <td>
+                                    @if (user.HasLocalLogin)
+                                    {
+                                        @if (user.IsLocalLoginEnabled)
+                                        {
+                                            <span class="badge text-bg-success">
+                                                @L["LocalLogin"]
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-secondary">
+                                                @L["LocalLoginDisabled"]
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-body-secondary">
+                                            @L["NoLogin"]
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="badge text-bg-success">
+                                            @L["Active"]
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">
+                                            @L["Inactive"]
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-end">
+
+                                    <div class="d-flex justify-content-end gap-2">
+
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           href="@($"/users/{user.Id}")">
+
+                                            <i class="bi bi-person me-1"></i>
+                                            @L["Open"]
+
+                                        </a>
+
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="@($"/users/{user.Id}/edit")">
+
+                                            <i class="bi bi-pencil me-1"></i>
+                                            @L["Edit"]
+
+                                        </a>
+
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="@($"/users/{user.Id}/access")">
+
+                                            <i class="bi bi-shield-lock me-1"></i>
+                                            @L["ManageAccess"]
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    }
+}
+
+@code {
+    private bool isLoading = true;
+
+    private List<UserListItemDto> users = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        users =
+            await UserAdministrationService
+                .GetUsersAsync();
+
+        isLoading = false;
+    }
+
+    private static string GetDisplayName(
+        UserListItemDto user)
+    {
+        var name =
+            $"{user.FirstName} {user.LastName}"
+                .Trim();
+
+        return string.IsNullOrWhiteSpace(name)
+            ? user.Email
+            : name;
+    }
+
+    private static string GetLanguageDisplayName(
+        string languageCode)
+    {
+        var language =
+            SupportedLanguages.All
+                .FirstOrDefault(x =>
+                    string.Equals(
+                        x.Code,
+                        languageCode,
+                        StringComparison.OrdinalIgnoreCase));
+
+        return language?.DisplayName
+            ?? languageCode;
+    }
+}
+

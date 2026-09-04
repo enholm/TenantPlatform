@@ -29,6 +29,7 @@ using TenantPlatform.Web.Services.ServiceRequests;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Web.Email;
 using TenantPlatform.Web.Services.Accounts;
+using TenantPlatform.Web.Services.UserAdministration;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -92,6 +93,7 @@ builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IInboundServiceRequestEmailService, InboundServiceRequestEmailService>();
 builder.Services.AddScoped<IServiceRequestReplyAddressParser, ServiceRequestReplyAddressParser>();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<

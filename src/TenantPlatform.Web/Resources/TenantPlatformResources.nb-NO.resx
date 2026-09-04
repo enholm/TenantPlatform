@@ -1164,5 +1164,251 @@
 <data name="AccountDefaultLanguageNotSupported" xml:space="preserve">
   <value>Det valgte standardspråket støttes ikke.</value>
 </data>
+<data name="User" xml:space="preserve">
+  <value>Bruker</value>
+</data>
 
+<data name="UsersDescription" xml:space="preserve">
+  <value>Administrer brukere og deres tilganger.</value>
+</data>
+
+<data name="CreateUser" xml:space="preserve">
+  <value>Opprett bruker</value>
+</data>
+
+<data name="EditUser" xml:space="preserve">
+  <value>Rediger bruker</value>
+</data>
+
+<data name="UserNotFound" xml:space="preserve">
+  <value>Brukeren ble ikke funnet.</value>
+</data>
+
+<data name="UserInformation" xml:space="preserve">
+  <value>Brukerinformasjon</value>
+</data>
+
+<data name="FirstName" xml:space="preserve">
+  <value>Fornavn</value>
+</data>
+
+<data name="LastName" xml:space="preserve">
+  <value>Etternavn</value>
+</data>
+
+<data name="Email" xml:space="preserve">
+  <value>E-post</value>
+</data>
+
+<data name="PreferredLanguage" xml:space="preserve">
+  <value>Foretrukket språk</value>
+</data>
+
+<data name="Authentication" xml:space="preserve">
+  <value>Autentisering</value>
+</data>
+
+<data name="LocalLogin" xml:space="preserve">
+  <value>Lokal innlogging</value>
+</data>
+
+<data name="LocalLoginDisabled" xml:space="preserve">
+  <value>Lokal innlogging deaktivert</value>
+</data>
+
+<data name="NoLogin" xml:space="preserve">
+  <value>Ingen innlogging</value>
+</data>
+
+<data name="CreateLocalLogin" xml:space="preserve">
+  <value>Opprett lokal innlogging</value>
+</data>
+
+<data name="LocalLoginEnabled" xml:space="preserve">
+  <value>Lokal innlogging aktivert</value>
+</data>
+
+<data name="TemporaryPassword" xml:space="preserve">
+  <value>Midlertidig passord</value>
+</data>
+
+<data name="TemporaryPasswordHelp" xml:space="preserve">
+  <value>Angi et midlertidig passord for brukeren.</value>
+</data>
+
+<data name="TemporaryPasswordRequired" xml:space="preserve">
+  <value>Midlertidig passord må angis.</value>
+</data>
+
+<data name="NoLocalLoginConfigured" xml:space="preserve">
+  <value>Ingen lokal innlogging er konfigurert.</value>
+</data>
+
+<data name="LoginType" xml:space="preserve">
+  <value>Innloggingstype</value>
+</data>
+
+<data name="LoginEmail" xml:space="preserve">
+  <value>E-post for innlogging</value>
+</data>
+
+<data name="LoginEmailFollowsUserEmail" xml:space="preserve">
+  <value>Innloggingsadressen følger brukerens e-postadresse.</value>
+</data>
+
+<data name="FailedLoginCount" xml:space="preserve">
+  <value>Mislykkede innloggingsforsøk</value>
+</data>
+
+<data name="LastLogin" xml:space="preserve">
+  <value>Siste innlogging</value>
+</data>
+
+<data name="LockedUntil" xml:space="preserve">
+  <value>Låst til</value>
+</data>
+
+<data name="Enabled" xml:space="preserve">
+  <value>Aktivert</value>
+</data>
+
+<data name="Disabled" xml:space="preserve">
+  <value>Deaktivert</value>
+</data>
+
+<data name="PlatformAdmin" xml:space="preserve">
+  <value>Plattformadministrator</value>
+</data>
+
+<data name="PlatformAdministrator" xml:space="preserve">
+  <value>Plattformadministrator</value>
+</data>
+
+<data name="PlatformAdministratorHelp" xml:space="preserve">
+  <value>Gir administratorrettigheter på hele plattformen.</value>
+</data>
+
+<data name="UserIsPlatformAdmin" xml:space="preserve">
+  <value>Denne brukeren er plattformadministrator.</value>
+</data>
+
+<data name="AccountAccess" xml:space="preserve">
+  <value>Kontotilgang</value>
+</data>
+
+<data name="ManageAccess" xml:space="preserve">
+  <value>Administrer tilgang</value>
+</data>
+
+<data name="NoAccountAccess" xml:space="preserve">
+  <value>Brukeren har ingen kontotilgang.</value>
+</data>
+
+<data name="NoRoles" xml:space="preserve">
+  <value>Ingen roller</value>
+</data>
+
+<data name="Role" xml:space="preserve">
+  <value>Rolle</value>
+</data>
+
+<data name="Scope" xml:space="preserve">
+  <value>Omfang</value>
+</data>
+
+<data name="EntireAccount" xml:space="preserve">
+  <value>Hele kontoen</value>
+</data>
+
+<data name="AddRole" xml:space="preserve">
+  <value>Legg til rolle</value>
+</data>
+
+<data name="Remove" xml:space="preserve">
+  <value>Fjern</value>
+</data>
+
+<data name="NoAccountsAvailable" xml:space="preserve">
+  <value>Ingen kontoer er tilgjengelige.</value>
+</data>
+
+<data name="SelectBuilding" xml:space="preserve">
+  <value>Velg bygg</value>
+</data>
+
+<data name="SelectOrganization" xml:space="preserve">
+  <value>Velg organisasjon</value>
+</data>
+
+<data name="AccountRequired" xml:space="preserve">
+  <value>Du må velge en konto.</value>
+</data>
+
+<data name="AccountAdmin" xml:space="preserve">
+  <value>Kontoadministrator</value>
+</data>
+
+<data name="PropertyAdmin" xml:space="preserve">
+  <value>Eiendomsadministrator</value>
+</data>
+
+<data name="TenantAdmin" xml:space="preserve">
+  <value>Leietakeradministrator</value>
+</data>
+
+<data name="TenantUser" xml:space="preserve">
+  <value>Leietakerbruker</value>
+</data>
+
+<data name="ServiceProviderUser" xml:space="preserve">
+  <value>Tjenesteleverandørbruker</value>
+</data>
+
+<data name="AccountAdminCannotHaveScope" xml:space="preserve">
+  <value>Kontoadministrator kan ikke ha bygg- eller organisasjonsomfang.</value>
+</data>
+
+<data name="PropertyAdminRequiresBuilding" xml:space="preserve">
+  <value>Eiendomsadministrator må knyttes til et bygg.</value>
+</data>
+
+<data name="OrganizationRoleRequiresOrganization" xml:space="preserve">
+  <value>Denne rollen må knyttes til en organisasjon.</value>
+</data>
+
+<data name="UnsupportedUserRole" xml:space="preserve">
+  <value>Brukerrollen støttes ikke.</value>
+</data>
+
+<data name="UserRoleAlreadyExists" xml:space="preserve">
+  <value>Brukeren har allerede denne rollen med samme omfang.</value>
+</data>
+
+<data name="UserRoleNotFound" xml:space="preserve">
+  <value>Brukerrollen ble ikke funnet.</value>
+</data>
+
+<data name="UserAdministrationNotAllowed" xml:space="preserve">
+  <value>Du har ikke tilgang til å administrere denne brukeren.</value>
+</data>
+
+<data name="UserEmailAlreadyExists" xml:space="preserve">
+  <value>Det finnes allerede en bruker med denne e-postadressen.</value>
+</data>
+
+<data name="FirstNameRequired" xml:space="preserve">
+  <value>Fornavn må angis.</value>
+</data>
+
+<data name="LastNameRequired" xml:space="preserve">
+  <value>Etternavn må angis.</value>
+</data>
+
+<data name="EmailRequired" xml:space="preserve">
+  <value>E-postadresse må angis.</value>
+</data>
+
+<data name="UnsupportedLanguage" xml:space="preserve">
+  <value>Det valgte språket støttes ikke.</value>
+</data>
 </root>

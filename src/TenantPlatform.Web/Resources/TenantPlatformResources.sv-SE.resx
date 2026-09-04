@@ -1164,5 +1164,251 @@
 <data name="AccountDefaultLanguageNotSupported" xml:space="preserve">
   <value>Det valda standardspråket stöds inte.</value>
 </data>
+<data name="User" xml:space="preserve">
+  <value>Användare</value>
+</data>
 
+<data name="UsersDescription" xml:space="preserve">
+  <value>Hantera användare och deras åtkomst.</value>
+</data>
+
+<data name="CreateUser" xml:space="preserve">
+  <value>Skapa användare</value>
+</data>
+
+<data name="EditUser" xml:space="preserve">
+  <value>Redigera användare</value>
+</data>
+
+<data name="UserNotFound" xml:space="preserve">
+  <value>Användaren kunde inte hittas.</value>
+</data>
+
+<data name="UserInformation" xml:space="preserve">
+  <value>Användarinformation</value>
+</data>
+
+<data name="FirstName" xml:space="preserve">
+  <value>Förnamn</value>
+</data>
+
+<data name="LastName" xml:space="preserve">
+  <value>Efternamn</value>
+</data>
+
+<data name="Email" xml:space="preserve">
+  <value>E-post</value>
+</data>
+
+<data name="PreferredLanguage" xml:space="preserve">
+  <value>Föredraget språk</value>
+</data>
+
+<data name="Authentication" xml:space="preserve">
+  <value>Autentisering</value>
+</data>
+
+<data name="LocalLogin" xml:space="preserve">
+  <value>Lokal inloggning</value>
+</data>
+
+<data name="LocalLoginDisabled" xml:space="preserve">
+  <value>Lokal inloggning inaktiverad</value>
+</data>
+
+<data name="NoLogin" xml:space="preserve">
+  <value>Ingen inloggning</value>
+</data>
+
+<data name="CreateLocalLogin" xml:space="preserve">
+  <value>Skapa lokal inloggning</value>
+</data>
+
+<data name="LocalLoginEnabled" xml:space="preserve">
+  <value>Lokal inloggning aktiverad</value>
+</data>
+
+<data name="TemporaryPassword" xml:space="preserve">
+  <value>Tillfälligt lösenord</value>
+</data>
+
+<data name="TemporaryPasswordHelp" xml:space="preserve">
+  <value>Ange ett tillfälligt lösenord för användaren.</value>
+</data>
+
+<data name="TemporaryPasswordRequired" xml:space="preserve">
+  <value>Ett tillfälligt lösenord måste anges.</value>
+</data>
+
+<data name="NoLocalLoginConfigured" xml:space="preserve">
+  <value>Ingen lokal inloggning är konfigurerad.</value>
+</data>
+
+<data name="LoginType" xml:space="preserve">
+  <value>Inloggningstyp</value>
+</data>
+
+<data name="LoginEmail" xml:space="preserve">
+  <value>E-post för inloggning</value>
+</data>
+
+<data name="LoginEmailFollowsUserEmail" xml:space="preserve">
+  <value>Inloggningsadressen följer användarens e-postadress.</value>
+</data>
+
+<data name="FailedLoginCount" xml:space="preserve">
+  <value>Misslyckade inloggningsförsök</value>
+</data>
+
+<data name="LastLogin" xml:space="preserve">
+  <value>Senaste inloggning</value>
+</data>
+
+<data name="LockedUntil" xml:space="preserve">
+  <value>Låst till</value>
+</data>
+
+<data name="Enabled" xml:space="preserve">
+  <value>Aktiverad</value>
+</data>
+
+<data name="Disabled" xml:space="preserve">
+  <value>Inaktiverad</value>
+</data>
+
+<data name="PlatformAdmin" xml:space="preserve">
+  <value>Plattformsadministratör</value>
+</data>
+
+<data name="PlatformAdministrator" xml:space="preserve">
+  <value>Plattformsadministratör</value>
+</data>
+
+<data name="PlatformAdministratorHelp" xml:space="preserve">
+  <value>Ger administratörsbehörighet till hela plattformen.</value>
+</data>
+
+<data name="UserIsPlatformAdmin" xml:space="preserve">
+  <value>Den här användaren är plattformsadministratör.</value>
+</data>
+
+<data name="AccountAccess" xml:space="preserve">
+  <value>Kontoåtkomst</value>
+</data>
+
+<data name="ManageAccess" xml:space="preserve">
+  <value>Hantera åtkomst</value>
+</data>
+
+<data name="NoAccountAccess" xml:space="preserve">
+  <value>Användaren har ingen kontoåtkomst.</value>
+</data>
+
+<data name="NoRoles" xml:space="preserve">
+  <value>Inga roller</value>
+</data>
+
+<data name="Role" xml:space="preserve">
+  <value>Roll</value>
+</data>
+
+<data name="Scope" xml:space="preserve">
+  <value>Omfattning</value>
+</data>
+
+<data name="EntireAccount" xml:space="preserve">
+  <value>Hela kontot</value>
+</data>
+
+<data name="AddRole" xml:space="preserve">
+  <value>Lägg till roll</value>
+</data>
+
+<data name="Remove" xml:space="preserve">
+  <value>Ta bort</value>
+</data>
+
+<data name="NoAccountsAvailable" xml:space="preserve">
+  <value>Inga konton är tillgängliga.</value>
+</data>
+
+<data name="SelectBuilding" xml:space="preserve">
+  <value>Välj byggnad</value>
+</data>
+
+<data name="SelectOrganization" xml:space="preserve">
+  <value>Välj organisation</value>
+</data>
+
+<data name="AccountRequired" xml:space="preserve">
+  <value>Du måste välja ett konto.</value>
+</data>
+
+<data name="AccountAdmin" xml:space="preserve">
+  <value>Kontoadministratör</value>
+</data>
+
+<data name="PropertyAdmin" xml:space="preserve">
+  <value>Fastighetsadministratör</value>
+</data>
+
+<data name="TenantAdmin" xml:space="preserve">
+  <value>Hyresgästadministratör</value>
+</data>
+
+<data name="TenantUser" xml:space="preserve">
+  <value>Hyresgästanvändare</value>
+</data>
+
+<data name="ServiceProviderUser" xml:space="preserve">
+  <value>Tjänsteleverantörsanvändare</value>
+</data>
+
+<data name="AccountAdminCannotHaveScope" xml:space="preserve">
+  <value>En kontoadministratör kan inte ha byggnads- eller organisationsomfattning.</value>
+</data>
+
+<data name="PropertyAdminRequiresBuilding" xml:space="preserve">
+  <value>En fastighetsadministratör måste kopplas till en byggnad.</value>
+</data>
+
+<data name="OrganizationRoleRequiresOrganization" xml:space="preserve">
+  <value>Den här rollen måste kopplas till en organisation.</value>
+</data>
+
+<data name="UnsupportedUserRole" xml:space="preserve">
+  <value>Användarrollen stöds inte.</value>
+</data>
+
+<data name="UserRoleAlreadyExists" xml:space="preserve">
+  <value>Användaren har redan den här rollen med samma omfattning.</value>
+</data>
+
+<data name="UserRoleNotFound" xml:space="preserve">
+  <value>Användarrollen kunde inte hittas.</value>
+</data>
+
+<data name="UserAdministrationNotAllowed" xml:space="preserve">
+  <value>Du har inte behörighet att administrera den här användaren.</value>
+</data>
+
+<data name="UserEmailAlreadyExists" xml:space="preserve">
+  <value>Det finns redan en användare med den här e-postadressen.</value>
+</data>
+
+<data name="FirstNameRequired" xml:space="preserve">
+  <value>Förnamn måste anges.</value>
+</data>
+
+<data name="LastNameRequired" xml:space="preserve">
+  <value>Efternamn måste anges.</value>
+</data>
+
+<data name="EmailRequired" xml:space="preserve">
+  <value>E-postadress måste anges.</value>
+</data>
+
+<data name="UnsupportedLanguage" xml:space="preserve">
+  <value>Det valda språket stöds inte.</value>
+</data>
 </root>

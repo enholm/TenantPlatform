@@ -1,0 +1,381 @@
+@page "/users/{Id:guid}/edit"
+
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Localization
+@using TenantPlatform.Web.Services.UserAdministration
+@using TenantPlatform.Web.Security.CurrentUserContext
+
+@inject ICurrentUserContextService UserContext
+@inject IUserAdministrationService UserAdministrationService
+@inject NavigationManager Navigation
+
+<PageTitle>@L["EditUser"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (user is null || Model is null)
+{
+    <div class="alert alert-warning">
+        @L["UserNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/users/{Id}")"
+           class="text-decoration-none">
+            ← @L["User"]
+        </a>
+    </div>
+
+    <h1>@L["EditUser"]</h1>
+
+    @if (!string.IsNullOrWhiteSpace(saveError))
+    {
+        <div class="alert alert-danger mt-3">
+            @L[saveError]
+        </div>
+    }
+
+    <div class="card mt-4">
+
+        <div class="card-body">
+
+            <EditForm Model="Model"
+                      OnValidSubmit="SaveAsync"
+                      FormName="EditUser">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <h5 class="mb-3">
+                    @L["UserInformation"]
+                </h5>
+
+                <div class="row">
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+                            @L["FirstName"]
+                        </label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="Model.FirstName" />
+
+                        <ValidationMessage For="() => Model.FirstName" />
+
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+
+                        <label class="form-label">
+                            @L["LastName"]
+                        </label>
+
+                        <InputText class="form-control"
+                                   @bind-Value="Model.LastName" />
+
+                        <ValidationMessage For="() => Model.LastName" />
+
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        @L["Email"]
+                    </label>
+
+                    <InputText class="form-control"
+                               type="email"
+                               @bind-Value="Model.Email" />
+
+                    <ValidationMessage For="() => Model.Email" />
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        @L["PreferredLanguage"]
+                    </label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="Model.PreferredLanguage">
+
+                        @foreach (var language in SupportedLanguages.All)
+                        {
+                            <option value="@language.Code">
+                                @language.DisplayName
+                            </option>
+                        }
+
+                    </InputSelect>
+
+                </div>
+
+                <div class="form-check mb-3">
+
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.IsActive" />
+
+                    <label class="form-check-label">
+                        @L["IsActive"]
+                    </label>
+
+                </div>
+                @if (UserContext.Current.IsPlatformAdmin)
+                {
+                    <div class="form-check mb-3">
+
+                        <InputCheckbox class="form-check-input"
+                                    @bind-Value="Model.IsPlatformAdmin" />
+
+                        <label class="form-check-label">
+                            @L["PlatformAdministrator"]
+                        </label>
+
+                        <div class="form-text">
+                            @L["PlatformAdministratorHelp"]
+                        </div>
+
+                    </div>
+                }
+                else if (user.IsPlatformAdmin)
+                {
+                    <div class="alert alert-info">
+                        @L["UserIsPlatformAdmin"]
+                    </div>
+                }
+
+                <hr />
+
+                <h5 class="mb-3">
+                    @L["Authentication"]
+                </h5>
+
+                @if (user.LocalLogin is null)
+                {
+                    <div class="text-body-secondary mb-4">
+                        @L["NoLocalLoginConfigured"]
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            @L["LoginEmail"]
+                        </label>
+
+                        <input class="form-control"
+                               value="@Model.Email"
+                               disabled />
+
+                        <div class="form-text">
+                            @L["LoginEmailFollowsUserEmail"]
+                        </div>
+
+                    </div>
+
+                    <div class="form-check mb-4">
+
+                        <InputCheckbox class="form-check-input"
+                                       @bind-Value="Model.IsLocalLoginEnabled" />
+
+                        <label class="form-check-label">
+                            @L["LocalLoginEnabled"]
+                        </label>
+
+                    </div>
+                }
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+
+                        @(isSaving
+                            ? L["Saving"]
+                            : L["Save"])
+
+                    </button>
+
+                    <a href="@($"/users/{Id}")"
+                       class="btn btn-outline-secondary">
+
+                        @L["Cancel"]
+
+                    </a>
+
+                </div>
+
+            </EditForm>
+
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "EditUser")]
+    public EditUserFormModel? Model { get; set; }
+
+    private UserDetailsDto? user;
+
+    private bool isLoading = true;
+
+    private bool isSaving;
+
+    private string? saveError;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+
+        user =
+            await UserAdministrationService
+                .GetUserAsync(Id);
+
+        if (user is not null &&
+            Model is null)
+        {
+            Model =
+                new EditUserFormModel
+                {
+                    FirstName =
+                        user.FirstName,
+
+                    LastName =
+                        user.LastName,
+
+                    Email =
+                        user.Email,
+
+                    PreferredLanguage =
+                        user.PreferredLanguage,
+
+                    IsActive =
+                        user.IsActive,
+
+                    IsPlatformAdmin =
+                        user.IsPlatformAdmin,
+
+                    IsLocalLoginEnabled =
+                        user.LocalLogin?.IsEnabled ?? false
+                };
+        }
+
+        isLoading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Model is null ||
+            user is null)
+        {
+            return;
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            await UserAdministrationService
+                .UpdateUserAsync(
+                    Id,
+                    new UpdateUserRequest
+                    {
+                        FirstName =
+                            Model.FirstName,
+
+                        LastName =
+                            Model.LastName,
+
+                        Email =
+                            Model.Email,
+
+                        PreferredLanguage =
+                            Model.PreferredLanguage,
+
+                        IsActive =
+                            Model.IsActive,
+
+                        //
+                        // Vi sender eksisterende verdi.
+                        // Service-laget avgjør om caller
+                        // faktisk har rett til å endre den.
+                        //
+                        IsPlatformAdmin =
+                            Model.IsPlatformAdmin,
+
+                        IsLocalLoginEnabled =
+                            user.LocalLogin is null
+                                ? null
+                                : Model.IsLocalLoginEnabled
+                    });
+
+            Navigation.NavigateTo(
+                $"/users/{Id}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            saveError =
+                ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class EditUserFormModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string FirstName { get; set; } =
+            string.Empty;
+
+        [Required]
+        [StringLength(200)]
+        public string LastName { get; set; } =
+            string.Empty;
+
+        [Required]
+        [EmailAddress]
+        [StringLength(320)]
+        public string Email { get; set; } =
+            string.Empty;
+
+        [Required]
+        [StringLength(10)]
+        public string PreferredLanguage { get; set; } =
+            SupportedLanguages.NbNo;
+
+        public bool IsActive { get; set; }
+
+        public bool IsPlatformAdmin { get; set; }
+
+        public bool IsLocalLoginEnabled { get; set; }
+    }
+}
+

@@ -1128,5 +1128,251 @@
 <data name="AccountDefaultLanguageNotSupported" xml:space="preserve">
   <value>The selected default language is not supported.</value>
 </data>
+<data name="User" xml:space="preserve">
+  <value>User</value>
+</data>
 
+<data name="UsersDescription" xml:space="preserve">
+  <value>Manage users and their access.</value>
+</data>
+
+<data name="CreateUser" xml:space="preserve">
+  <value>Create user</value>
+</data>
+
+<data name="EditUser" xml:space="preserve">
+  <value>Edit user</value>
+</data>
+
+<data name="UserNotFound" xml:space="preserve">
+  <value>The user could not be found.</value>
+</data>
+
+<data name="UserInformation" xml:space="preserve">
+  <value>User information</value>
+</data>
+
+<data name="FirstName" xml:space="preserve">
+  <value>First name</value>
+</data>
+
+<data name="LastName" xml:space="preserve">
+  <value>Last name</value>
+</data>
+
+<data name="Email" xml:space="preserve">
+  <value>Email</value>
+</data>
+
+<data name="PreferredLanguage" xml:space="preserve">
+  <value>Preferred language</value>
+</data>
+
+<data name="Authentication" xml:space="preserve">
+  <value>Authentication</value>
+</data>
+
+<data name="LocalLogin" xml:space="preserve">
+  <value>Local login</value>
+</data>
+
+<data name="LocalLoginDisabled" xml:space="preserve">
+  <value>Local login disabled</value>
+</data>
+
+<data name="NoLogin" xml:space="preserve">
+  <value>No login</value>
+</data>
+
+<data name="CreateLocalLogin" xml:space="preserve">
+  <value>Create local login</value>
+</data>
+
+<data name="LocalLoginEnabled" xml:space="preserve">
+  <value>Local login enabled</value>
+</data>
+
+<data name="TemporaryPassword" xml:space="preserve">
+  <value>Temporary password</value>
+</data>
+
+<data name="TemporaryPasswordHelp" xml:space="preserve">
+  <value>Enter a temporary password for the user.</value>
+</data>
+
+<data name="TemporaryPasswordRequired" xml:space="preserve">
+  <value>A temporary password is required.</value>
+</data>
+
+<data name="NoLocalLoginConfigured" xml:space="preserve">
+  <value>No local login is configured.</value>
+</data>
+
+<data name="LoginType" xml:space="preserve">
+  <value>Login type</value>
+</data>
+
+<data name="LoginEmail" xml:space="preserve">
+  <value>Login email</value>
+</data>
+
+<data name="LoginEmailFollowsUserEmail" xml:space="preserve">
+  <value>The login address follows the user's email address.</value>
+</data>
+
+<data name="FailedLoginCount" xml:space="preserve">
+  <value>Failed login attempts</value>
+</data>
+
+<data name="LastLogin" xml:space="preserve">
+  <value>Last login</value>
+</data>
+
+<data name="LockedUntil" xml:space="preserve">
+  <value>Locked until</value>
+</data>
+
+<data name="Enabled" xml:space="preserve">
+  <value>Enabled</value>
+</data>
+
+<data name="Disabled" xml:space="preserve">
+  <value>Disabled</value>
+</data>
+
+<data name="PlatformAdmin" xml:space="preserve">
+  <value>Platform administrator</value>
+</data>
+
+<data name="PlatformAdministrator" xml:space="preserve">
+  <value>Platform administrator</value>
+</data>
+
+<data name="PlatformAdministratorHelp" xml:space="preserve">
+  <value>Grants administrator access to the entire platform.</value>
+</data>
+
+<data name="UserIsPlatformAdmin" xml:space="preserve">
+  <value>This user is a platform administrator.</value>
+</data>
+
+<data name="AccountAccess" xml:space="preserve">
+  <value>Account access</value>
+</data>
+
+<data name="ManageAccess" xml:space="preserve">
+  <value>Manage access</value>
+</data>
+
+<data name="NoAccountAccess" xml:space="preserve">
+  <value>The user has no account access.</value>
+</data>
+
+<data name="NoRoles" xml:space="preserve">
+  <value>No roles</value>
+</data>
+
+<data name="Role" xml:space="preserve">
+  <value>Role</value>
+</data>
+
+<data name="Scope" xml:space="preserve">
+  <value>Scope</value>
+</data>
+
+<data name="EntireAccount" xml:space="preserve">
+  <value>Entire account</value>
+</data>
+
+<data name="AddRole" xml:space="preserve">
+  <value>Add role</value>
+</data>
+
+<data name="Remove" xml:space="preserve">
+  <value>Remove</value>
+</data>
+
+<data name="NoAccountsAvailable" xml:space="preserve">
+  <value>No accounts are available.</value>
+</data>
+
+<data name="SelectBuilding" xml:space="preserve">
+  <value>Select building</value>
+</data>
+
+<data name="SelectOrganization" xml:space="preserve">
+  <value>Select organization</value>
+</data>
+
+<data name="AccountRequired" xml:space="preserve">
+  <value>An account must be selected.</value>
+</data>
+
+<data name="AccountAdmin" xml:space="preserve">
+  <value>Account administrator</value>
+</data>
+
+<data name="PropertyAdmin" xml:space="preserve">
+  <value>Property administrator</value>
+</data>
+
+<data name="TenantAdmin" xml:space="preserve">
+  <value>Tenant administrator</value>
+</data>
+
+<data name="TenantUser" xml:space="preserve">
+  <value>Tenant user</value>
+</data>
+
+<data name="ServiceProviderUser" xml:space="preserve">
+  <value>Service provider user</value>
+</data>
+
+<data name="AccountAdminCannotHaveScope" xml:space="preserve">
+  <value>An account administrator cannot have a building or organization scope.</value>
+</data>
+
+<data name="PropertyAdminRequiresBuilding" xml:space="preserve">
+  <value>A property administrator must be assigned to a building.</value>
+</data>
+
+<data name="OrganizationRoleRequiresOrganization" xml:space="preserve">
+  <value>This role must be assigned to an organization.</value>
+</data>
+
+<data name="UnsupportedUserRole" xml:space="preserve">
+  <value>The user role is not supported.</value>
+</data>
+
+<data name="UserRoleAlreadyExists" xml:space="preserve">
+  <value>The user already has this role with the same scope.</value>
+</data>
+
+<data name="UserRoleNotFound" xml:space="preserve">
+  <value>The user role could not be found.</value>
+</data>
+
+<data name="UserAdministrationNotAllowed" xml:space="preserve">
+  <value>You are not allowed to administer this user.</value>
+</data>
+
+<data name="UserEmailAlreadyExists" xml:space="preserve">
+  <value>A user with this email address already exists.</value>
+</data>
+
+<data name="FirstNameRequired" xml:space="preserve">
+  <value>A first name is required.</value>
+</data>
+
+<data name="LastNameRequired" xml:space="preserve">
+  <value>A last name is required.</value>
+</data>
+
+<data name="EmailRequired" xml:space="preserve">
+  <value>An email address is required.</value>
+</data>
+
+<data name="UnsupportedLanguage" xml:space="preserve">
+  <value>The selected language is not supported.</value>
+</data>
 </root>

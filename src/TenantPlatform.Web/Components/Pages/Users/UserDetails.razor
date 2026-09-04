@@ -1,0 +1,479 @@
+@page "/users/{Id:guid}"
+
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Identity
+@using TenantPlatform.Core.Localization
+@using TenantPlatform.Web.Services.UserAdministration
+
+@inject IUserAdministrationService UserAdministrationService
+@inject NavigationManager Navigation
+
+<PageTitle>@L["User"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (user is null)
+{
+    <div class="alert alert-warning">
+        @L["UserNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+
+        <a href="/users"
+           class="text-decoration-none">
+            ← @L["Users"]
+        </a>
+
+    </div>
+
+    <div class="d-flex justify-content-between align-items-start mb-4">
+
+        <div>
+
+            <div class="d-flex align-items-center gap-2">
+
+                <h1 class="mb-0">
+                    @GetDisplayName()
+                </h1>
+
+                @if (user.IsPlatformAdmin)
+                {
+                    <span class="badge text-bg-info">
+                        @L["PlatformAdmin"]
+                    </span>
+                }
+
+                @if (!user.IsActive)
+                {
+                    <span class="badge text-bg-secondary">
+                        @L["Inactive"]
+                    </span>
+                }
+
+            </div>
+
+            <div class="text-body-secondary mt-1">
+                @user.Email
+            </div>
+
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <a class="btn btn-outline-secondary"
+               href="@($"/users/{Id}/edit")">
+
+                <i class="bi bi-pencil me-1"></i>
+                @L["Edit"]
+
+            </a>
+
+            <a class="btn btn-primary"
+               href="@($"/users/{Id}/access")">
+
+                <i class="bi bi-shield-lock me-1"></i>
+                @L["ManageAccess"]
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-6">
+
+            <div class="card h-100">
+
+                <div class="card-header">
+                    <strong>@L["UserInformation"]</strong>
+                </div>
+
+                <div class="card-body">
+
+                    <dl class="row mb-0">
+
+                        <dt class="col-sm-4">
+                            @L["FirstName"]
+                        </dt>
+
+                        <dd class="col-sm-8">
+                            @user.FirstName
+                        </dd>
+
+                        <dt class="col-sm-4">
+                            @L["LastName"]
+                        </dt>
+
+                        <dd class="col-sm-8">
+                            @user.LastName
+                        </dd>
+
+                        <dt class="col-sm-4">
+                            @L["Email"]
+                        </dt>
+
+                        <dd class="col-sm-8">
+                            @user.Email
+                        </dd>
+
+                        <dt class="col-sm-4">
+                            @L["PreferredLanguage"]
+                        </dt>
+
+                        <dd class="col-sm-8">
+                            @GetLanguageDisplayName(
+                                user.PreferredLanguage)
+                        </dd>
+
+                        <dt class="col-sm-4">
+                            @L["Status"]
+                        </dt>
+
+                        <dd class="col-sm-8">
+
+                            @if (user.IsActive)
+                            {
+                                <span class="badge text-bg-success">
+                                    @L["Active"]
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">
+                                    @L["Inactive"]
+                                </span>
+                            }
+
+                        </dd>
+
+                        <dt class="col-sm-4">
+                            @L["PlatformAdministrator"]
+                        </dt>
+
+                        <dd class="col-sm-8">
+                            @(user.IsPlatformAdmin
+                                ? L["Yes"]
+                                : L["No"])
+                        </dd>
+
+                    </dl>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-6">
+
+            <div class="card h-100">
+
+                <div class="card-header">
+                    <strong>@L["Authentication"]</strong>
+                </div>
+
+                <div class="card-body">
+
+                    @if (user.LocalLogin is null)
+                    {
+                        <div class="text-body-secondary">
+                            @L["NoLocalLoginConfigured"]
+                        </div>
+                    }
+                    else
+                    {
+                        <dl class="row mb-0">
+
+                            <dt class="col-sm-5">
+                                @L["LoginType"]
+                            </dt>
+
+                            <dd class="col-sm-7">
+                                @L["LocalLogin"]
+                            </dd>
+
+                            <dt class="col-sm-5">
+                                @L["LoginEmail"]
+                            </dt>
+
+                            <dd class="col-sm-7">
+                                @user.LocalLogin.Email
+                            </dd>
+
+                            <dt class="col-sm-5">
+                                @L["Status"]
+                            </dt>
+
+                            <dd class="col-sm-7">
+
+                                @if (user.LocalLogin.IsEnabled)
+                                {
+                                    <span class="badge text-bg-success">
+                                        @L["Enabled"]
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">
+                                        @L["Disabled"]
+                                    </span>
+                                }
+
+                            </dd>
+
+                            <dt class="col-sm-5">
+                                @L["FailedLoginCount"]
+                            </dt>
+
+                            <dd class="col-sm-7">
+                                @user.LocalLogin.FailedLoginCount
+                            </dd>
+
+                            <dt class="col-sm-5">
+                                @L["LastLogin"]
+                            </dt>
+
+                            <dd class="col-sm-7">
+                                @FormatDateTime(
+                                    user.LocalLogin.LastLoginUtc)
+                            </dd>
+
+                            <dt class="col-sm-5">
+                                @L["LockedUntil"]
+                            </dt>
+
+                            <dd class="col-sm-7">
+                                @FormatDateTime(
+                                    user.LocalLogin.LockedUntilUtc)
+                            </dd>
+
+                        </dl>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card mt-4">
+
+        <div class="card-header d-flex justify-content-between align-items-center">
+
+            <strong>
+                @L["AccountAccess"]
+            </strong>
+
+            <a class="btn btn-sm btn-outline-primary"
+               href="@($"/users/{Id}/access")">
+
+                @L["ManageAccess"]
+
+            </a>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            @if (user.Accounts.Count == 0)
+            {
+                <div class="p-3 text-body-secondary">
+                    @L["NoAccountAccess"]
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table align-middle mb-0">
+
+                        <thead>
+                            <tr>
+                                <th>@L["Account"]</th>
+                                <th>@L["Role"]</th>
+                                <th>@L["Scope"]</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var account in user.Accounts)
+                            {
+                                if (account.Roles.Count == 0)
+                                {
+                                    <tr>
+                                        <td>
+                                            @account.AccountName
+                                        </td>
+
+                                        <td class="text-body-secondary">
+                                            @L["NoRoles"]
+                                        </td>
+
+                                        <td></td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    var first = true;
+
+                                    foreach (var role in account.Roles)
+                                    {
+                                        <tr>
+
+                                            <td>
+                                                @if (first)
+                                                {
+                                                    @account.AccountName
+                                                }
+                                            </td>
+
+                                            <td>
+                                                @GetRoleDisplayName(
+                                                    role.Role)
+                                            </td>
+
+                                            <td>
+                                                @GetScopeDisplayName(
+                                                    role)
+                                            </td>
+
+                                        </tr>
+
+                                        first = false;
+                                    }
+                                }
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private UserDetailsDto? user;
+
+    private bool isLoading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+
+        user =
+            await UserAdministrationService
+                .GetUserAsync(Id);
+
+        isLoading = false;
+    }
+
+    private string GetDisplayName()
+    {
+        if (user is null)
+        {
+            return string.Empty;
+        }
+
+        var name =
+            $"{user.FirstName} {user.LastName}"
+                .Trim();
+
+        return string.IsNullOrWhiteSpace(name)
+            ? user.Email
+            : name;
+    }
+
+    private static string GetLanguageDisplayName(
+        string languageCode)
+    {
+        var language =
+            SupportedLanguages.All
+                .FirstOrDefault(x =>
+                    string.Equals(
+                        x.Code,
+                        languageCode,
+                        StringComparison.OrdinalIgnoreCase));
+
+        return language?.DisplayName
+            ?? languageCode;
+    }
+
+    private string GetRoleDisplayName(
+        UserRole role)
+    {
+        return role switch
+        {
+            UserRole.AccountAdmin =>
+                L["AccountAdmin"],
+
+            UserRole.PropertyAdmin =>
+                L["PropertyAdmin"],
+
+            UserRole.TenantAdmin =>
+                L["TenantAdmin"],
+
+            UserRole.TenantUser =>
+                L["TenantUser"],
+
+            UserRole.ServiceProviderUser =>
+                L["ServiceProviderUser"],
+
+            _ =>
+                role.ToString()
+        };
+    }
+
+    private string GetScopeDisplayName(
+        UserRoleAssignmentDto role)
+    {
+        if (!string.IsNullOrWhiteSpace(
+            role.BuildingName))
+        {
+            return $"{L["Building"]}: {role.BuildingName}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(
+            role.OrganizationName))
+        {
+            return $"{L["Organization"]}: {role.OrganizationName}";
+        }
+
+        return L["EntireAccount"];
+    }
+
+    private static string FormatDateTime(
+        DateTimeOffset? value)
+    {
+        if (!value.HasValue)
+        {
+            return "—";
+        }
+
+        return value.Value
+            .ToLocalTime()
+            .ToString("g");
+    }
+}
+
