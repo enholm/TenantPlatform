@@ -1,0 +1,194 @@
+@page "/accounts/{Id:guid}"
+
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Localization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Services.Accounts
+
+@inject IAccountService AccountService
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
+
+<PageTitle>@(account?.Name ?? L["Account"])</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (account is null)
+{
+    <div class="alert alert-warning">
+        @L["AccountNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="/accounts"
+           class="text-decoration-none">
+            ← @L["Accounts"]
+        </a>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-start mb-4">
+
+        <div>
+            <h1 class="mb-1">
+                @account.Name
+            </h1>
+
+            <div class="text-body-secondary">
+                @L["Account"]
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            @if (canEdit)
+            {
+                <a class="btn btn-outline-secondary"
+                   href="@($"/accounts/{Id}/edit")">
+
+                    <i class="bi bi-pencil me-1"></i>
+                    @L["Edit"]
+
+                </a>
+            }
+
+            @if (canDelete)
+            {
+                <a class="btn btn-outline-danger"
+                   href="@($"/accounts/{Id}/delete")">
+
+                    <i class="bi bi-trash me-1"></i>
+                    @L["Delete"]
+
+                </a>
+            }
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+            @L["AccountInformation"]
+        </div>
+
+        <div class="card-body">
+
+            <dl class="row mb-0">
+
+                <dt class="col-sm-4">
+                    @L["Name"]
+                </dt>
+
+                <dd class="col-sm-8">
+                    @account.Name
+                </dd>
+
+                <dt class="col-sm-4">
+                    @L["DefaultLanguage"]
+                </dt>
+
+                <dd class="col-sm-8">
+                    @GetLanguageDisplayName(
+                        account.DefaultLanguage)
+                </dd>
+
+                <dt class="col-sm-4">
+                    @L["Status"]
+                </dt>
+
+                <dd class="col-sm-8">
+                    @if (account.IsActive)
+                    {
+                        <span class="badge text-bg-success">
+                            @L["Active"]
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge text-bg-secondary">
+                            @L["Inactive"]
+                        </span>
+                    }
+                </dd>
+
+                <dt class="col-sm-4">
+                    @L["Id"]
+                </dt>
+
+                <dd class="col-sm-8">
+                    <code>@account.Id</code>
+                </dd>
+
+            </dl>
+
+        </div>
+
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private AccountDetailsDto? account;
+
+    private bool isLoading = true;
+
+    private bool canEdit;
+    private bool canDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService
+            .CanViewAccountAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        account =
+            await AccountService
+                .GetAccountAsync(Id);
+
+        if (account is null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        canEdit =
+            await AuthorizationService
+                .CanEditAccountAsync(Id);
+
+        canDelete =
+            await AuthorizationService
+                .CanDeleteAccountAsync(Id);
+
+        isLoading = false;
+    }
+
+    private static string GetLanguageDisplayName(
+        string languageCode)
+    {
+        var language =
+            SupportedLanguages.All
+                .FirstOrDefault(x =>
+                    string.Equals(
+                        x.Code,
+                        languageCode,
+                        StringComparison.OrdinalIgnoreCase));
+
+        return language?.DisplayName
+            ?? languageCode;
+    }
+}
+

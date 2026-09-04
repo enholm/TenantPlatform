@@ -1,30 +1,189 @@
 @page "/accounts"
 
-<PageTitle>Ikke implementert</PageTitle>
+@rendermode InteractiveServer
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-xl-5">
+@attribute [Authorize]
 
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center p-5">
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Localization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Services.Accounts
 
-                    <div class="display-5 text-body-secondary mb-4">
-                        <i class="bi bi-tools"></i>
-                    </div>
+@inject IAccountService AccountService
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
 
-                    <h1 class="h3 mb-3">
-                        Denne siden kommer snart
-                    </h1>
+<PageTitle>@L["Accounts"]</PageTitle>
 
-                    <p class="text-body-secondary mb-0">
-                        Denne funksjonen er ikke implementert ennå.
-                    </p>
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-                </div>
+        <div>
+            <h1 class="mb-1">
+                @L["Accounts"]
+            </h1>
+
+            <div class="text-body-secondary">
+                @L["AccountsDescription"]
+            </div>
+        </div>
+
+        @if (canCreate)
+        {
+            <a class="btn btn-primary"
+               href="/accounts/create">
+
+                <i class="bi bi-plus-lg me-1"></i>
+                @L["CreateAccount"]
+
+            </a>
+        }
+
+    </div>
+
+    @if (accounts.Count == 0)
+    {
+        <div class="alert alert-light border">
+            @L["NoAccounts"]
+        </div>
+    }
+    else
+    {
+        <div class="card">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>@L["Name"]</th>
+                            <th>@L["DefaultLanguage"]</th>
+                            <th>@L["Status"]</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var account in accounts)
+                        {
+                            <tr>
+
+                                <td class="fw-semibold">
+                                    @account.Name
+                                </td>
+
+                                <td>
+                                    @GetLanguageDisplayName(
+                                        account.DefaultLanguage)
+                                </td>
+
+                                <td>
+                                    @if (account.IsActive)
+                                    {
+                                        <span class="badge text-bg-success">
+                                            @L["Active"]
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">
+                                            @L["Inactive"]
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-end">
+
+                                    <div class="d-flex justify-content-end gap-2">
+
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           href="@($"/accounts/{account.Id}")">
+
+                                            <i class="bi bi-folder2-open me-1"></i>
+                                            @L["Open"]
+
+                                        </a>
+
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           href="@($"/accounts/{account.Id}/edit")">
+
+                                            <i class="bi bi-pencil me-1"></i>
+                                            @L["Edit"]
+
+                                        </a>
+
+                                        <a class="btn btn-sm btn-outline-danger"
+                                           href="@($"/accounts/{account.Id}/delete")">
+
+                                            <i class="bi bi-trash me-1"></i>
+                                            @L["Delete"]
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
             </div>
 
         </div>
-    </div>
-</div>
+    }
+}
+
+@code {
+    private bool isLoading = true;
+
+    private bool canCreate;
+
+    private List<AccountListItemDto> accounts = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService
+            .CanManageAccountsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        canCreate =
+            await AuthorizationService
+                .CanCreateAccountAsync();
+
+        accounts =
+            await AccountService
+                .GetAccountsAsync();
+
+        isLoading = false;
+    }
+
+    private static string GetLanguageDisplayName(
+        string languageCode)
+    {
+        var language =
+            SupportedLanguages.All
+                .FirstOrDefault(x =>
+                    string.Equals(
+                        x.Code,
+                        languageCode,
+                        StringComparison.OrdinalIgnoreCase));
+
+        return language?.DisplayName
+            ?? languageCode;
+    }
+}
 

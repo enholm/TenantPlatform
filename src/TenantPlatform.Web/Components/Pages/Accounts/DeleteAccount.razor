@@ -1,0 +1,320 @@
+@page "/accounts/{Id:guid}/delete"
+
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Localization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Services.Accounts
+
+@inject IAccountService AccountService
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
+
+<PageTitle>@L["DeleteAccount"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (account is null)
+{
+    <div class="alert alert-warning">
+        @L["AccountNotFound"]
+    </div>
+}
+else
+{
+    <div class="mb-4">
+        <a href="@($"/accounts/{Id}")"
+           class="text-decoration-none">
+            ← @L["Account"]
+        </a>
+    </div>
+
+    <h1>@L["DeleteAccount"]</h1>
+
+    @if (deleteCheck is not null &&
+         !deleteCheck.CanDelete)
+    {
+        <div class="alert alert-warning mt-4">
+
+            <strong>
+                @L["AccountCannotBeDeleted"]
+            </strong>
+
+            <div class="mt-2">
+                @L[deleteCheck.Reason ?? "AccountHasData"]
+            </div>
+
+            @if (account.IsActive)
+            {
+                <div class="mt-2">
+                    @L["DeactivateAccountInstead"]
+                </div>
+            }
+
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+
+                <h5 class="card-title">
+                    @account.Name
+                </h5>
+
+                <dl class="row mb-0 mt-3">
+
+                    <dt class="col-sm-4">
+                        @L["DefaultLanguage"]
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @GetLanguageDisplayName(
+                            account.DefaultLanguage)
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        @L["Status"]
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @if (account.IsActive)
+                        {
+                            <span class="badge text-bg-success">
+                                @L["Active"]
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary">
+                                @L["Inactive"]
+                            </span>
+                        }
+                    </dd>
+
+                </dl>
+
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+
+            @if (account.IsActive)
+            {
+                <a href="@($"/accounts/{Id}/edit")"
+                   class="btn btn-outline-primary">
+
+                    @L["EditAccount"]
+
+                </a>
+            }
+
+            <a href="@($"/accounts/{Id}")"
+               class="btn btn-outline-secondary">
+
+                @L["Cancel"]
+
+            </a>
+
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger mt-4">
+
+            <strong>
+                @L["Warning"]
+            </strong>
+
+            <div class="mt-2">
+                @L["DeleteAccountConfirmation"]
+            </div>
+
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(deleteError))
+        {
+            <div class="alert alert-danger">
+                @L[deleteError]
+            </div>
+        }
+
+        <div class="card mt-4">
+            <div class="card-body">
+
+                <h5 class="card-title">
+                    @account.Name
+                </h5>
+
+                <dl class="row mb-0 mt-3">
+
+                    <dt class="col-sm-4">
+                        @L["DefaultLanguage"]
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @GetLanguageDisplayName(
+                            account.DefaultLanguage)
+                    </dd>
+
+                    <dt class="col-sm-4">
+                        @L["Status"]
+                    </dt>
+
+                    <dd class="col-sm-8">
+                        @if (account.IsActive)
+                        {
+                            <span class="badge text-bg-success">
+                                @L["Active"]
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary">
+                                @L["Inactive"]
+                            </span>
+                        }
+                    </dd>
+
+                </dl>
+
+                <EditForm Model="Model!"
+                          OnValidSubmit="DeleteAsync"
+                          FormName="DeleteAccount"
+                          class="mt-4">
+
+                    <DataAnnotationsValidator />
+
+                    <button type="submit"
+                            class="btn btn-danger"
+                            disabled="@isDeleting">
+
+                        @if (isDeleting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+
+                        @(isDeleting
+                            ? L["Deleting"]
+                            : L["Delete"])
+
+                    </button>
+
+                    <a href="@($"/accounts/{Id}")"
+                       class="btn btn-outline-secondary ms-2">
+
+                        @L["Cancel"]
+
+                    </a>
+
+                </EditForm>
+
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "DeleteAccount")]
+    public DeleteAccountFormModel? Model { get; set; }
+
+    private AccountDetailsDto? account;
+
+    private AccountDeleteCheckResult? deleteCheck;
+
+    private bool isLoading = true;
+
+    private bool isDeleting;
+
+    private string? deleteError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService
+            .CanDeleteAccountAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        Model ??=
+            new DeleteAccountFormModel();
+
+        account =
+            await AccountService
+                .GetAccountAsync(Id);
+
+        if (account is null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        deleteCheck =
+            await AccountService
+                .CanDeleteAccountAsync(Id);
+
+        isLoading = false;
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (!await AuthorizationService
+            .CanDeleteAccountAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        deleteError = null;
+        isDeleting = true;
+
+        try
+        {
+            await AccountService
+                .DeleteAccountAsync(Id);
+
+            Navigation.NavigateTo(
+                "/accounts");
+        }
+        catch (AccountDeleteNotAllowedException ex)
+        {
+            deleteError =
+                ex.Message;
+
+            deleteCheck =
+                await AccountService
+                    .CanDeleteAccountAsync(Id);
+        }
+        finally
+        {
+            isDeleting = false;
+        }
+    }
+
+    private static string GetLanguageDisplayName(
+        string languageCode)
+    {
+        var language =
+            SupportedLanguages.All
+                .FirstOrDefault(x =>
+                    string.Equals(
+                        x.Code,
+                        languageCode,
+                        StringComparison.OrdinalIgnoreCase));
+
+        return language?.DisplayName
+            ?? languageCode;
+    }
+
+    public sealed class DeleteAccountFormModel
+    {
+    }
+}
+

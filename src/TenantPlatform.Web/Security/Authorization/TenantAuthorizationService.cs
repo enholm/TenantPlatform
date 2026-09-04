@@ -19,6 +19,63 @@ public class TenantAuthorizationService
         _currentUserService = currentUserService;
     }
 
+    /***************************************************************
+    **                         Accounts                          **
+    ***************************************************************/
+
+    public Task<bool> CanCreateAccountAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser =
+            _currentUserService.Current;
+
+        return Task.FromResult(
+            currentUser.IsAuthenticated &&
+            currentUser.IsPlatformAdmin);
+    }
+
+    public async Task<bool> CanViewAccountAsync(
+        Guid accountId,
+        CancellationToken cancellationToken = default)
+    {
+        var currentUser =
+            _currentUserService.Current;
+
+        if (!currentUser.IsAuthenticated ||
+            !currentUser.IsPlatformAdmin)
+        {
+            return false;
+        }
+
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        return await dbContext.Accounts
+            .AsNoTracking()
+            .AnyAsync(
+                x => x.Id == accountId,
+                cancellationToken);
+    }
+
+    public async Task<bool> CanEditAccountAsync(
+        Guid accountId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanViewAccountAsync(
+            accountId,
+            cancellationToken);
+    }
+
+    public async Task<bool> CanDeleteAccountAsync(
+        Guid accountId,
+        CancellationToken cancellationToken = default)
+    {
+        return await CanViewAccountAsync(
+            accountId,
+            cancellationToken);
+    }
+
 
     /***************************************************************
      **                         Buildings                         **

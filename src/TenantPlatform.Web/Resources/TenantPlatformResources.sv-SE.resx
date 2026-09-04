@@ -1110,4 +1110,59 @@
   <value>Du kan inte svara på e-post efter att ärendet har stängts.</value>
 </data>
 
+<data name="Accounts" xml:space="preserve">
+  <value>Konton</value>
+</data>
+<data name="Account" xml:space="preserve">
+  <value>Konto</value>
+</data>
+<data name="AccountsDescription" xml:space="preserve">
+  <value>Hantera kontona i plattformen.</value>
+</data>
+<data name="CreateAccount" xml:space="preserve">
+  <value>Skapa konto</value>
+</data>
+<data name="EditAccount" xml:space="preserve">
+  <value>Redigera konto</value>
+</data>
+<data name="DeleteAccount" xml:space="preserve">
+  <value>Ta bort konto</value>
+</data>
+<data name="NoAccounts" xml:space="preserve">
+  <value>Inga konton har skapats.</value>
+</data>
+<data name="AccountInformation" xml:space="preserve">
+  <value>Kontoinformation</value>
+</data>
+<data name="AccountNotFound" xml:space="preserve">
+  <value>Kontot kunde inte hittas.</value>
+</data>
+<data name="DefaultLanguage" xml:space="preserve">
+  <value>Standardspråk</value>
+</data>
+<data name="AccountCannotBeDeleted" xml:space="preserve">
+  <value>Kontot kan inte tas bort.</value>
+</data>
+<data name="AccountHasData" xml:space="preserve">
+  <value>Kontot innehåller data och kan därför inte tas bort.</value>
+</data>
+<data name="DeactivateAccountInstead" xml:space="preserve">
+  <value>Du kan inaktivera kontot i stället.</value>
+</data>
+<data name="DeleteAccountConfirmation" xml:space="preserve">
+  <value>Är du säker på att du vill ta bort det här kontot? Åtgärden kan inte ångras.</value>
+</data>
+<data name="AccountNameRequired" xml:space="preserve">
+  <value>Ett kontonamn måste anges.</value>
+</data>
+<data name="AccountNameTooLong" xml:space="preserve">
+  <value>Kontonamnet är för långt.</value>
+</data>
+<data name="AccountDefaultLanguageRequired" xml:space="preserve">
+  <value>Ett standardspråk måste anges.</value>
+</data>
+<data name="AccountDefaultLanguageNotSupported" xml:space="preserve">
+  <value>Det valda standardspråket stöds inte.</value>
+</data>
+
 </root>

@@ -1,0 +1,211 @@
+@page "/accounts/create"
+
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Localization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Services.Accounts
+
+@inject IAccountService AccountService
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
+
+<PageTitle>@L["CreateAccount"]</PageTitle>
+
+@if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="/accounts"
+           class="text-decoration-none">
+            ← @L["Accounts"]
+        </a>
+    </div>
+
+    <h1>@L["CreateAccount"]</h1>
+
+    @if (!string.IsNullOrWhiteSpace(saveError))
+    {
+        <div class="alert alert-danger mt-3">
+            @L[saveError]
+        </div>
+    }
+
+    <div class="card mt-4">
+        <div class="card-body">
+
+            <EditForm Model="Model"
+                      OnValidSubmit="CreateAsync"
+                      FormName="CreateAccount">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["Name"]
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="Model.Name" />
+
+                    <ValidationMessage For="() => Model.Name" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["DefaultLanguage"]
+                    </label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="Model.DefaultLanguage">
+
+                        @foreach (var language in SupportedLanguages.All)
+                        {
+                            <option value="@language.Code">
+                                @language.DisplayName
+                            </option>
+                        }
+
+                    </InputSelect>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.IsActive" />
+
+                    <label class="form-check-label">
+                        @L["IsActive"]
+                    </label>
+                </div>
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+
+                        @(isSaving
+                            ? L["Saving"]
+                            : L["Create"])
+
+                    </button>
+
+                    <a href="/accounts"
+                       class="btn btn-outline-secondary">
+
+                        @L["Cancel"]
+
+                    </a>
+
+                </div>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromForm(FormName = "CreateAccount")]
+    public CreateAccountFormModel? Model { get; set; }
+
+    private bool isSaving;
+
+    private string? saveError;
+
+    protected override void OnInitialized()
+    {
+        Model ??=
+            new CreateAccountFormModel
+            {
+                DefaultLanguage =
+                    SupportedLanguages.NbNo,
+
+                IsActive =
+                    true
+            };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService
+            .CanCreateAccountAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanCreateAccountAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            var accountId =
+                await AccountService
+                    .CreateAccountAsync(
+                        new CreateAccountRequest
+                        {
+                            Name =
+                                Model.Name,
+
+                            DefaultLanguage =
+                                Model.DefaultLanguage,
+
+                            IsActive =
+                                Model.IsActive
+                        });
+
+            Navigation.NavigateTo(
+                $"/accounts/{accountId}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            saveError =
+                ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class CreateAccountFormModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } =
+            string.Empty;
+
+        [Required]
+        [StringLength(10)]
+        public string DefaultLanguage { get; set; } =
+            SupportedLanguages.NbNo;
+
+        public bool IsActive { get; set; } =
+            true;
+    }
+}
+

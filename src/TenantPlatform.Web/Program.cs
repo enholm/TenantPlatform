@@ -28,7 +28,7 @@ using TenantPlatform.Web.Services.ServiceCatalog;
 using TenantPlatform.Web.Services.ServiceRequests;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Web.Email;
-
+using TenantPlatform.Web.Services.Accounts;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,6 +91,7 @@ builder.Services.AddScoped<IServiceRequestEmailComposer, ServiceRequestEmailComp
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IInboundServiceRequestEmailService, InboundServiceRequestEmailService>();
 builder.Services.AddScoped<IServiceRequestReplyAddressParser, ServiceRequestReplyAddressParser>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<
@@ -444,7 +445,7 @@ app.MapPost("/auth/select-account", async (
         authorizationService.GetStartPage(
             user.IsPlatformAdmin,
             roles);
-            
+
     return Results.Redirect(startPage);
 });
 
@@ -460,9 +461,17 @@ app.MapPost("/preferences/language", async (
 {
     var culture = form["culture"].ToString();
 
-    if (culture is not (SupportedLanguages.NbNo or SupportedLanguages.EnGb or SupportedLanguages.SvSe))
+    var isSupportedCulture =
+        SupportedLanguages.All.Any(
+            x => string.Equals(
+                x.Code,
+                culture,
+                StringComparison.OrdinalIgnoreCase));
+
+    if (!isSupportedCulture)
     {
-        return Results.BadRequest("Unsupported language.");
+        return Results.BadRequest(
+            "Unsupported language.");
     }
 
     var userIdValue = httpContext.User.FindFirstValue(

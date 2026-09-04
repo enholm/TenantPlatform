@@ -5,6 +5,25 @@ namespace TenantPlatform.Web.Security.Authorization;
 public interface ITenantAuthorizationService
 {
     /***************************************************************
+    **                         Accounts                          **
+    ***************************************************************/
+    Task<bool> CanCreateAccountAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanEditAccountAsync(
+        Guid accountId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanDeleteAccountAsync(
+        Guid accountId,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> CanViewAccountAsync(
+        Guid accountId,
+        CancellationToken cancellationToken = default);
+
+        
+    /***************************************************************
      **                         Buildings                         **
      ***************************************************************/
     Task<bool> CanManageBuildingAsync(
@@ -121,6 +140,7 @@ public interface ITenantAuthorizationService
      ***************************************************************/
     Task<NavigationPermissions> GetNavigationPermissionsAsync(
         CancellationToken cancellationToken = default);
+
 
     /***************************************************************
      **                     Page Access.  .                       **

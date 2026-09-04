@@ -1,0 +1,247 @@
+@page "/accounts/{Id:guid}/edit"
+
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Localization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Services.Accounts
+
+@inject IAccountService AccountService
+@inject ITenantAuthorizationService AuthorizationService
+@inject NavigationManager Navigation
+
+<PageTitle>@L["EditAccount"]</PageTitle>
+
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (notFound)
+{
+    <div class="alert alert-warning">
+        @L["AccountNotFound"]
+    </div>
+}
+else if (Model is not null)
+{
+    <div class="mb-4">
+        <a href="@($"/accounts/{Id}")"
+           class="text-decoration-none">
+            ← @L["Account"]
+        </a>
+    </div>
+
+    <h1>@L["EditAccount"]</h1>
+
+    @if (!string.IsNullOrWhiteSpace(saveError))
+    {
+        <div class="alert alert-danger mt-3">
+            @L[saveError]
+        </div>
+    }
+
+    <div class="card mt-4">
+        <div class="card-body">
+
+            <EditForm Model="Model"
+                      OnValidSubmit="SaveAsync"
+                      FormName="EditAccount">
+
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["Name"]
+                    </label>
+
+                    <InputText class="form-control"
+                               @bind-Value="Model.Name" />
+
+                    <ValidationMessage For="() => Model.Name" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">
+                        @L["DefaultLanguage"]
+                    </label>
+
+                    <InputSelect class="form-select"
+                                 @bind-Value="Model.DefaultLanguage">
+
+                        @foreach (var language in SupportedLanguages.All)
+                        {
+                            <option value="@language.Code">
+                                @language.DisplayName
+                            </option>
+                        }
+
+                    </InputSelect>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox class="form-check-input"
+                                   @bind-Value="Model.IsActive" />
+
+                    <label class="form-check-label">
+                        @L["IsActive"]
+                    </label>
+                </div>
+
+                <div class="d-flex gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary"
+                            disabled="@isSaving">
+
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+
+                        @(isSaving
+                            ? L["Saving"]
+                            : L["Save"])
+
+                    </button>
+
+                    <a href="@($"/accounts/{Id}")"
+                       class="btn btn-outline-secondary">
+
+                        @L["Cancel"]
+
+                    </a>
+
+                </div>
+
+            </EditForm>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    [SupplyParameterFromForm(FormName = "EditAccount")]
+    public EditAccountFormModel? Model { get; set; }
+
+    private bool isLoading = true;
+
+    private bool isSaving;
+
+    private bool notFound;
+
+    private string? saveError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService
+            .CanEditAccountAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        if (Model is not null)
+        {
+            isLoading = false;
+            return;
+        }
+
+        var account =
+            await AccountService
+                .GetAccountAsync(Id);
+
+        if (account is null)
+        {
+            notFound = true;
+            isLoading = false;
+            return;
+        }
+
+        Model =
+            new EditAccountFormModel
+            {
+                Name =
+                    account.Name,
+
+                DefaultLanguage =
+                    account.DefaultLanguage,
+
+                IsActive =
+                    account.IsActive
+            };
+
+        isLoading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (Model is null)
+        {
+            return;
+        }
+
+        if (!await AuthorizationService
+            .CanEditAccountAsync(Id))
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        saveError = null;
+        isSaving = true;
+
+        try
+        {
+            await AccountService
+                .UpdateAccountAsync(
+                    Id,
+                    new UpdateAccountRequest
+                    {
+                        Name =
+                            Model.Name,
+
+                        DefaultLanguage =
+                            Model.DefaultLanguage,
+
+                        IsActive =
+                            Model.IsActive
+                    });
+
+            Navigation.NavigateTo(
+                $"/accounts/{Id}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            saveError =
+                ex.Message;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public sealed class EditAccountFormModel
+    {
+        [Required]
+        [StringLength(200)]
+        public string Name { get; set; } =
+            string.Empty;
+
+        [Required]
+        [StringLength(10)]
+        public string DefaultLanguage { get; set; } =
+            SupportedLanguages.NbNo;
+
+        public bool IsActive { get; set; }
+    }
+}
+

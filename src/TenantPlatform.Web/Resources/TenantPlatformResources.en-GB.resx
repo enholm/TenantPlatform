@@ -1074,4 +1074,59 @@
   <value>You cannot reply to emails after the request has been closed.</value>
 </data>
 
+<data name="Accounts" xml:space="preserve">
+  <value>Accounts</value>
+</data>
+<data name="Account" xml:space="preserve">
+  <value>Account</value>
+</data>
+<data name="AccountsDescription" xml:space="preserve">
+  <value>Manage the accounts in the platform.</value>
+</data>
+<data name="CreateAccount" xml:space="preserve">
+  <value>Create account</value>
+</data>
+<data name="EditAccount" xml:space="preserve">
+  <value>Edit account</value>
+</data>
+<data name="DeleteAccount" xml:space="preserve">
+  <value>Delete account</value>
+</data>
+<data name="NoAccounts" xml:space="preserve">
+  <value>No accounts have been created.</value>
+</data>
+<data name="AccountInformation" xml:space="preserve">
+  <value>Account information</value>
+</data>
+<data name="AccountNotFound" xml:space="preserve">
+  <value>The account could not be found.</value>
+</data>
+<data name="DefaultLanguage" xml:space="preserve">
+  <value>Default language</value>
+</data>
+<data name="AccountCannotBeDeleted" xml:space="preserve">
+  <value>The account cannot be deleted.</value>
+</data>
+<data name="AccountHasData" xml:space="preserve">
+  <value>The account contains data and therefore cannot be deleted.</value>
+</data>
+<data name="DeactivateAccountInstead" xml:space="preserve">
+  <value>You can deactivate the account instead.</value>
+</data>
+<data name="DeleteAccountConfirmation" xml:space="preserve">
+  <value>Are you sure you want to delete this account? This action cannot be undone.</value>
+</data>
+<data name="AccountNameRequired" xml:space="preserve">
+  <value>An account name is required.</value>
+</data>
+<data name="AccountNameTooLong" xml:space="preserve">
+  <value>The account name is too long.</value>
+</data>
+<data name="AccountDefaultLanguageRequired" xml:space="preserve">
+  <value>A default language is required.</value>
+</data>
+<data name="AccountDefaultLanguageNotSupported" xml:space="preserve">
+  <value>The selected default language is not supported.</value>
+</data>
+
 </root>
