@@ -96,9 +96,11 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddScoped<
-    ICurrentUserContextService,
-    CurrentUserContextService>();
+builder.Services.AddScoped<CurrentUserContextService>();
+builder.Services.AddScoped<ICurrentUserContextService>(services =>
+    services.GetRequiredService<CurrentUserContextService>());
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler>(services =>
+    services.GetRequiredService<CurrentUserContextService>());
 
 builder.Services.AddHostedService<EmailOutboxWorker>();
 
