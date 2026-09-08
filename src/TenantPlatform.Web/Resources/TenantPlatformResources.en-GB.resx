@@ -1375,4 +1375,18 @@
 <data name="UnsupportedLanguage" xml:space="preserve">
   <value>The selected language is not supported.</value>
 </data>
+<data name="AllServiceRequestsDescription" xml:space="preserve"><value>Manage all service requests you have access to.</value></data>
+<data name="AllStatuses" xml:space="preserve"><value>All statuses</value></data>
+<data name="AllServices" xml:space="preserve"><value>All services</value></data>
+<data name="AllBuildings" xml:space="preserve"><value>All buildings</value></data>
+<data name="AllProviders" xml:space="preserve"><value>All providers</value></data>
+<data name="Search" xml:space="preserve"><value>Search</value></data>
+<data name="SearchServiceRequestsPlaceholder" xml:space="preserve"><value>Title, requester, email, organization or service</value></data>
+<data name="ApplyFilters" xml:space="preserve"><value>Apply filters</value></data>
+<data name="NoAdminServiceRequests" xml:space="preserve"><value>No service requests match the filters.</value></data>
+<data name="Requester" xml:space="preserve"><value>Requester</value></data>
+<data name="ServiceRequestStatus_Draft" xml:space="preserve"><value>Draft</value></data>
+<data name="ServiceRequestStatus_Rejected" xml:space="preserve"><value>Rejected</value></data>
+<data name="ServiceRequestStatus_Cancelled" xml:space="preserve"><value>Cancelled</value></data>
+<data name="ServiceRequestStatus_Failed" xml:space="preserve"><value>Failed</value></data>
 </root>

@@ -628,14 +628,16 @@ public class ServiceRequestService : IServiceRequestService
                 .Select(x => new
                 {
                     x.Role,
-                    x.OrganizationId
+                    x.OrganizationId,
+                    x.BuildingId
                 })
                 .ToListAsync(cancellationToken);
 
         var isAdministrator =
             roles.Any(x =>
                 x.Role == UserRole.AccountAdmin ||
-                x.Role == UserRole.PropertyAdmin);
+                (x.Role == UserRole.PropertyAdmin &&
+                 x.BuildingId == request.Request.BuildingId));
 
         var isRequester =
             request.Request.RequesterUserId == userId;
@@ -860,7 +862,8 @@ public class ServiceRequestService : IServiceRequestService
                         x.UserAccount.AccountId == accountId &&
                         (
                             x.Role == UserRole.AccountAdmin ||
-                            x.Role == UserRole.PropertyAdmin
+                            (x.Role == UserRole.PropertyAdmin &&
+                             x.BuildingId == request.BuildingId)
                         ),
                     cancellationToken);
 
@@ -970,14 +973,16 @@ public class ServiceRequestService : IServiceRequestService
                 .Select(x => new
                 {
                     x.Role,
-                    x.OrganizationId
+                    x.OrganizationId,
+                    x.BuildingId
                 })
                 .ToListAsync(cancellationToken);
 
         var isAdmin =
             roles.Any(x =>
                 x.Role == UserRole.AccountAdmin ||
-                x.Role == UserRole.PropertyAdmin);
+                (x.Role == UserRole.PropertyAdmin &&
+                 x.BuildingId == request.BuildingId));
 
         var isAssignedProvider =
             request.AssignedServiceProviderOrganizationId.HasValue &&
@@ -1158,6 +1163,206 @@ public class ServiceRequestService : IServiceRequestService
                 };
             })
             .ToList();
+    }
+
+    public async Task<ServiceRequestAdminListDto> GetAdminRequestsAsync(
+        Guid accountId,
+        Guid userId,
+        string languageCode,
+        ServiceRequestAdminFilter filter,
+        CancellationToken cancellationToken = default)
+    {
+        await using var dbContext =
+            await _dbContextFactory.CreateDbContextAsync(
+                cancellationToken);
+
+        var roles = await dbContext.UserAccountRoles
+            .AsNoTracking()
+            .Where(x =>
+                x.UserAccount.UserId == userId &&
+                x.UserAccount.AccountId == accountId &&
+                (x.Role == UserRole.AccountAdmin ||
+                 x.Role == UserRole.PropertyAdmin))
+            .Select(x => new
+            {
+                x.Role,
+                x.BuildingId
+            })
+            .ToListAsync(cancellationToken);
+
+        var isAccountAdmin =
+            roles.Any(x => x.Role == UserRole.AccountAdmin);
+
+        var buildingIds = roles
+            .Where(x =>
+                x.Role == UserRole.PropertyAdmin &&
+                x.BuildingId.HasValue)
+            .Select(x => x.BuildingId!.Value)
+            .Distinct()
+            .ToList();
+
+        if (!isAccountAdmin && buildingIds.Count == 0)
+        {
+            return new ServiceRequestAdminListDto();
+        }
+
+        var defaultLanguage = await dbContext.Accounts
+            .AsNoTracking()
+            .Where(x => x.Id == accountId)
+            .Select(x => x.DefaultLanguage)
+            .SingleAsync(cancellationToken);
+
+        var rawRequests = await (
+            from request in dbContext.ServiceRequests.AsNoTracking()
+            join definition in dbContext.ServiceDefinitions.AsNoTracking()
+                on request.ServiceDefinitionId equals definition.Id
+            join requester in dbContext.Users.AsNoTracking()
+                on request.RequesterUserId equals requester.Id
+            join requesterOrganization in dbContext.Organizations.AsNoTracking()
+                on request.RequesterOrganizationId equals requesterOrganization.Id
+            join building in dbContext.Buildings.AsNoTracking()
+                on request.BuildingId equals building.Id
+            join unitJoin in dbContext.Units.AsNoTracking()
+                on request.UnitId equals unitJoin.Id into units
+            from unit in units.DefaultIfEmpty()
+            join providerJoin in dbContext.Organizations.AsNoTracking()
+                on request.AssignedServiceProviderOrganizationId equals providerJoin.Id
+                into providers
+            from provider in providers.DefaultIfEmpty()
+            where
+                request.AccountId == accountId &&
+                definition.AccountId == accountId &&
+                requesterOrganization.AccountId == accountId &&
+                building.AccountId == accountId &&
+                (unit == null || unit.AccountId == accountId) &&
+                (provider == null || provider.AccountId == accountId) &&
+                (isAccountAdmin || buildingIds.Contains(request.BuildingId))
+            orderby request.CreatedAt descending
+            select new
+            {
+                Request = request,
+                DefinitionCode = definition.Code,
+                RequesterName = requester.FirstName + " " + requester.LastName,
+                RequesterEmail = requester.Email,
+                RequesterOrganizationName = requesterOrganization.Name,
+                BuildingName = building.Name,
+                UnitName = unit != null ? unit.Name : null,
+                ProviderName = provider != null ? provider.Name : null
+            })
+            .ToListAsync(cancellationToken);
+
+        var definitionIds = rawRequests
+            .Select(x => x.Request.ServiceDefinitionId)
+            .Distinct()
+            .ToList();
+
+        var translations = await dbContext.ServiceDefinitionTranslations
+            .AsNoTracking()
+            .Where(x => definitionIds.Contains(x.ServiceDefinitionId))
+            .ToListAsync(cancellationToken);
+
+        var allRequests = rawRequests
+            .Select(x =>
+            {
+                var translation = TranslationHelper.Select(
+                    translations.Where(t =>
+                        t.ServiceDefinitionId == x.Request.ServiceDefinitionId),
+                    t => t.LanguageCode,
+                    languageCode,
+                    defaultLanguage);
+
+                return new ServiceRequestAdminListItemDto
+                {
+                    Id = x.Request.Id,
+                    ServiceDefinitionId = x.Request.ServiceDefinitionId,
+                    ServiceName = translation?.Name ?? x.DefinitionCode,
+                    Title = x.Request.Title,
+                    RequesterName = x.RequesterName.Trim(),
+                    RequesterEmail = x.RequesterEmail,
+                    RequesterOrganizationName = x.RequesterOrganizationName,
+                    BuildingId = x.Request.BuildingId,
+                    BuildingName = x.BuildingName,
+                    UnitName = x.UnitName,
+                    AssignedProviderOrganizationId =
+                        x.Request.AssignedServiceProviderOrganizationId,
+                    AssignedProviderOrganizationName = x.ProviderName,
+                    Status = x.Request.Status,
+                    CreatedAt = x.Request.CreatedAt
+                };
+            })
+            .ToList();
+
+        var filteredRequests = allRequests.AsEnumerable();
+
+        if (filter.Status.HasValue)
+        {
+            filteredRequests = filteredRequests.Where(x =>
+                x.Status == filter.Status.Value);
+        }
+
+        if (filter.ServiceDefinitionId.HasValue)
+        {
+            filteredRequests = filteredRequests.Where(x =>
+                x.ServiceDefinitionId == filter.ServiceDefinitionId.Value);
+        }
+
+        if (filter.BuildingId.HasValue)
+        {
+            filteredRequests = filteredRequests.Where(x =>
+                x.BuildingId == filter.BuildingId.Value);
+        }
+
+        if (filter.AssignedProviderOrganizationId.HasValue)
+        {
+            filteredRequests = filteredRequests.Where(x =>
+                x.AssignedProviderOrganizationId ==
+                filter.AssignedProviderOrganizationId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var search = filter.Search.Trim();
+            filteredRequests = filteredRequests.Where(x =>
+                Contains(x.Title, search) ||
+                Contains(x.RequesterName, search) ||
+                Contains(x.RequesterEmail, search) ||
+                Contains(x.RequesterOrganizationName, search) ||
+                Contains(x.ServiceName, search));
+        }
+
+        return new ServiceRequestAdminListDto
+        {
+            Requests = filteredRequests.ToList(),
+            Services = allRequests
+                .Select(x => new ServiceRequestAdminFilterOptionDto(
+                    x.ServiceDefinitionId,
+                    x.ServiceName))
+                .DistinctBy(x => x.Id)
+                .OrderBy(x => x.Name)
+                .ToList(),
+            Buildings = allRequests
+                .Select(x => new ServiceRequestAdminFilterOptionDto(
+                    x.BuildingId,
+                    x.BuildingName))
+                .DistinctBy(x => x.Id)
+                .OrderBy(x => x.Name)
+                .ToList(),
+            Providers = allRequests
+                .Where(x => x.AssignedProviderOrganizationId.HasValue)
+                .Select(x => new ServiceRequestAdminFilterOptionDto(
+                    x.AssignedProviderOrganizationId!.Value,
+                    x.AssignedProviderOrganizationName ?? string.Empty))
+                .DistinctBy(x => x.Id)
+                .OrderBy(x => x.Name)
+                .ToList()
+        };
+    }
+
+    private static bool Contains(string? value, string search)
+    {
+        return value?.Contains(
+            search,
+            StringComparison.CurrentCultureIgnoreCase) == true;
     }
 
     public async Task QueueProviderEmailAsync(
@@ -1405,7 +1610,8 @@ public class ServiceRequestService : IServiceRequestService
                 .Select(x => new
                 {
                     x.Role,
-                    x.OrganizationId
+                    x.OrganizationId,
+                    x.BuildingId
                 })
                 .ToListAsync(cancellationToken);
 
@@ -1414,7 +1620,8 @@ public class ServiceRequestService : IServiceRequestService
 
             roles.Any(x =>
                 x.Role == UserRole.AccountAdmin ||
-                x.Role == UserRole.PropertyAdmin) ||
+                (x.Role == UserRole.PropertyAdmin &&
+                 x.BuildingId == request.BuildingId)) ||
 
             roles.Any(x =>
                 (x.Role == UserRole.TenantAdmin ||
@@ -1518,7 +1725,8 @@ public class ServiceRequestService : IServiceRequestService
                 .Select(x => new
                 {
                     x.Role,
-                    x.OrganizationId
+                    x.OrganizationId,
+                    x.BuildingId
                 })
                 .ToListAsync(cancellationToken);
 
@@ -1527,7 +1735,8 @@ public class ServiceRequestService : IServiceRequestService
 
             roles.Any(x =>
                 x.Role == UserRole.AccountAdmin ||
-                x.Role == UserRole.PropertyAdmin) ||
+                (x.Role == UserRole.PropertyAdmin &&
+                 x.BuildingId == request.BuildingId)) ||
 
             roles.Any(x =>
                 (x.Role == UserRole.TenantAdmin ||
@@ -1826,7 +2035,8 @@ Subject: {originalMessage.Subject}
                         x.UserAccount.AccountId == accountId &&
                         (
                             x.Role == UserRole.AccountAdmin ||
-                            x.Role == UserRole.PropertyAdmin
+                            (x.Role == UserRole.PropertyAdmin &&
+                             x.BuildingId == request.BuildingId)
                         ),
                     cancellationToken);
 
@@ -1898,4 +2108,3 @@ Subject: {originalMessage.Subject}
         }
     }
 }
-

@@ -135,6 +135,9 @@ public interface ITenantAuthorizationService
         Guid requestId,
         CancellationToken cancellationToken = default);
 
+    Task<bool> CanManageServiceRequestsAsync(
+        CancellationToken cancellationToken = default);
+
     /***************************************************************
      **                     Navigationmenu.                       **
      ***************************************************************/

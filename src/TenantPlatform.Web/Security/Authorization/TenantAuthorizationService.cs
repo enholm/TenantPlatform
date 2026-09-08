@@ -680,24 +680,31 @@ public class TenantAuthorizationService
         var accountId = currentUser.CurrentAccountId.Value;
 
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        var requestExists =
+        var buildingId =
             await dbContext.ServiceRequests
                 .AsNoTracking()
-                .AnyAsync(
+                .Where(
                     x =>
                         x.Id == requestId &&
-                        x.AccountId == accountId,
-                    cancellationToken);
+                        x.AccountId == accountId)
+                .Select(x => (Guid?)x.BuildingId)
+                .SingleOrDefaultAsync(cancellationToken);
 
-        if (!requestExists)
+        if (!buildingId.HasValue)
         {
             return false;
         }
 
-        return await HasAnyRolesAsync(
-            cancellationToken,
-            UserRole.AccountAdmin,
-            UserRole.PropertyAdmin);
+        return await dbContext.UserAccountRoles
+            .AsNoTracking()
+            .AnyAsync(
+                x =>
+                    x.UserAccount.UserId == currentUser.UserId &&
+                    x.UserAccount.AccountId == accountId &&
+                    (x.Role == UserRole.AccountAdmin ||
+                     (x.Role == UserRole.PropertyAdmin &&
+                      x.BuildingId == buildingId.Value)),
+                cancellationToken);
 
     }
 
@@ -708,6 +715,15 @@ public class TenantAuthorizationService
         return await CanApproveServiceRequestAsync(
             requestId,
             cancellationToken);
+    }
+
+    public Task<bool> CanManageServiceRequestsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return HasAnyRolesAsync(
+            cancellationToken,
+            UserRole.AccountAdmin,
+            UserRole.PropertyAdmin);
     }
 
     /***************************************************************

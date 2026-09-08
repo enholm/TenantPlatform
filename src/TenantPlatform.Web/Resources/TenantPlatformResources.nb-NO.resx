@@ -1411,4 +1411,18 @@
 <data name="UnsupportedLanguage" xml:space="preserve">
   <value>Det valgte språket støttes ikke.</value>
 </data>
+<data name="AllServiceRequestsDescription" xml:space="preserve"><value>Administrer alle bestillinger du har tilgang til.</value></data>
+<data name="AllStatuses" xml:space="preserve"><value>Alle statuser</value></data>
+<data name="AllServices" xml:space="preserve"><value>Alle tjenester</value></data>
+<data name="AllBuildings" xml:space="preserve"><value>Alle bygg</value></data>
+<data name="AllProviders" xml:space="preserve"><value>Alle leverandører</value></data>
+<data name="Search" xml:space="preserve"><value>Søk</value></data>
+<data name="SearchServiceRequestsPlaceholder" xml:space="preserve"><value>Tittel, bestiller, e-post, organisasjon eller tjeneste</value></data>
+<data name="ApplyFilters" xml:space="preserve"><value>Bruk filtre</value></data>
+<data name="NoAdminServiceRequests" xml:space="preserve"><value>Ingen bestillinger samsvarer med filtrene.</value></data>
+<data name="Requester" xml:space="preserve"><value>Bestiller</value></data>
+<data name="ServiceRequestStatus_Draft" xml:space="preserve"><value>Utkast</value></data>
+<data name="ServiceRequestStatus_Rejected" xml:space="preserve"><value>Avvist</value></data>
+<data name="ServiceRequestStatus_Cancelled" xml:space="preserve"><value>Kansellert</value></data>
+<data name="ServiceRequestStatus_Failed" xml:space="preserve"><value>Feilet</value></data>
 </root>

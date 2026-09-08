@@ -32,7 +32,14 @@ else if (request is null)
 else
 {
     <div class="mb-4">
-        @if (isProviderUser)
+        @if (isAdministrator)
+        {
+            <a href="/admin/requests"
+               class="text-decoration-none">
+                ← @L["AllServiceRequests"]
+            </a>
+        }
+        else if (isProviderUser)
         {
             <a href="/provider/requests"
                class="text-decoration-none">
@@ -451,6 +458,7 @@ else
     private string? actionError;
 
     private bool isProviderUser;
+    private bool isAdministrator;
     private bool canUseProviderPortal;
 
     private bool isAddingComment;
@@ -478,6 +486,10 @@ else
         isProviderUser =
             await AuthorizationService
                 .CanUseProviderPortalAsync();
+
+        isAdministrator =
+            await AuthorizationService
+                .CanManageServiceRequestsAsync();
 
         await ReloadAsync();
 
@@ -986,4 +998,3 @@ else
             canProviderComplete;
     }
 }
-

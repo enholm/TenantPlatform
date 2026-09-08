@@ -39,6 +39,13 @@ public interface IServiceRequestService
         string languageCode,
         CancellationToken cancellationToken = default);
 
+    Task<ServiceRequestAdminListDto> GetAdminRequestsAsync(
+        Guid accountId,
+        Guid userId,
+        string languageCode,
+        ServiceRequestAdminFilter filter,
+        CancellationToken cancellationToken = default);
+
     Task QueueProviderEmailAsync(
         Guid accountId,
         Guid requestId,
@@ -78,4 +85,3 @@ public interface IServiceRequestService
         Guid userId,
         CancellationToken cancellationToken = default);
 }
-

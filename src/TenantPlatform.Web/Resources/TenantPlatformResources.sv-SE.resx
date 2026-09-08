@@ -1411,4 +1411,18 @@
 <data name="UnsupportedLanguage" xml:space="preserve">
   <value>Det valda språket stöds inte.</value>
 </data>
+<data name="AllServiceRequestsDescription" xml:space="preserve"><value>Hantera alla beställningar som du har åtkomst till.</value></data>
+<data name="AllStatuses" xml:space="preserve"><value>Alla statusar</value></data>
+<data name="AllServices" xml:space="preserve"><value>Alla tjänster</value></data>
+<data name="AllBuildings" xml:space="preserve"><value>Alla byggnader</value></data>
+<data name="AllProviders" xml:space="preserve"><value>Alla leverantörer</value></data>
+<data name="Search" xml:space="preserve"><value>Sök</value></data>
+<data name="SearchServiceRequestsPlaceholder" xml:space="preserve"><value>Titel, beställare, e-post, organisation eller tjänst</value></data>
+<data name="ApplyFilters" xml:space="preserve"><value>Använd filter</value></data>
+<data name="NoAdminServiceRequests" xml:space="preserve"><value>Inga beställningar matchar filtren.</value></data>
+<data name="Requester" xml:space="preserve"><value>Beställare</value></data>
+<data name="ServiceRequestStatus_Draft" xml:space="preserve"><value>Utkast</value></data>
+<data name="ServiceRequestStatus_Rejected" xml:space="preserve"><value>Avvisad</value></data>
+<data name="ServiceRequestStatus_Cancelled" xml:space="preserve"><value>Avbruten</value></data>
+<data name="ServiceRequestStatus_Failed" xml:space="preserve"><value>Misslyckad</value></data>
 </root>

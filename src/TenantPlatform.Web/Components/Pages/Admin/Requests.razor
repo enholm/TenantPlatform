@@ -1,30 +1,212 @@
 @page "/admin/requests"
+@attribute [Authorize]
+@rendermode InteractiveServer
 
-<PageTitle>Ikke implementert</PageTitle>
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Services
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.ServiceRequests
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-xl-5">
+@inject IServiceRequestService ServiceRequestService
+@inject ITenantAuthorizationService AuthorizationService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
 
-            <div class="card shadow-sm border-0">
-                <div class="card-body text-center p-5">
+<PageTitle>@L["AllServiceRequests"]</PageTitle>
 
-                    <div class="display-5 text-body-secondary mb-4">
-                        <i class="bi bi-tools"></i>
-                    </div>
+<div class="mb-4">
+    <h1>@L["AllServiceRequests"]</h1>
+    <p class="text-body-secondary mb-0">@L["AllServiceRequestsDescription"]</p>
+</div>
 
-                    <h1 class="h3 mb-3">
-                        Denne siden kommer snart
-                    </h1>
-
-                    <p class="text-body-secondary mb-0">
-                        Denne funksjonen er ikke implementert ennå.
-                    </p>
-
+<div class="card mb-4">
+    <div class="card-body">
+        <form @onsubmit="LoadAsync" @onsubmit:preventDefault>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6 col-xl">
+                    <label class="form-label">@L["Status"]</label>
+                    <select class="form-select" @bind="statusFilter">
+                        <option value="">@L["AllStatuses"]</option>
+                        @foreach (var status in Enum.GetValues<ServiceRequestStatus>())
+                        {
+                            <option value="@status">@GetStatusText(status)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 col-xl">
+                    <label class="form-label">@L["Service"]</label>
+                    <select class="form-select" @bind="serviceDefinitionIdFilter">
+                        <option value="">@L["AllServices"]</option>
+                        @foreach (var service in result.Services)
+                        {
+                            <option value="@service.Id">@service.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 col-xl">
+                    <label class="form-label">@L["Building"]</label>
+                    <select class="form-select" @bind="buildingIdFilter">
+                        <option value="">@L["AllBuildings"]</option>
+                        @foreach (var building in result.Buildings)
+                        {
+                            <option value="@building.Id">@building.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6 col-xl">
+                    <label class="form-label">@L["Provider"]</label>
+                    <select class="form-select" @bind="providerIdFilter">
+                        <option value="">@L["AllProviders"]</option>
+                        @foreach (var provider in result.Providers)
+                        {
+                            <option value="@provider.Id">@provider.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-9 col-xl-3">
+                    <label class="form-label">@L["Search"]</label>
+                    <input class="form-control"
+                           placeholder="@L["SearchServiceRequestsPlaceholder"]"
+                           @bind="searchFilter" />
+                </div>
+                <div class="col-md-3 col-xl-auto">
+                    <button type="submit" class="btn btn-primary w-100" disabled="@isLoading">
+                        <i class="bi bi-search me-1"></i>
+                        @L["ApplyFilters"]
+                    </button>
                 </div>
             </div>
-
-        </div>
+        </form>
     </div>
 </div>
 
+@if (isLoading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (result.Requests.Count == 0)
+{
+    <div class="alert alert-info">@L["NoAdminServiceRequests"]</div>
+}
+else
+{
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>@L["Created"]</th>
+                        <th>@L["Service"]</th>
+                        <th>@L["Requester"]</th>
+                        <th>@L["Building"]</th>
+                        <th>@L["Provider"]</th>
+                        <th>@L["Status"]</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var request in result.Requests)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@request.CreatedAt.ToLocalTime().ToString("g")</td>
+                            <td>
+                                <div class="fw-semibold">@request.ServiceName</div>
+                                @if (!string.IsNullOrWhiteSpace(request.Title))
+                                {
+                                    <div class="small text-body-secondary">@request.Title</div>
+                                }
+                            </td>
+                            <td>
+                                <div>@request.RequesterName</div>
+                                <div class="small text-body-secondary">@request.RequesterOrganizationName</div>
+                            </td>
+                            <td>
+                                @request.BuildingName
+                                @if (!string.IsNullOrWhiteSpace(request.UnitName))
+                                {
+                                    <div class="small text-body-secondary">@request.UnitName</div>
+                                }
+                            </td>
+                            <td>@(request.AssignedProviderOrganizationName ?? L["NotAssigned"])</td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(request.Status)">
+                                    @GetStatusText(request.Status)
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="@($"/portal/requests/{request.Id}")"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>
+                                    @L["Open"]
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private ServiceRequestStatus? statusFilter;
+    private Guid? serviceDefinitionIdFilter;
+    private Guid? buildingIdFilter;
+    private Guid? providerIdFilter;
+    private string? searchFilter;
+    private ServiceRequestAdminListDto result = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await AuthorizationService.CanManageServiceRequestsAsync())
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var accountId = UserContext.Current.CurrentAccountId;
+        if (!accountId.HasValue)
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+
+        isLoading = true;
+        result = await ServiceRequestService.GetAdminRequestsAsync(
+            accountId.Value,
+            UserContext.Current.UserId,
+            CultureInfo.CurrentUICulture.Name,
+            new ServiceRequestAdminFilter
+            {
+                Status = statusFilter,
+                ServiceDefinitionId = serviceDefinitionIdFilter,
+                BuildingId = buildingIdFilter,
+                AssignedProviderOrganizationId = providerIdFilter,
+                Search = searchFilter
+            });
+        isLoading = false;
+    }
+
+    private string GetStatusText(ServiceRequestStatus status) =>
+        L[$"ServiceRequestStatus_{status}"];
+
+    private static string GetStatusBadgeClass(ServiceRequestStatus status) =>
+        status switch
+        {
+            ServiceRequestStatus.Submitted => "text-bg-primary",
+            ServiceRequestStatus.Approved => "text-bg-info",
+            ServiceRequestStatus.InProgress => "text-bg-warning",
+            ServiceRequestStatus.Completed => "text-bg-success",
+            ServiceRequestStatus.Rejected => "text-bg-danger",
+            ServiceRequestStatus.Failed => "text-bg-danger",
+            _ => "text-bg-secondary"
+        };
+}
