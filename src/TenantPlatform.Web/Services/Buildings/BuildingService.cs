@@ -241,6 +241,12 @@ public class BuildingService : IBuildingService
                 "BuildingContainsNetworkEnvironments");
         }
 
+        if (await dbContext.MeetingRooms.AsNoTracking().AnyAsync(x =>
+                x.AccountId == accountId && x.BuildingId == buildingId, cancellationToken))
+        {
+            return BuildingDeleteCheckResult.NotAllowed("BuildingContainsMeetingRooms");
+        }
+
         return BuildingDeleteCheckResult.Allowed();
     }
 }

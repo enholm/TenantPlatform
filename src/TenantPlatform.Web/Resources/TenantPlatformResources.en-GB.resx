@@ -1389,4 +1389,52 @@
 <data name="ServiceRequestStatus_Rejected" xml:space="preserve"><value>Rejected</value></data>
 <data name="ServiceRequestStatus_Cancelled" xml:space="preserve"><value>Cancelled</value></data>
 <data name="ServiceRequestStatus_Failed" xml:space="preserve"><value>Failed</value></data>
+<data name="MeetingRooms" xml:space="preserve"><value>Meeting rooms</value></data>
+<data name="MeetingRoom" xml:space="preserve"><value>Meeting room</value></data>
+<data name="ManageMeetingRooms" xml:space="preserve"><value>Manage meeting rooms</value></data>
+<data name="CreateMeetingRoom" xml:space="preserve"><value>Create meeting room</value></data>
+<data name="EditMeetingRoom" xml:space="preserve"><value>Edit meeting room</value></data>
+<data name="MeetingRoomCapacity" xml:space="preserve"><value>Capacity (people)</value></data>
+<data name="Description" xml:space="preserve"><value>Description</value></data>
+<data name="NoMeetingRooms" xml:space="preserve"><value>No meeting rooms have been registered.</value></data>
+<data name="MeetingRoomNotFound" xml:space="preserve"><value>The meeting room was not found in the selected account.</value></data>
+<data name="MeetingRoomInactive" xml:space="preserve"><value>The room or building is inactive. New bookings and booking changes are unavailable.</value></data>
+<data name="MeetingRoomInvalidDetails" xml:space="preserve"><value>Enter a name (max. 200 characters), description (max. 4000 characters) and a positive capacity if specified.</value></data>
+<data name="MeetingRoomInvalidCalendar" xml:space="preserve"><value>Enter a valid calendar ID (max. 512 characters) and optional resource email (max. 320 characters).</value></data>
+<data name="MeetingRoomCalendarAlreadyMapped" xml:space="preserve"><value>The calendar is already mapped to another meeting room.</value></data>
+<data name="CalendarIntegrations" xml:space="preserve"><value>Calendar integrations</value></data>
+<data name="CalendarIntegration" xml:space="preserve"><value>Calendar integration</value></data>
+<data name="CreateCalendarIntegration" xml:space="preserve"><value>Create calendar configuration</value></data>
+<data name="EditCalendarIntegration" xml:space="preserve"><value>Edit calendar configuration</value></data>
+<data name="NoCalendarIntegration" xml:space="preserve"><value>No external calendar</value></data>
+<data name="NoCalendarIntegrations" xml:space="preserve"><value>No calendar integrations are configured.</value></data>
+<data name="CalendarIntegrationNotFound" xml:space="preserve"><value>The calendar integration was not found in the selected account.</value></data>
+<data name="CalendarIntegrationInvalidDetails" xml:space="preserve"><value>Enter a name (max. 200 characters) and a valid calendar provider.</value></data>
+<data name="CalendarConfigurationOnly" xml:space="preserve"><value>This saves calendar configuration only. Bookings are stored in TenantPlatform and are not yet synchronized with external calendars.</value></data>
+<data name="CalendarProvider_Microsoft365" xml:space="preserve"><value>Microsoft 365</value></data>
+<data name="CalendarProvider_Google" xml:space="preserve"><value>Google</value></data>
+<data name="ExternalCalendarId" xml:space="preserve"><value>External calendar ID</value></data>
+<data name="ExternalResourceEmail" xml:space="preserve"><value>Resource email address</value></data>
+<data name="RoomBookings" xml:space="preserve"><value>Bookings</value></data>
+<data name="CreateRoomBooking" xml:space="preserve"><value>Book meeting room</value></data>
+<data name="EditRoomBooking" xml:space="preserve"><value>Edit booking</value></data>
+<data name="CancelRoomBooking" xml:space="preserve"><value>Cancel booking</value></data>
+<data name="RoomBookingDayUtc" xml:space="preserve"><value>Day (UTC)</value></data>
+<data name="RoomBookingStartUtc" xml:space="preserve"><value>Start (UTC)</value></data>
+<data name="RoomBookingEndUtc" xml:space="preserve"><value>End (UTC)</value></data>
+<data name="RoomBookingSubject" xml:space="preserve"><value>Subject</value></data>
+<data name="RoomBookingOrganizer" xml:space="preserve"><value>Organizer</value></data>
+<data name="RoomBookingUtcHelp" xml:space="preserve"><value>All dates and times on this page are displayed and entered in UTC.</value></data>
+<data name="NoRoomBookings" xml:space="preserve"><value>No bookings for the selected room and day.</value></data>
+<data name="CheckRoomAvailability" xml:space="preserve"><value>Check availability</value></data>
+<data name="RoomBookingAvailable" xml:space="preserve"><value>The room is available. Availability is checked again when saving.</value></data>
+<data name="RoomBookingOverlap" xml:space="preserve"><value>The room is unavailable during the selected interval.</value></data>
+<data name="RoomBookingInvalidInterval" xml:space="preserve"><value>End must be after start.</value></data>
+<data name="RoomBookingInvalidDetails" xml:space="preserve"><value>Enter a subject (max. 200 characters) and a description of at most 4000 characters.</value></data>
+<data name="RoomBookingNotFound" xml:space="preserve"><value>The booking was not found in the selected account.</value></data>
+<data name="RoomBookingCancelled" xml:space="preserve"><value>The booking is cancelled and cannot be edited.</value></data>
+<data name="RoomBookingSaved" xml:space="preserve"><value>The booking has been saved.</value></data>
+<data name="RoomBookingStatus_Confirmed" xml:space="preserve"><value>Confirmed</value></data>
+<data name="RoomBookingStatus_Cancelled" xml:space="preserve"><value>Cancelled</value></data>
+<data name="BuildingContainsMeetingRooms" xml:space="preserve"><value>The building contains meeting rooms and cannot be deleted.</value></data>
 </root>

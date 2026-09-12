@@ -1,0 +1,140 @@
+@page "/admin/meeting-rooms"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.MeetingRooms
+@using TenantPlatform.Web.Services.Buildings
+@inject IMeetingRoomService RoomService
+@inject ICalendarIntegrationService IntegrationService
+@inject ITenantAuthorizationService Authorization
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["ManageMeetingRooms"]</PageTitle>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>@L["ManageMeetingRooms"]</h1>
+    <button class="btn btn-primary" @onclick="NewRoom" disabled="@busy">
+        <i class="bi bi-plus-lg me-1"></i>@L["CreateMeetingRoom"]
+    </button>
+</div>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (loading) { <p>@L["Loading"]</p> }
+else if (allowed)
+{
+    @if (model is not null)
+    {
+        <div class="card mb-4"><div class="card-body">
+            <h2 class="h5">@L[editingId.HasValue ? "EditMeetingRoom" : "CreateMeetingRoom"]</h2>
+            <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                <fieldset disabled="@busy">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label for="room-name" class="form-label">@L["Name"]</label>
+                            <input id="room-name" class="form-control" required maxlength="200" @bind="model.Name" /></div>
+                        <div class="col-md-6"><label for="room-building" class="form-label">@L["Building"]</label>
+                            <select id="room-building" class="form-select" required @bind="model.BuildingId">
+                                <option value="@Guid.Empty">@L["SelectOption"]</option>
+                                @foreach (var building in buildings) { <option value="@building.Id">@building.Name</option> }
+                            </select></div>
+                        <div class="col-md-6"><label for="room-capacity" class="form-label">@L["MeetingRoomCapacity"]</label>
+                            <input id="room-capacity" type="number" min="1" class="form-control" @bind="model.Capacity" /></div>
+                        <div class="col-md-6 d-flex align-items-end"><div class="form-check">
+                            <input id="room-active" type="checkbox" class="form-check-input" @bind="model.IsActive" />
+                            <label for="room-active" class="form-check-label">@L["IsActive"]</label></div></div>
+                        <div class="col-12"><label for="room-description" class="form-label">@L["Description"]</label>
+                            <textarea id="room-description" class="form-control" maxlength="4000" @bind="model.Description"></textarea></div>
+                        <div class="col-md-4"><label for="room-integration" class="form-label">@L["CalendarIntegration"]</label>
+                            <select id="room-integration" class="form-select" @bind="model.CalendarIntegrationId">
+                                <option value="">@L["NoCalendarIntegration"]</option>
+                                @foreach (var integration in integrations)
+                                { <option value="@integration.Id">@integration.Name @(!integration.IsActive ? L["Inactive"] : "")</option> }
+                            </select></div>
+                        @if (model.CalendarIntegrationId.HasValue)
+                        {
+                            <div class="col-md-4"><label for="room-calendar" class="form-label">@L["ExternalCalendarId"]</label>
+                                <input id="room-calendar" class="form-control" required maxlength="512" @bind="model.ExternalCalendarId" /></div>
+                            <div class="col-md-4"><label for="room-email" class="form-label">@L["ExternalResourceEmail"]</label>
+                                <input id="room-email" type="email" class="form-control" maxlength="320" @bind="model.ExternalResourceEmail" /></div>
+                        }
+                    </div>
+                    <p class="text-body-secondary small mt-3">@L["CalendarConfigurationOnly"]</p>
+                    <button type="submit" class="btn btn-primary me-2">@L["Save"]</button>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="CloseEditor">@L["Cancel"]</button>
+                </fieldset>
+            </form>
+        </div></div>
+    }
+    @if (rooms.Count == 0) { <div class="alert alert-info">@L["NoMeetingRooms"]</div> }
+    else
+    {
+        <div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+            <thead><tr><th>@L["Name"]</th><th>@L["Building"]</th><th>@L["MeetingRoomCapacity"]</th><th>@L["Status"]</th><th></th></tr></thead>
+            <tbody>@foreach (var room in rooms)
+            {
+                <tr><td>@room.Name</td><td>@room.BuildingName</td><td>@room.Capacity</td>
+                    <td><span class="badge @(room.IsActive ? "text-bg-success" : "text-bg-secondary")">@L[room.IsActive ? "Active" : "Inactive"]</span></td>
+                    <td class="text-end"><button class="btn btn-outline-secondary btn-sm" disabled="@busy" @onclick="() => Edit(room)">@L["Edit"]</button></td></tr>
+            }</tbody>
+        </table></div></div>
+    }
+}
+
+@code {
+    private bool loading = true, busy, allowed;
+    private Guid accountId;
+    private Guid? editingId;
+    private string? error;
+    private SaveMeetingRoomRequest? model;
+    private List<MeetingRoomDto> rooms = [];
+    private List<BuildingListItemDto> buildings = [];
+    private List<CalendarIntegrationDto> integrations = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        allowed = await Authorization.CanManageMeetingRoomsAsync();
+        if (!allowed || UserContext.Current.CurrentAccountId is not Guid selectedAccount)
+        { Navigation.NavigateTo("/access-denied"); return; }
+        accountId = selectedAccount;
+        await RunAsync(async () =>
+        {
+            rooms = await RoomService.ListAsync(accountId, true);
+            buildings = await RoomService.GetBuildingsAsync(accountId);
+            integrations = await IntegrationService.ListAsync(accountId);
+        });
+        loading = false;
+    }
+
+    private void NewRoom() { editingId = null; model = new(); error = null; }
+    private void CloseEditor() { model = null; editingId = null; }
+    private void Edit(MeetingRoomDto room)
+    {
+        editingId = room.Id;
+        model = new SaveMeetingRoomRequest
+        {
+            Name = room.Name, Description = room.Description, BuildingId = room.BuildingId,
+            Capacity = room.Capacity, IsActive = room.IsActive, CalendarIntegrationId = room.CalendarIntegrationId,
+            ExternalCalendarId = room.ExternalCalendarId, ExternalResourceEmail = room.ExternalResourceEmail
+        };
+        error = null;
+    }
+
+    private Task SaveAsync() => RunAsync(async () =>
+    {
+        if (model is null) return;
+        if (editingId.HasValue) await RoomService.UpdateAsync(accountId, editingId.Value, model);
+        else await RoomService.CreateAsync(accountId, model);
+        CloseEditor();
+        rooms = await RoomService.ListAsync(accountId, true);
+    });
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        if (busy) return;
+        busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (MeetingRoomValidationException ex) { error = ex.Message; }
+        finally { busy = false; }
+    }
+}

@@ -1425,4 +1425,52 @@
 <data name="ServiceRequestStatus_Rejected" xml:space="preserve"><value>Avvist</value></data>
 <data name="ServiceRequestStatus_Cancelled" xml:space="preserve"><value>Kansellert</value></data>
 <data name="ServiceRequestStatus_Failed" xml:space="preserve"><value>Feilet</value></data>
+<data name="MeetingRooms" xml:space="preserve"><value>Møterom</value></data>
+<data name="MeetingRoom" xml:space="preserve"><value>Møterom</value></data>
+<data name="ManageMeetingRooms" xml:space="preserve"><value>Administrer møterom</value></data>
+<data name="CreateMeetingRoom" xml:space="preserve"><value>Opprett møterom</value></data>
+<data name="EditMeetingRoom" xml:space="preserve"><value>Rediger møterom</value></data>
+<data name="MeetingRoomCapacity" xml:space="preserve"><value>Kapasitet (personer)</value></data>
+<data name="Description" xml:space="preserve"><value>Beskrivelse</value></data>
+<data name="NoMeetingRooms" xml:space="preserve"><value>Ingen møterom er registrert.</value></data>
+<data name="MeetingRoomNotFound" xml:space="preserve"><value>Møterommet finnes ikke i valgt konto.</value></data>
+<data name="MeetingRoomInactive" xml:space="preserve"><value>Rommet eller bygget er deaktivert. Nye og endrede bookinger er ikke tillatt.</value></data>
+<data name="MeetingRoomInvalidDetails" xml:space="preserve"><value>Angi navn (maks. 200 tegn), beskrivelse (maks. 4000 tegn) og positiv kapasitet dersom angitt.</value></data>
+<data name="MeetingRoomInvalidCalendar" xml:space="preserve"><value>Angi gyldig kalender-ID (maks. 512 tegn) og eventuell ressursadresse (maks. 320 tegn).</value></data>
+<data name="MeetingRoomCalendarAlreadyMapped" xml:space="preserve"><value>Kalenderen er allerede koblet til et annet møterom.</value></data>
+<data name="CalendarIntegrations" xml:space="preserve"><value>Kalenderintegrasjoner</value></data>
+<data name="CalendarIntegration" xml:space="preserve"><value>Kalenderintegrasjon</value></data>
+<data name="CreateCalendarIntegration" xml:space="preserve"><value>Opprett kalenderoppsett</value></data>
+<data name="EditCalendarIntegration" xml:space="preserve"><value>Rediger kalenderoppsett</value></data>
+<data name="NoCalendarIntegration" xml:space="preserve"><value>Ingen ekstern kalender</value></data>
+<data name="NoCalendarIntegrations" xml:space="preserve"><value>Ingen kalenderintegrasjoner er konfigurert.</value></data>
+<data name="CalendarIntegrationNotFound" xml:space="preserve"><value>Kalenderintegrasjonen finnes ikke i valgt konto.</value></data>
+<data name="CalendarIntegrationInvalidDetails" xml:space="preserve"><value>Angi navn (maks. 200 tegn) og en gyldig kalenderleverandør.</value></data>
+<data name="CalendarConfigurationOnly" xml:space="preserve"><value>Dette lagrer kun kalenderoppsett. Bookinger lagres i TenantPlatform og synkroniseres ikke med eksterne kalendere ennå.</value></data>
+<data name="CalendarProvider_Microsoft365" xml:space="preserve"><value>Microsoft 365</value></data>
+<data name="CalendarProvider_Google" xml:space="preserve"><value>Google</value></data>
+<data name="ExternalCalendarId" xml:space="preserve"><value>Ekstern kalender-ID</value></data>
+<data name="ExternalResourceEmail" xml:space="preserve"><value>Ressursens e-postadresse</value></data>
+<data name="RoomBookings" xml:space="preserve"><value>Bookinger</value></data>
+<data name="CreateRoomBooking" xml:space="preserve"><value>Bestill møterom</value></data>
+<data name="EditRoomBooking" xml:space="preserve"><value>Rediger booking</value></data>
+<data name="CancelRoomBooking" xml:space="preserve"><value>Avbestill</value></data>
+<data name="RoomBookingDayUtc" xml:space="preserve"><value>Dag (UTC)</value></data>
+<data name="RoomBookingStartUtc" xml:space="preserve"><value>Start (UTC)</value></data>
+<data name="RoomBookingEndUtc" xml:space="preserve"><value>Slutt (UTC)</value></data>
+<data name="RoomBookingSubject" xml:space="preserve"><value>Emne</value></data>
+<data name="RoomBookingOrganizer" xml:space="preserve"><value>Arrangør</value></data>
+<data name="RoomBookingUtcHelp" xml:space="preserve"><value>Alle datoer og klokkeslett på denne siden vises og angis i UTC.</value></data>
+<data name="NoRoomBookings" xml:space="preserve"><value>Ingen bookinger for valgt rom og dag.</value></data>
+<data name="CheckRoomAvailability" xml:space="preserve"><value>Sjekk tilgjengelighet</value></data>
+<data name="RoomBookingAvailable" xml:space="preserve"><value>Rommet er tilgjengelig. Tilgjengeligheten kontrolleres på nytt ved lagring.</value></data>
+<data name="RoomBookingOverlap" xml:space="preserve"><value>Rommet er ikke tilgjengelig i det valgte tidsrommet.</value></data>
+<data name="RoomBookingInvalidInterval" xml:space="preserve"><value>Slutt må være etter start.</value></data>
+<data name="RoomBookingInvalidDetails" xml:space="preserve"><value>Angi emne (maks. 200 tegn) og beskrivelse med maks. 4000 tegn.</value></data>
+<data name="RoomBookingNotFound" xml:space="preserve"><value>Bookingen finnes ikke i valgt konto.</value></data>
+<data name="RoomBookingCancelled" xml:space="preserve"><value>Bookingen er avbestilt og kan ikke redigeres.</value></data>
+<data name="RoomBookingSaved" xml:space="preserve"><value>Bookingen er lagret.</value></data>
+<data name="RoomBookingStatus_Confirmed" xml:space="preserve"><value>Bekreftet</value></data>
+<data name="RoomBookingStatus_Cancelled" xml:space="preserve"><value>Avbestilt</value></data>
+<data name="BuildingContainsMeetingRooms" xml:space="preserve"><value>Bygget inneholder møterom og kan ikke slettes.</value></data>
 </root>

@@ -7,6 +7,7 @@ using TenantPlatform.Core.Organizations;
 using TenantPlatform.Core.Properties;
 using TenantPlatform.Core.Services;
 using TenantPlatform.Core.Auditing;
+using TenantPlatform.Core.MeetingRooms;
 
 namespace TenantPlatform.Infrastructure.Persistence;
 
@@ -53,6 +54,10 @@ public class TenantPlatformDbContext : DbContext
         Set<EmailOutboxMessage>();
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<MeetingRoom> MeetingRooms => Set<MeetingRoom>();
+    public DbSet<RoomBooking> RoomBookings => Set<RoomBooking>();
+    public DbSet<CalendarIntegration> CalendarIntegrations => Set<CalendarIntegration>();
+    public DbSet<MeetingRoomCalendar> MeetingRoomCalendars => Set<MeetingRoomCalendar>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(

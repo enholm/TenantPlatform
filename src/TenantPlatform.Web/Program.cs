@@ -95,6 +95,12 @@ builder.Services.AddScoped<IServiceRequestReplyAddressParser, ServiceRequestRepl
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.IMeetingRoomService,
+    TenantPlatform.Web.Services.MeetingRooms.MeetingRoomService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.IRoomBookingService,
+    TenantPlatform.Web.Services.MeetingRooms.RoomBookingService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.ICalendarIntegrationService,
+    TenantPlatform.Web.Services.MeetingRooms.CalendarIntegrationService>();
 
 builder.Services.AddScoped<CurrentUserContextService>();
 builder.Services.AddScoped<ICurrentUserContextService>(services =>

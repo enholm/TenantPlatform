@@ -1,0 +1,94 @@
+@page "/admin/calendar-integrations"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.MeetingRooms
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.MeetingRooms
+@inject ICalendarIntegrationService IntegrationService
+@inject ITenantAuthorizationService Authorization
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["CalendarIntegrations"]</PageTitle>
+<h1>@L["CalendarIntegrations"]</h1>
+<p class="text-body-secondary">@L["CalendarConfigurationOnly"]</p>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (loading) { <p>@L["Loading"]</p> }
+else if (allowed)
+{
+    <div class="card mb-4"><div class="card-body">
+        <h2 class="h5">@L[editingId.HasValue ? "EditCalendarIntegration" : "CreateCalendarIntegration"]</h2>
+        <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+            <fieldset disabled="@busy"><div class="row g-3 align-items-end">
+                <div class="col-md-5"><label for="integration-name" class="form-label">@L["Name"]</label>
+                    <input id="integration-name" required maxlength="200" class="form-control" @bind="model.Name" /></div>
+                <div class="col-md-4"><label for="integration-provider" class="form-label">@L["Provider"]</label>
+                    <select id="integration-provider" class="form-select" @bind="model.Provider">
+                        @foreach (var provider in Enum.GetValues<CalendarProvider>())
+                        { <option value="@provider">@L[$"CalendarProvider_{provider}"]</option> }
+                    </select></div>
+                <div class="col-md-3"><div class="form-check">
+                    <input id="integration-active" type="checkbox" class="form-check-input" @bind="model.IsActive" />
+                    <label for="integration-active" class="form-check-label">@L["IsActive"]</label></div></div>
+            </div>
+            <div class="mt-3"><button type="submit" class="btn btn-primary me-2">@L["Save"]</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="Reset">@L["Cancel"]</button></div>
+            </fieldset>
+        </form>
+    </div></div>
+    <div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead><tr><th>@L["Name"]</th><th>@L["Provider"]</th><th>@L["Status"]</th><th></th></tr></thead>
+        <tbody>@foreach (var item in integrations)
+        {
+            <tr><td>@item.Name</td><td>@L[$"CalendarProvider_{item.Provider}"]</td><td>@L[item.IsActive ? "Active" : "Inactive"]</td>
+                <td class="text-end"><button class="btn btn-outline-secondary btn-sm" disabled="@busy" @onclick="() => Edit(item)">@L["Edit"]</button></td></tr>
+        }</tbody>
+    </table></div></div>
+    @if (integrations.Count == 0) { <p class="mt-3">@L["NoCalendarIntegrations"]</p> }
+}
+
+@code {
+    private bool loading = true, busy, allowed;
+    private Guid accountId;
+    private Guid? editingId;
+    private string? error;
+    private SaveCalendarIntegrationRequest model = new();
+    private List<CalendarIntegrationDto> integrations = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        allowed = await Authorization.CanManageMeetingRoomsAsync();
+        if (!allowed || UserContext.Current.CurrentAccountId is not Guid selectedAccount)
+        { Navigation.NavigateTo("/access-denied"); return; }
+        accountId = selectedAccount;
+        try { integrations = await IntegrationService.ListAsync(accountId); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        loading = false;
+    }
+
+    private void Reset() { editingId = null; model = new(); error = null; }
+    private void Edit(CalendarIntegrationDto item)
+    {
+        editingId = item.Id;
+        model = new() { Name = item.Name, Provider = item.Provider, IsActive = item.IsActive };
+        error = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (busy) return;
+        busy = true; error = null;
+        try
+        {
+            if (editingId.HasValue) await IntegrationService.UpdateAsync(accountId, editingId.Value, model);
+            else await IntegrationService.CreateAsync(accountId, model);
+            Reset();
+            integrations = await IntegrationService.ListAsync(accountId);
+        }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (MeetingRoomValidationException ex) { error = ex.Message; }
+        finally { busy = false; }
+    }
+}

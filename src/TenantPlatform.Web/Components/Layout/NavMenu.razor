@@ -6,6 +6,13 @@
 
 @if (UserContext.Current.IsAuthenticated)
 {
+    @if (permissions.CanSeeMeetingRooms)
+    {
+        <NavLink href="/meeting-rooms" class="sidebar-link">
+            <i class="bi bi-calendar3"></i>
+            <span>@L["MeetingRooms"]</span>
+        </NavLink>
+    }
     @if (permissions.CanSeeTenantPortal)
     {
         <div class="sidebar-section-title">
@@ -89,6 +96,18 @@
         <div class="sidebar-section-title">
             @L["Administration"]
         </div>
+
+        @if (permissions.CanManageMeetingRooms)
+        {
+            <NavLink href="/admin/meeting-rooms" class="sidebar-link">
+                <i class="bi bi-door-open"></i>
+                <span>@L["ManageMeetingRooms"]</span>
+            </NavLink>
+            <NavLink href="/admin/calendar-integrations" class="sidebar-link">
+                <i class="bi bi-calendar2-week"></i>
+                <span>@L["CalendarIntegrations"]</span>
+            </NavLink>
+        }
 
         @if (permissions.CanSeeOrganizations)
         {

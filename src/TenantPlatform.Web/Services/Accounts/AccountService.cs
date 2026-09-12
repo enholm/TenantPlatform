@@ -264,6 +264,12 @@ public class AccountService : IAccountService
                 "AccountHasData");
         }
 
+        if (await dbContext.CalendarIntegrations.AsNoTracking()
+            .AnyAsync(x => x.AccountId == accountId, cancellationToken))
+        {
+            return AccountDeleteCheckResult.NotAllowed("AccountHasData");
+        }
+
         return AccountDeleteCheckResult.Allowed();
     }
 
@@ -362,4 +368,3 @@ public class AccountService : IAccountService
         }
     }
 }
-

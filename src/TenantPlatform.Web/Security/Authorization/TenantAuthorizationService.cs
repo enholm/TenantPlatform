@@ -11,6 +11,21 @@ public class TenantAuthorizationService
     private readonly IDbContextFactory<TenantPlatformDbContext> _dbContextFactory;
     private readonly ICurrentUserContextService _currentUserService;
 
+    public async Task<bool> CanUseMeetingRoomsAsync(CancellationToken cancellationToken = default)
+    {
+        var current = _currentUserService.Current;
+        if (!current.IsAuthenticated || !current.CurrentAccountId.HasValue)
+            return false;
+
+        await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await db.UserAccounts.AsNoTracking().AnyAsync(x =>
+            x.AccountId == current.CurrentAccountId.Value && x.UserId == current.UserId,
+            cancellationToken);
+    }
+
+    public Task<bool> CanManageMeetingRoomsAsync(CancellationToken cancellationToken = default) =>
+        HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin);
+
     public TenantAuthorizationService(
         IDbContextFactory<TenantPlatformDbContext> dbContextFactory,
         ICurrentUserContextService currentUserService)
@@ -808,6 +823,8 @@ public class TenantAuthorizationService
 
         return new NavigationPermissions
         {
+            CanSeeMeetingRooms = await CanUseMeetingRoomsAsync(cancellationToken),
+            CanManageMeetingRooms = isAccountAdmin,
             CanSeeTenantPortal =
                 canUseTenantPortal,
 

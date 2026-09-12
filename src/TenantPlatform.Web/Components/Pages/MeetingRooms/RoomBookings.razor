@@ -1,0 +1,176 @@
+@page "/meeting-rooms"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.MeetingRooms
+@using TenantPlatform.Web.Security.Authorization
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.MeetingRooms
+@inject IMeetingRoomService RoomService
+@inject IRoomBookingService BookingService
+@inject ITenantAuthorizationService Authorization
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["MeetingRooms"]</PageTitle>
+<h1>@L["MeetingRooms"]</h1>
+<p class="text-body-secondary">@L["RoomBookingUtcHelp"]</p>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (notice is not null) { <div class="alert alert-info" role="status">@L[notice]</div> }
+@if (loading) { <p>@L["Loading"]</p> }
+else if (allowed)
+{
+    @if (rooms.Count == 0) { <div class="alert alert-info">@L["NoMeetingRooms"]</div> }
+    else
+    {
+        <div class="card mb-4"><div class="card-body">
+            <fieldset disabled="@busy"><div class="row g-3">
+                <div class="col-md-8"><label for="booking-room" class="form-label">@L["MeetingRoom"]</label>
+                    <select id="booking-room" class="form-select" @bind="selectedRoom" @bind:after="SelectionChangedAsync">
+                        @foreach (var room in rooms)
+                        { <option value="@room.Id">@room.BuildingName — @room.Name @(!room.IsActive ? L["Inactive"] : "")</option> }
+                    </select></div>
+                <div class="col-md-4"><label for="booking-day" class="form-label">@L["RoomBookingDayUtc"]</label>
+                    <input id="booking-day" type="date" class="form-control" @bind="day" @bind:after="SelectionChangedAsync" /></div>
+            </div></fieldset>
+            @if (SelectedRoom is { } selected)
+            {
+                <p class="mt-3 mb-0">@selected.Description</p>
+                @if (selected.Capacity.HasValue) { <p class="small text-body-secondary">@L["MeetingRoomCapacity"]: @selected.Capacity</p> }
+                @if (!selected.IsActive) { <div class="alert alert-warning mt-3">@L["MeetingRoomInactive"]</div> }
+            }
+        </div></div>
+
+        @if (SelectedRoom?.IsActive == true)
+        {
+            <div class="card mb-4"><div class="card-body">
+                <h2 class="h5">@L[editingId.HasValue ? "EditRoomBooking" : "CreateRoomBooking"]</h2>
+                <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                    <fieldset disabled="@busy"><div class="row g-3">
+                        <div class="col-md-6"><label for="booking-start" class="form-label">@L["RoomBookingStartUtc"]</label>
+                            <input id="booking-start" type="datetime-local" class="form-control" required @bind="start" /></div>
+                        <div class="col-md-6"><label for="booking-end" class="form-label">@L["RoomBookingEndUtc"]</label>
+                            <input id="booking-end" type="datetime-local" class="form-control" required @bind="end" /></div>
+                        <div class="col-12"><label for="booking-subject" class="form-label">@L["RoomBookingSubject"]</label>
+                            <input id="booking-subject" class="form-control" required maxlength="200" @bind="subject" /></div>
+                        <div class="col-12"><label for="booking-description" class="form-label">@L["Description"]</label>
+                            <textarea id="booking-description" class="form-control" maxlength="4000" @bind="description"></textarea></div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">@L[editingId.HasValue ? "Save" : "CreateRoomBooking"]</button>
+                        @if (!editingId.HasValue)
+                        { <button type="button" class="btn btn-outline-secondary" @onclick="CheckAvailabilityAsync">@L["CheckRoomAvailability"]</button> }
+                        @if (editingId.HasValue)
+                        { <button type="button" class="btn btn-outline-secondary" @onclick="ResetEditor">@L["Cancel"]</button> }
+                    </div></fieldset>
+                </form>
+            </div></div>
+        }
+
+        <h2 class="h5">@L["RoomBookings"]</h2>
+        @if (bookings.Count == 0) { <div class="alert alert-info">@L["NoRoomBookings"]</div> }
+        else
+        {
+            <div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0">
+                <thead><tr><th>@L["RoomBookingStartUtc"]</th><th>@L["RoomBookingEndUtc"]</th><th>@L["RoomBookingSubject"]</th><th>@L["RoomBookingOrganizer"]</th><th>@L["Status"]</th><th></th></tr></thead>
+                <tbody>@foreach (var booking in bookings)
+                {
+                    <tr><td>@booking.StartUtc.UtcDateTime.ToString("g")</td><td>@booking.EndUtc.UtcDateTime.ToString("g")</td>
+                        <td>@booking.Subject
+                            @if (!string.IsNullOrWhiteSpace(booking.Description)) { <div class="small text-body-secondary">@booking.Description</div> }
+                        </td><td>@booking.OrganizerName</td>
+                        <td><span class="badge @(booking.Status == RoomBookingStatus.Confirmed ? "text-bg-success" : "text-bg-secondary")">@L[$"RoomBookingStatus_{booking.Status}"]</span></td>
+                        <td class="text-end text-nowrap">
+                            @if (booking.Status == RoomBookingStatus.Confirmed && (isAdmin || booking.OrganizerUserId == UserContext.Current.UserId))
+                            {
+                                @if (SelectedRoom?.IsActive == true)
+                                { <button class="btn btn-outline-secondary btn-sm me-2" disabled="@busy" @onclick="() => Edit(booking)">@L["Edit"]</button> }
+                                <button class="btn btn-outline-danger btn-sm" disabled="@busy" @onclick="() => CancelAsync(booking.Id)">@L["CancelRoomBooking"]</button>
+                            }
+                        </td></tr>
+                }</tbody>
+            </table></div></div>
+        }
+    }
+}
+
+@code {
+    private bool loading = true, busy, allowed, isAdmin;
+    private Guid accountId, selectedRoom;
+    private Guid? editingId;
+    private DateTime day = DateTime.UtcNow.Date;
+    private DateTime start, end;
+    private string subject = string.Empty;
+    private string? description, error, notice;
+    private List<MeetingRoomDto> rooms = [];
+    private List<RoomBookingDto> bookings = [];
+    private MeetingRoomDto? SelectedRoom => rooms.SingleOrDefault(x => x.Id == selectedRoom);
+
+    protected override async Task OnInitializedAsync()
+    {
+        allowed = await Authorization.CanUseMeetingRoomsAsync();
+        if (!allowed || UserContext.Current.CurrentAccountId is not Guid selectedAccount)
+        { Navigation.NavigateTo("/access-denied"); return; }
+        accountId = selectedAccount;
+        isAdmin = await Authorization.CanManageMeetingRoomsAsync();
+        await RunAsync(async () =>
+        {
+            rooms = await RoomService.ListAsync(accountId, true);
+            selectedRoom = rooms.OrderByDescending(x => x.IsActive).FirstOrDefault()?.Id ?? Guid.Empty;
+            ResetEditor();
+            await ReloadAsync();
+        });
+        loading = false;
+    }
+
+    private Task SelectionChangedAsync() => RunAsync(async () => { ResetEditor(); await ReloadAsync(); });
+    private async Task ReloadAsync()
+    {
+        bookings = selectedRoom == Guid.Empty ? [] : await BookingService.ListAsync(accountId, selectedRoom, Utc(day.Date), Utc(day.Date.AddDays(1)));
+    }
+    private static DateTimeOffset Utc(DateTime value) => new(DateTime.SpecifyKind(value, DateTimeKind.Utc));
+    private void ResetEditor()
+    {
+        editingId = null; subject = string.Empty; description = null;
+        start = day.Date.AddHours(9); end = day.Date.AddHours(10); notice = null;
+    }
+    private void Edit(RoomBookingDto booking)
+    {
+        editingId = booking.Id; subject = booking.Subject; description = booking.Description;
+        start = booking.StartUtc.UtcDateTime; end = booking.EndUtc.UtcDateTime;
+        notice = null; error = null;
+    }
+    private Task SaveAsync() => RunAsync(async () =>
+    {
+        var request = new SaveRoomBookingRequest { Subject = subject, Description = description, StartUtc = Utc(start), EndUtc = Utc(end) };
+        if (editingId.HasValue) await BookingService.UpdateAsync(accountId, editingId.Value, request);
+        else await BookingService.CreateAsync(accountId, selectedRoom, request);
+        day = start.Date;
+        ResetEditor();
+        notice = "RoomBookingSaved";
+        await ReloadAsync();
+    });
+    private Task CheckAvailabilityAsync() => RunAsync(async () =>
+    {
+        if (await BookingService.IsAvailableAsync(accountId, selectedRoom, Utc(start), Utc(end)))
+            notice = "RoomBookingAvailable";
+        else
+            error = "RoomBookingOverlap";
+    });
+    private Task CancelAsync(Guid bookingId) => RunAsync(async () =>
+    {
+        await BookingService.CancelAsync(accountId, bookingId);
+        if (editingId == bookingId) ResetEditor();
+        notice = "RoomBookingCancelled";
+        await ReloadAsync();
+    });
+    private async Task RunAsync(Func<Task> action)
+    {
+        if (busy) return;
+        busy = true; error = null; notice = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (MeetingRoomValidationException ex) { error = ex.Message; }
+        finally { busy = false; }
+    }
+}

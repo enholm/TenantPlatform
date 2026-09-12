@@ -1425,4 +1425,52 @@
 <data name="ServiceRequestStatus_Rejected" xml:space="preserve"><value>Avvisad</value></data>
 <data name="ServiceRequestStatus_Cancelled" xml:space="preserve"><value>Avbruten</value></data>
 <data name="ServiceRequestStatus_Failed" xml:space="preserve"><value>Misslyckad</value></data>
+<data name="MeetingRooms" xml:space="preserve"><value>Mötesrum</value></data>
+<data name="MeetingRoom" xml:space="preserve"><value>Mötesrum</value></data>
+<data name="ManageMeetingRooms" xml:space="preserve"><value>Hantera mötesrum</value></data>
+<data name="CreateMeetingRoom" xml:space="preserve"><value>Skapa mötesrum</value></data>
+<data name="EditMeetingRoom" xml:space="preserve"><value>Redigera mötesrum</value></data>
+<data name="MeetingRoomCapacity" xml:space="preserve"><value>Kapacitet (personer)</value></data>
+<data name="Description" xml:space="preserve"><value>Beskrivning</value></data>
+<data name="NoMeetingRooms" xml:space="preserve"><value>Inga mötesrum har registrerats.</value></data>
+<data name="MeetingRoomNotFound" xml:space="preserve"><value>Mötesrummet finns inte i valt konto.</value></data>
+<data name="MeetingRoomInactive" xml:space="preserve"><value>Rummet eller byggnaden är inaktiv. Nya och ändrade bokningar är inte tillåtna.</value></data>
+<data name="MeetingRoomInvalidDetails" xml:space="preserve"><value>Ange namn (max. 200 tecken), beskrivning (max. 4000 tecken) och positiv kapacitet om den anges.</value></data>
+<data name="MeetingRoomInvalidCalendar" xml:space="preserve"><value>Ange giltigt kalender-ID (max. 512 tecken) och eventuell resursadress (max. 320 tecken).</value></data>
+<data name="MeetingRoomCalendarAlreadyMapped" xml:space="preserve"><value>Kalendern är redan kopplad till ett annat mötesrum.</value></data>
+<data name="CalendarIntegrations" xml:space="preserve"><value>Kalenderintegrationer</value></data>
+<data name="CalendarIntegration" xml:space="preserve"><value>Kalenderintegration</value></data>
+<data name="CreateCalendarIntegration" xml:space="preserve"><value>Skapa kalenderinställning</value></data>
+<data name="EditCalendarIntegration" xml:space="preserve"><value>Redigera kalenderinställning</value></data>
+<data name="NoCalendarIntegration" xml:space="preserve"><value>Ingen extern kalender</value></data>
+<data name="NoCalendarIntegrations" xml:space="preserve"><value>Inga kalenderintegrationer är konfigurerade.</value></data>
+<data name="CalendarIntegrationNotFound" xml:space="preserve"><value>Kalenderintegrationen finns inte i valt konto.</value></data>
+<data name="CalendarIntegrationInvalidDetails" xml:space="preserve"><value>Ange namn (max. 200 tecken) och en giltig kalenderleverantör.</value></data>
+<data name="CalendarConfigurationOnly" xml:space="preserve"><value>Detta sparar endast kalenderinställningar. Bokningar lagras i TenantPlatform och synkroniseras ännu inte med externa kalendrar.</value></data>
+<data name="CalendarProvider_Microsoft365" xml:space="preserve"><value>Microsoft 365</value></data>
+<data name="CalendarProvider_Google" xml:space="preserve"><value>Google</value></data>
+<data name="ExternalCalendarId" xml:space="preserve"><value>Externt kalender-ID</value></data>
+<data name="ExternalResourceEmail" xml:space="preserve"><value>Resursens e-postadress</value></data>
+<data name="RoomBookings" xml:space="preserve"><value>Bokningar</value></data>
+<data name="CreateRoomBooking" xml:space="preserve"><value>Boka mötesrum</value></data>
+<data name="EditRoomBooking" xml:space="preserve"><value>Redigera bokning</value></data>
+<data name="CancelRoomBooking" xml:space="preserve"><value>Avboka</value></data>
+<data name="RoomBookingDayUtc" xml:space="preserve"><value>Dag (UTC)</value></data>
+<data name="RoomBookingStartUtc" xml:space="preserve"><value>Start (UTC)</value></data>
+<data name="RoomBookingEndUtc" xml:space="preserve"><value>Slut (UTC)</value></data>
+<data name="RoomBookingSubject" xml:space="preserve"><value>Ämne</value></data>
+<data name="RoomBookingOrganizer" xml:space="preserve"><value>Arrangör</value></data>
+<data name="RoomBookingUtcHelp" xml:space="preserve"><value>Alla datum och tider på denna sida visas och anges i UTC.</value></data>
+<data name="NoRoomBookings" xml:space="preserve"><value>Inga bokningar för valt rum och dag.</value></data>
+<data name="CheckRoomAvailability" xml:space="preserve"><value>Kontrollera tillgänglighet</value></data>
+<data name="RoomBookingAvailable" xml:space="preserve"><value>Rummet är tillgängligt. Tillgängligheten kontrolleras igen när bokningen sparas.</value></data>
+<data name="RoomBookingOverlap" xml:space="preserve"><value>Rummet är inte tillgängligt under det valda tidsintervallet.</value></data>
+<data name="RoomBookingInvalidInterval" xml:space="preserve"><value>Slut måste vara efter start.</value></data>
+<data name="RoomBookingInvalidDetails" xml:space="preserve"><value>Ange ämne (max. 200 tecken) och en beskrivning med högst 4000 tecken.</value></data>
+<data name="RoomBookingNotFound" xml:space="preserve"><value>Bokningen finns inte i valt konto.</value></data>
+<data name="RoomBookingCancelled" xml:space="preserve"><value>Bokningen är avbokad och kan inte redigeras.</value></data>
+<data name="RoomBookingSaved" xml:space="preserve"><value>Bokningen har sparats.</value></data>
+<data name="RoomBookingStatus_Confirmed" xml:space="preserve"><value>Bekräftad</value></data>
+<data name="RoomBookingStatus_Cancelled" xml:space="preserve"><value>Avbokad</value></data>
+<data name="BuildingContainsMeetingRooms" xml:space="preserve"><value>Byggnaden innehåller mötesrum och kan inte raderas.</value></data>
 </root>

@@ -2,6 +2,8 @@ namespace TenantPlatform.Web.Security.Authorization;
 
 public sealed class NavigationPermissions
 {
+    public bool CanSeeMeetingRooms { get; init; }
+    public bool CanManageMeetingRooms { get; init; }
     public bool CanSeeTenantPortal { get; init; }
 
     public bool CanSeeProviderPortal { get; init; }
@@ -32,4 +34,3 @@ public sealed class NavigationPermissions
 
     public bool CanSeeAccounts { get; init; }
 }
-
