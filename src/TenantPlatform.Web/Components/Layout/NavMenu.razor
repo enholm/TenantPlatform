@@ -6,6 +6,13 @@
 
 @if (UserContext.Current.IsAuthenticated)
 {
+    @if (permissions.CanSeeTenantPortal)
+    {
+        <div class="sidebar-section-title">
+            @L["Portal"]
+        </div>
+    }
+
     @if (permissions.CanSeeMeetingRooms)
     {
         <NavLink href="/meeting-rooms" class="sidebar-link">
@@ -15,10 +22,6 @@
     }
     @if (permissions.CanSeeTenantPortal)
     {
-        <div class="sidebar-section-title">
-            @L["Portal"]
-        </div>
-
         <NavLink href="/portal/services"
                  class="sidebar-link">
             <i class="bi bi-grid"></i>
