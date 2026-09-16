@@ -247,6 +247,12 @@ public class BuildingService : IBuildingService
             return BuildingDeleteCheckResult.NotAllowed("BuildingContainsMeetingRooms");
         }
 
+        if (await dbContext.Agreements.AsNoTracking().AnyAsync(x =>
+                x.AccountId == accountId && x.BuildingId == buildingId, cancellationToken))
+        {
+            return BuildingDeleteCheckResult.NotAllowed("AgreementReferenced");
+        }
+
         return BuildingDeleteCheckResult.Allowed();
     }
 }

@@ -1,0 +1,80 @@
+@page "/agreements"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService AgreementsService
+@inject ITenantAuthorizationService Authorization
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L["Agreements"]</PageTitle>
+<div class="d-flex justify-content-between mb-3"><h1>@L["Agreements"]</h1>
+@if (canCreate) { <a href="/agreements/create" class="btn btn-primary align-self-center"><i class="bi bi-plus-lg"></i> @L["AgreementCreate"]</a> }
+</div>
+@if (error) { <div class="alert alert-danger" role="alert">@L["AgreementOperationFailed"]</div> }
+@if (allowed)
+{
+    <div class="card mb-3"><div class="card-body">
+    <fieldset disabled="@busy"><div class="row g-3">
+        <div class="col-md-3"><label for="agreement-search" class="form-label">@L["Search"]</label><input id="agreement-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
+        <div class="col-md-2"><label for="agreement-status" class="form-label">@L["Status"]</label><select id="agreement-status" class="form-select" @bind="filter.Status">
+            <option value="">@L["AgreementAll"]</option>
+            @foreach (var value in Enum.GetValues<AgreementStatus>()) { <option value="@value">@L[$"AgreementStatus{value}"]</option> }
+        </select></div>
+        <div class="col-md-3"><label for="agreement-type" class="form-label">@L["AgreementType"]</label><select id="agreement-type" class="form-select" @bind="filter.Type">
+            <option value="">@L["AgreementAll"]</option>
+            @foreach (var value in Enum.GetValues<AgreementType>()) { <option value="@value">@L[$"AgreementType{value}"]</option> }
+        </select></div>
+        <div class="col-md-3"><label for="agreement-owner" class="form-label">@L["AgreementOwner"]</label><select id="agreement-owner" class="form-select" @bind="filter.OwnerUserId">
+            <option value="">@L["AgreementAll"]</option>
+            @if (result is not null) { @foreach (var owner in result.Owners) { <option value="@owner.Id">@owner.Name</option> } }
+        </select></div>
+        <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary" @onclick="SearchAsync">@L["Search"]</button></div>
+    </div></fieldset>
+    </div></div>
+}
+@if (busy) { <p role="status">@L["Loading"]</p> }
+else if (result is not null)
+{
+    @if (result.Items.Count == 0) { <div class="alert alert-info">@L["AgreementEmpty"]</div> }
+    else
+    {
+        <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+        <thead><tr><th>@L["Name"]</th><th>@L["AgreementCounterparty"]</th><th>@L["AgreementType"]</th><th>@L["Status"]</th><th>@L["AgreementOwner"]</th><th>@L["AgreementEndDate"]</th><th>@L["AgreementNoticeDeadline"]</th></tr></thead>
+        <tbody>@foreach (var item in result.Items)
+        {
+            <tr><td><a href="@($"/agreements/{item.Id}")">@item.Title</a></td><td>@item.CounterpartyName</td><td>@L[$"AgreementType{item.Type}"]</td>
+            <td><span class="badge text-bg-secondary">@L[$"AgreementStatus{item.Status}"]</span></td><td>@item.OwnerName</td><td>@item.EndDate?.ToString("d")</td><td>@item.NoticeDeadline?.ToString("d")</td></tr>
+        }</tbody></table></div></div>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <button class="btn btn-outline-secondary" disabled="@(result.Page <= 1)" @onclick="PreviousAsync">@L["AgreementPrevious"]</button>
+            <span>@L["AgreementPageSummary", result.Page, Math.Max(1, (result.TotalCount + result.PageSize - 1) / result.PageSize), result.TotalCount]</span>
+            <button class="btn btn-outline-secondary" disabled="@(result.Page * result.PageSize >= result.TotalCount)" @onclick="NextAsync">@L["AgreementNext"]</button>
+        </div>
+    }
+}
+
+@code {
+    private readonly AgreementFilter filter = new();
+    private AgreementPageDto? result;
+    private bool busy = true, allowed, canCreate, error;
+    private Guid accountId;
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserContext.Current.CurrentAccountId is not Guid id || !await Authorization.CanUseAgreementsAsync())
+        { Navigation.NavigateTo("/access-denied"); busy = false; return; }
+        accountId = id; allowed = true; canCreate = await Authorization.CanCreateAgreementAsync();
+        await LoadAsync();
+    }
+    private async Task LoadAsync()
+    {
+        busy = true; error = false;
+        try { result = await AgreementsService.ListAsync(accountId, filter); filter.Page = result.Page; }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (Exception) { error = true; result = null; }
+        finally { busy = false; }
+    }
+    private Task SearchAsync() { filter.Page = 1; return LoadAsync(); }
+    private Task PreviousAsync() { filter.Page--; return LoadAsync(); }
+    private Task NextAsync() { filter.Page++; return LoadAsync(); }
+}
+

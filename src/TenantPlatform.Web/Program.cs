@@ -30,6 +30,8 @@ using TenantPlatform.Core.Identity;
 using TenantPlatform.Web.Email;
 using TenantPlatform.Web.Services.Accounts;
 using TenantPlatform.Web.Services.UserAdministration;
+using TenantPlatform.Web.Services.Agreements;
+using TenantPlatform.Infrastructure.Agreements;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -95,6 +97,20 @@ builder.Services.AddScoped<IServiceRequestReplyAddressParser, ServiceRequestRepl
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddOptions<AgreementDocumentStorageOptions>()
+    .Bind(builder.Configuration.GetSection("AgreementDocuments"))
+    .PostConfigure(options =>
+    {
+        options.RootPath = Path.GetFullPath(options.RootPath, builder.Environment.ContentRootPath);
+        var webRoot = Path.GetFullPath(builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"));
+        if (options.RootPath.Equals(webRoot, StringComparison.OrdinalIgnoreCase) ||
+            options.RootPath.StartsWith(webRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Agreement document storage must be outside wwwroot.");
+    })
+    .Validate(options => options.MaxFileSizeBytes > 0, "AgreementDocuments:MaxFileSizeBytes must be positive.")
+    .ValidateOnStart();
+builder.Services.AddSingleton<IAgreementDocumentStorage, LocalAgreementDocumentStorage>();
+builder.Services.AddScoped<IAgreementService, AgreementService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.IMeetingRoomService,
     TenantPlatform.Web.Services.MeetingRooms.MeetingRoomService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.IRoomBookingService,
@@ -517,6 +533,7 @@ app.MapPost("/preferences/language", async (
 });
 // ----------------------------------------------------------------------
 
+app.MapAgreementEndpoints();
 app.Run();
 
 

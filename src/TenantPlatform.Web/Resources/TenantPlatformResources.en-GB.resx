@@ -1437,4 +1437,196 @@
 <data name="RoomBookingStatus_Confirmed" xml:space="preserve"><value>Confirmed</value></data>
 <data name="RoomBookingStatus_Cancelled" xml:space="preserve"><value>Cancelled</value></data>
 <data name="BuildingContainsMeetingRooms" xml:space="preserve"><value>The building contains meeting rooms and cannot be deleted.</value></data>
+  <data name="Agreements" xml:space="preserve">
+    <value>Agreements</value>
+  </data>
+  <data name="AgreementCreate" xml:space="preserve">
+    <value>Create agreement</value>
+  </data>
+  <data name="AgreementEdit" xml:space="preserve">
+    <value>Edit agreement</value>
+  </data>
+  <data name="AgreementAll" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="AgreementNone" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="AgreementSelect" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="AgreementEmpty" xml:space="preserve">
+    <value>No agreements found.</value>
+  </data>
+  <data name="AgreementType" xml:space="preserve">
+    <value>Agreement type</value>
+  </data>
+  <data name="AgreementCounterparty" xml:space="preserve">
+    <value>Counterparty</value>
+  </data>
+  <data name="AgreementOwner" xml:space="preserve">
+    <value>Agreement owner</value>
+  </data>
+  <data name="AgreementStartDate" xml:space="preserve">
+    <value>Start date</value>
+  </data>
+  <data name="AgreementEndDate" xml:space="preserve">
+    <value>End date</value>
+  </data>
+  <data name="AgreementNoticeDeadline" xml:space="preserve">
+    <value>Notice deadline</value>
+  </data>
+  <data name="AgreementAutoRenew" xml:space="preserve">
+    <value>Automatic renewal</value>
+  </data>
+  <data name="AgreementRenewalMonths" xml:space="preserve">
+    <value>Renewal period (months)</value>
+  </data>
+  <data name="AgreementTerms" xml:space="preserve">
+    <value>Notice and renewal terms</value>
+  </data>
+  <data name="AgreementPeriodHelp" xml:space="preserve">
+    <value>The notice deadline applies to the current agreement period. Automatic reminders and renewals are not performed in this version.</value>
+  </data>
+  <data name="AgreementCreated" xml:space="preserve">
+    <value>Created (UTC)</value>
+  </data>
+  <data name="AgreementUpdated" xml:space="preserve">
+    <value>Last updated (UTC)</value>
+  </data>
+  <data name="AgreementDocuments" xml:space="preserve">
+    <value>Documents</value>
+  </data>
+  <data name="AgreementNoDocuments" xml:space="preserve">
+    <value>No documents have been uploaded.</value>
+  </data>
+  <data name="AgreementCategory" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="AgreementFileSize" xml:space="preserve">
+    <value>File size</value>
+  </data>
+  <data name="AgreementBytes" xml:space="preserve">
+    <value>{0:N0} bytes</value>
+  </data>
+  <data name="AgreementUploaded" xml:space="preserve">
+    <value>Uploaded (UTC)</value>
+  </data>
+  <data name="AgreementFile" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="AgreementUpload" xml:space="preserve">
+    <value>Upload</value>
+  </data>
+  <data name="AgreementUploadHelp" xml:space="preserve">
+    <value>PDF, DOCX, XLSX, PNG or JPEG. Maximum file size: {0:N0} MiB.</value>
+  </data>
+  <data name="AgreementAccess" xml:space="preserve">
+    <value>Access</value>
+  </data>
+  <data name="AgreementAccessHelp" xml:space="preserve">
+    <value>Account administrators and the agreement owner always have management access. Other permissions apply only while the user remains an account member.</value>
+  </data>
+  <data name="AgreementMember" xml:space="preserve">
+    <value>Account member</value>
+  </data>
+  <data name="AgreementGrant" xml:space="preserve">
+    <value>Grant / update access</value>
+  </data>
+  <data name="AgreementRevoke" xml:space="preserve">
+    <value>Revoke grant</value>
+  </data>
+  <data name="AgreementAccessRead" xml:space="preserve">
+    <value>Read access</value>
+  </data>
+  <data name="AgreementAccessEdit" xml:space="preserve">
+    <value>Edit access</value>
+  </data>
+  <data name="AgreementPrevious" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="AgreementNext" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="AgreementPageSummary" xml:space="preserve">
+    <value>Page {0} of {1} · {2} agreements</value>
+  </data>
+  <data name="AgreementTypeLease" xml:space="preserve">
+    <value>Lease</value>
+  </data>
+  <data name="AgreementTypeSoftwareLicense" xml:space="preserve">
+    <value>Software / licence</value>
+  </data>
+  <data name="AgreementTypeServiceMaintenance" xml:space="preserve">
+    <value>Service / maintenance</value>
+  </data>
+  <data name="AgreementTypeSupplier" xml:space="preserve">
+    <value>Supplier agreement</value>
+  </data>
+  <data name="AgreementTypeOther" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="AgreementStatusDraft" xml:space="preserve">
+    <value>Draft</value>
+  </data>
+  <data name="AgreementStatusActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="AgreementStatusTerminated" xml:space="preserve">
+    <value>Terminated</value>
+  </data>
+  <data name="AgreementStatusExpired" xml:space="preserve">
+    <value>Expired</value>
+  </data>
+  <data name="AgreementCategoryContract" xml:space="preserve">
+    <value>Contract document</value>
+  </data>
+  <data name="AgreementCategoryAttachment" xml:space="preserve">
+    <value>Attachment</value>
+  </data>
+  <data name="AgreementInvalidFileName" xml:space="preserve">
+    <value>The file name is invalid or too long (maximum 200 characters).</value>
+  </data>
+  <data name="AgreementInvalidFileType" xml:space="preserve">
+    <value>The file content or type is unsupported. Choose PDF, DOCX, XLSX, PNG or JPEG.</value>
+  </data>
+  <data name="AgreementFileTooLarge" xml:space="preserve">
+    <value>The file exceeds the allowed size.</value>
+  </data>
+  <data name="AgreementInvalidDocument" xml:space="preserve">
+    <value>Check the document category and description (maximum 2,000 characters).</value>
+  </data>
+  <data name="AgreementConcurrencyConflict" xml:space="preserve">
+    <value>The agreement was changed by another operation. Reload the page and review the latest changes before trying again.</value>
+  </data>
+  <data name="AgreementReferenceChanged" xml:space="preserve">
+    <value>A referenced record was changed or removed. Reload the page and check your selections.</value>
+  </data>
+  <data name="AgreementInvalidDetails" xml:space="preserve">
+    <value>Enter a title (maximum 200 characters), valid type and status. Description allows 4,000 characters and terms 10,000.</value>
+  </data>
+  <data name="AgreementInvalidDates" xml:space="preserve">
+    <value>Enter a start date. The end date cannot precede it.</value>
+  </data>
+  <data name="AgreementInvalidRenewal" xml:space="preserve">
+    <value>A renewal period must be positive and requires automatic renewal.</value>
+  </data>
+  <data name="AgreementInvalidCounterparty" xml:space="preserve">
+    <value>Select a counterparty in the current account.</value>
+  </data>
+  <data name="AgreementInvalidMember" xml:space="preserve">
+    <value>Select an active user who belongs to the current account.</value>
+  </data>
+  <data name="AgreementInvalidBuilding" xml:space="preserve">
+    <value>Select a building in the current account.</value>
+  </data>
+  <data name="AgreementInvalidUnit" xml:space="preserve">
+    <value>Select a unit in the selected building and current account.</value>
+  </data>
+  <data name="AgreementOperationFailed" xml:space="preserve">
+    <value>The operation failed. Please try again.</value>
+  </data>
+  <data name="AgreementReferenced" xml:space="preserve">
+    <value>The record is used by an agreement and cannot be deleted.</value>
+  </data>
 </root>

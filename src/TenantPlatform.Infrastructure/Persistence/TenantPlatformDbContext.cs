@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TenantPlatform.Core.Agreements;
 using TenantPlatform.Core.Accounts;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Core.Networking;
@@ -13,6 +14,9 @@ namespace TenantPlatform.Infrastructure.Persistence;
 
 public class TenantPlatformDbContext : DbContext
 {
+    public DbSet<Agreement> Agreements => Set<Agreement>();
+    public DbSet<AgreementAccess> AgreementAccess => Set<AgreementAccess>();
+    public DbSet<AgreementDocument> AgreementDocuments => Set<AgreementDocument>();
     public TenantPlatformDbContext(
         DbContextOptions<TenantPlatformDbContext> options)
         : base(options)

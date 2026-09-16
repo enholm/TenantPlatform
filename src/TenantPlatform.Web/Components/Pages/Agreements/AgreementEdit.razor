@@ -1,0 +1,98 @@
+@page "/agreements/create"
+@page "/agreements/{Id:guid}/edit"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService AgreementsService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<PageTitle>@L[Id.HasValue ? "AgreementEdit" : "AgreementCreate"]</PageTitle>
+<h1>@L[Id.HasValue ? "AgreementEdit" : "AgreementCreate"]</h1>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (loading) { <p>@L["Loading"]</p> }
+else if (options is not null)
+{
+    <EditForm Model="model" OnSubmit="SaveAsync">
+    <fieldset disabled="@busy"><div class="card"><div class="card-body"><div class="row g-3">
+        <div class="col-md-8"><label for="title" class="form-label">@L["Name"]</label><InputText id="title" class="form-control" @bind-Value="model.Title" maxlength="200" required /></div>
+        <div class="col-md-4"><label for="status" class="form-label">@L["Status"]</label><InputSelect id="status" class="form-select" @bind-Value="model.Status">
+            @foreach (var value in Enum.GetValues<AgreementStatus>()) { <option value="@value">@L[$"AgreementStatus{value}"]</option> }
+        </InputSelect></div>
+        <div class="col-md-4"><label for="type" class="form-label">@L["AgreementType"]</label><InputSelect id="type" class="form-select" @bind-Value="model.Type">
+            @foreach (var value in Enum.GetValues<AgreementType>()) { <option value="@value">@L[$"AgreementType{value}"]</option> }
+        </InputSelect></div>
+        <div class="col-md-4"><label for="counterparty" class="form-label">@L["AgreementCounterparty"]</label><InputSelect id="counterparty" class="form-select" @bind-Value="model.CounterpartyOrganizationId">
+            <option value="@Guid.Empty">@L["AgreementSelect"]</option>
+            @foreach (var item in options.Counterparties) { <option value="@item.Id">@item.Name</option> }
+        </InputSelect></div>
+        <div class="col-md-4"><label for="owner" class="form-label">@L["AgreementOwner"]</label><InputSelect id="owner" class="form-select" @bind-Value="model.OwnerUserId" disabled="@(!canManage)">
+            <option value="@Guid.Empty">@L["AgreementSelect"]</option>
+            @foreach (var item in options.Members) { <option value="@item.Id">@item.Name</option> }
+        </InputSelect></div>
+        <div class="col-md-4"><label for="start" class="form-label">@L["AgreementStartDate"]</label><InputDate id="start" class="form-control" @bind-Value="model.StartDate" required /></div>
+        <div class="col-md-4"><label for="end" class="form-label">@L["AgreementEndDate"]</label><InputDate id="end" class="form-control" @bind-Value="model.EndDate" /></div>
+        <div class="col-md-4"><label for="notice" class="form-label">@L["AgreementNoticeDeadline"]</label><InputDate id="notice" class="form-control" @bind-Value="model.NoticeDeadline" /></div>
+        <div class="col-12"><p class="text-body-secondary">@L["AgreementPeriodHelp"]</p></div>
+        <div class="col-md-6"><div class="form-check"><InputCheckbox id="renew" class="form-check-input" @bind-Value="model.AutoRenew" @bind-Value:after="RenewChanged" /><label for="renew" class="form-check-label">@L["AgreementAutoRenew"]</label></div></div>
+        <div class="col-md-6"><label for="months" class="form-label">@L["AgreementRenewalMonths"]</label><InputNumber id="months" class="form-control" @bind-Value="model.RenewalMonths" min="1" disabled="@(!model.AutoRenew)" /></div>
+        <div class="col-md-6"><label for="building" class="form-label">@L["Building"]</label><InputSelect id="building" class="form-select" @bind-Value="model.BuildingId" @bind-Value:after="BuildingChanged">
+            <option value="">@L["AgreementNone"]</option>
+            @foreach (var item in options.Buildings) { <option value="@item.Id">@item.Name</option> }
+        </InputSelect></div>
+        <div class="col-md-6"><label for="unit" class="form-label">@L["Unit"]</label><InputSelect id="unit" class="form-select" @bind-Value="model.UnitId" disabled="@(!model.BuildingId.HasValue)">
+            <option value="">@L["AgreementNone"]</option>
+            @foreach (var item in options.Units.Where(x => x.BuildingId == model.BuildingId)) { <option value="@item.Id">@item.Name</option> }
+        </InputSelect></div>
+        <div class="col-12"><label for="description" class="form-label">@L["Description"]</label><InputTextArea id="description" class="form-control" @bind-Value="model.Description" maxlength="4000" rows="3" /></div>
+        <div class="col-12"><label for="terms" class="form-label">@L["AgreementTerms"]</label><InputTextArea id="terms" class="form-control" @bind-Value="model.Terms" maxlength="10000" rows="5" /></div>
+    </div></div></div>
+    <div class="d-flex gap-2 mt-3"><button type="submit" class="btn btn-primary">@L["Save"]</button><a class="btn btn-outline-secondary" href="@(Id.HasValue ? $"/agreements/{Id}" : "/agreements")">@L["Cancel"]</a></div>
+    </fieldset></EditForm>
+}
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    private SaveAgreementRequest model = new();
+    private AgreementOptionsDto? options;
+    private Guid accountId;
+    private bool loading = true, busy, canManage;
+    private string? error;
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true; options = null; error = null;
+        if (UserContext.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; }
+        accountId = id;
+        try
+        {
+            if (Id.HasValue)
+            {
+                var details = await AgreementsService.GetAsync(accountId, Id.Value);
+                if (!details.CanEdit) throw new UnauthorizedAccessException();
+                model = details; canManage = details.CanManageAccess;
+            }
+            else { model = new() { OwnerUserId = UserContext.Current.UserId }; canManage = true; }
+            options = await AgreementsService.GetOptionsAsync(accountId, Id);
+        }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (Exception) { error = "AgreementOperationFailed"; }
+        finally { loading = false; }
+    }
+    private void RenewChanged() { if (!model.AutoRenew) model.RenewalMonths = null; }
+    private void BuildingChanged() => model.UnitId = null;
+    private async Task SaveAsync()
+    {
+        if (busy) return;
+        busy = true; error = null;
+        try
+        {
+            var id = Id;
+            if (id.HasValue) await AgreementsService.UpdateAsync(accountId, id.Value, model);
+            else id = await AgreementsService.CreateAsync(accountId, model);
+            Navigation.NavigateTo($"/agreements/{id}");
+        }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception) { error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}
+

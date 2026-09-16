@@ -222,6 +222,12 @@ public class UnitService : IUnitService
                 "UnitContainsOccupancies");
         }
 
+        if (await dbContext.Agreements.AsNoTracking().AnyAsync(x =>
+                x.AccountId == accountId && x.UnitId == unitId, cancellationToken))
+        {
+            return UnitDeleteCheckResult.NotAllowed("AgreementReferenced");
+        }
+
         return UnitDeleteCheckResult.Allowed();
     }
 
@@ -412,4 +418,3 @@ public class UnitService : IUnitService
             .ToListAsync(cancellationToken);
     }    
 }
-

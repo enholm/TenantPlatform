@@ -1473,4 +1473,196 @@
 <data name="RoomBookingStatus_Confirmed" xml:space="preserve"><value>Bekräftad</value></data>
 <data name="RoomBookingStatus_Cancelled" xml:space="preserve"><value>Avbokad</value></data>
 <data name="BuildingContainsMeetingRooms" xml:space="preserve"><value>Byggnaden innehåller mötesrum och kan inte raderas.</value></data>
+  <data name="Agreements" xml:space="preserve">
+    <value>Avtal</value>
+  </data>
+  <data name="AgreementCreate" xml:space="preserve">
+    <value>Skapa avtal</value>
+  </data>
+  <data name="AgreementEdit" xml:space="preserve">
+    <value>Redigera avtal</value>
+  </data>
+  <data name="AgreementAll" xml:space="preserve">
+    <value>Alla</value>
+  </data>
+  <data name="AgreementNone" xml:space="preserve">
+    <value>Ingen</value>
+  </data>
+  <data name="AgreementSelect" xml:space="preserve">
+    <value>Välj</value>
+  </data>
+  <data name="AgreementEmpty" xml:space="preserve">
+    <value>Inga avtal hittades.</value>
+  </data>
+  <data name="AgreementType" xml:space="preserve">
+    <value>Avtalstyp</value>
+  </data>
+  <data name="AgreementCounterparty" xml:space="preserve">
+    <value>Motpart</value>
+  </data>
+  <data name="AgreementOwner" xml:space="preserve">
+    <value>Avtalsansvarig</value>
+  </data>
+  <data name="AgreementStartDate" xml:space="preserve">
+    <value>Startdatum</value>
+  </data>
+  <data name="AgreementEndDate" xml:space="preserve">
+    <value>Slutdatum</value>
+  </data>
+  <data name="AgreementNoticeDeadline" xml:space="preserve">
+    <value>Sista uppsägningsdag</value>
+  </data>
+  <data name="AgreementAutoRenew" xml:space="preserve">
+    <value>Automatisk förnyelse</value>
+  </data>
+  <data name="AgreementRenewalMonths" xml:space="preserve">
+    <value>Förnyelseperiod (månader)</value>
+  </data>
+  <data name="AgreementTerms" xml:space="preserve">
+    <value>Uppsägnings- och förnyelsevillkor</value>
+  </data>
+  <data name="AgreementPeriodHelp" xml:space="preserve">
+    <value>Uppsägningsdagen gäller den aktuella avtalsperioden. Automatiska påminnelser och förnyelser utförs inte i denna version.</value>
+  </data>
+  <data name="AgreementCreated" xml:space="preserve">
+    <value>Skapad (UTC)</value>
+  </data>
+  <data name="AgreementUpdated" xml:space="preserve">
+    <value>Senast ändrad (UTC)</value>
+  </data>
+  <data name="AgreementDocuments" xml:space="preserve">
+    <value>Dokument</value>
+  </data>
+  <data name="AgreementNoDocuments" xml:space="preserve">
+    <value>Inga dokument har laddats upp.</value>
+  </data>
+  <data name="AgreementCategory" xml:space="preserve">
+    <value>Kategori</value>
+  </data>
+  <data name="AgreementFileSize" xml:space="preserve">
+    <value>Filstorlek</value>
+  </data>
+  <data name="AgreementBytes" xml:space="preserve">
+    <value>{0:N0} byte</value>
+  </data>
+  <data name="AgreementUploaded" xml:space="preserve">
+    <value>Uppladdad (UTC)</value>
+  </data>
+  <data name="AgreementFile" xml:space="preserve">
+    <value>Fil</value>
+  </data>
+  <data name="AgreementUpload" xml:space="preserve">
+    <value>Ladda upp</value>
+  </data>
+  <data name="AgreementUploadHelp" xml:space="preserve">
+    <value>PDF, DOCX, XLSX, PNG eller JPEG. Maximal filstorlek: {0:N0} MiB.</value>
+  </data>
+  <data name="AgreementAccess" xml:space="preserve">
+    <value>Behörigheter</value>
+  </data>
+  <data name="AgreementAccessHelp" xml:space="preserve">
+    <value>Kontoadministratörer och avtalsansvarig har alltid administrativ behörighet. Övriga behörigheter gäller endast så länge användaren är medlem i kontot.</value>
+  </data>
+  <data name="AgreementMember" xml:space="preserve">
+    <value>Kontomedlem</value>
+  </data>
+  <data name="AgreementGrant" xml:space="preserve">
+    <value>Ge / uppdatera behörighet</value>
+  </data>
+  <data name="AgreementRevoke" xml:space="preserve">
+    <value>Ta bort tilldelning</value>
+  </data>
+  <data name="AgreementAccessRead" xml:space="preserve">
+    <value>Läsbehörighet</value>
+  </data>
+  <data name="AgreementAccessEdit" xml:space="preserve">
+    <value>Redigeringsbehörighet</value>
+  </data>
+  <data name="AgreementPrevious" xml:space="preserve">
+    <value>Föregående</value>
+  </data>
+  <data name="AgreementNext" xml:space="preserve">
+    <value>Nästa</value>
+  </data>
+  <data name="AgreementPageSummary" xml:space="preserve">
+    <value>Sida {0} av {1} · {2} avtal</value>
+  </data>
+  <data name="AgreementTypeLease" xml:space="preserve">
+    <value>Hyresavtal</value>
+  </data>
+  <data name="AgreementTypeSoftwareLicense" xml:space="preserve">
+    <value>Programvaru-/licensavtal</value>
+  </data>
+  <data name="AgreementTypeServiceMaintenance" xml:space="preserve">
+    <value>Service-/underhållsavtal</value>
+  </data>
+  <data name="AgreementTypeSupplier" xml:space="preserve">
+    <value>Leverantörsavtal</value>
+  </data>
+  <data name="AgreementTypeOther" xml:space="preserve">
+    <value>Annat</value>
+  </data>
+  <data name="AgreementStatusDraft" xml:space="preserve">
+    <value>Utkast</value>
+  </data>
+  <data name="AgreementStatusActive" xml:space="preserve">
+    <value>Aktivt</value>
+  </data>
+  <data name="AgreementStatusTerminated" xml:space="preserve">
+    <value>Uppsagt</value>
+  </data>
+  <data name="AgreementStatusExpired" xml:space="preserve">
+    <value>Utgånget</value>
+  </data>
+  <data name="AgreementCategoryContract" xml:space="preserve">
+    <value>Kontraktsdokument</value>
+  </data>
+  <data name="AgreementCategoryAttachment" xml:space="preserve">
+    <value>Bilaga</value>
+  </data>
+  <data name="AgreementInvalidFileName" xml:space="preserve">
+    <value>Filnamnet är ogiltigt eller för långt (högst 200 tecken).</value>
+  </data>
+  <data name="AgreementInvalidFileType" xml:space="preserve">
+    <value>Filinnehållet eller filtypen stöds inte. Välj PDF, DOCX, XLSX, PNG eller JPEG.</value>
+  </data>
+  <data name="AgreementFileTooLarge" xml:space="preserve">
+    <value>Filen överskrider tillåten storlek.</value>
+  </data>
+  <data name="AgreementInvalidDocument" xml:space="preserve">
+    <value>Kontrollera dokumentkategori och beskrivning (högst 2000 tecken).</value>
+  </data>
+  <data name="AgreementConcurrencyConflict" xml:space="preserve">
+    <value>Avtalet har ändrats av en annan åtgärd. Ladda om sidan och granska de senaste ändringarna innan du försöker igen.</value>
+  </data>
+  <data name="AgreementReferenceChanged" xml:space="preserve">
+    <value>En refererad post har ändrats eller tagits bort. Ladda om sidan och kontrollera dina val.</value>
+  </data>
+  <data name="AgreementInvalidDetails" xml:space="preserve">
+    <value>Ange titel (högst 200 tecken), giltig typ och status. Beskrivning tillåter 4000 tecken och villkor 10000.</value>
+  </data>
+  <data name="AgreementInvalidDates" xml:space="preserve">
+    <value>Ange startdatum. Slutdatum får inte vara före startdatum.</value>
+  </data>
+  <data name="AgreementInvalidRenewal" xml:space="preserve">
+    <value>Förnyelseperioden måste vara positiv och kräver automatisk förnyelse.</value>
+  </data>
+  <data name="AgreementInvalidCounterparty" xml:space="preserve">
+    <value>Välj en motpart i det aktuella kontot.</value>
+  </data>
+  <data name="AgreementInvalidMember" xml:space="preserve">
+    <value>Välj en aktiv användare som är medlem i det aktuella kontot.</value>
+  </data>
+  <data name="AgreementInvalidBuilding" xml:space="preserve">
+    <value>Välj en byggnad i det aktuella kontot.</value>
+  </data>
+  <data name="AgreementInvalidUnit" xml:space="preserve">
+    <value>Välj en enhet i vald byggnad och aktuellt konto.</value>
+  </data>
+  <data name="AgreementOperationFailed" xml:space="preserve">
+    <value>Åtgärden misslyckades. Försök igen.</value>
+  </data>
+  <data name="AgreementReferenced" xml:space="preserve">
+    <value>Posten används av ett avtal och kan inte tas bort.</value>
+  </data>
 </root>

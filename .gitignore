@@ -2,6 +2,7 @@
 docker/.env
 
 # Build output
+**/App_Data/agreement-documents/
 bin/
 obj/
 

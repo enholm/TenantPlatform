@@ -209,6 +209,12 @@ public class OrganizationService : IOrganizationService
                 "OrganizationContainsUserRoles");
         }
 
+        if (await dbContext.Agreements.AsNoTracking().AnyAsync(x =>
+                x.AccountId == accountId && x.CounterpartyOrganizationId == organizationId, cancellationToken))
+        {
+            return OrganizationDeleteCheckResult.NotAllowed("AgreementReferenced");
+        }
+
         return OrganizationDeleteCheckResult.Allowed();
     }
 
@@ -263,4 +269,3 @@ public class OrganizationService : IOrganizationService
         return value.Trim();
     }
 }
-

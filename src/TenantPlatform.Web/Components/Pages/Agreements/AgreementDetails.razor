@@ -1,0 +1,145 @@
+@page "/agreements/{Id:guid}"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IAgreementService AgreementsService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementDetails> Logger
+
+<PageTitle>@(details?.Title ?? L["Agreements"])</PageTitle>
+<a href="/agreements">@L["Agreements"]</a>
+@if (error is not null) { <div class="alert alert-danger mt-3" role="alert">@L[error]</div> }
+@if (loading) { <p>@L["Loading"]</p> }
+else if (details is not null)
+{
+    <div class="d-flex justify-content-between my-3"><h1>@details.Title</h1>
+    @if (details.CanEdit) { <a class="btn btn-outline-primary align-self-center" href="@($"/agreements/{Id}/edit")">@L["Edit"]</a> }
+    </div>
+    <div class="card mb-3"><div class="card-body"><dl class="row mb-0">
+        <dt class="col-sm-4">@L["AgreementCounterparty"]</dt><dd class="col-sm-8">@details.CounterpartyName</dd>
+        <dt class="col-sm-4">@L["AgreementOwner"]</dt><dd class="col-sm-8">@details.OwnerName</dd>
+        <dt class="col-sm-4">@L["AgreementType"]</dt><dd class="col-sm-8">@L[$"AgreementType{details.Type}"]</dd>
+        <dt class="col-sm-4">@L["Status"]</dt><dd class="col-sm-8">@L[$"AgreementStatus{details.Status}"]</dd>
+        <dt class="col-sm-4">@L["AgreementStartDate"]</dt><dd class="col-sm-8">@details.StartDate.ToString("d")</dd>
+        <dt class="col-sm-4">@L["AgreementEndDate"]</dt><dd class="col-sm-8">@details.EndDate?.ToString("d")</dd>
+        <dt class="col-sm-4">@L["AgreementNoticeDeadline"]</dt><dd class="col-sm-8">@details.NoticeDeadline?.ToString("d")</dd>
+        <dt class="col-sm-4">@L["AgreementAutoRenew"]</dt><dd class="col-sm-8">@L[details.AutoRenew ? "Yes" : "No"]</dd>
+        <dt class="col-sm-4">@L["AgreementRenewalMonths"]</dt><dd class="col-sm-8">@details.RenewalMonths</dd>
+        <dt class="col-sm-4">@L["Building"]</dt><dd class="col-sm-8">@details.BuildingName</dd>
+        <dt class="col-sm-4">@L["Unit"]</dt><dd class="col-sm-8">@details.UnitName</dd>
+        <dt class="col-sm-4">@L["Description"]</dt><dd class="col-sm-8" style="white-space: pre-wrap">@details.Description</dd>
+        <dt class="col-sm-4">@L["AgreementTerms"]</dt><dd class="col-sm-8" style="white-space: pre-wrap">@details.Terms</dd>
+        <dt class="col-sm-4">@L["AgreementCreated"]</dt><dd class="col-sm-8">@details.CreatedUtc.ToString("g") UTC · @details.CreatedByName</dd>
+        <dt class="col-sm-4">@L["AgreementUpdated"]</dt><dd class="col-sm-8">@details.UpdatedUtc.ToString("g") UTC · @details.UpdatedByName</dd>
+    </dl><p class="text-body-secondary mt-3 mb-0">@L["AgreementPeriodHelp"]</p></div></div>
+
+    <h2>@L["AgreementDocuments"]</h2>
+    @if (details.Documents.Count == 0) { <p>@L["AgreementNoDocuments"]</p> }
+    else
+    {
+        <div class="card mb-3"><div class="table-responsive"><table class="table table-hover mb-0">
+        <thead><tr><th>@L["Name"]</th><th>@L["AgreementCategory"]</th><th>@L["Description"]</th><th>@L["AgreementFileSize"]</th><th>@L["AgreementUploaded"]</th></tr></thead>
+        <tbody>@foreach (var doc in details.Documents)
+        {
+            <tr><td><a href="@($"/agreements/documents/{doc.Id}/download")" data-enhance-nav="false"><i class="bi bi-download"></i> @doc.FileName</a></td>
+                <td>@L[$"AgreementCategory{doc.Category}"]</td><td>@doc.Description</td><td>@L["AgreementBytes", doc.Size]</td><td>@doc.UploadedUtc.ToString("g") UTC · @doc.UploadedByName</td></tr>
+        }</tbody></table></div></div>
+    }
+    @if (details.CanEdit)
+    {
+        <div class="card mb-4"><div class="card-body">
+        <fieldset disabled="@busy">
+            <p class="text-body-secondary">@L["AgreementUploadHelp", AgreementsService.MaxFileSizeBytes / (1024m * 1024m)]</p>
+            <div class="row g-3">
+                <div class="col-md-6"><label for="document-file" class="form-label">@L["AgreementFile"]</label><InputFile @key="fileInputKey" id="document-file" class="form-control" OnChange="SelectFile" accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg" /></div>
+                <div class="col-md-6"><label for="document-category" class="form-label">@L["AgreementCategory"]</label><select id="document-category" class="form-select" @bind="category">
+                    @foreach (var value in Enum.GetValues<AgreementDocumentCategory>()) { <option value="@value">@L[$"AgreementCategory{value}"]</option> }
+                </select></div>
+                <div class="col-12"><label for="document-description" class="form-label">@L["Description"]</label><textarea id="document-description" class="form-control" @bind="description" maxlength="2000"></textarea></div>
+                <div class="col-12"><button class="btn btn-primary" disabled="@(file is null)" @onclick="UploadAsync">@L["AgreementUpload"]</button></div>
+            </div>
+        </fieldset>
+        @if (busy) { <p role="status" class="mt-2">@L["Loading"]</p> }
+        </div></div>
+    }
+
+    @if (details.CanManageAccess && options is not null)
+    {
+        <h2>@L["AgreementAccess"]</h2>
+        <p class="text-body-secondary">@L["AgreementAccessHelp"]</p>
+        <fieldset disabled="@busy"><div class="card"><div class="card-body">
+            @foreach (var grant in details.Access)
+            {
+                <div class="d-flex gap-3 align-items-center mb-2"><span>@grant.Name · @L[$"AgreementAccess{grant.Level}"]</span>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => ChangeAccessAsync(grant.UserId, null)">@L["AgreementRevoke"]</button></div>
+            }
+            <div class="row g-3 mt-2">
+                <div class="col-md-6"><label for="access-user" class="form-label">@L["AgreementMember"]</label><select id="access-user" class="form-select" @bind="memberId">
+                    <option value="@Guid.Empty">@L["AgreementSelect"]</option>
+                    @foreach (var member in options.Members) { <option value="@member.Id">@member.Name</option> }
+                </select></div>
+                <div class="col-md-3"><label for="access-level" class="form-label">@L["AgreementAccess"]</label><select id="access-level" class="form-select" @bind="level">
+                    @foreach (var value in Enum.GetValues<AgreementAccessLevel>()) { <option value="@value">@L[$"AgreementAccess{value}"]</option> }
+                </select></div>
+                <div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary" disabled="@(memberId == Guid.Empty)" @onclick="() => ChangeAccessAsync(memberId, level)">@L["AgreementGrant"]</button></div>
+            </div>
+        </div></div></fieldset>
+    }
+}
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private readonly CancellationTokenSource lifetime = new();
+    private AgreementDetailsDto? details;
+    private AgreementOptionsDto? options;
+    private Guid accountId, memberId;
+    private bool loading = true, busy;
+    private string? error, description;
+    private IBrowserFile? file;
+    private int fileInputKey;
+    private AgreementDocumentCategory category = AgreementDocumentCategory.Contract;
+    private AgreementAccessLevel level = AgreementAccessLevel.Read;
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true; details = null; options = null; error = null;
+        if (UserContext.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; }
+        accountId = id;
+        await RunAsync(LoadAsync);
+        loading = false;
+    }
+    private async Task LoadAsync()
+    {
+        details = await AgreementsService.GetAsync(accountId, Id, lifetime.Token);
+        options = details.CanManageAccess ? await AgreementsService.GetOptionsAsync(accountId, Id, lifetime.Token) : null;
+    }
+    private void SelectFile(InputFileChangeEventArgs args) => file = args.File;
+    private Task UploadAsync() => RunAsync(async () =>
+    {
+        if (file is null || details is null) return;
+        if (file.Size > AgreementsService.MaxFileSizeBytes) throw new AgreementFileException("AgreementFileTooLarge");
+        await using var stream = file.OpenReadStream(AgreementsService.MaxFileSizeBytes, lifetime.Token);
+        await AgreementsService.UploadAsync(accountId, Id, details.Revision, file.Name, stream, category, description, lifetime.Token);
+        file = null; description = null; fileInputKey++;
+        await LoadAsync();
+    });
+    private Task ChangeAccessAsync(Guid userId, AgreementAccessLevel? access) => RunAsync(async () =>
+    {
+        if (details is null) return;
+        await AgreementsService.SetAccessAsync(accountId, Id, userId, access, details.Revision, lifetime.Token);
+        await LoadAsync();
+    });
+    private async Task RunAsync(Func<Task> action)
+    {
+        if (busy) return;
+        busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (AgreementFileException ex) { error = ex.Message; }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (Exception ex) { Logger.LogError(ex, "Agreement operation failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+    public void Dispose() { lifetime.Cancel(); lifetime.Dispose(); }
+}
+

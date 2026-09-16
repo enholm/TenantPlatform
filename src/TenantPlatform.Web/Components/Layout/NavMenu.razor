@@ -13,6 +13,13 @@
         </div>
     }
 
+    @if (permissions.CanSeeAgreements)
+    {
+        <NavLink href="/agreements" class="sidebar-link">
+            <i class="bi bi-file-earmark-text"></i>
+            <span>@L["Agreements"]</span>
+        </NavLink>
+    }
     @if (permissions.CanSeeMeetingRooms)
     {
         <NavLink href="/meeting-rooms" class="sidebar-link">
