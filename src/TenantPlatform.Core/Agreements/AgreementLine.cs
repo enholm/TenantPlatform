@@ -59,6 +59,8 @@ public class AgreementPriceVersion
     public Guid AgreementId { get; set; }
     public Guid LineId { get; set; }
     public int Sequence { get; set; }
+    public bool Independent { get; set; }
+    public Guid? AdjustmentId { get; set; }
     public DateOnly EffectiveFrom { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }

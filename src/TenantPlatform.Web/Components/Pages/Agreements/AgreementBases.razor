@@ -1,0 +1,39 @@
+@page "/agreements/bases"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementBases> Logger
+@using System.Text.Json
+
+<PageTitle>@L["ProcessingBases"]</PageTitle><h1>@L["ProcessingBases"]</h1><p>@L["ProcessingBasisHelp"]</p>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (busy) { <p role="status">@L["Loading"]</p> }
+
+<fieldset disabled="@busy"><label for="basis-direction">@L["FinanceDirection"]</label><select id="basis-direction" class="form-select mb-3" @bind="direction" @bind:after="Reload">@foreach(var d in Enum.GetValues<AgreementDirection>()){<option value="@d">@L[$"ProcessingDirection{d}"]</option>}</select></fieldset>
+@if(items is not null){
+@if(items.Count==0){<p>@L["ProcessingEmpty"]</p>}
+<div class="table-responsive"><table class="table table-hover"><thead><tr><th>@L["Agreements"]</th><th>@L["AgreementCounterparty"]</th><th>@L[direction == AgreementDirection.Cost ? "FinanceExpectedInvoice" : "FinancePlannedInvoice"]</th><th>@L["Status"]</th><th>@L["FinanceAmount"]</th><th></th></tr></thead><tbody>
+@foreach(var x in items){<tr><td>@x.Title @if(x.Basis.OriginalBasisId.HasValue){<span class="badge text-bg-info">@L["ProcessingCorrection"]</span>}</td><td>@x.Counterparty</td><td>@x.Basis.InvoiceDate.ToString("d")</td><td>@L[$"ProcessingStatus{x.Basis.Status}"]</td><td>@x.Amount.ToString("N2") @x.Currency</td><td><a href="@($"/agreements/bases/{x.Basis.Id}")">@L["Open"]</a></td></tr>}
+</tbody></table></div><p class="text-body-secondary">@L["ProcessingListLimit"]</p>}
+
+@code {
+    private AgreementDirection direction=AgreementDirection.Income;
+    private List<AgreementBasisSummary>? items;
+    protected override Task OnInitializedAsync()=>Reload();
+    private Task Reload()=>Run(async()=>items=await Service.ListBasisAsync(AccountId,direction));
+
+    private Guid AccountId => UserContext.Current.CurrentAccountId ?? throw new UnauthorizedAccessException();
+    private bool busy;
+    private string? error;
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return; busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Agreement financial processing failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}

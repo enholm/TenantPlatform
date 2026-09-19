@@ -1,0 +1,72 @@
+@page "/agreements/bases/{BasisId:guid}"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementBasisDetailsPage> Logger
+@using System.Text.Json
+
+<PageTitle>@L["ProcessingBasisDetails"]</PageTitle><a href="/agreements/bases">@L["ProcessingBases"]</a><h1>@L["ProcessingBasisDetails"]</h1><p>@L["ProcessingBasisHelp"]</p>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (busy) { <p role="status">@L["Loading"]</p> }
+
+@if(data is not null)
+{
+<p><strong>@L[$"ProcessingDirection{data.Basis.Direction}"] · @L[$"ProcessingStatus{data.Basis.Status}"]</strong> · @data.Basis.Id · @data.Basis.InvoiceDate.ToString("d")</p>
+<a href="@($"/agreements/{data.Basis.AgreementId}")">@L["Agreements"]</a>
+@if(data.Basis.OriginalBasisId.HasValue){<p>@L["ProcessingCorrection"]: <a href="@($"/agreements/bases/{data.Basis.OriginalBasisId}")">@data.Basis.OriginalBasisId</a></p>}
+<details class="mb-3"><summary>@L["ProcessingTreatmentHistory"]</summary>
+<p>@L["ProcessingGenerated"]: @data.Basis.GeneratedUtc.ToString("u") · @data.Basis.GeneratedByUserId</p>
+@if(data.Basis.ApprovedUtc.HasValue){<p>@L["ProcessingApproved"]: @data.Basis.ApprovedUtc.Value.ToString("u") · @data.Basis.ApprovedByUserId</p>}
+@if(data.Basis.CancelledUtc.HasValue){<p>@L["ProcessingCancelled"]: @data.Basis.CancelledUtc.Value.ToString("u") · @data.Basis.CancelledByUserId</p>}
+@if(!string.IsNullOrEmpty(data.Basis.Reason)){<p>@L["NoticeReason"]: @data.Basis.Reason</p>}
+</details>
+@if(data.Stale){<div class="alert alert-warning">@L["ProcessingStale"]</div>}
+@if(data.NeedsCorrection){<div class="alert alert-warning">@L["ProcessingCorrectionNeeded"]</div>}
+<fieldset disabled="@busy">
+@if(data.Basis.Status != AgreementBasisStatus.Cancelled && data.CanEdit){<label for="basis-reason">@L["NoticeReason"]</label><input id="basis-reason" class="form-control mb-2" @bind="reason" maxlength="2000" /><div class="mb-3">
+@if(data.Basis.Status==AgreementBasisStatus.Draft){<button class="btn btn-outline-primary me-2" @onclick="Regenerate">@L["ProcessingRegenerate"]</button>@if(data.CanApprove){<button class="btn btn-success me-2" disabled="@data.Stale" @onclick="Approve">@L["ProcessingApproveLock"]</button>}}
+@if(data.Basis.Status==AgreementBasisStatus.Approved && !data.Basis.OriginalBasisId.HasValue){<button class="btn btn-outline-primary me-2" @onclick="Correct">@L["ProcessingCreateCorrection"]</button>}
+@if(data.CanApprove){<button class="btn btn-outline-danger" @onclick="Cancel">@L["ProcessingCancel"]</button>}
+</div>}
+</fieldset>
+@foreach(var snapshot in data.Snapshots)
+{
+var body=JsonSerializer.Deserialize<AgreementBasisData>(snapshot.DataJson)!;
+<details class="card p-3 mb-3" open="@(snapshot.Revision==data.Basis.Revision)"><summary>@L["ProcessingRevision"] @snapshot.Revision · @body.Events.Sum(x=>x.Amount).ToString("N2") @body.Currency</summary>
+<p>@body.AccountName · @body.AgreementTitle · @body.CounterpartyName · @L[body.TaxTreatment]</p><p>@snapshot.RecordedUtc.ToString("u") · @snapshot.ActorUserId · @(snapshot.Reason.StartsWith("Processing")?L[snapshot.Reason]:snapshot.Reason)</p>
+@if(body.PreviousSnapshotIds.Count>0){<p>@L["ProcessingNetSnapshots"]: @string.Join(", ",body.PreviousSnapshotIds)</p>}
+@foreach(var e in body.Events){<div class="border-top mt-3"><p>@L["FinanceEvent"]: @e.EventKey</p>
+@if(data.Basis.OriginalBasisId.HasValue){<p>@L["ProcessingDifference",e.TargetAmount.ToString("N2"),e.PreviousAmount.ToString("N2"),e.Amount.ToString("N2")] @body.Currency</p>}
+<AgreementPeriodTable Periods="e.Segments" />
+@foreach(var adjustment in e.Adjustments){<details><summary>@L["ProcessingAdjustments"] · @adjustment.Id</summary><AgreementAdjustmentExplanation Calculation="@(JsonSerializer.Deserialize<AgreementAdjustmentCalculation>(adjustment.CalculationJson)!)" /></details>}
+</div>}
+</details>
+}
+}
+
+@code {
+    [Parameter] public Guid BasisId {get;set;}
+    private AgreementBasisDetails? data;
+    private string reason="";
+    protected override Task OnParametersSetAsync()=>Run(Load);
+    private async Task Load()=>data=await Service.GetBasisAsync(AccountId,BasisId);
+    private Task Regenerate()=>Run(async()=>{await Service.RegenerateBasisAsync(AccountId,BasisId,data!.Basis.Revision,reason);await Load();});
+    private Task Approve()=>Run(async()=>{await Service.ApproveBasisAsync(AccountId,BasisId,data!.Basis.Revision);await Load();});
+    private Task Cancel()=>Run(async()=>{await Service.CancelBasisAsync(AccountId,BasisId,data!.Basis.Revision,reason);await Load();});
+    private Task Correct()=>Run(async()=>{var id=await Service.CreateCorrectionAsync(AccountId,BasisId,reason);Navigation.NavigateTo($"/agreements/bases/{id}");});
+
+    private Guid AccountId => UserContext.Current.CurrentAccountId ?? throw new UnauthorizedAccessException();
+    private bool busy;
+    private string? error;
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return; busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Agreement financial processing failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}

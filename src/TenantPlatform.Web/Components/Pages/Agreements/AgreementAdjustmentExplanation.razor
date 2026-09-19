@@ -1,0 +1,7 @@
+<p>@L["ProcessingCalculationOrder"]</p>
+<p>@L["ProcessingBasePrice"]: @Calculation.BasePrice.UnitPrice · @L["ProcessingRawIndex"]: @Calculation.RawIndexPercent.ToString("N6") % · @L["ProcessingAppliedRate"]: @Calculation.AppliedPercent.ToString("N6") % → @Calculation.NewPrice.ToString("N2")</p>
+@if(Calculation.BaseIndex is {} basis){<p>@L["ProcessingBasePeriod"]: @basis.Period.ToString("d") · @basis.Value · @L["ProcessingRevision"] @basis.Revision · @basis.Id</p>}
+@if(Calculation.ComparisonIndex is {} compare){<p>@L["ProcessingComparisonPeriod"]: @compare.Period.ToString("d") · @compare.Value · @L["ProcessingRevision"] @compare.Revision · @compare.Id</p>}
+<p>@L["FinanceLineVersion"]: @Calculation.Line.Id · @L["FinancePriceVersion"]: @Calculation.CurrentPrice.Id · @L["FinanceEffectiveFrom"]: @Calculation.EffectiveDate.ToString("d")</p>
+<AgreementRuleSummary Rule="Calculation.Rule" />
+@code { [Parameter, EditorRequired] public AgreementAdjustmentCalculation Calculation {get;set;} = default!; }

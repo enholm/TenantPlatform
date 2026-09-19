@@ -14,6 +14,14 @@ namespace TenantPlatform.Infrastructure.Persistence;
 
 public class TenantPlatformDbContext : DbContext
 {
+    public DbSet<AgreementIndex> AgreementIndexRecords => Set<AgreementIndex>();
+    public DbSet<AgreementIndexValue> AgreementIndexValueRecords => Set<AgreementIndexValue>();
+    public DbSet<AgreementAdjustmentRule> AgreementAdjustmentRuleRecords => Set<AgreementAdjustmentRule>();
+    public DbSet<AgreementAdjustmentDocument> AgreementAdjustmentDocumentRecords => Set<AgreementAdjustmentDocument>();
+    public DbSet<AgreementAdjustmentProposal> AgreementAdjustmentProposalRecords => Set<AgreementAdjustmentProposal>();
+    public DbSet<AgreementBasis> AgreementBasisRecords => Set<AgreementBasis>();
+    public DbSet<AgreementBasisSnapshot> AgreementBasisSnapshotRecords => Set<AgreementBasisSnapshot>();
+    public DbSet<AgreementBasisEvent> AgreementBasisEventRecords => Set<AgreementBasisEvent>();
     public DbSet<AgreementNoticeHistory> AgreementNoticeHistory => Set<AgreementNoticeHistory>();
     public DbSet<AgreementLine> AgreementLines => Set<AgreementLine>();
     public DbSet<AgreementLineVersion> AgreementLineVersions => Set<AgreementLineVersion>();

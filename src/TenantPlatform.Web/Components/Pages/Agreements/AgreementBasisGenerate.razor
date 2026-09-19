@@ -1,0 +1,42 @@
+@page "/agreements/{AgreementId:guid}/basis"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementBasisGenerate> Logger
+@using System.Text.Json
+
+<PageTitle>@L["ProcessingGenerate"]</PageTitle><a href="@($"/agreements/{AgreementId}/lines")">@L["FinanceLinesAndForecast"]</a><h1>@L["ProcessingGenerate"]</h1><p>@L["ProcessingGenerationHelp"]</p>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (busy) { <p role="status">@L["Loading"]</p> }
+
+@if(lines?.Direction is not null){<h2 class="h5">@L[$"ProcessingDirection{lines.Direction}"] · @lines.Currency</h2>
+<fieldset disabled="@busy"><div class="row g-3 mb-3"><div class="col-md-4"><label for="basis-from">@L["FinanceFrom"]</label><InputDate id="basis-from" class="form-control" @bind-Value="from" /></div><div class="col-md-4"><label for="basis-to">@L["ProcessingTo"]</label><InputDate id="basis-to" class="form-control" @bind-Value="to" /></div><div class="col-md-4 align-self-end"><button class="btn btn-outline-primary me-2" @onclick="Preview">@L["ProcessingPreview"]</button>@if(lines.CanEdit){<button class="btn btn-primary" @onclick="Generate">@L["ProcessingGenerateDraft"]</button>}</div></div></fieldset>
+@if(preview is not null){<p>@L["FinanceDirectionIncome"]: @preview.Income.ToString("N2") @preview.Currency · @L["FinanceDirectionCost"]: @preview.Cost.ToString("N2") @preview.Currency</p><AgreementPeriodTable Periods="preview.Periods" />}
+@if(result is not null){<div class="alert alert-info">@L["ProcessingRunResult",result.Created.Count,result.Existing.Count]</div>@foreach(var id in result.Created.Concat(result.Existing)){<p><a href="@($"/agreements/bases/{id}")">@L["Open"] · @id</a></p>}}
+}else if(lines is not null){<p>@L["FinanceSetupRequired"]</p>}
+
+@code {
+    [Parameter] public Guid AgreementId {get;set;}
+    private AgreementLinesDto? lines;
+    private AgreementForecastDto? preview;
+    private AgreementBasisRun? result;
+    private DateOnly from=new(DateTime.Today.Year,DateTime.Today.Month,1),to=new DateOnly(DateTime.Today.Year,DateTime.Today.Month,1).AddMonths(1).AddDays(-1);
+    protected override Task OnParametersSetAsync()=>Run(async()=>lines=await Service.GetLinesAsync(AccountId,AgreementId));
+    private Task Preview()=>Run(async()=>preview=await Service.PreviewBasisAsync(AccountId,AgreementId,lines!.Direction!.Value,from,to));
+    private Task Generate()=>Run(async()=>{result=await Service.GenerateBasisAsync(AccountId,AgreementId,lines!.Direction!.Value,from,to); preview=await Service.PreviewBasisAsync(AccountId,AgreementId,lines.Direction.Value,from,to);});
+
+    private Guid AccountId => UserContext.Current.CurrentAccountId ?? throw new UnauthorizedAccessException();
+    private bool busy;
+    private string? error;
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return; busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Agreement financial processing failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}

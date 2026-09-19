@@ -24,6 +24,11 @@
             <span>@L["FollowupTitle"]</span>
         </NavLink>
     }
+    @if (permissions.CanSeeAgreements)
+    {
+        <NavLink href="/agreements/indices" class="sidebar-link"><i class="bi bi-graph-up"></i><span>@L["ProcessingIndices"]</span></NavLink>
+        <NavLink href="/agreements/bases" class="sidebar-link"><i class="bi bi-files"></i><span>@L["ProcessingBases"]</span></NavLink>
+    }
     @if (permissions.CanSeeMeetingRooms)
     {
         <NavLink href="/meeting-rooms" class="sidebar-link">

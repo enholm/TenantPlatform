@@ -46,7 +46,7 @@ public static class AgreementPeriodCalculator
         var publishedSequences = published.Select(x => (x.LineId, x.Sequence)).ToHashSet();
         // Every price version is issued with a line snapshot of the same sequence.
         // Abandoned draft dates/prices must never take effect after later activation.
-        var prices = priceVersions.Where(x => publishedSequences.Contains((x.LineId, x.Sequence))).ToLookup(x => x.LineId);
+        var prices = priceVersions.Where(x => x.Independent || publishedSequences.Contains((x.LineId, x.Sequence))).ToLookup(x => x.LineId);
         foreach (var line in published.GroupBy(x => x.LineId))
         {
             var versions = line.OrderBy(x => x.EffectiveFrom).ThenBy(x => x.Sequence).ToArray();
@@ -83,24 +83,39 @@ public static class AgreementPeriodCalculator
                 }
             }
         }
-        return result.OrderBy(x => x.From).ThenBy(x => x.LineId).ThenBy(x => x.Included).ToList();
+        // Allocate rounding across the whole logical event before applying the overlap filter.
+        var rounded = new List<AgreementCalculatedPeriod>();
+        foreach (var group in result.GroupBy(x => x.EventKey))
+        {
+            decimal raw = 0, previous = 0;
+            foreach (var row in group.OrderBy(x => x.From).ThenBy(x => x.PriceVersionId))
+            {
+                raw += row.Included ? 0 : row.Quantity * row.UnitPrice * row.ActiveDays / row.ReferenceDays;
+                var cumulative = decimal.Round(raw, 2, MidpointRounding.AwayFromZero);
+                rounded.Add(row with { Amount = cumulative - previous }); previous = cumulative;
+            }
+        }
+        return rounded.Where(x => x.From <= to && x.To >= from).OrderBy(x => x.From).ThenBy(x => x.LineId).ThenBy(x => x.Included).ToList();
 
         void Add(AgreementLineVersion v, DateOnly referenceFrom, DateOnly referenceUntil,
             DateOnly actualFrom, DateOnly actualUntil, bool included, bool once)
         {
-            // Overlap is a filter only. Never clip a calculated amount to the search window.
-            if (actualFrom > to || actualUntil <= from) return;
-            var price = prices[v.LineId].Where(x => x.AgreementId == agreementId && x.EffectiveFrom <= actualFrom)
-                .OrderByDescending(x => x.EffectiveFrom).ThenByDescending(x => x.Sequence).FirstOrDefault()
-                ?? throw new AgreementValidationException("FinanceMissingPrice");
-            int days = actualUntil.DayNumber - actualFrom.DayNumber, totalDays = referenceUntil.DayNumber - referenceFrom.DayNumber;
-            var amount = included ? 0 : decimal.Round(price.Quantity * price.UnitPrice * days / totalDays, 2, MidpointRounding.AwayFromZero);
             var invoice = v.BillingTiming == AgreementBillingTiming.Advance ? actualFrom : actualUntil;
-            result.Add(new(agreementId, v.LineId, v.Name, direction, currency, referenceFrom, referenceUntil.AddDays(-1),
-                actualFrom, actualUntil.AddDays(-1), invoice, price.Quantity, price.UnitPrice, days, totalDays, amount, included,
-                v.Id, price.Id, once ? $"{v.LineId:N}:once" : $"{v.LineId:N}:{referenceFrom:yyyyMMdd}:{actualFrom:yyyyMMdd}",
-                v.Documents.Select(x => x.DocumentId).Order().ToArray()));
-            if (result.Count > 20000) throw new AgreementValidationException("FinanceInvalidRange");
+            var boundaries = prices[v.LineId].Where(x => x.EffectiveFrom > actualFrom && x.EffectiveFrom < actualUntil)
+                .Select(x => x.EffectiveFrom).Append(actualFrom).Append(actualUntil).Distinct().Order().ToArray();
+            for (var part = 0; part < boundaries.Length - 1; part++)
+            {
+                var partFrom = boundaries[part]; var partUntil = boundaries[part + 1];
+                var price = prices[v.LineId].Where(x => x.AgreementId == agreementId && x.EffectiveFrom <= partFrom)
+                    .OrderByDescending(x => x.EffectiveFrom).ThenByDescending(x => x.Sequence).FirstOrDefault()
+                    ?? throw new AgreementValidationException("FinanceMissingPrice");
+                int days = partUntil.DayNumber - partFrom.DayNumber, totalDays = referenceUntil.DayNumber - referenceFrom.DayNumber;
+                result.Add(new(agreementId, v.LineId, v.Name, direction, currency, referenceFrom, referenceUntil.AddDays(-1),
+                    partFrom, partUntil.AddDays(-1), invoice, price.Quantity, price.UnitPrice, days, totalDays, 0, included,
+                    v.Id, price.Id, once ? $"{v.LineId:N}:once" : $"{v.LineId:N}:{referenceFrom:yyyyMMdd}",
+                    v.Documents.Select(x => x.DocumentId).Order().ToArray()));
+                if (result.Count > 20000) throw new AgreementValidationException("FinanceInvalidRange");
+            }
         }
     }
 

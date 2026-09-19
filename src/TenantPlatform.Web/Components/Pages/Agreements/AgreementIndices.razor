@@ -1,0 +1,71 @@
+@page "/agreements/indices"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementIndices> Logger
+@using System.Text.Json
+
+<PageTitle>@L["ProcessingIndices"]</PageTitle>
+<h1>@L["ProcessingIndices"]</h1><p>@L["ProcessingIndexHelp"]</p>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (busy) { <p role="status">@L["Loading"]</p> }
+
+@if (data is not null)
+{
+<fieldset disabled="@busy">
+@if (data.CanWrite)
+{
+<details class="card mb-3 p-3"><summary>@L["ProcessingNewIndex"]</summary><div class="row g-3 mt-1">
+<div class="col-md-3"><label for="index-code">@L["ProcessingCode"]</label><input id="index-code" class="form-control" @bind="code" maxlength="50" /></div>
+<div class="col-md-5"><label for="index-name">@L["Name"]</label><input id="index-name" class="form-control" @bind="name" maxlength="200" /></div>
+<div class="col-md-4"><label for="index-resolution">@L["ProcessingResolution"]</label><select id="index-resolution" class="form-select" @bind="resolution">@foreach(var v in Enum.GetValues<AgreementIndexResolution>()){<option value="@v">@L[$"ProcessingResolution{v}"]</option>}</select></div>
+<div class="col-md-6"><label for="index-source">@L["ProcessingSource"]</label><input id="index-source" class="form-control" @bind="source" maxlength="2000" /></div>
+<div class="col-md-6"><label for="index-description">@L["Description"]</label><input id="index-description" class="form-control" @bind="description" maxlength="4000" /></div>
+<div><button class="btn btn-primary" @onclick="Create">@L["Save"]</button></div></div></details>
+<div class="card mb-3 p-3"><h2 class="h5">@L["ProcessingRecordValue"]</h2><div class="row g-3">
+<div class="col-md-4"><label for="value-index">@L["ProcessingIndex"]</label><select id="value-index" class="form-select" @bind="indexId"><option value="@Guid.Empty">@L["AgreementSelect"]</option>@foreach(var i in data.Indices){<option value="@i.Id">@i.Code — @i.Name</option>}</select></div>
+<div class="col-md-3"><label for="value-period">@L["ProcessingIndexPeriod"]</label><InputDate id="value-period" class="form-control" @bind-Value="period" /></div>
+<div class="col-md-2"><label for="index-value">@L["ProcessingIndexValue"]</label><input id="index-value" type="number" step="any" class="form-control" @bind="value" /></div>
+<div class="col-md-3"><label for="value-published">@L["ProcessingPublished"]</label><InputDate id="value-published" class="form-control" @bind-Value="published" /></div>
+<div class="col-12"><label for="value-reason">@L["NoticeReason"]</label><input id="value-reason" class="form-control" @bind="reason" maxlength="2000" /></div>
+<div><button class="btn btn-primary" @onclick="Record">@L["Save"]</button></div></div></div>
+}
+@if (data.Indices.Count == 0) { <p>@L["ProcessingEmpty"]</p> }
+@foreach(var i in data.Indices)
+{
+<div class="card mb-3 p-3"><h2 class="h5">@i.Code — @i.Name</h2><p>@i.Description · @i.Source · @L[$"ProcessingResolution{i.Resolution}"]</p>
+<details><summary>@L["ProcessingHistory"]</summary><div class="table-responsive"><table class="table table-hover"><thead><tr><th>@L["ProcessingIndexPeriod"]</th><th>@L["ProcessingIndexValue"]</th><th>@L["ProcessingRevision"]</th><th>@L["ProcessingPublished"]</th><th>@L["FinanceRecorded"]</th><th>@L["NoticeReason"]</th></tr></thead><tbody>
+@foreach(var v in data.Values.Where(x=>x.IndexId==i.Id)){<tr><td>@v.Period.ToString("d")</td><td>@v.Value</td><td>@v.Revision <small>@v.Id</small></td><td>@v.PublishedDate?.ToString("d")</td><td>@v.RecordedUtc.ToString("u") · @v.ActorUserId</td><td>@v.Reason</td></tr>}
+</tbody></table></div></details></div>
+}
+</fieldset>
+}
+
+@code {
+    private AgreementIndexRegister? data;
+    private string code = "", name = "", description = "", source = "", reason = "";
+    private AgreementIndexResolution resolution = AgreementIndexResolution.Month;
+    private Guid indexId;
+    private DateOnly period = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateOnly? published;
+    private decimal value;
+    protected override Task OnInitializedAsync() => Run(Load);
+    private async Task Load() => data = await Service.GetIndicesAsync(AccountId);
+    private Task Create() => Run(async () => { indexId = await Service.CreateIndexAsync(AccountId, code, name, description, source, resolution); code = name = description = source = ""; await Load(); });
+    private Task Record() => Run(async () => { await Service.RecordIndexValueAsync(AccountId, indexId, period, value, published, reason); reason = ""; await Load(); });
+
+    private Guid AccountId => UserContext.Current.CurrentAccountId ?? throw new UnauthorizedAccessException();
+    private bool busy;
+    private string? error;
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return; busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Agreement financial processing failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}

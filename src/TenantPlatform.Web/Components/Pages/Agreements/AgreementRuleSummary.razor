@@ -1,0 +1,20 @@
+<p>@L[$"ProcessingKind{Rule.Kind}"] · @L[$"ProcessingBasis{Rule.Basis}"] · @L[$"ProcessingTiming{Rule.PriceTiming}"]</p>
+<dl class="row">
+<dt class="col-sm-4">@L["ProcessingFirstAllowed"]</dt><dd class="col-sm-8">@Rule.FirstAllowedDate.ToString("d")</dd>
+<dt class="col-sm-4">@L["ProcessingIntervalMonths"]</dt><dd class="col-sm-8">@Rule.IntervalMonths · @L[$"ProcessingAnchor{Rule.Anchor}"] · @Rule.AnchorDate.ToString("d")</dd>
+@if(Rule.Kind == AgreementAdjustmentKind.Index)
+{
+<dt class="col-sm-4">@L["ProcessingIndex"]</dt><dd class="col-sm-8">@Rule.IndexId · @L["ProcessingBasePeriod"]: @Rule.BaseIndexPeriod.ToString("d") · @L["ProcessingOffset"]: @Rule.ComparisonOffsetMonths</dd>
+<dt class="col-sm-4">@L["ProcessingShare"]</dt><dd class="col-sm-8">@Rule.SharePercent %</dd>
+<dt class="col-sm-4">@L["ProcessingAddition"]</dt><dd class="col-sm-8">@L[$"ProcessingAddition{Rule.Addition}"] · @Rule.AdditionPercent %</dd>
+}
+@if(Rule.Kind == AgreementAdjustmentKind.Percentage)
+{
+<dt class="col-sm-4">@L["ProcessingFixedPercent"]</dt><dd class="col-sm-8">@Rule.FixedPercent %</dd>
+}
+<dt class="col-sm-4">@L["ProcessingFloor"] / @L["ProcessingCeiling"]</dt><dd class="col-sm-8">@Rule.FloorPercent / @Rule.CeilingPercent % · @L["ProcessingAllowDecrease"]: @L[Rule.AllowDecrease ? "ProcessingYes" : "ProcessingNo"]</dd>
+<dt class="col-sm-4">@L["FinancePriceVersion"]</dt><dd class="col-sm-8">@Rule.BasePriceVersionId</dd>
+<dt class="col-sm-4">@L["ProcessingRuleVersion"]</dt><dd class="col-sm-8">@Rule.Id · @Rule.EffectiveFrom.ToString("d") · @Rule.RecordedUtc.ToString("u") · @Rule.ActorUserId · @Rule.Reason</dd>
+</dl>
+@foreach(var d in Rule.Documents){<p><a href="@($"/agreements/documents/{d.DocumentId}/download")">@L["AgreementDocuments"] · @d.DocumentId</a></p>}
+@code { [Parameter, EditorRequired] public AgreementAdjustmentRule Rule {get;set;} = default!; }

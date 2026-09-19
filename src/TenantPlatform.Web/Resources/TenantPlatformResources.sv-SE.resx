@@ -2122,4 +2122,124 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="FinanceLineClosed" xml:space="preserve"><value>Raden är inte aktiv eller är redan avslutad/avaktiverad.</value></data>
   <data name="FinanceBoundaryRequired" xml:space="preserve"><value>Ändringen kräver motivering och en senare gräns som är giltig för både gammal och ny period. Aktiverade engångsrader kan inte prisändras.</value></data>
   <data name="FinanceStartLocked" xml:space="preserve"><value>Aktiverad leveransstart, betalningsgrund och leveransslut kan inte ändras här. Använd den separata avslutsåtgärden.</value></data>
+  <data name="ProcessingIndices" xml:space="preserve"><value>Indexregister</value></data>
+  <data name="ProcessingIndexHelp" xml:space="preserve"><value>Index tillhör kontot. Kontoadministratörer registrerar värden; korrigering skapar en ny revision.</value></data>
+  <data name="ProcessingNewIndex" xml:space="preserve"><value>Nytt index</value></data>
+  <data name="ProcessingCode" xml:space="preserve"><value>Kod</value></data>
+  <data name="ProcessingResolution" xml:space="preserve"><value>Periodupplösning</value></data>
+  <data name="ProcessingResolutionMonth" xml:space="preserve"><value>Månad</value></data>
+  <data name="ProcessingResolutionQuarter" xml:space="preserve"><value>Kvartal</value></data>
+  <data name="ProcessingResolutionYear" xml:space="preserve"><value>År</value></data>
+  <data name="ProcessingSource" xml:space="preserve"><value>Källinformation</value></data>
+  <data name="ProcessingRecordValue" xml:space="preserve"><value>Registrera värde eller korrigering</value></data>
+  <data name="ProcessingIndex" xml:space="preserve"><value>Index</value></data>
+  <data name="ProcessingIndexPeriod" xml:space="preserve"><value>Indexperiod (första dagen)</value></data>
+  <data name="ProcessingIndexValue" xml:space="preserve"><value>Indexvärde</value></data>
+  <data name="ProcessingPublished" xml:space="preserve"><value>Publiceringsdatum</value></data>
+  <data name="ProcessingHistory" xml:space="preserve"><value>Värdehistorik</value></data>
+  <data name="ProcessingRevision" xml:space="preserve"><value>Revision</value></data>
+  <data name="ProcessingEmpty" xml:space="preserve"><value>Inga resultat.</value></data>
+  <data name="ProcessingAdjustments" xml:space="preserve"><value>Prisjusteringar</value></data>
+  <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Beräkna förslag och granska underlaget före uttryckligt godkännande. Ingen faktura eller e-post skickas.</value></data>
+  <data name="ProcessingNewRule" xml:space="preserve"><value>Ny regelversion</value></data>
+  <data name="ProcessingRuleHelp" xml:space="preserve"><value>Regler sparas som daterade versioner. Justeringstakt är oberoende av betalningstakt. Golv och tak gäller total sats efter tillägg.</value></data>
+  <data name="ProcessingLine" xml:space="preserve"><value>Avtalsrad</value></data>
+  <data name="ProcessingRuleKind" xml:space="preserve"><value>Justeringstyp</value></data>
+  <data name="ProcessingKindFixed" xml:space="preserve"><value>Fast pris utan justering</value></data>
+  <data name="ProcessingKindIndex" xml:space="preserve"><value>Indexjustering</value></data>
+  <data name="ProcessingKindPercentage" xml:space="preserve"><value>Fast procentuell justering</value></data>
+  <data name="ProcessingKindLimit" xml:space="preserve"><value>Tillåten ram – manuellt val</value></data>
+  <data name="ProcessingFirstAllowed" xml:space="preserve"><value>Första tillåtna justeringsdatum</value></data>
+  <data name="ProcessingIntervalMonths" xml:space="preserve"><value>Månader mellan justeringar</value></data>
+  <data name="ProcessingAdjustmentAnchor" xml:space="preserve"><value>Förankring för justering</value></data>
+  <data name="ProcessingAnchorReferenceDate" xml:space="preserve"><value>Angivet referensdatum</value></data>
+  <data name="ProcessingAnchorAnniversary" xml:space="preserve"><value>Avtalets årsdag</value></data>
+  <data name="ProcessingAnchorAnnualDate" xml:space="preserve"><value>Fast årligt datum</value></data>
+  <data name="ProcessingPriceTiming" xml:space="preserve"><value>Verkan inom betalningsperioden</value></data>
+  <data name="ProcessingTimingNextPeriod" xml:space="preserve"><value>Nästa hela betalningsperiod</value></data>
+  <data name="ProcessingTimingSplit" xml:space="preserve"><value>Dela perioden vid ikraftträdandedatum</value></data>
+  <data name="ProcessingShare" xml:space="preserve"><value>Andel av indexförändringen (%)</value></data>
+  <data name="ProcessingPriceBasis" xml:space="preserve"><value>Prisgrund</value></data>
+  <data name="ProcessingBasisOriginal" xml:space="preserve"><value>Ursprungligt baspris</value></data>
+  <data name="ProcessingBasisLatest" xml:space="preserve"><value>Senast gällande pris</value></data>
+  <data name="ProcessingBasePeriod" xml:space="preserve"><value>Basperiod</value></data>
+  <data name="ProcessingOffset" xml:space="preserve"><value>Jämförelseperiod: månadsförskjutning</value></data>
+  <data name="ProcessingAddition" xml:space="preserve"><value>Tilläggstyp</value></data>
+  <data name="ProcessingAdditionNone" xml:space="preserve"><value>Inget tillägg</value></data>
+  <data name="ProcessingAdditionPercentagePoints" xml:space="preserve"><value>Procentenheter till satsen</value></data>
+  <data name="ProcessingAdditionPriceMarkup" xml:space="preserve"><value>Procentpåslag på justerat pris</value></data>
+  <data name="ProcessingAdditionPercent" xml:space="preserve"><value>Tilläggsvärde (%)</value></data>
+  <data name="ProcessingFixedPercent" xml:space="preserve"><value>Fast justeringssats (%)</value></data>
+  <data name="ProcessingFloor" xml:space="preserve"><value>Golv, total sats (%)</value></data>
+  <data name="ProcessingCeiling" xml:space="preserve"><value>Tak, total sats (%)</value></data>
+  <data name="ProcessingAllowDecrease" xml:space="preserve"><value>Tillåt prissänkning</value></data>
+  <data name="ProcessingRuleHistory" xml:space="preserve"><value>Regelhistorik</value></data>
+  <data name="ProcessingTo" xml:space="preserve"><value>Till datum (högst ett år)</value></data>
+  <data name="ProcessingFindDue" xml:space="preserve"><value>Hitta kommande justeringar</value></data>
+  <data name="ProcessingSelectCandidate" xml:space="preserve"><value>Välj för beräkning</value></data>
+  <data name="ProcessingChosenPercent" xml:space="preserve"><value>Vald sats inom ramen (%; krävs för tillåten ram)</value></data>
+  <data name="ProcessingPropose" xml:space="preserve"><value>Beräkna förslag</value></data>
+  <data name="ProcessingActualChange" xml:space="preserve"><value>Förändring från föregående pris</value></data>
+  <data name="ProcessingApprove" xml:space="preserve"><value>Godkänn och genomför</value></data>
+  <data name="ProcessingReject" xml:space="preserve"><value>Avvisa</value></data>
+  <data name="ProcessingProposalPending" xml:space="preserve"><value>För granskning</value></data>
+  <data name="ProcessingProposalApproved" xml:space="preserve"><value>Genomförd</value></data>
+  <data name="ProcessingProposalRejected" xml:space="preserve"><value>Avvisad</value></data>
+  <data name="ProcessingProposalStale" xml:space="preserve"><value>Inaktuell</value></data>
+  <data name="ProcessingManualPrice" xml:space="preserve"><value>Daterad manuell priskorrigering</value></data>
+  <data name="ProcessingManualHelp" xml:space="preserve"><value>En ny prisversion skriver inte över historiska snapshots. Berört godkänt underlag kräver separat korrigering. Priset gäller till nästa registrerade prisversion.</value></data>
+  <data name="ProcessingBases" xml:space="preserve"><value>Faktura- och kostnadsunderlag</value></data>
+  <data name="ProcessingBasisHelp" xml:space="preserve"><value>Internt underlag, inte faktura, kreditnota, bokföring eller betalningsorder. Godkända snapshots bevaras. Annullering bevarar historik och frigör originalets händelser för ny generering.</value></data>
+  <data name="ProcessingDirectionIncome" xml:space="preserve"><value>Fakturaunderlag – intäkt</value></data>
+  <data name="ProcessingDirectionCost" xml:space="preserve"><value>Förväntat kostnadsunderlag</value></data>
+  <data name="ProcessingCorrection" xml:space="preserve"><value>Korrigeringsunderlag</value></data>
+  <data name="ProcessingStatusDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="ProcessingStatusApproved" xml:space="preserve"><value>Godkänt och låst</value></data>
+  <data name="ProcessingStatusCancelled" xml:space="preserve"><value>Annullerat</value></data>
+  <data name="ProcessingListLimit" xml:space="preserve"><value>Visar de senaste 500 tillgängliga underlagen i vald riktning. Generera nya underlag från avtalets radsida.</value></data>
+  <data name="ProcessingGenerate" xml:space="preserve"><value>Förhandsvisa och generera underlag</value></data>
+  <data name="ProcessingGenerationHelp" xml:space="preserve"><value>Datumintervallet gäller planerat fakturadatum, inte leveransdatum. Hela perioder och alla prissegment ingår. Inkluderade perioder utan betalning ger inget underlag.</value></data>
+  <data name="ProcessingPreview" xml:space="preserve"><value>Förhandsvisa</value></data>
+  <data name="ProcessingGenerateDraft" xml:space="preserve"><value>Generera utkast</value></data>
+  <data name="ProcessingRunResult" xml:space="preserve"><value>Skapat {0}. Redan behandlat: {1}. Omkörning ändrar inte befintliga underlag.</value></data>
+  <data name="ProcessingBasisDetails" xml:space="preserve"><value>Underlagsdetaljer</value></data>
+  <data name="ProcessingGenerated" xml:space="preserve"><value>Genererat</value></data>
+  <data name="ProcessingApproved" xml:space="preserve"><value>Godkänt</value></data>
+  <data name="ProcessingCancelled" xml:space="preserve"><value>Annullerat</value></data>
+  <data name="ProcessingCorrectionNeeded" xml:space="preserve"><value>Aktuell beräkning avviker från godkänt nettounderlag. Skapa och granska ett korrigeringsunderlag.</value></data>
+  <data name="ProcessingRegenerate" xml:space="preserve"><value>Regenerera som ny revision</value></data>
+  <data name="ProcessingApproveLock" xml:space="preserve"><value>Godkänn och lås</value></data>
+  <data name="ProcessingCreateCorrection" xml:space="preserve"><value>Skapa differensunderlag</value></data>
+  <data name="ProcessingCancel" xml:space="preserve"><value>Annullera med motivering</value></data>
+  <data name="ProcessingNetSnapshots" xml:space="preserve"><value>Snapshots i godkänt nettounderlag</value></data>
+  <data name="ProcessingDifference" xml:space="preserve"><value>Mål {0} − godkänt netto {1} = korrigering {2}</value></data>
+  <data name="ProcessingRuleVersion" xml:space="preserve"><value>Regelversion</value></data>
+  <data name="ProcessingYes" xml:space="preserve"><value>Ja</value></data>
+  <data name="ProcessingNo" xml:space="preserve"><value>Nej</value></data>
+  <data name="ProcessingCalculationOrder" xml:space="preserve"><value>Indexkvot → avtalad andel → procentenheter eller påslag → reduktionsregel → totalt golv/tak → avrundning. Ursprunglig bas ackumulerar inte tidigare tillägg.</value></data>
+  <data name="ProcessingBasePrice" xml:space="preserve"><value>Baspris</value></data>
+  <data name="ProcessingRawIndex" xml:space="preserve"><value>Indexförändring</value></data>
+  <data name="ProcessingAppliedRate" xml:space="preserve"><value>Total sats mot baspris</value></data>
+  <data name="ProcessingComparisonPeriod" xml:space="preserve"><value>Jämförelseperiod</value></data>
+  <data name="ProcessingTaxExclusive" xml:space="preserve"><value>Belopp exklusive skatt; skatt har inte beräknats.</value></data>
+  <data name="ProcessingPeriodLocked" xml:space="preserve"><value>Betalningsfrekvens och förankring kan inte ändras efter generering. Använd en ny rad för nytt tidsförlopp.</value></data>
+  <data name="ProcessingReasonRequired" xml:space="preserve"><value>Ange en motivering på 1–2000 tecken.</value></data>
+  <data name="ProcessingInvalidIndex" xml:space="preserve"><value>Kontrollera indexfälten. Värdet måste vara positivt och perioden första dagen i rätt månad, kvartal eller år.</value></data>
+  <data name="ProcessingInvalidRule" xml:space="preserve"><value>Regelkombinationen eller beräkningsresultatet är ogiltigt. Kontrollera datum, bas, procent, golv och tak.</value></data>
+  <data name="ProcessingRuleOrder" xml:space="preserve"><value>En ny regelversion måste börja efter tidigare registrerade regler.</value></data>
+  <data name="ProcessingMissingIndex" xml:space="preserve"><value>Exakt bas- eller jämförelsevärde saknas. Registrera indexperioden före beräkning.</value></data>
+  <data name="ProcessingChoiceRequired" xml:space="preserve"><value>Tillåten ram kräver en uttryckligt vald procentsats.</value></data>
+  <data name="ProcessingOutsideLimit" xml:space="preserve"><value>Vald justering ligger utanför tillåten ram.</value></data>
+  <data name="ProcessingFixedPrice" xml:space="preserve"><value>Fast pris har ingen justering.</value></data>
+  <data name="ProcessingMissingRule" xml:space="preserve"><value>Ingen gällande justeringsregel på detta datum.</value></data>
+  <data name="ProcessingNotDue" xml:space="preserve"><value>Datumet är inte ett tillåtet justeringsdatum för gällande regel och rad.</value></data>
+  <data name="ProcessingAlreadyAdjusted" xml:space="preserve"><value>Justeringen är redan genomförd eller intervallet sedan föregående justering är för kort.</value></data>
+  <data name="ProcessingStale" xml:space="preserve"><value>Förutsättningarna har ändrats. Beräkna förslaget på nytt eller regenerera utkastet och granska ny revision före godkännande.</value></data>
+  <data name="ProcessingWrongDirection" xml:space="preserve"><value>Avtalets ekonomiska riktning matchar inte vald underlagstyp.</value></data>
+  <data name="ProcessingOriginalRequired" xml:space="preserve"><value>Korrigering kräver ett godkänt originalunderlag.</value></data>
+  <data name="ProcessingInvoiceDateChanged" xml:space="preserve"><value>Planerat fakturadatum har ändrats. Annullera utkastet och generera nytt underlag.</value></data>
+  <data name="ProcessingCancelCorrectionsFirst" xml:space="preserve"><value>Annullera tillhörande korrigeringar före originalunderlaget.</value></data>
+  <data name="ProcessingNoDifference" xml:space="preserve"><value>Ingen differens mot aktuellt godkänt nettounderlag.</value></data>
+  <data name="ProcessingPriceIndexBasisChanged" xml:space="preserve"><value>Gällande pris saknar entydig tillhörande indexperiod efter en manuell prisändring. Registrera en ny regel med denna prisversion och rätt basperiod.</value></data>
+  <data name="ProcessingTreatmentHistory" xml:space="preserve"><value>Behandlingshistorik</value></data>
 </root>

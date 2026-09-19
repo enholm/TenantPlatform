@@ -2086,4 +2086,124 @@ This is a reminder, not a termination or renewal.</value>
   <data name="FinanceLineClosed" xml:space="preserve"><value>The line is not active or has already been ended/deactivated.</value></data>
   <data name="FinanceBoundaryRequired" xml:space="preserve"><value>The change requires a reason and a later boundary valid for both the old and new period. Activated one-off lines cannot be repriced.</value></data>
   <data name="FinanceStartLocked" xml:space="preserve"><value>Activated delivery start, payment basis and delivery end cannot change here. Use the separate closing action.</value></data>
+  <data name="ProcessingIndices" xml:space="preserve"><value>Index register</value></data>
+  <data name="ProcessingIndexHelp" xml:space="preserve"><value>Indices belong to this account. Account administrators record values; corrections create a new revision.</value></data>
+  <data name="ProcessingNewIndex" xml:space="preserve"><value>New index</value></data>
+  <data name="ProcessingCode" xml:space="preserve"><value>Code</value></data>
+  <data name="ProcessingResolution" xml:space="preserve"><value>Period resolution</value></data>
+  <data name="ProcessingResolutionMonth" xml:space="preserve"><value>Month</value></data>
+  <data name="ProcessingResolutionQuarter" xml:space="preserve"><value>Quarter</value></data>
+  <data name="ProcessingResolutionYear" xml:space="preserve"><value>Year</value></data>
+  <data name="ProcessingSource" xml:space="preserve"><value>Source information</value></data>
+  <data name="ProcessingRecordValue" xml:space="preserve"><value>Record value or correction</value></data>
+  <data name="ProcessingIndex" xml:space="preserve"><value>Index</value></data>
+  <data name="ProcessingIndexPeriod" xml:space="preserve"><value>Index period (first day)</value></data>
+  <data name="ProcessingIndexValue" xml:space="preserve"><value>Index value</value></data>
+  <data name="ProcessingPublished" xml:space="preserve"><value>Publication date</value></data>
+  <data name="ProcessingHistory" xml:space="preserve"><value>Value history</value></data>
+  <data name="ProcessingRevision" xml:space="preserve"><value>Revision</value></data>
+  <data name="ProcessingEmpty" xml:space="preserve"><value>No results.</value></data>
+  <data name="ProcessingAdjustments" xml:space="preserve"><value>Price adjustments</value></data>
+  <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Calculate proposals and review the evidence before explicit approval. No invoices or emails are sent.</value></data>
+  <data name="ProcessingNewRule" xml:space="preserve"><value>New rule version</value></data>
+  <data name="ProcessingRuleHelp" xml:space="preserve"><value>Rules are saved as dated versions. Adjustment frequency is independent of billing frequency. Floor and ceiling apply to the total rate after additions.</value></data>
+  <data name="ProcessingLine" xml:space="preserve"><value>Agreement line</value></data>
+  <data name="ProcessingRuleKind" xml:space="preserve"><value>Adjustment type</value></data>
+  <data name="ProcessingKindFixed" xml:space="preserve"><value>Fixed price without adjustment</value></data>
+  <data name="ProcessingKindIndex" xml:space="preserve"><value>Index adjustment</value></data>
+  <data name="ProcessingKindPercentage" xml:space="preserve"><value>Fixed percentage adjustment</value></data>
+  <data name="ProcessingKindLimit" xml:space="preserve"><value>Allowed range – manual choice</value></data>
+  <data name="ProcessingFirstAllowed" xml:space="preserve"><value>First permitted adjustment date</value></data>
+  <data name="ProcessingIntervalMonths" xml:space="preserve"><value>Months between adjustments</value></data>
+  <data name="ProcessingAdjustmentAnchor" xml:space="preserve"><value>Adjustment anchor</value></data>
+  <data name="ProcessingAnchorReferenceDate" xml:space="preserve"><value>Specified reference date</value></data>
+  <data name="ProcessingAnchorAnniversary" xml:space="preserve"><value>Agreement anniversary</value></data>
+  <data name="ProcessingAnchorAnnualDate" xml:space="preserve"><value>Fixed annual date</value></data>
+  <data name="ProcessingPriceTiming" xml:space="preserve"><value>Effect within billing period</value></data>
+  <data name="ProcessingTimingNextPeriod" xml:space="preserve"><value>Next full billing period</value></data>
+  <data name="ProcessingTimingSplit" xml:space="preserve"><value>Split period on effective date</value></data>
+  <data name="ProcessingShare" xml:space="preserve"><value>Share of index change (%)</value></data>
+  <data name="ProcessingPriceBasis" xml:space="preserve"><value>Price basis</value></data>
+  <data name="ProcessingBasisOriginal" xml:space="preserve"><value>Original base price</value></data>
+  <data name="ProcessingBasisLatest" xml:space="preserve"><value>Latest effective price</value></data>
+  <data name="ProcessingBasePeriod" xml:space="preserve"><value>Base period</value></data>
+  <data name="ProcessingOffset" xml:space="preserve"><value>Comparison period: month offset</value></data>
+  <data name="ProcessingAddition" xml:space="preserve"><value>Addition type</value></data>
+  <data name="ProcessingAdditionNone" xml:space="preserve"><value>No addition</value></data>
+  <data name="ProcessingAdditionPercentagePoints" xml:space="preserve"><value>Percentage points added to rate</value></data>
+  <data name="ProcessingAdditionPriceMarkup" xml:space="preserve"><value>Percentage markup on adjusted price</value></data>
+  <data name="ProcessingAdditionPercent" xml:space="preserve"><value>Addition value (%)</value></data>
+  <data name="ProcessingFixedPercent" xml:space="preserve"><value>Fixed adjustment rate (%)</value></data>
+  <data name="ProcessingFloor" xml:space="preserve"><value>Floor, total rate (%)</value></data>
+  <data name="ProcessingCeiling" xml:space="preserve"><value>Ceiling, total rate (%)</value></data>
+  <data name="ProcessingAllowDecrease" xml:space="preserve"><value>Allow price reduction</value></data>
+  <data name="ProcessingRuleHistory" xml:space="preserve"><value>Rule history</value></data>
+  <data name="ProcessingTo" xml:space="preserve"><value>To date (maximum one year)</value></data>
+  <data name="ProcessingFindDue" xml:space="preserve"><value>Find upcoming adjustments</value></data>
+  <data name="ProcessingSelectCandidate" xml:space="preserve"><value>Select for calculation</value></data>
+  <data name="ProcessingChosenPercent" xml:space="preserve"><value>Chosen rate within range (%; required for allowed range)</value></data>
+  <data name="ProcessingPropose" xml:space="preserve"><value>Calculate proposal</value></data>
+  <data name="ProcessingActualChange" xml:space="preserve"><value>Change from previous price</value></data>
+  <data name="ProcessingApprove" xml:space="preserve"><value>Approve and apply</value></data>
+  <data name="ProcessingReject" xml:space="preserve"><value>Reject</value></data>
+  <data name="ProcessingProposalPending" xml:space="preserve"><value>Pending review</value></data>
+  <data name="ProcessingProposalApproved" xml:space="preserve"><value>Applied</value></data>
+  <data name="ProcessingProposalRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="ProcessingProposalStale" xml:space="preserve"><value>Stale</value></data>
+  <data name="ProcessingManualPrice" xml:space="preserve"><value>Dated manual price correction</value></data>
+  <data name="ProcessingManualHelp" xml:space="preserve"><value>A new price version does not overwrite historical snapshots. Affected approved bases require a separate correction. The price applies until the next recorded price version.</value></data>
+  <data name="ProcessingBases" xml:space="preserve"><value>Invoice and cost bases</value></data>
+  <data name="ProcessingBasisHelp" xml:space="preserve"><value>Internal basis, not an invoice, credit note, posting or payment order. Approved snapshots are retained. Cancellation retains history and releases original events for regeneration.</value></data>
+  <data name="ProcessingDirectionIncome" xml:space="preserve"><value>Invoice basis – income</value></data>
+  <data name="ProcessingDirectionCost" xml:space="preserve"><value>Expected cost basis</value></data>
+  <data name="ProcessingCorrection" xml:space="preserve"><value>Correction basis</value></data>
+  <data name="ProcessingStatusDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="ProcessingStatusApproved" xml:space="preserve"><value>Approved and locked</value></data>
+  <data name="ProcessingStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="ProcessingListLimit" xml:space="preserve"><value>Shows the latest 500 accessible bases in the selected direction. Generate new bases from the agreement lines page.</value></data>
+  <data name="ProcessingGenerate" xml:space="preserve"><value>Preview and generate basis</value></data>
+  <data name="ProcessingGenerationHelp" xml:space="preserve"><value>The date range applies to planned invoice dates, not delivery dates. Whole periods and all price segments are included. Included periods without payment do not generate bases.</value></data>
+  <data name="ProcessingPreview" xml:space="preserve"><value>Preview</value></data>
+  <data name="ProcessingGenerateDraft" xml:space="preserve"><value>Generate draft</value></data>
+  <data name="ProcessingRunResult" xml:space="preserve"><value>Created {0}. Already processed: {1}. Reruns do not change existing bases.</value></data>
+  <data name="ProcessingBasisDetails" xml:space="preserve"><value>Basis details</value></data>
+  <data name="ProcessingGenerated" xml:space="preserve"><value>Generated</value></data>
+  <data name="ProcessingApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="ProcessingCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="ProcessingCorrectionNeeded" xml:space="preserve"><value>Current calculation differs from the approved net basis. Create and review a correction basis.</value></data>
+  <data name="ProcessingRegenerate" xml:space="preserve"><value>Regenerate as new revision</value></data>
+  <data name="ProcessingApproveLock" xml:space="preserve"><value>Approve and lock</value></data>
+  <data name="ProcessingCreateCorrection" xml:space="preserve"><value>Create difference basis</value></data>
+  <data name="ProcessingCancel" xml:space="preserve"><value>Cancel with reason</value></data>
+  <data name="ProcessingNetSnapshots" xml:space="preserve"><value>Snapshots in approved net basis</value></data>
+  <data name="ProcessingDifference" xml:space="preserve"><value>Target {0} − approved net {1} = correction {2}</value></data>
+  <data name="ProcessingRuleVersion" xml:space="preserve"><value>Rule version</value></data>
+  <data name="ProcessingYes" xml:space="preserve"><value>Yes</value></data>
+  <data name="ProcessingNo" xml:space="preserve"><value>No</value></data>
+  <data name="ProcessingCalculationOrder" xml:space="preserve"><value>Index ratio → agreed share → percentage points or markup → reduction rule → total floor/ceiling → rounding. Original basis does not compound previous additions.</value></data>
+  <data name="ProcessingBasePrice" xml:space="preserve"><value>Base price</value></data>
+  <data name="ProcessingRawIndex" xml:space="preserve"><value>Index change</value></data>
+  <data name="ProcessingAppliedRate" xml:space="preserve"><value>Total rate against base price</value></data>
+  <data name="ProcessingComparisonPeriod" xml:space="preserve"><value>Comparison period</value></data>
+  <data name="ProcessingTaxExclusive" xml:space="preserve"><value>Amounts exclude tax; tax has not been calculated.</value></data>
+  <data name="ProcessingPeriodLocked" xml:space="preserve"><value>Billing frequency and anchor cannot change after basis generation. Use a new line for a new schedule.</value></data>
+  <data name="ProcessingReasonRequired" xml:space="preserve"><value>Enter a reason of 1–2000 characters.</value></data>
+  <data name="ProcessingInvalidIndex" xml:space="preserve"><value>Check the index fields. Value must be positive and period must be the first day of the correct month, quarter or year.</value></data>
+  <data name="ProcessingInvalidRule" xml:space="preserve"><value>Rule combination or calculation result is invalid. Check dates, basis, percentages, floor and ceiling.</value></data>
+  <data name="ProcessingRuleOrder" xml:space="preserve"><value>A new rule version must start after previously recorded rules.</value></data>
+  <data name="ProcessingMissingIndex" xml:space="preserve"><value>The exact base or comparison value is missing. Record the index period before calculation.</value></data>
+  <data name="ProcessingChoiceRequired" xml:space="preserve"><value>An allowed range requires an explicitly chosen percentage.</value></data>
+  <data name="ProcessingOutsideLimit" xml:space="preserve"><value>Chosen adjustment is outside the allowed range.</value></data>
+  <data name="ProcessingFixedPrice" xml:space="preserve"><value>Fixed price has no adjustment.</value></data>
+  <data name="ProcessingMissingRule" xml:space="preserve"><value>No effective adjustment rule on this date.</value></data>
+  <data name="ProcessingNotDue" xml:space="preserve"><value>The date is not an allowed adjustment date for the current rule and line.</value></data>
+  <data name="ProcessingAlreadyAdjusted" xml:space="preserve"><value>The adjustment is already applied or the interval since the previous adjustment is too short.</value></data>
+  <data name="ProcessingStale" xml:space="preserve"><value>Inputs have changed. Recalculate the proposal or regenerate the draft and review the new revision before approval.</value></data>
+  <data name="ProcessingWrongDirection" xml:space="preserve"><value>The agreement direction does not match the requested basis type.</value></data>
+  <data name="ProcessingOriginalRequired" xml:space="preserve"><value>Correction requires an approved original basis.</value></data>
+  <data name="ProcessingInvoiceDateChanged" xml:space="preserve"><value>The planned invoice date changed. Cancel the draft and generate a new basis.</value></data>
+  <data name="ProcessingCancelCorrectionsFirst" xml:space="preserve"><value>Cancel related corrections before the original basis.</value></data>
+  <data name="ProcessingNoDifference" xml:space="preserve"><value>No difference from the current approved net basis.</value></data>
+  <data name="ProcessingPriceIndexBasisChanged" xml:space="preserve"><value>The current price has no unambiguous index period after a manual price change. Record a new rule with this price version and the correct base period.</value></data>
+  <data name="ProcessingTreatmentHistory" xml:space="preserve"><value>Processing history</value></data>
 </root>

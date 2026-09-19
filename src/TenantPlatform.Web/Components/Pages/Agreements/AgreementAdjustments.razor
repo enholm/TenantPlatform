@@ -1,0 +1,116 @@
+@page "/agreements/{AgreementId:guid}/adjustments"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementAdjustments> Logger
+@using System.Text.Json
+
+<PageTitle>@L["ProcessingAdjustments"]</PageTitle>
+<a href="@($"/agreements/{AgreementId}/lines")">@L["FinanceLinesAndForecast"]</a>
+<h1>@L["ProcessingAdjustments"]</h1><p>@L["ProcessingAdjustmentHelp"]</p>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (busy) { <p role="status">@L["Loading"]</p> }
+
+@if (data is not null && lines is not null && indices is not null)
+{
+<fieldset disabled="@busy">
+@if(data.CanEdit)
+{
+<details class="card mb-3 p-3"><summary>@L["ProcessingNewRule"]</summary><p>@L["ProcessingRuleHelp"]</p><div class="row g-3 mt-1">
+<div class="col-md-6"><label for="rule-line">@L["ProcessingLine"]</label><select id="rule-line" class="form-select" @bind="rule.LineId" @bind:after="SetPrice"><option value="@Guid.Empty">@L["AgreementSelect"]</option>@foreach(var line in lines.Lines.Where(x=>x.Line.ActivatedUtc.HasValue)){<option value="@line.Line.Id">@line.Versions[0].Name</option>}</select></div>
+<div class="col-md-6"><label for="rule-kind">@L["ProcessingRuleKind"]</label><select id="rule-kind" class="form-select" @bind="rule.Kind">@foreach(var v in Enum.GetValues<AgreementAdjustmentKind>()){<option value="@v">@L[$"ProcessingKind{v}"]</option>}</select></div>
+<div class="col-md-4"><label for="rule-effective">@L["FinanceEffectiveFrom"]</label><InputDate id="rule-effective" class="form-control" @bind-Value="rule.EffectiveFrom" /></div>
+<div class="col-md-4"><label for="rule-first">@L["ProcessingFirstAllowed"]</label><InputDate id="rule-first" class="form-control" @bind-Value="rule.FirstAllowedDate" /></div>
+<div class="col-md-4"><label for="rule-months">@L["ProcessingIntervalMonths"]</label><input id="rule-months" type="number" class="form-control" @bind="rule.IntervalMonths" /></div>
+<div class="col-md-4"><label for="rule-anchor">@L["ProcessingAdjustmentAnchor"]</label><select id="rule-anchor" class="form-select" @bind="rule.Anchor">@foreach(var v in Enum.GetValues<AgreementAdjustmentAnchor>()){<option value="@v">@L[$"ProcessingAnchor{v}"]</option>}</select></div>
+<div class="col-md-4"><label for="rule-anchor-date">@L["FinanceAnchorDateLabel"]</label><InputDate id="rule-anchor-date" class="form-control" @bind-Value="rule.AnchorDate" /></div>
+<div class="col-md-4"><label for="rule-timing">@L["ProcessingPriceTiming"]</label><select id="rule-timing" class="form-select" @bind="rule.PriceTiming">@foreach(var v in Enum.GetValues<AgreementPriceTiming>()){<option value="@v">@L[$"ProcessingTiming{v}"]</option>}</select></div>
+@if(rule.Kind == AgreementAdjustmentKind.Index)
+{
+<div class="col-md-4"><label for="rule-index">@L["ProcessingIndex"]</label><select id="rule-index" class="form-select" @bind="rule.IndexId"><option value="">@L["AgreementSelect"]</option>@foreach(var i in indices.Indices){<option value="@i.Id">@i.Code — @i.Name</option>}</select></div>
+<div class="col-md-4"><label for="rule-share">@L["ProcessingShare"]</label><input id="rule-share" type="number" step="any" class="form-control" @bind="rule.SharePercent" /></div>
+<div class="col-md-4"><label for="rule-basis">@L["ProcessingPriceBasis"]</label><select id="rule-basis" class="form-select" @bind="rule.Basis">@foreach(var v in Enum.GetValues<AgreementAdjustmentBasis>()){<option value="@v">@L[$"ProcessingBasis{v}"]</option>}</select></div>
+<div class="col-md-6"><label for="rule-base-price">@L["FinancePriceVersion"]</label><select id="rule-base-price" class="form-select" @bind="rule.BasePriceVersionId">@foreach(var p in lines.Lines.FirstOrDefault(x=>x.Line.Id==rule.LineId)?.Prices ?? []){<option @key="p.Id" value="@p.Id">@p.EffectiveFrom.ToString("d") · @p.UnitPrice · @p.Id</option>}</select></div>
+<div class="col-md-3"><label for="rule-base-period">@L["ProcessingBasePeriod"]</label><InputDate id="rule-base-period" class="form-control" @bind-Value="rule.BaseIndexPeriod" /></div>
+<div class="col-md-3"><label for="rule-offset">@L["ProcessingOffset"]</label><input id="rule-offset" type="number" class="form-control" @bind="rule.ComparisonOffsetMonths" /></div>
+<div class="col-md-6"><label for="rule-addition">@L["ProcessingAddition"]</label><select id="rule-addition" class="form-select" @bind="rule.Addition">@foreach(var v in Enum.GetValues<AgreementAdjustmentAddition>()){<option value="@v">@L[$"ProcessingAddition{v}"]</option>}</select></div>
+<div class="col-md-6"><label for="rule-addition-value">@L["ProcessingAdditionPercent"]</label><input id="rule-addition-value" type="number" step="any" class="form-control" @bind="rule.AdditionPercent" /></div>
+}
+@if(rule.Kind == AgreementAdjustmentKind.Percentage){<div class="col-md-4"><label for="rule-percent">@L["ProcessingFixedPercent"]</label><input id="rule-percent" type="number" step="any" class="form-control" @bind="rule.FixedPercent" /></div>}
+<div class="col-md-4"><label for="rule-floor">@L["ProcessingFloor"]</label><input id="rule-floor" type="number" step="any" class="form-control" @bind="rule.FloorPercent" /></div>
+<div class="col-md-4"><label for="rule-ceiling">@L["ProcessingCeiling"]</label><input id="rule-ceiling" type="number" step="any" class="form-control" @bind="rule.CeilingPercent" /></div>
+<div class="col-md-4"><label><input type="checkbox" @bind="rule.AllowDecrease" /> @L["ProcessingAllowDecrease"]</label></div>
+<div class="col-12"><label for="rule-reason">@L["NoticeReason"]</label><input id="rule-reason" class="form-control" @bind="rule.Reason" maxlength="2000" /></div>
+<div class="col-12">@L["AgreementDocuments"] @foreach(var d in lines.Documents){<label class="d-block"><input type="checkbox" checked="@documentIds.Contains(d.Id)" @onchange="e=>SelectDocument(d.Id,e)" /> @d.FileName</label>}</div>
+<div><button class="btn btn-primary" @onclick="SaveRule">@L["Save"]</button></div></div></details>
+}
+<details class="mb-3"><summary>@L["ProcessingRuleHistory"]</summary>@foreach(var r in data.Rules){<div class="card p-3 mb-2"><strong>@LineName(r.LineId) · @r.EffectiveFrom.ToString("d")</strong><AgreementRuleSummary Rule="r" /></div>}</details>
+<div class="card p-3 mb-3"><div class="row g-3">
+<div class="col-md-4"><label for="adjust-from">@L["FinanceFrom"]</label><InputDate id="adjust-from" class="form-control" @bind-Value="from" /></div>
+<div class="col-md-4"><label for="adjust-to">@L["ProcessingTo"]</label><InputDate id="adjust-to" class="form-control" @bind-Value="to" /></div>
+<div class="col-md-4 align-self-end"><button class="btn btn-outline-primary" @onclick="Find">@L["ProcessingFindDue"]</button></div></div>
+@if(candidates is not null){@foreach(var c in candidates){<div class="border-top mt-3 pt-2">@c.Name · @c.Date.ToString("d") @if(c.BlockedKey is not null){<span class="text-warning-emphasis">@L[c.BlockedKey]</span>}
+@if(data.CanEdit){<button class="btn btn-sm btn-outline-primary ms-2" @onclick="()=>ChooseCandidate(c)">@L["ProcessingSelectCandidate"]</button>}</div>}@if(candidates.Count==0){<p>@L["ProcessingEmpty"]</p>}}
+</div>
+@if(selected is not null && data.CanEdit){<div class="card p-3 mb-3"><p>@selected.Name · @selected.Date.ToString("d")</p><label for="chosen-percent">@L["ProcessingChosenPercent"]</label><input id="chosen-percent" type="number" step="any" class="form-control mb-2" @bind="chosen" /><button class="btn btn-primary" @onclick="Propose">@L["ProcessingPropose"]</button></div>}
+@if(data.CanApprove){<label for="decision-comment">@L["NoticeReason"]</label><input id="decision-comment" class="form-control mb-3" @bind="comment" maxlength="2000" />}
+@foreach(var p in data.Proposals)
+{
+<div class="card mb-3 p-3"><h2 class="h5">@LineName(p.LineId) · @p.OldPrice → @p.NewPrice @lines.Currency <span class="badge text-bg-secondary">@L[$"ProcessingProposal{p.Status}"]</span></h2>
+<p>@L["FinanceEffectiveFrom"]: @p.EffectiveDate.ToString("d") · @L["ProcessingActualChange"]: @(p.OldPrice == 0 ? "–" : ((p.NewPrice / p.OldPrice - 1) * 100).ToString("N4") + " %")</p>
+<details><summary>@L["FinanceCalculation"]</summary><AgreementAdjustmentExplanation Calculation="@(JsonSerializer.Deserialize<AgreementAdjustmentCalculation>(p.CalculationJson)!)" /></details>
+<p>@p.Comment · @p.DecidedUtc?.ToString("u") · @p.DecidedByUserId</p>
+@if(p.Status==AgreementProposalStatus.Pending && data.CanApprove){<div><button class="btn btn-success me-2" @onclick="()=>Decide(p.Id,true)">@L["ProcessingApprove"]</button><button class="btn btn-outline-danger" @onclick="()=>Decide(p.Id,false)">@L["ProcessingReject"]</button></div>}
+</div>
+}
+@if(data.CanApprove){<details class="card p-3 mb-3"><summary>@L["ProcessingManualPrice"]</summary><p>@L["ProcessingManualHelp"]</p><div class="row g-3 mt-1">
+<div class="col-md-4"><label for="manual-line">@L["ProcessingLine"]</label><select id="manual-line" class="form-select" @bind="manualLine"><option value="@Guid.Empty">@L["AgreementSelect"]</option>@foreach(var l in lines.Lines.Where(x=>x.Line.ActivatedUtc.HasValue)){<option value="@l.Line.Id">@l.Versions[0].Name</option>}</select></div>
+<div class="col-md-4"><label for="manual-date">@L["FinanceEffectiveFrom"]</label><InputDate id="manual-date" class="form-control" @bind-Value="manualDate" /></div>
+<div class="col-md-4"><label for="manual-price">@L["FinanceUnitPrice"]</label><input id="manual-price" type="number" step="any" class="form-control" @bind="manualPrice" /></div>
+<div class="col-md-6"><label for="manual-timing">@L["ProcessingPriceTiming"]</label><select id="manual-timing" class="form-select" @bind="manualTiming">@foreach(var t in Enum.GetValues<AgreementPriceTiming>()){<option value="@t">@L[$"ProcessingTiming{t}"]</option>}</select></div>
+<div class="col-md-6"><label for="manual-reason">@L["NoticeReason"]</label><input id="manual-reason" class="form-control" @bind="manualReason" maxlength="2000" /></div><div><button class="btn btn-primary" @onclick="Manual">@L["Save"]</button></div></div></details>}
+</fieldset>
+}
+
+@code {
+    [Parameter] public Guid AgreementId { get; set; }
+    private AgreementProcessingView? data;
+    private AgreementLinesDto? lines;
+    private AgreementIndexRegister? indices;
+    private AgreementAdjustmentRule rule = new() { EffectiveFrom = DateOnly.FromDateTime(DateTime.Today), FirstAllowedDate = DateOnly.FromDateTime(DateTime.Today), AnchorDate = DateOnly.FromDateTime(DateTime.Today), BaseIndexPeriod = new(DateTime.Today.Year-1,DateTime.Today.Month,1) };
+    private HashSet<Guid> documentIds = [];
+    private List<AgreementAdjustmentCandidate>? candidates;
+    private AgreementAdjustmentCandidate? selected;
+    private DateOnly from = DateOnly.FromDateTime(DateTime.Today), to = DateOnly.FromDateTime(DateTime.Today).AddYears(1).AddDays(-1), manualDate = DateOnly.FromDateTime(DateTime.Today);
+    private Guid manualLine;
+    private decimal manualPrice;
+    private AgreementPriceTiming manualTiming = AgreementPriceTiming.NextPeriod;
+    private decimal? chosen;
+    private string comment = "", manualReason = "";
+    protected override Task OnParametersSetAsync() => Run(Load);
+    private async Task Load() { lines = await Service.GetLinesAsync(AccountId,AgreementId); data = await Service.GetProcessingAsync(AccountId,AgreementId); indices = await Service.GetIndicesAsync(AccountId); }
+    private string LineName(Guid id) => lines?.Lines.FirstOrDefault(x=>x.Line.Id==id)?.Versions[0].Name ?? id.ToString();
+    private void SetPrice() => rule.BasePriceVersionId = lines?.Lines.FirstOrDefault(x=>x.Line.Id==rule.LineId)?.Prices[0].Id ?? Guid.Empty;
+    private void SelectDocument(Guid id, ChangeEventArgs e) { if(e.Value is true)documentIds.Add(id);else documentIds.Remove(id); }
+    private Task SaveRule() => Run(async () => { if(rule.Kind != AgreementAdjustmentKind.Index){rule.IndexId=null;rule.Addition=AgreementAdjustmentAddition.None;rule.Basis=AgreementAdjustmentBasis.Latest;} rule.Documents=documentIds.Select(id=>new AgreementAdjustmentDocument{DocumentId=id}).ToList(); await Service.SaveAdjustmentRuleAsync(AccountId,AgreementId,lines!.Revision,rule); await Load(); });
+    private Task Find() => Run(async () => candidates=await Service.FindAdjustmentsAsync(AccountId,AgreementId,from,to));
+    private void ChooseCandidate(AgreementAdjustmentCandidate c) { selected=c; chosen=null; }
+    private Task Propose() => Run(async () => { await Service.ProposeAdjustmentAsync(AccountId,AgreementId,selected!.LineId,selected.Date,chosen); selected=null; await Load(); });
+    private Task Decide(Guid id,bool approve) => Run(async () => { try { await Service.DecideAdjustmentAsync(AccountId,AgreementId,id,approve,comment); } finally { await Load(); } });
+    private Task Manual() => Run(async () => { await Service.ChangePriceAsync(AccountId,AgreementId,manualLine,lines!.Revision,manualDate,manualPrice,manualTiming,manualReason); await Load(); });
+
+    private Guid AccountId => UserContext.Current.CurrentAccountId ?? throw new UnauthorizedAccessException();
+    private bool busy;
+    private string? error;
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return; busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Agreement financial processing failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}

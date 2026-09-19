@@ -50,7 +50,8 @@ public class AgreementPriceVersionConfiguration : IEntityTypeConfiguration<Agree
     public void Configure(EntityTypeBuilder<AgreementPriceVersion> b)
     {
         b.ToTable("agreement_price_versions", t => t.HasCheckConstraint("CK_agreement_price_positive", "\"Quantity\" > 0 AND \"UnitPrice\" >= 0"));
-        b.HasKey(x => x.Id); b.HasIndex(x => new { x.AccountId, x.LineId, x.Sequence }).IsUnique();
+        b.HasKey(x => x.Id); b.HasAlternateKey(x => new { x.AccountId, x.AgreementId, x.Id }); b.HasIndex(x => new { x.AccountId, x.LineId, x.Sequence }).IsUnique();
+        b.HasOne<AgreementAdjustmentProposal>().WithMany().HasForeignKey(x => new { x.AccountId, x.AgreementId, x.AdjustmentId }).HasPrincipalKey(x => new { x.AccountId, x.AgreementId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         b.Property(x => x.Quantity).HasPrecision(18, 4); b.Property(x => x.UnitPrice).HasPrecision(18, 4);
         b.Property(x => x.Reason).HasMaxLength(2000);
         b.HasOne<AgreementLine>().WithMany().HasForeignKey(x => new { x.AccountId, x.AgreementId, x.LineId })

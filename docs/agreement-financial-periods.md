@@ -1,5 +1,9 @@
 # Avtalelinjer og forventede inntekter/kostnader – fase 1–3
 
+Fase 4–5 viderefører denne modellen. Se [indekser, justeringer og grunnlag](agreement-adjustments-basis.md)
+for utvidede prisregler, segmentering, avrunding og lagrede grunnlag. Avgrensningene
+nedenfor beskriver den opprinnelige leveransen av fase 1–3.
+
 ## Spesifikasjon og beslutninger før implementering
 
 Hovedavtalen er eksisterende Agreement med motpart, rettigheter og dokumentarkiv.

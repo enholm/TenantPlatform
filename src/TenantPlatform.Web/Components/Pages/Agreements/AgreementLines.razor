@@ -9,6 +9,7 @@
 <PageTitle>@L["FinanceLinesAndForecast"]</PageTitle>
 <a href="@($"/agreements/{AgreementId}")">@L["Agreements"]</a>
 <h1>@L["FinanceLinesAndForecast"]</h1>
+<div class="d-flex gap-3 mb-3"><a href="@($"/agreements/{AgreementId}/adjustments")">@L["ProcessingAdjustments"]</a><a href="@($"/agreements/{AgreementId}/basis")">@L["ProcessingGenerate"]</a></div>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (data is null) { <p>@L["Loading"]</p> }
 else

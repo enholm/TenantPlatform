@@ -43,8 +43,13 @@ public partial class AgreementService
         var old = allVersions.FirstOrDefault(x => x.LineId == line.Id);
         if (old?.Status is AgreementLineStatus.Ended or AgreementLineStatus.Deactivated) throw new AgreementValidationException("FinanceLineClosed");
         var active = line.ActivatedUtc.HasValue;
+        var lastPriceSequence = await db.AgreementPriceVersions.Where(x => x.AccountId == accountId && x.AgreementId == agreementId && x.LineId == line.Id)
+            .Select(x => (int?)x.Sequence).MaxAsync(ct) ?? 0;
+        if (active && (r.Frequency != old!.Frequency || r.Anchor != old.Anchor || (r.Anchor == AgreementAnchor.Date && r.AnchorDate != old.AnchorDate)) &&
+            await db.AgreementBasisEventRecords.AnyAsync(x => x.AccountId == accountId && x.AgreementId == agreementId && x.LineId == line.Id, ct))
+            throw new AgreementValidationException("ProcessingPeriodLocked");
         var v = new AgreementLineVersion { Id = Guid.NewGuid(), AccountId = accountId, AgreementId = agreementId,
-            LineId = line.Id, Sequence = (old?.Sequence ?? 0) + 1, EffectiveFrom = active ? r.EffectiveFrom : r.StartDate,
+            LineId = line.Id, Sequence = Math.Max(old?.Sequence ?? 0, lastPriceSequence) + 1, EffectiveFrom = active ? r.EffectiveFrom : r.StartDate,
             Name = r.Name.Trim(), Description = r.Description?.Trim(), StartDate = r.StartDate, EndDate = r.EndDate,
             FirstPayableDate = r.FirstPayableDate, PayableSourceLineId = r.PayableSourceLineId,
             PayableOffsetMonths = r.PayableSourceLineId.HasValue ? r.PayableOffsetMonths : null,
