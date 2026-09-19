@@ -1486,7 +1486,7 @@
     <value>Notice and renewal terms</value>
   </data>
   <data name="AgreementPeriodHelp" xml:space="preserve">
-    <value>The notice deadline applies to the current agreement period. Automatic reminders and renewals are not performed in this version.</value>
+    <value>Dates apply to the current agreement period. Follow-up and reminders never change agreement dates or status automatically.</value>
   </data>
   <data name="AgreementCreated" xml:space="preserve">
     <value>Created (UTC)</value>
@@ -1628,5 +1628,330 @@
   </data>
   <data name="AgreementReferenced" xml:space="preserve">
     <value>The record is used by an agreement and cannot be deleted.</value>
+  </data>
+  <data name="FollowupTitle" xml:space="preserve">
+    <value>Agreements to follow up</value>
+  </data>
+  <data name="FollowupRenewalDate" xml:space="preserve">
+    <value>Next renewal date</value>
+  </data>
+  <data name="FollowupSection" xml:space="preserve">
+    <value>Deadline follow-up</value>
+  </data>
+  <data name="FollowupContractData" xml:space="preserve">
+    <value>Recorded agreement data</value>
+  </data>
+  <data name="FollowupOverviewHelp" xml:space="preserve">
+    <value>One row per deadline. The default view includes unresolved overdue deadlines and the next 90 days.</value>
+  </data>
+  <data name="FollowupAccountSettings" xml:space="preserve">
+    <value>Account reminder defaults</value>
+  </data>
+  <data name="FollowupRange" xml:space="preserve">
+    <value>Date range</value>
+  </data>
+  <data name="FollowupNextDays" xml:space="preserve">
+    <value>Next {0} days and overdue</value>
+  </data>
+  <data name="FollowupCustomRange" xml:space="preserve">
+    <value>Custom range</value>
+  </data>
+  <data name="FollowupFrom" xml:space="preserve">
+    <value>From date</value>
+  </data>
+  <data name="FollowupTo" xml:space="preserve">
+    <value>To date</value>
+  </data>
+  <data name="FollowupOwner" xml:space="preserve">
+    <value>Follow-up owner</value>
+  </data>
+  <data name="FollowupKind" xml:space="preserve">
+    <value>Deadline type</value>
+  </data>
+  <data name="FollowupStatus" xml:space="preserve">
+    <value>Follow-up status</value>
+  </data>
+  <data name="FollowupState" xml:space="preserve">
+    <value>Deadline occurrence</value>
+  </data>
+  <data name="FollowupMine" xml:space="preserve">
+    <value>My follow-ups</value>
+  </data>
+  <data name="FollowupIncludeCompleted" xml:space="preserve">
+    <value>Include completed</value>
+  </data>
+  <data name="FollowupSummary" xml:space="preserve">
+    <value>All accessible unresolved deadlines: {0} overdue · {1} next 30 days · {2} without a valid owner</value>
+  </data>
+  <data name="FollowupEmpty" xml:space="preserve">
+    <value>No deadlines match this selection. Change the filters or record agreement dates.</value>
+  </data>
+  <data name="FollowupNoDates" xml:space="preserve">
+    <value>This agreement has no recorded deadlines. Add a notice deadline, end date or explicit renewal date when editing.</value>
+  </data>
+  <data name="FollowupDue" xml:space="preserve">
+    <value>Deadline date</value>
+  </data>
+  <data name="FollowupDays" xml:space="preserve">
+    <value>Days</value>
+  </data>
+  <data name="FollowupOverdueDays" xml:space="preserve">
+    <value>{0} days overdue</value>
+  </data>
+  <data name="FollowupRemainingDays" xml:space="preserve">
+    <value>{0} days remaining</value>
+  </data>
+  <data name="FollowupActivity" xml:space="preserve">
+    <value>Last activity (UTC)</value>
+  </data>
+  <data name="FollowupPage" xml:space="preserve">
+    <value>Page {0} of {1} · {2} deadlines</value>
+  </data>
+  <data name="FollowupKindNotice" xml:space="preserve">
+    <value>Notice deadline – action required</value>
+  </data>
+  <data name="FollowupKindExpiry" xml:space="preserve">
+    <value>Expiry date</value>
+  </data>
+  <data name="FollowupKindRenewal" xml:space="preserve">
+    <value>Renewal date</value>
+  </data>
+  <data name="FollowupStatusUntreated" xml:space="preserve">
+    <value>Untreated</value>
+  </data>
+  <data name="FollowupStatusInReview" xml:space="preserve">
+    <value>Under review</value>
+  </data>
+  <data name="FollowupStatusCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="FollowupStateCurrent" xml:space="preserve">
+    <value>Current</value>
+  </data>
+  <data name="FollowupStateReplaced" xml:space="preserve">
+    <value>Replaced</value>
+  </data>
+  <data name="FollowupStateWithdrawn" xml:space="preserve">
+    <value>Withdrawn</value>
+  </data>
+  <data name="FollowupUserActionHelp" xml:space="preserve">
+    <value>Follow-up records user actions. Completing it does not renew or terminate the agreement or prove that notice was sent.</value>
+  </data>
+  <data name="FollowupInheritedOwner" xml:space="preserve">
+    <value>Follow agreement owner</value>
+  </data>
+  <data name="FollowupAssign" xml:space="preserve">
+    <value>Change owner</value>
+  </data>
+  <data name="FollowupComment" xml:space="preserve">
+    <value>Comment</value>
+  </data>
+  <data name="FollowupCompletionHelp" xml:space="preserve">
+    <value>A brief closing comment is required on completion. Maximum 2,000 characters.</value>
+  </data>
+  <data name="FollowupStart" xml:space="preserve">
+    <value>Start follow-up</value>
+  </data>
+  <data name="FollowupAddComment" xml:space="preserve">
+    <value>Add comment</value>
+  </data>
+  <data name="FollowupComplete" xml:space="preserve">
+    <value>Mark completed</value>
+  </data>
+  <data name="FollowupReopen" xml:space="preserve">
+    <value>Reopen</value>
+  </data>
+  <data name="FollowupHistory" xml:space="preserve">
+    <value>Follow-up history</value>
+  </data>
+  <data name="FollowupSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="FollowupHistoryCreated" xml:space="preserve">
+    <value>Deadline created</value>
+  </data>
+  <data name="FollowupHistoryReplaced" xml:space="preserve">
+    <value>Deadline replaced</value>
+  </data>
+  <data name="FollowupHistoryWithdrawn" xml:space="preserve">
+    <value>Deadline withdrawn</value>
+  </data>
+  <data name="FollowupHistoryStarted" xml:space="preserve">
+    <value>Follow-up started</value>
+  </data>
+  <data name="FollowupHistoryAssigned" xml:space="preserve">
+    <value>Owner changed</value>
+  </data>
+  <data name="FollowupHistoryCommented" xml:space="preserve">
+    <value>Comment added</value>
+  </data>
+  <data name="FollowupHistoryCompleted" xml:space="preserve">
+    <value>Follow-up completed</value>
+  </data>
+  <data name="FollowupHistoryReopened" xml:space="preserve">
+    <value>Follow-up reopened</value>
+  </data>
+  <data name="FollowupHistoryArchived" xml:space="preserve">
+    <value>Agreement archived; deadline withdrawn</value>
+  </data>
+  <data name="FollowupDeliveryLog" xml:space="preserve">
+    <value>System reminder log</value>
+  </data>
+  <data name="FollowupDeliveryHelp" xml:space="preserve">
+    <value>Times are UTC. Sent means accepted by the transport, not read or delivered to the inbox. Capture means local test capture only.</value>
+  </data>
+  <data name="FollowupNoReminders" xml:space="preserve">
+    <value>No reminders recorded. Only active agreements with enabled reminders are queued.</value>
+  </data>
+  <data name="FollowupThreshold" xml:space="preserve">
+    <value>Threshold</value>
+  </data>
+  <data name="FollowupRecipient" xml:space="preserve">
+    <value>Recipient</value>
+  </data>
+  <data name="FollowupScheduled" xml:space="preserve">
+    <value>Scheduled (UTC)</value>
+  </data>
+  <data name="FollowupAttempts" xml:space="preserve">
+    <value>Attempts</value>
+  </data>
+  <data name="FollowupLastAttempt" xml:space="preserve">
+    <value>Last attempt (UTC)</value>
+  </data>
+  <data name="FollowupSent" xml:space="preserve">
+    <value>Accepted (UTC)</value>
+  </data>
+  <data name="FollowupResult" xml:space="preserve">
+    <value>Result / transport ID</value>
+  </data>
+  <data name="FollowupDaysBefore" xml:space="preserve">
+    <value>{0} days before</value>
+  </data>
+  <data name="FollowupDeliveryPending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
+  <data name="FollowupDeliveryProcessing" xml:space="preserve">
+    <value>Processing</value>
+  </data>
+  <data name="FollowupDeliverySent" xml:space="preserve">
+    <value>Accepted by transport</value>
+  </data>
+  <data name="FollowupDeliveryFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="FollowupDeliverySkipped" xml:space="preserve">
+    <value>Skipped / cancelled</value>
+  </data>
+  <data name="FollowupReminderSettings" xml:space="preserve">
+    <value>Reminder settings</value>
+  </data>
+  <data name="FollowupScheduleDescription" xml:space="preserve">
+    <value>Account default: {0} days before. Processed from {1} in {2}.</value>
+  </data>
+  <data name="FollowupReminderMode" xml:space="preserve">
+    <value>Agreement reminders</value>
+  </data>
+  <data name="FollowupModeInherit" xml:space="preserve">
+    <value>Use account default</value>
+  </data>
+  <data name="FollowupModeCustom" xml:space="preserve">
+    <value>Custom thresholds</value>
+  </data>
+  <data name="FollowupModeDisabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="FollowupTransportCapture" xml:space="preserve">
+    <value>Local capture is selected. No email is sent.</value>
+  </data>
+  <data name="FollowupTransportSmtp" xml:space="preserve">
+    <value>SMTP is selected. Real delivery requires a production environment and configured transport.</value>
+  </data>
+  <data name="FollowupTransportNotConfigured" xml:space="preserve">
+    <value>Transport or application URL is not configured for delivery.</value>
+  </data>
+  <data name="FollowupArchive" xml:space="preserve">
+    <value>Archive agreement</value>
+  </data>
+  <data name="FollowupArchiveHelp" xml:space="preserve">
+    <value>Archiving preserves documents and history, stops new reminders and locks the agreement for editing.</value>
+  </data>
+  <data name="FollowupArchived" xml:space="preserve">
+    <value>The agreement is archived.</value>
+  </data>
+  <data name="FollowupActivationHelp" xml:space="preserve">
+    <value>Automatic reminders are off by default. Activation queues at most one current catch-up reminder per deadline, never old reminders after the deadline. Local capture is the default transport; production delivery needs separate configuration.</value>
+  </data>
+  <data name="FollowupEnable" xml:space="preserve">
+    <value>Enable automatic reminders for this account</value>
+  </data>
+  <data name="FollowupThresholds" xml:space="preserve">
+    <value>Days before deadline, comma-separated (0 = deadline day)</value>
+  </data>
+  <data name="FollowupTimeZone" xml:space="preserve">
+    <value>Time zone (IANA, e.g. Europe/Oslo)</value>
+  </data>
+  <data name="FollowupSendAt" xml:space="preserve">
+    <value>Local send time</value>
+  </data>
+  <data name="FollowupSaved" xml:space="preserve">
+    <value>Settings saved.</value>
+  </data>
+  <data name="FollowupInvalidDays" xml:space="preserve">
+    <value>Enter 1–20 unique whole day values from 0 to 36500, comma-separated.</value>
+  </data>
+  <data name="FollowupInvalidTimeZone" xml:space="preserve">
+    <value>Enter a valid time zone.</value>
+  </data>
+  <data name="FollowupInvalidRange" xml:space="preserve">
+    <value>Check the date range.</value>
+  </data>
+  <data name="FollowupInvalidComment" xml:space="preserve">
+    <value>Comments allow a maximum of 2,000 characters.</value>
+  </data>
+  <data name="FollowupCommentRequired" xml:space="preserve">
+    <value>Enter a brief comment before continuing.</value>
+  </data>
+  <data name="FollowupInvalidTransition" xml:space="preserve">
+    <value>This action is not valid for the current status. Reload the page.</value>
+  </data>
+  <data name="FollowupInvalidOwner" xml:space="preserve">
+    <value>The owner must be an active account member with edit access to the agreement.</value>
+  </data>
+  <data name="FollowupMissingOwner" xml:space="preserve">
+    <value>No valid owner</value>
+  </data>
+  <data name="FollowupObsolete" xml:space="preserve">
+    <value>The deadline is no longer current, or the agreement is not active.</value>
+  </data>
+  <data name="FollowupCompleted" xml:space="preserve">
+    <value>The follow-up is completed.</value>
+  </data>
+  <data name="FollowupDisabled" xml:space="preserve">
+    <value>Reminders are disabled.</value>
+  </data>
+  <data name="FollowupPastDeadline" xml:space="preserve">
+    <value>The deadline has passed; no old reminder is sent.</value>
+  </data>
+  <data name="FollowupOlderThreshold" xml:space="preserve">
+    <value>Older threshold bypassed during catch-up.</value>
+  </data>
+  <data name="FollowupDeliveryUnknown" xml:space="preserve">
+    <value>Unknown delivery outcome after an expired reservation. No automatic resend.</value>
+  </data>
+  <data name="FollowupTransportFailed" xml:space="preserve">
+    <value>Transport failure. Up to three attempts with backoff.</value>
+  </data>
+  <data name="FollowupEmailSubject" xml:space="preserve">
+    <value>Agreement follow-up: {0}</value>
+  </data>
+  <data name="FollowupEmailBody" xml:space="preserve">
+    <value>Agreement: {0}
+Deadline: {1}
+Date: {2}
+
+Review the deadline and record your follow-up on the agreement:
+{3}
+
+This is a reminder, not a termination or renewal.</value>
   </data>
 </root>

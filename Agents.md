@@ -188,3 +188,25 @@ For non-trivial tasks:
 When asked to investigate or analyze something without making changes, do not edit files.
 
 When uncertain about an architectural decision, ask or present the trade-off instead of silently introducing a new pattern.
+
+## Autonomy
+
+Work autonomously and complete requested tasks end-to-end.
+
+Do not ask for confirmation before:
+- creating, editing, moving, or deleting project files
+- running build, test, migration, formatting, or other development commands
+- installing or restoring project dependencies
+- inspecting the repository
+- fixing errors discovered while implementing the requested change
+
+When a task requires multiple steps, perform all necessary steps without
+asking for permission between steps.
+
+After making changes, build and test the affected projects and fix any
+errors caused by your changes.
+
+Only ask for confirmation when an action is destructive or irreversible
+outside the repository, such as modifying production systems, deleting
+external data, publishing/deploying to production, or changing external
+services.

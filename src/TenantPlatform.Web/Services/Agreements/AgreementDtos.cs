@@ -13,6 +13,7 @@ public class SaveAgreementRequest
     public DateOnly StartDate { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     public DateOnly? EndDate { get; set; }
     public DateOnly? NoticeDeadline { get; set; }
+    public DateOnly? RenewalDate { get; set; }
     public bool AutoRenew { get; set; }
     public int? RenewalMonths { get; set; }
     public string? Terms { get; set; }
@@ -23,6 +24,7 @@ public class SaveAgreementRequest
 
 public class AgreementDetailsDto : SaveAgreementRequest
 {
+    public bool IsArchived { get; init; }
     public Guid Id { get; init; }
     public string CounterpartyName { get; init; } = string.Empty;
     public string OwnerName { get; init; } = string.Empty;
@@ -39,7 +41,7 @@ public class AgreementDetailsDto : SaveAgreementRequest
 }
 
 public record AgreementListItemDto(Guid Id, string Title, string CounterpartyName, AgreementType Type,
-    AgreementStatus Status, Guid OwnerUserId, string OwnerName, DateOnly? EndDate, DateOnly? NoticeDeadline);
+    AgreementStatus Status, Guid OwnerUserId, string OwnerName, DateOnly? EndDate, DateOnly? NoticeDeadline, bool IsArchived = false);
 public record AgreementOptionDto(Guid Id, string Name, Guid? BuildingId = null);
 public record AgreementPageDto(List<AgreementListItemDto> Items, int TotalCount, int Page, int PageSize, List<AgreementOptionDto> Owners);
 public class AgreementFilter

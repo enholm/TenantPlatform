@@ -1522,7 +1522,7 @@
     <value>Uppsägnings- och förnyelsevillkor</value>
   </data>
   <data name="AgreementPeriodHelp" xml:space="preserve">
-    <value>Uppsägningsdagen gäller den aktuella avtalsperioden. Automatiska påminnelser och förnyelser utförs inte i denna version.</value>
+    <value>Datumen gäller den aktuella avtalsperioden. Uppföljning och påminnelser ändrar aldrig avtalsdatum eller status automatiskt.</value>
   </data>
   <data name="AgreementCreated" xml:space="preserve">
     <value>Skapad (UTC)</value>
@@ -1664,5 +1664,330 @@
   </data>
   <data name="AgreementReferenced" xml:space="preserve">
     <value>Posten används av ett avtal och kan inte tas bort.</value>
+  </data>
+  <data name="FollowupTitle" xml:space="preserve">
+    <value>Avtal att följa upp</value>
+  </data>
+  <data name="FollowupRenewalDate" xml:space="preserve">
+    <value>Nästa förnyelsedatum</value>
+  </data>
+  <data name="FollowupSection" xml:space="preserve">
+    <value>Uppföljning av tidsfrister</value>
+  </data>
+  <data name="FollowupContractData" xml:space="preserve">
+    <value>Registrerade avtalsuppgifter</value>
+  </data>
+  <data name="FollowupOverviewHelp" xml:space="preserve">
+    <value>En rad per tidsfrist. Standardvyn visar öppna försenade tidsfrister och de närmaste 90 dagarna.</value>
+  </data>
+  <data name="FollowupAccountSettings" xml:space="preserve">
+    <value>Kontostandard för påminnelser</value>
+  </data>
+  <data name="FollowupRange" xml:space="preserve">
+    <value>Datumurval</value>
+  </data>
+  <data name="FollowupNextDays" xml:space="preserve">
+    <value>Nästa {0} dagar och försenade</value>
+  </data>
+  <data name="FollowupCustomRange" xml:space="preserve">
+    <value>Eget intervall</value>
+  </data>
+  <data name="FollowupFrom" xml:space="preserve">
+    <value>Från datum</value>
+  </data>
+  <data name="FollowupTo" xml:space="preserve">
+    <value>Till datum</value>
+  </data>
+  <data name="FollowupOwner" xml:space="preserve">
+    <value>Uppföljningsansvarig</value>
+  </data>
+  <data name="FollowupKind" xml:space="preserve">
+    <value>Typ av tidsfrist</value>
+  </data>
+  <data name="FollowupStatus" xml:space="preserve">
+    <value>Uppföljningsstatus</value>
+  </data>
+  <data name="FollowupState" xml:space="preserve">
+    <value>Förekomst</value>
+  </data>
+  <data name="FollowupMine" xml:space="preserve">
+    <value>Mina uppföljningar</value>
+  </data>
+  <data name="FollowupIncludeCompleted" xml:space="preserve">
+    <value>Inkludera slutförda</value>
+  </data>
+  <data name="FollowupSummary" xml:space="preserve">
+    <value>Alla tillgängliga öppna tidsfrister: {0} försenade · {1} nästa 30 dagar · {2} utan giltig ansvarig</value>
+  </data>
+  <data name="FollowupEmpty" xml:space="preserve">
+    <value>Inga tidsfrister i urvalet. Ändra filtren eller registrera datum i ett avtal.</value>
+  </data>
+  <data name="FollowupNoDates" xml:space="preserve">
+    <value>Avtalet saknar registrerade tidsfrister. Lägg till uppsägningsdag, slutdatum eller uttryckligt förnyelsedatum vid redigering.</value>
+  </data>
+  <data name="FollowupDue" xml:space="preserve">
+    <value>Fristdatum</value>
+  </data>
+  <data name="FollowupDays" xml:space="preserve">
+    <value>Dagar</value>
+  </data>
+  <data name="FollowupOverdueDays" xml:space="preserve">
+    <value>{0} dagar försenad</value>
+  </data>
+  <data name="FollowupRemainingDays" xml:space="preserve">
+    <value>{0} dagar kvar</value>
+  </data>
+  <data name="FollowupActivity" xml:space="preserve">
+    <value>Senaste aktivitet (UTC)</value>
+  </data>
+  <data name="FollowupPage" xml:space="preserve">
+    <value>Sida {0} av {1} · {2} tidsfrister</value>
+  </data>
+  <data name="FollowupKindNotice" xml:space="preserve">
+    <value>Uppsägningsdag – åtgärdsfrist</value>
+  </data>
+  <data name="FollowupKindExpiry" xml:space="preserve">
+    <value>Utgångsdatum</value>
+  </data>
+  <data name="FollowupKindRenewal" xml:space="preserve">
+    <value>Förnyelsedatum</value>
+  </data>
+  <data name="FollowupStatusUntreated" xml:space="preserve">
+    <value>Inte behandlad</value>
+  </data>
+  <data name="FollowupStatusInReview" xml:space="preserve">
+    <value>Under granskning</value>
+  </data>
+  <data name="FollowupStatusCompleted" xml:space="preserve">
+    <value>Färdigbehandlad</value>
+  </data>
+  <data name="FollowupStateCurrent" xml:space="preserve">
+    <value>Aktuell</value>
+  </data>
+  <data name="FollowupStateReplaced" xml:space="preserve">
+    <value>Ersatt</value>
+  </data>
+  <data name="FollowupStateWithdrawn" xml:space="preserve">
+    <value>Återkallad</value>
+  </data>
+  <data name="FollowupUserActionHelp" xml:space="preserve">
+    <value>Uppföljning visar registrerade användaråtgärder. Slutförd uppföljning förnyar eller avslutar inte avtalet och bevisar inte att uppsägning har skickats.</value>
+  </data>
+  <data name="FollowupInheritedOwner" xml:space="preserve">
+    <value>Följ avtalsansvarig</value>
+  </data>
+  <data name="FollowupAssign" xml:space="preserve">
+    <value>Ändra ansvarig</value>
+  </data>
+  <data name="FollowupComment" xml:space="preserve">
+    <value>Kommentar</value>
+  </data>
+  <data name="FollowupCompletionHelp" xml:space="preserve">
+    <value>En kort avslutande kommentar krävs vid slutförande. Högst 2000 tecken.</value>
+  </data>
+  <data name="FollowupStart" xml:space="preserve">
+    <value>Starta uppföljning</value>
+  </data>
+  <data name="FollowupAddComment" xml:space="preserve">
+    <value>Lägg till kommentar</value>
+  </data>
+  <data name="FollowupComplete" xml:space="preserve">
+    <value>Markera som slutförd</value>
+  </data>
+  <data name="FollowupReopen" xml:space="preserve">
+    <value>Öppna igen</value>
+  </data>
+  <data name="FollowupHistory" xml:space="preserve">
+    <value>Uppföljningshistorik</value>
+  </data>
+  <data name="FollowupSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="FollowupHistoryCreated" xml:space="preserve">
+    <value>Tidsfrist skapad</value>
+  </data>
+  <data name="FollowupHistoryReplaced" xml:space="preserve">
+    <value>Tidsfrist ersatt</value>
+  </data>
+  <data name="FollowupHistoryWithdrawn" xml:space="preserve">
+    <value>Tidsfrist återkallad</value>
+  </data>
+  <data name="FollowupHistoryStarted" xml:space="preserve">
+    <value>Uppföljning startad</value>
+  </data>
+  <data name="FollowupHistoryAssigned" xml:space="preserve">
+    <value>Ansvarig ändrad</value>
+  </data>
+  <data name="FollowupHistoryCommented" xml:space="preserve">
+    <value>Kommentar tillagd</value>
+  </data>
+  <data name="FollowupHistoryCompleted" xml:space="preserve">
+    <value>Uppföljning slutförd</value>
+  </data>
+  <data name="FollowupHistoryReopened" xml:space="preserve">
+    <value>Uppföljning återöppnad</value>
+  </data>
+  <data name="FollowupHistoryArchived" xml:space="preserve">
+    <value>Avtal arkiverat, tidsfrist återkallad</value>
+  </data>
+  <data name="FollowupDeliveryLog" xml:space="preserve">
+    <value>Systemets påminnelselogg</value>
+  </data>
+  <data name="FollowupDeliveryHelp" xml:space="preserve">
+    <value>Tider visas i UTC. Skickat betyder accepterat av transporten, inte läst eller levererat till inkorgen. Capture betyder endast lokal testlagring.</value>
+  </data>
+  <data name="FollowupNoReminders" xml:space="preserve">
+    <value>Inga påminnelser registrerade. Endast aktiva avtal med aktiverade påminnelser köas.</value>
+  </data>
+  <data name="FollowupThreshold" xml:space="preserve">
+    <value>Tröskel</value>
+  </data>
+  <data name="FollowupRecipient" xml:space="preserve">
+    <value>Mottagare</value>
+  </data>
+  <data name="FollowupScheduled" xml:space="preserve">
+    <value>Planerad (UTC)</value>
+  </data>
+  <data name="FollowupAttempts" xml:space="preserve">
+    <value>Försök</value>
+  </data>
+  <data name="FollowupLastAttempt" xml:space="preserve">
+    <value>Senaste försök (UTC)</value>
+  </data>
+  <data name="FollowupSent" xml:space="preserve">
+    <value>Accepterad (UTC)</value>
+  </data>
+  <data name="FollowupResult" xml:space="preserve">
+    <value>Resultat / transport-ID</value>
+  </data>
+  <data name="FollowupDaysBefore" xml:space="preserve">
+    <value>{0} dagar före</value>
+  </data>
+  <data name="FollowupDeliveryPending" xml:space="preserve">
+    <value>Väntar</value>
+  </data>
+  <data name="FollowupDeliveryProcessing" xml:space="preserve">
+    <value>Behandlas</value>
+  </data>
+  <data name="FollowupDeliverySent" xml:space="preserve">
+    <value>Accepterad av transport</value>
+  </data>
+  <data name="FollowupDeliveryFailed" xml:space="preserve">
+    <value>Misslyckad</value>
+  </data>
+  <data name="FollowupDeliverySkipped" xml:space="preserve">
+    <value>Överhoppad / avbruten</value>
+  </data>
+  <data name="FollowupReminderSettings" xml:space="preserve">
+    <value>Påminnelseinställningar</value>
+  </data>
+  <data name="FollowupScheduleDescription" xml:space="preserve">
+    <value>Kontostandard: {0} dagar före. Behandlas från kl. {1} i {2}.</value>
+  </data>
+  <data name="FollowupReminderMode" xml:space="preserve">
+    <value>Påminnelser för avtalet</value>
+  </data>
+  <data name="FollowupModeInherit" xml:space="preserve">
+    <value>Använd kontostandard</value>
+  </data>
+  <data name="FollowupModeCustom" xml:space="preserve">
+    <value>Egna trösklar</value>
+  </data>
+  <data name="FollowupModeDisabled" xml:space="preserve">
+    <value>Inaktiverat</value>
+  </data>
+  <data name="FollowupTransportCapture" xml:space="preserve">
+    <value>Lokal testlagring är vald. Ingen e-post skickas.</value>
+  </data>
+  <data name="FollowupTransportSmtp" xml:space="preserve">
+    <value>SMTP är vald. Verklig sändning kräver produktionsmiljö och konfigurerad transport.</value>
+  </data>
+  <data name="FollowupTransportNotConfigured" xml:space="preserve">
+    <value>Transport eller applikationsadress är inte konfigurerad för sändning.</value>
+  </data>
+  <data name="FollowupArchive" xml:space="preserve">
+    <value>Arkivera avtal</value>
+  </data>
+  <data name="FollowupArchiveHelp" xml:space="preserve">
+    <value>Arkivering bevarar dokument och historik, stoppar nya påminnelser och låser avtalet för redigering.</value>
+  </data>
+  <data name="FollowupArchived" xml:space="preserve">
+    <value>Avtalet är arkiverat.</value>
+  </data>
+  <data name="FollowupActivationHelp" xml:space="preserve">
+    <value>Automatiska påminnelser är avstängda som standard. Aktivering köar högst en aktuell uppsamlingspåminnelse per tidsfrist, aldrig gamla påminnelser efter fristdatumet. Lokal testlagring är standardtransport; produktionssändning kräver separat konfiguration.</value>
+  </data>
+  <data name="FollowupEnable" xml:space="preserve">
+    <value>Aktivera automatiska påminnelser för kontot</value>
+  </data>
+  <data name="FollowupThresholds" xml:space="preserve">
+    <value>Dagar före tidsfristen, kommaseparerat (0 = fristdagen)</value>
+  </data>
+  <data name="FollowupTimeZone" xml:space="preserve">
+    <value>Tidszon (IANA, t.ex. Europe/Oslo)</value>
+  </data>
+  <data name="FollowupSendAt" xml:space="preserve">
+    <value>Lokal sändningstid</value>
+  </data>
+  <data name="FollowupSaved" xml:space="preserve">
+    <value>Inställningarna har sparats.</value>
+  </data>
+  <data name="FollowupInvalidDays" xml:space="preserve">
+    <value>Ange 1–20 unika heltalsdagar från 0 till 36500, kommaseparerat.</value>
+  </data>
+  <data name="FollowupInvalidTimeZone" xml:space="preserve">
+    <value>Ange en giltig tidszon.</value>
+  </data>
+  <data name="FollowupInvalidRange" xml:space="preserve">
+    <value>Kontrollera datumintervallet.</value>
+  </data>
+  <data name="FollowupInvalidComment" xml:space="preserve">
+    <value>Kommentaren får innehålla högst 2000 tecken.</value>
+  </data>
+  <data name="FollowupCommentRequired" xml:space="preserve">
+    <value>Skriv en kort kommentar innan du fortsätter.</value>
+  </data>
+  <data name="FollowupInvalidTransition" xml:space="preserve">
+    <value>Åtgärden är inte giltig för aktuell status. Ladda om sidan.</value>
+  </data>
+  <data name="FollowupInvalidOwner" xml:space="preserve">
+    <value>Ansvarig måste vara en aktiv kontomedlem med redigeringsbehörighet för avtalet.</value>
+  </data>
+  <data name="FollowupMissingOwner" xml:space="preserve">
+    <value>Saknar giltig ansvarig</value>
+  </data>
+  <data name="FollowupObsolete" xml:space="preserve">
+    <value>Tidsfristen är inte längre aktuell, eller avtalet är inte aktivt.</value>
+  </data>
+  <data name="FollowupCompleted" xml:space="preserve">
+    <value>Uppföljningen är slutförd.</value>
+  </data>
+  <data name="FollowupDisabled" xml:space="preserve">
+    <value>Påminnelser är inaktiverade.</value>
+  </data>
+  <data name="FollowupPastDeadline" xml:space="preserve">
+    <value>Fristdatumet har passerat; ingen gammal påminnelse skickas.</value>
+  </data>
+  <data name="FollowupOlderThreshold" xml:space="preserve">
+    <value>Äldre tröskel överhoppad vid uppsamling.</value>
+  </data>
+  <data name="FollowupDeliveryUnknown" xml:space="preserve">
+    <value>Okänt leveransutfall efter utgången reservation. Ingen automatisk omsändning.</value>
+  </data>
+  <data name="FollowupTransportFailed" xml:space="preserve">
+    <value>Transportfel. Upp till tre försök med fördröjning.</value>
+  </data>
+  <data name="FollowupEmailSubject" xml:space="preserve">
+    <value>Avtal att följa upp: {0}</value>
+  </data>
+  <data name="FollowupEmailBody" xml:space="preserve">
+    <value>Avtal: {0}
+Tidsfrist: {1}
+Datum: {2}
+
+Granska tidsfristen och registrera uppföljning på avtalet:
+{3}
+
+Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   </data>
 </root>

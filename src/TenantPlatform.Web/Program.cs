@@ -110,7 +110,24 @@ builder.Services.AddOptions<AgreementDocumentStorageOptions>()
     .Validate(options => options.MaxFileSizeBytes > 0, "AgreementDocuments:MaxFileSizeBytes must be positive.")
     .ValidateOnStart();
 builder.Services.AddSingleton<IAgreementDocumentStorage, LocalAgreementDocumentStorage>();
-builder.Services.AddScoped<IAgreementService, AgreementService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<AgreementService>();
+builder.Services.AddScoped<IAgreementService>(sp => sp.GetRequiredService<AgreementService>());
+builder.Services.AddScoped<IAgreementFollowupService>(sp => sp.GetRequiredService<AgreementService>());
+builder.Services.AddOptions<AgreementReminderOptions>()
+    .Bind(builder.Configuration.GetSection("AgreementReminders"))
+    .Validate(o => o.TransportMode is "Capture" or "Smtp", "AgreementReminders:TransportMode must be Capture or Smtp.")
+    .PostConfigure(o =>
+    {
+        o.CapturePath = Path.GetFullPath(o.CapturePath, builder.Environment.ContentRootPath);
+        var webRoot = Path.GetFullPath(builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"));
+        if (o.CapturePath.Equals(webRoot, StringComparison.OrdinalIgnoreCase) ||
+            o.CapturePath.StartsWith(webRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Reminder capture must be outside wwwroot.");
+    }).ValidateOnStart();
+builder.Services.AddScoped<IAgreementReminderTransport, AgreementReminderTransport>();
+builder.Services.AddScoped<AgreementReminderProcessor>();
+builder.Services.AddHostedService<AgreementReminderWorker>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.IMeetingRoomService,
     TenantPlatform.Web.Services.MeetingRooms.MeetingRoomService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.IRoomBookingService,

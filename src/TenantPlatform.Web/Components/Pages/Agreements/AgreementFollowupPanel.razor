@@ -1,0 +1,163 @@
+@inject IAgreementFollowupService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementFollowupPanel> Logger
+
+<section class="mb-4">
+<h2>@L["FollowupSection"]</h2>
+<p>@L["FollowupUserActionHelp"]</p>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (data is null) { <p>@L["Loading"]</p> }
+else
+{
+    @if (data.Deadlines.Count == 0) { <div class="alert alert-info">@L["FollowupNoDates"]</div> }
+    @foreach (var item in data.Deadlines)
+    {
+        var row = item.Deadline;
+        <div id="@($"deadline-{row.Id}")" class="card mb-3">
+            <div class="card-header d-flex flex-wrap gap-2 align-items-center">
+                <strong>@L[$"FollowupKind{row.Kind}"] · @row.DueDate.ToString("d")</strong>
+                <span class="badge text-bg-secondary">@L[$"FollowupState{row.State}"]</span>
+                <span class="badge @(row.Status == AgreementFollowupStatus.Completed ? "text-bg-success" : "text-bg-primary")">@L[$"FollowupStatus{row.Status}"]</span>
+            </div>
+            <div class="card-body">
+                <p>@L["FollowupOwner"]: @row.ResponsibleName
+                    @if (item.AssignedUserId is null) { <span class="text-body-secondary">(@L["FollowupInheritedOwner"])</span> }
+                    @if (!row.ResponsibleValid) { <span class="badge text-bg-warning">@L["FollowupMissingOwner"]</span> }
+                </p>
+                @if (data.CanEdit && row.State == AgreementDeadlineState.Current)
+                {
+                    <fieldset disabled="@busy">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-8"><label class="form-label" for="@($"assignee-{row.Id}")">@L["FollowupOwner"]</label>
+                                <select id="@($"assignee-{row.Id}")" class="form-select" @bind="assignees[row.Id]">
+                                    <option value="">@L["FollowupInheritedOwner"]</option>
+                                    @foreach (var editor in data.Editors) { <option value="@editor.Id">@editor.Name</option> }
+                                </select></div>
+                            <div class="col-md-4 d-flex align-items-end"><button class="btn btn-outline-primary" @onclick="() => ActAsync(row.Id, AgreementFollowupAction.Assign)">@L["FollowupAssign"]</button></div>
+                            <div class="col-12"><label class="form-label" for="@($"comment-{row.Id}")">@L["FollowupComment"]</label>
+                                <textarea id="@($"comment-{row.Id}")" class="form-control" maxlength="2000" @bind="comments[row.Id]"></textarea>
+                                <small class="text-body-secondary">@L["FollowupCompletionHelp"]</small>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if (row.Status == AgreementFollowupStatus.Untreated) { <button class="btn btn-outline-primary" @onclick="() => ActAsync(row.Id, AgreementFollowupAction.Start)">@L["FollowupStart"]</button> }
+                            <button class="btn btn-outline-primary" @onclick="() => ActAsync(row.Id, AgreementFollowupAction.Comment)">@L["FollowupAddComment"]</button>
+                            @if (row.Status != AgreementFollowupStatus.Completed) { <button class="btn btn-success" @onclick="() => ActAsync(row.Id, AgreementFollowupAction.Complete)">@L["FollowupComplete"]</button> }
+                            else { <button class="btn btn-outline-primary" @onclick="() => ActAsync(row.Id, AgreementFollowupAction.Reopen)">@L["FollowupReopen"]</button> }
+                        </div>
+                    </fieldset>
+                }
+                <details class="mt-3"><summary>@L["FollowupHistory"] (@item.History.Count)</summary>
+                    <ul class="list-group list-group-flush mt-2">
+                        @foreach (var entry in item.History)
+                        {
+                            <li class="list-group-item">
+                                <div>@entry.CreatedUtc.ToString("g") UTC · @(entry.Actor ?? L["FollowupSystem"]) · @L[$"FollowupHistory{entry.Kind}"]</div>
+                                @if (entry.Assignee is not null) { <small>@L["FollowupOwner"]: @entry.Assignee</small> }
+                                @if (entry.Comment is not null) { <p class="mb-0" style="white-space:pre-wrap">@entry.Comment</p> }
+                            </li>
+                        }
+                    </ul>
+                </details>
+                <details class="mt-3"><summary>@L["FollowupDeliveryLog"] (@item.Reminders.Count)</summary>
+                    <p class="text-body-secondary mt-2">@L["FollowupDeliveryHelp"]</p>
+                    @if (item.Reminders.Count == 0) { <p>@L["FollowupNoReminders"]</p> }
+                    else
+                    {
+                        <div class="table-responsive"><table class="table table-sm">
+                        <thead><tr><th>@L["FollowupThreshold"]</th><th>@L["Status"]</th><th>@L["FollowupRecipient"]</th><th>@L["FollowupScheduled"]</th><th>@L["FollowupAttempts"]</th><th>@L["FollowupLastAttempt"]</th><th>@L["FollowupSent"]</th><th>@L["FollowupResult"]</th></tr></thead>
+                        <tbody>@foreach (var reminder in item.Reminders)
+                        {
+                            <tr><td>@L["FollowupDaysBefore", reminder.DaysBefore]</td><td>@L[$"FollowupDelivery{reminder.Status}"]</td>
+                                <td>@reminder.Recipient</td><td>@reminder.ScheduledUtc.ToString("g") UTC</td><td>@reminder.Attempts</td>
+                                <td>@reminder.LastAttemptUtc?.ToString("g")</td><td>@reminder.SentUtc?.ToString("g")</td>
+                                <td>@if (reminder.ResultKey is not null) { @L[reminder.ResultKey] }
+                                    @if (reminder.TransportId is not null) { <small class="d-block">@reminder.TransportId</small> }</td></tr>
+                        }</tbody></table></div>
+                    }
+                </details>
+            </div>
+        </div>
+    }
+    <div class="card mb-3"><div class="card-body">
+        <h3 class="h5">@L["FollowupReminderSettings"]</h3>
+        <p>@L["FollowupScheduleDescription", string.Join(", ", data.AccountDays), data.SendAt.ToString("HH:mm"), data.TimeZoneId]</p>
+        @if (!data.AccountRemindersEnabled) { <div class="alert alert-info">@L["FollowupDisabled"]</div> }
+        <p class="text-body-secondary">@L[$"FollowupTransport{data.TransportMode}"]</p>
+        <fieldset disabled="@(!data.CanEdit || busy)">
+            <label for="agreement-reminder-mode" class="form-label">@L["FollowupReminderMode"]</label>
+            <select id="agreement-reminder-mode" class="form-select mb-2" @bind="mode">
+                @foreach (var value in Enum.GetValues<AgreementReminderMode>()) { <option value="@value">@L[$"FollowupMode{value}"]</option> }
+            </select>
+            @if (mode == AgreementReminderMode.Custom)
+            {
+                <label for="agreement-reminder-days" class="form-label">@L["FollowupThresholds"]</label>
+                <input id="agreement-reminder-days" class="form-control mb-2" @bind="days" />
+            }
+            @if (data.CanEdit) { <button class="btn btn-outline-primary" @onclick="SavePreferencesAsync">@L["Save"]</button> }
+        </fieldset>
+    </div></div>
+    @if (data.CanArchive)
+    {
+        <div class="card border-secondary"><div class="card-body">
+            <p>@L["FollowupArchiveHelp"]</p>
+            <button class="btn btn-outline-secondary" disabled="@busy" @onclick="ArchiveAsync">@L["FollowupArchive"]</button>
+        </div></div>
+    }
+}
+</section>
+
+@code {
+    [Parameter] public Guid AgreementId { get; set; }
+    [Parameter] public Guid ParentRevision { get; set; }
+    [Parameter] public EventCallback Changed { get; set; }
+    private AgreementFollowupDetails? data;
+    private readonly Dictionary<Guid, string?> comments = new();
+    private readonly Dictionary<Guid, Guid?> assignees = new();
+    private Guid loadedId, loadedRevision;
+    private string? error;
+    private bool busy;
+    private AgreementReminderMode mode;
+    private string days = "90,30,7";
+    private Guid AccountId => UserContext.Current.CurrentAccountId ?? throw new UnauthorizedAccessException();
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedId == AgreementId && loadedRevision == ParentRevision) return;
+        await RunAsync(LoadAsync);
+    }
+    private async Task LoadAsync()
+    {
+        data = await Service.GetFollowupAsync(AccountId, AgreementId);
+        loadedId = AgreementId; loadedRevision = data.Revision; mode = data.ReminderMode;
+        days = string.Join(",", data.ReminderMode == AgreementReminderMode.Custom ? data.ReminderDays : data.AccountDays);
+        foreach (var item in data.Deadlines) { comments[item.Deadline.Id] = null; assignees[item.Deadline.Id] = item.AssignedUserId; }
+    }
+    private Task ActAsync(Guid deadlineId, AgreementFollowupAction action) => RunAsync(async () =>
+    {
+        await Service.FollowupAsync(AccountId, deadlineId, data!.Revision, action, assignees[deadlineId], comments[deadlineId]);
+        await ReloadParentAsync();
+    });
+    private Task SavePreferencesAsync() => RunAsync(async () =>
+    {
+        await Service.SetReminderPreferencesAsync(AccountId, AgreementId, data!.Revision, mode,
+            mode == AgreementReminderMode.Custom ? AgreementReminderSchedule.ParseDays(days) : []);
+        await ReloadParentAsync();
+    });
+    private Task ArchiveAsync() => RunAsync(async () =>
+    {
+        await Service.ArchiveAsync(AccountId, AgreementId, data!.Revision); await ReloadParentAsync();
+    });
+    private async Task ReloadParentAsync() { await LoadAsync(); await Changed.InvokeAsync(); }
+    private async Task RunAsync(Func<Task> action)
+    {
+        if (busy) return;
+        busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Agreement follow-up failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}
+

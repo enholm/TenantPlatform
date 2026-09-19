@@ -15,9 +15,13 @@
 
     @if (permissions.CanSeeAgreements)
     {
-        <NavLink href="/agreements" class="sidebar-link">
+        <NavLink href="/agreements" Match="NavLinkMatch.All" class="sidebar-link">
             <i class="bi bi-file-earmark-text"></i>
             <span>@L["Agreements"]</span>
+        </NavLink>
+        <NavLink href="/agreements/follow-up" class="sidebar-link">
+            <i class="bi bi-calendar-check"></i>
+            <span>@L["FollowupTitle"]</span>
         </NavLink>
     }
     @if (permissions.CanSeeMeetingRooms)

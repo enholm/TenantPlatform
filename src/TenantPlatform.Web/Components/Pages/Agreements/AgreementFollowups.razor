@@ -1,0 +1,97 @@
+@page "/agreements/follow-up"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementFollowupService Service
+@inject ICurrentUserContextService UserContext
+@inject ITenantAuthorizationService Authorization
+@inject NavigationManager Navigation
+@inject ILogger<AgreementFollowups> Logger
+
+<PageTitle>@L["FollowupTitle"]</PageTitle>
+<h1>@L["FollowupTitle"]</h1>
+<p>@L["FollowupOverviewHelp"]</p>
+@if (admin) { <a class="btn btn-outline-primary mb-3" href="/agreements/reminder-settings">@L["FollowupAccountSettings"]</a> }
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (allowed)
+{
+    <div class="card mb-3"><div class="card-body"><fieldset disabled="@busy"><div class="row g-3">
+        <div class="col-md-4"><label for="follow-search" class="form-label">@L["Search"]</label><input id="follow-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
+        <div class="col-md-4"><label for="follow-range" class="form-label">@L["FollowupRange"]</label><select id="follow-range" class="form-select" @bind="range" @bind:after="RangeChanged">
+            <option value="30">@L["FollowupNextDays", 30]</option><option value="60">@L["FollowupNextDays", 60]</option><option value="90">@L["FollowupNextDays", 90]</option><option value="0">@L["FollowupCustomRange"]</option>
+        </select></div>
+        <div class="col-md-4"><label for="follow-owner" class="form-label">@L["FollowupOwner"]</label><select id="follow-owner" class="form-select" @bind="filter.AssignedUserId">
+            <option value="">@L["AgreementAll"]</option>
+            @if (result is not null) { @foreach (var owner in result.Owners) { <option value="@owner.Id">@owner.Name</option> } }
+        </select></div>
+        @if (filter.CustomDates)
+        {
+            <div class="col-md-6"><label for="follow-from" class="form-label">@L["FollowupFrom"]</label><input id="follow-from" type="date" class="form-control" @bind="filter.From" /></div>
+            <div class="col-md-6"><label for="follow-to" class="form-label">@L["FollowupTo"]</label><input id="follow-to" type="date" class="form-control" @bind="filter.To" /></div>
+        }
+        <div class="col-md-3"><label for="follow-type" class="form-label">@L["AgreementType"]</label><select id="follow-type" class="form-select" @bind="filter.AgreementType">
+            <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementType>()) { <option value="@v">@L[$"AgreementType{v}"]</option> }
+        </select></div>
+        <div class="col-md-3"><label for="follow-kind" class="form-label">@L["FollowupKind"]</label><select id="follow-kind" class="form-select" @bind="filter.Kind">
+            <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementDeadlineKind>()) { <option value="@v">@L[$"FollowupKind{v}"]</option> }
+        </select></div>
+        <div class="col-md-3"><label for="follow-status" class="form-label">@L["FollowupStatus"]</label><select id="follow-status" class="form-select" @bind="filter.Status">
+            <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementFollowupStatus>()) { <option value="@v">@L[$"FollowupStatus{v}"]</option> }
+        </select></div>
+        <div class="col-md-3"><label for="follow-state" class="form-label">@L["FollowupState"]</label><select id="follow-state" class="form-select" @bind="filter.State">
+            <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementDeadlineState>()) { <option value="@v">@L[$"FollowupState{v}"]</option> }
+        </select></div>
+        <div class="col-md-4"><div class="form-check"><input id="mine" type="checkbox" class="form-check-input" @bind="filter.Mine" /><label for="mine">@L["FollowupMine"]</label></div></div>
+        <div class="col-md-4"><div class="form-check"><input id="completed" type="checkbox" class="form-check-input" @bind="filter.IncludeCompleted" /><label for="completed">@L["FollowupIncludeCompleted"]</label></div></div>
+        <div class="col-md-4"><button class="btn btn-primary" @onclick="SearchAsync">@L["Search"]</button></div>
+    </div></fieldset></div></div>
+}
+@if (busy) { <p role="status">@L["Loading"]</p> }
+else if (result is not null)
+{
+    <p class="text-body-secondary">@L["FollowupSummary", result.Overdue, result.Next30, result.MissingOwner]</p>
+    @if (result.Items.Count == 0) { <div class="alert alert-info">@L["FollowupEmpty"]</div> }
+    else
+    {
+        <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+            <thead class="text-nowrap"><tr><th>@L["Name"]</th><th>@L["AgreementCounterparty"]</th><th>@L["AgreementType"]</th><th>@L["FollowupKind"]</th><th>@L["FollowupDue"]</th><th>@L["FollowupDays"]</th><th>@L["FollowupOwner"]</th><th>@L["FollowupStatus"]</th><th>@L["FollowupActivity"]</th></tr></thead>
+            <tbody>@foreach (var row in result.Items)
+            {
+                <tr><td><a href="@($"/agreements/{row.AgreementId}#deadline-{row.Id}")">@row.AgreementTitle</a></td><td>@row.Counterparty</td><td>@L[$"AgreementType{row.AgreementType}"]</td>
+                    <td>@L[$"FollowupKind{row.Kind}"]</td><td>@row.DueDate.ToString("d")</td><td><span class="@(row.DaysLeft < 0 ? "text-danger fw-semibold" : "")">@L[row.DaysLeft < 0 ? "FollowupOverdueDays" : "FollowupRemainingDays", Math.Abs(row.DaysLeft)]</span></td>
+                    <td>@row.ResponsibleName @if (!row.ResponsibleValid) { <span class="badge text-bg-warning">@L["FollowupMissingOwner"]</span> }</td>
+                    <td>@L[$"FollowupStatus{row.Status}"] @if (row.State != AgreementDeadlineState.Current) { <span class="badge text-bg-secondary">@L[$"FollowupState{row.State}"]</span> }</td>
+                    <td>@row.UpdatedUtc.ToString("g") UTC</td></tr>
+            }</tbody>
+        </table></div></div>
+        <div class="d-flex justify-content-between mt-3"><button class="btn btn-outline-secondary" disabled="@(result.Page <= 1)" @onclick="PreviousAsync">@L["AgreementPrevious"]</button>
+        <span>@L["FollowupPage", result.Page, Math.Max(1, (result.Total + result.PageSize - 1) / result.PageSize), result.Total]</span>
+        <button class="btn btn-outline-secondary" disabled="@(result.Page * result.PageSize >= result.Total)" @onclick="NextAsync">@L["AgreementNext"]</button></div>
+    }
+}
+@code {
+    private readonly AgreementDeadlineFilter filter = new();
+    private AgreementDeadlinePage? result;
+    private int range = 90;
+    private bool busy = true, allowed, admin;
+    private Guid accountId;
+    private string? error;
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserContext.Current.CurrentAccountId is not Guid id || !await Authorization.CanUseAgreementsAsync())
+        { Navigation.NavigateTo("/access-denied"); busy = false; return; }
+        accountId = id; allowed = true; admin = await Authorization.CanCreateAgreementAsync(); await LoadAsync();
+    }
+    private void RangeChanged() { filter.CustomDates = range == 0; if (range != 0) filter.HorizonDays = range; }
+    private async Task LoadAsync()
+    {
+        busy = true; error = null;
+        try { result = await Service.ListDeadlinesAsync(accountId, filter); filter.Page = result.Page; }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Could not load agreement follow-ups."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+    private Task SearchAsync() { filter.Page = 1; return LoadAsync(); }
+    private Task PreviousAsync() { filter.Page--; return LoadAsync(); }
+    private Task NextAsync() { filter.Page++; return LoadAsync(); }
+}

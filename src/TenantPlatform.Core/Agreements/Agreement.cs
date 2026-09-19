@@ -13,6 +13,11 @@ public class Agreement
     public DateOnly StartDate { get; set; }
     public DateOnly? EndDate { get; set; }
     public DateOnly? NoticeDeadline { get; set; }
+    public DateOnly? RenewalDate { get; set; }
+    public bool DeadlinesInitialized { get; set; }
+    public bool IsArchived { get; set; }
+    public AgreementReminderMode ReminderMode { get; set; }
+    public int[] ReminderDays { get; set; } = [];
     public bool AutoRenew { get; set; }
     public int? RenewalMonths { get; set; }
     public string? Terms { get; set; }

@@ -7,13 +7,16 @@ using TenantPlatform.Web.Security.CurrentUserContext;
 
 namespace TenantPlatform.Web.Services.Agreements;
 
-public class AgreementService(
+public partial class AgreementService(
     IDbContextFactory<TenantPlatformDbContext> factory,
     ICurrentUserContextService userContext,
     ITenantAuthorizationService authorization,
     IAgreementDocumentStorage storage,
-    ILogger<AgreementService> logger) : IAgreementService
+    ILogger<AgreementService> logger,
+    TimeProvider? clock = null,
+    Microsoft.Extensions.Options.IOptions<AgreementReminderOptions>? reminderOptions = null) : IAgreementService, IAgreementFollowupService
 {
+    private TimeProvider Clock => clock ?? TimeProvider.System;
     public long MaxFileSizeBytes => storage.MaxFileSizeBytes;
 
     private async Task<(Guid UserId, bool Admin)> RequireMemberAsync(TenantPlatformDbContext db, Guid accountId, CancellationToken ct)
@@ -40,6 +43,7 @@ public class AgreementService(
         var canEdit = canManage || await db.AgreementAccess.AnyAsync(x => x.AccountId == accountId &&
             x.AgreementId == id && x.UserId == userId && x.Level == AgreementAccessLevel.Edit, ct);
         if ((edit && !canEdit) || (manage && !canManage)) throw new UnauthorizedAccessException();
+        if (edit && agreement.IsArchived) throw new AgreementValidationException("FollowupArchived");
         return (agreement, canEdit, canManage);
     }
 
@@ -71,7 +75,7 @@ public class AgreementService(
         var items = await query.OrderBy(x => x.Agreement.Title).ThenBy(x => x.Agreement.Id)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(x => new AgreementListItemDto(x.Agreement.Id, x.Agreement.Title, x.Counterparty, x.Agreement.Type,
-                x.Agreement.Status, x.Agreement.OwnerUserId, x.Owner, x.Agreement.EndDate, x.Agreement.NoticeDeadline))
+                x.Agreement.Status, x.Agreement.OwnerUserId, x.Owner, x.Agreement.EndDate, x.Agreement.NoticeDeadline, x.Agreement.IsArchived))
             .ToListAsync(cancellationToken);
         return new(items, count, page, pageSize, owners);
     }
@@ -80,18 +84,23 @@ public class AgreementService(
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         var (a, edit, manage) = await RequireAsync(db, accountId, agreementId, false, false, cancellationToken);
+        if (!a.DeadlinesInitialized)
+        {
+            await new AgreementDeadlineInitializer(factory, Clock).EnsureAccountAsync(accountId, cancellationToken);
+            await db.Entry(a).ReloadAsync(cancellationToken);
+        }
         var names = await db.Users.Where(x => x.Id == a.OwnerUserId || x.Id == a.CreatedByUserId || x.Id == a.UpdatedByUserId)
             .ToDictionaryAsync(x => x.Id, x => x.FirstName + " " + x.LastName, cancellationToken);
         var details = new AgreementDetailsDto
         {
             Id = a.Id, Title = a.Title, Description = a.Description, Type = a.Type, Status = a.Status,
             CounterpartyOrganizationId = a.CounterpartyOrganizationId, OwnerUserId = a.OwnerUserId,
-            StartDate = a.StartDate, EndDate = a.EndDate, NoticeDeadline = a.NoticeDeadline,
+            StartDate = a.StartDate, EndDate = a.EndDate, NoticeDeadline = a.NoticeDeadline, RenewalDate = a.RenewalDate,
             AutoRenew = a.AutoRenew, RenewalMonths = a.RenewalMonths, Terms = a.Terms,
             BuildingId = a.BuildingId, UnitId = a.UnitId, Revision = a.Revision,
             CreatedUtc = a.CreatedUtc, UpdatedUtc = a.UpdatedUtc,
             OwnerName = names[a.OwnerUserId], CreatedByName = names[a.CreatedByUserId], UpdatedByName = names[a.UpdatedByUserId],
-            CanEdit = edit, CanManageAccess = manage,
+            CanEdit = edit && !a.IsArchived, CanManageAccess = manage, IsArchived = a.IsArchived,
             CounterpartyName = await db.Organizations.Where(x => x.AccountId == accountId && x.Id == a.CounterpartyOrganizationId)
                 .Select(x => x.Name).SingleAsync(cancellationToken),
             BuildingName = await db.Buildings.Where(x => x.AccountId == accountId && x.Id == a.BuildingId)
@@ -138,9 +147,10 @@ public class AgreementService(
         var (userId, admin) = await RequireMemberAsync(db, accountId, cancellationToken);
         if (!admin) throw new UnauthorizedAccessException();
         await ValidateAsync(db, accountId, request, cancellationToken);
-        var a = new Agreement { Id = Guid.NewGuid(), AccountId = accountId, CreatedUtc = DateTimeOffset.UtcNow, CreatedByUserId = userId };
+        var a = new Agreement { Id = Guid.NewGuid(), AccountId = accountId, CreatedUtc = Clock.GetUtcNow(), CreatedByUserId = userId };
         Apply(a, request); Touch(a, userId);
         db.Agreements.Add(a);
+        await AgreementDeadlineSynchronizer.SynchronizeAsync(db, a, Clock.GetUtcNow(), userId, cancellationToken);
         await SaveAsync(db, cancellationToken);
         return a.Id;
     }
@@ -152,7 +162,20 @@ public class AgreementService(
         CheckRevision(a, request.Revision);
         if (!manage && request.OwnerUserId != a.OwnerUserId) throw new UnauthorizedAccessException();
         await ValidateAsync(db, accountId, request, cancellationToken);
+        var previousOwner = a.OwnerUserId;
         Apply(a, request); Touch(a, userContext.Current.UserId);
+        await AgreementDeadlineSynchronizer.SynchronizeAsync(db, a, Clock.GetUtcNow(), userContext.Current.UserId, cancellationToken);
+        if (previousOwner != a.OwnerUserId)
+        {
+            var inherited = await db.AgreementDeadlines.Where(x => x.AccountId == accountId && x.AgreementId == a.Id &&
+                x.State == AgreementDeadlineState.Current && x.AssignedUserId == null).ToListAsync(cancellationToken);
+            foreach (var deadline in inherited.Where(x => x.State == AgreementDeadlineState.Current))
+            {
+                deadline.UpdatedUtc = Clock.GetUtcNow(); deadline.UpdatedByUserId = userContext.Current.UserId;
+                AgreementDeadlineSynchronizer.AddHistory(db, deadline, AgreementHistoryKind.Assigned,
+                    Clock.GetUtcNow(), userContext.Current.UserId, effectiveAssignee: a.OwnerUserId);
+            }
+        }
         await SaveAsync(db, cancellationToken);
     }
 
@@ -195,7 +218,7 @@ public class AgreementService(
                 Id = Guid.NewGuid(), AccountId = accountId, AgreementId = agreementId,
                 OriginalFileName = stored.FileName, StorageKey = stored.StorageKey, MediaType = stored.MediaType,
                 Size = stored.Size, Category = category, Description = description?.Trim(),
-                UploadedUtc = DateTimeOffset.UtcNow, UploadedByUserId = userContext.Current.UserId
+                UploadedUtc = Clock.GetUtcNow(), UploadedByUserId = userContext.Current.UserId
             });
             Touch(a, userContext.Current.UserId);
             await SaveAsync(db, cancellationToken);
@@ -229,8 +252,8 @@ public class AgreementService(
     {
         if (a.Revision != revision) throw new AgreementValidationException("AgreementConcurrencyConflict");
     }
-    private static void Touch(Agreement a, Guid userId)
-    { a.Revision = Guid.NewGuid(); a.UpdatedUtc = DateTimeOffset.UtcNow; a.UpdatedByUserId = userId; }
+    private void Touch(Agreement a, Guid userId)
+    { a.Revision = Guid.NewGuid(); a.UpdatedUtc = Clock.GetUtcNow(); a.UpdatedByUserId = userId; }
     private static async Task SaveAsync(TenantPlatformDbContext db, CancellationToken ct)
     {
         try { await db.SaveChangesAsync(ct); }
@@ -245,6 +268,7 @@ public class AgreementService(
         a.Title = r.Title.Trim(); a.Description = r.Description?.Trim(); a.Type = r.Type;
         a.CounterpartyOrganizationId = r.CounterpartyOrganizationId; a.OwnerUserId = r.OwnerUserId; a.Status = r.Status;
         a.StartDate = r.StartDate; a.EndDate = r.EndDate; a.NoticeDeadline = r.NoticeDeadline;
+        a.RenewalDate = r.RenewalDate;
         a.AutoRenew = r.AutoRenew; a.RenewalMonths = r.AutoRenew ? r.RenewalMonths : null; a.Terms = r.Terms?.Trim();
         a.BuildingId = r.BuildingId; a.UnitId = r.UnitId;
     }

@@ -32,6 +32,7 @@ else if (options is not null)
         <div class="col-md-4"><label for="start" class="form-label">@L["AgreementStartDate"]</label><InputDate id="start" class="form-control" @bind-Value="model.StartDate" required /></div>
         <div class="col-md-4"><label for="end" class="form-label">@L["AgreementEndDate"]</label><InputDate id="end" class="form-control" @bind-Value="model.EndDate" /></div>
         <div class="col-md-4"><label for="notice" class="form-label">@L["AgreementNoticeDeadline"]</label><InputDate id="notice" class="form-control" @bind-Value="model.NoticeDeadline" /></div>
+        <div class="col-md-4"><label for="renewal-date" class="form-label">@L["FollowupRenewalDate"]</label><InputDate id="renewal-date" class="form-control" @bind-Value="model.RenewalDate" /></div>
         <div class="col-12"><p class="text-body-secondary">@L["AgreementPeriodHelp"]</p></div>
         <div class="col-md-6"><div class="form-check"><InputCheckbox id="renew" class="form-check-input" @bind-Value="model.AutoRenew" @bind-Value:after="RenewChanged" /><label for="renew" class="form-check-label">@L["AgreementAutoRenew"]</label></div></div>
         <div class="col-md-6"><label for="months" class="form-label">@L["AgreementRenewalMonths"]</label><InputNumber id="months" class="form-control" @bind-Value="model.RenewalMonths" min="1" disabled="@(!model.AutoRenew)" /></div>
@@ -95,4 +96,3 @@ else if (options is not null)
         finally { busy = false; }
     }
 }
-

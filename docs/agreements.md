@@ -1,5 +1,8 @@
 # Avtaleregister og dokumentarkiv
 
+Fristoversikt, oppfølging, arkivering og konfigurerbare påminnelser er beskrevet
+i [agreement-follow-up.md](agreement-follow-up.md). Dette dokumentet beskriver grunnmodulen.
+
 ## Sider og struktur
 
 - `/agreements`: tilgjengelige avtaler, søk på tittel/motpart, filtre for status/type/ansvarlig og serverbasert sideinndeling (25 per side).
@@ -130,6 +133,5 @@ Praktisk nettleserkontroll mot isolert database: opprettelse uten eiendom/sluttd
 oppsigelsesdato før startdato, redigering/status, listefilter, tilgangstildeling,
 PNG-opplasting, nedlasting og avvisning av falsk PDF. Ingen ekte e-post ble sendt.
 
-Automatiske varsler/fornyelser, fysisk sletting, full dokumentversjonering,
+Automatisk fornyelse, fysisk sletting, full dokumentversjonering,
 OCR, signering og økonomifunksjoner er utenfor denne versjonen.
-
