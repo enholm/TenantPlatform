@@ -68,7 +68,7 @@ SaveAgreementRequest Request(string title, DateOnly? notice = null) => new() { T
     Status = AgreementStatus.Active, StartDate = today.AddYears(-1), NoticeDeadline = notice };
 var request = Request("Initial", today.AddDays(90)); request.Status = AgreementStatus.Draft;
 request.EndDate = today.AddDays(120); request.RenewalDate = today.AddDays(150);
-var agreement = await admin.CreateAsync(account, request);
+var agreement = await CreateLegacyAsync(account, request);
 var initial = await owner.GetFollowupAsync(account, agreement);
 Assert(initial.Deadlines.Count == 3 && initial.Deadlines.All(x => x.Deadline.Status == AgreementFollowupStatus.Untreated), "three independent occurrences created");
 var notice = initial.Deadlines.Single(x => x.Deadline.Kind == AgreementDeadlineKind.Notice).Deadline.Id;
@@ -109,14 +109,14 @@ await owner.UpdateAsync(account, agreement, editRequest);
 Assert((await owner.GetFollowupAsync(account, agreement)).Deadlines.Count(x => x.Deadline.Kind == AgreementDeadlineKind.Notice) == 3, "reused date gets fresh occurrence");
 editRequest = await owner.GetAsync(account, agreement); editRequest.StartDate = editRequest.StartDate.AddDays(1);
 await owner.UpdateAsync(account, agreement, editRequest);
-Assert((await owner.GetFollowupAsync(account, agreement)).Deadlines.Count(x => x.Deadline.State == AgreementDeadlineState.Current) == 3, "period change replaces all current occurrences");
+Assert((await owner.GetFollowupAsync(account, agreement)).Deadlines.Count(x => x.Deadline.State == AgreementDeadlineState.Current) == 3, "start date correction keeps three current occurrences");
 editRequest = await owner.GetAsync(account, agreement); editRequest.NoticeDeadline = null;
 await owner.UpdateAsync(account, agreement, editRequest);
 Assert(!(await owner.GetFollowupAsync(account, agreement)).Deadlines.Any(x => x.Deadline.Kind == AgreementDeadlineKind.Notice && x.Deadline.State == AgreementDeadlineState.Current), "removed date withdraws current occurrence");
 
 var transport = new RecordingTransport();
 AgreementReminderProcessor Processor() => new(factory, clock, transport, NullLogger<AgreementReminderProcessor>.Instance);
-var remindersAgreement = await admin.CreateAsync(account, Request("Reminder dates", today.AddDays(90)));
+var remindersAgreement = await CreateLegacyAsync(account, Request("Reminder dates", today.AddDays(90)));
 await Processor().RunAccountAsync(account);
 Assert(transport.Messages.Count == 0, "reminders disabled by default");
 var settings = await admin.GetReminderSettingsAsync(account); settings.Enabled = true;
@@ -145,18 +145,18 @@ await Processor().RunAccountAsync(account);
 Assert(Count(remindersAgreement) == 3, "reopening does not resend sent thresholds");
 
 var currentDay = AgreementReminderSchedule.Today(clock.Now, "Europe/Oslo");
-var catchup = await admin.CreateAsync(account, Request("Catch-up", currentDay.AddDays(5)));
+var catchup = await CreateLegacyAsync(account, Request("Catch-up", currentDay.AddDays(5)));
 await Task.WhenAll(Processor().RunAccountAsync(account), Processor().RunAccountAsync(account));
 var catchupLog = (await owner.GetFollowupAsync(account, catchup)).Deadlines.Single().Reminders;
 Assert(Count(catchup) == 1 && catchupLog.Single(x => x.Status == AgreementReminderStatus.Sent).DaysBefore == 7 &&
     catchupLog.Count(x => x.Status == AgreementReminderStatus.Skipped) == 2, "late registration sends newest passed threshold only");
-var past = await admin.CreateAsync(account, Request("Overdue", currentDay.AddDays(-1)));
+var past = await CreateLegacyAsync(account, Request("Overdue", currentDay.AddDays(-1)));
 await Processor().RunAccountAsync(account);
 Assert(Count(past) == 0 && (await owner.GetFollowupAsync(account, past)).Deadlines.Single().Reminders.All(x => x.Status == AgreementReminderStatus.Skipped), "no old reminders after deadline");
 var overview = await owner.ListDeadlinesAsync(account, new());
 Assert(overview.Items.Any(x => x.AgreementId == past) && overview.Overdue > 0, "default overview retains overdue deadlines");
 Assert((await owner.ListDeadlinesAsync(account, new() { Search = "Acme", Kind = AgreementDeadlineKind.Notice })).Total > 0, "counterparty and deadline filters translate");
-var zero = await admin.CreateAsync(account, Request("Deadline day", currentDay));
+var zero = await CreateLegacyAsync(account, Request("Deadline day", currentDay));
 await owner.SetReminderPreferencesAsync(account, zero, (await owner.GetFollowupAsync(account, zero)).Revision, AgreementReminderMode.Custom, [0]);
 await Processor().RunAccountAsync(account);
 Assert(Count(zero) == 1, "zero-day reminder on deadline day");
@@ -237,7 +237,7 @@ var legacy = Guid.NewGuid();
 await using (var db = factory.CreateDbContext())
 {
     db.Agreements.Add(new Agreement { Id = legacy, AccountId = account, Title = "Legacy", CounterpartyOrganizationId = org, OwnerUserId = ownerId,
-        Status = AgreementStatus.Draft, Type = AgreementType.Other, StartDate = today, NoticeDeadline = today.AddDays(1), CreatedByUserId = adminId, UpdatedByUserId = adminId,
+        Status = AgreementStatus.Draft, Type = AgreementType.Other, StartDate = today, CurrentPeriodStartDate = today, NoticeDeadline = today.AddDays(1), CreatedByUserId = adminId, UpdatedByUserId = adminId,
         CreatedUtc = clock.Now, UpdatedUtc = clock.Now, Revision = Guid.NewGuid() });
     await db.SaveChangesAsync();
 }
@@ -245,7 +245,7 @@ await Task.WhenAll(new AgreementDeadlineInitializer(factory, clock).EnsureAccoun
 await new AgreementDeadlineInitializer(factory, clock).EnsureAccountAsync(account);
 Assert((await owner.GetFollowupAsync(account, legacy)).Deadlines.Count == 1, "concurrent idempotent backfill creates one occurrence");
 var bRequest = Request("Private B", currentDay.AddDays(5)); bRequest.OwnerUserId = foreignId; bRequest.CounterpartyOrganizationId = foreignOrg;
-var bAgreement = await foreign.CreateAsync(otherAccount, bRequest);
+var bAgreement = await CreateLegacyAsync(otherAccount, bRequest);
 var bSettings = await foreign.GetReminderSettingsAsync(otherAccount); bSettings.Enabled = true; await foreign.SaveReminderSettingsAsync(otherAccount, bSettings);
 await Processor().RunAccountAsync(account); Assert(Count(bAgreement) == 0, "account worker cannot queue/send another account");
 await Processor().RunAccountAsync(otherAccount);
@@ -268,8 +268,24 @@ await Expect<AgreementValidationException>(() => capture.SendAsync(captureMessag
 Assert(smtpSpy.Calls == 0, "no real emails in test");
 Console.WriteLine("All agreement follow-up smoke tests passed.");
 
+// These legacy fixtures intentionally retain the original one-deadline layout. New forms
+// and their creation/validation are covered by the notice smoke suite.
+async Task<Guid> CreateLegacyAsync(Guid accountId, SaveAgreementRequest r)
+{
+    await using var db = factory.CreateDbContext();
+    var entity = new Agreement { Id = Guid.NewGuid(), AccountId = accountId, Title = r.Title,
+        CounterpartyOrganizationId = r.CounterpartyOrganizationId, OwnerUserId = r.OwnerUserId,
+        Type = r.Type, Status = r.Status, StartDate = r.StartDate, CurrentPeriodStartDate = r.StartDate,
+        EndDate = r.EndDate, NoticeDeadline = r.NoticeDeadline, RenewalDate = r.RenewalDate,
+        NoticeMode = r.NoticeDeadline.HasValue ? AgreementNoticeMode.Manual : AgreementNoticeMode.None,
+        CreatedByUserId = r.OwnerUserId, UpdatedByUserId = r.OwnerUserId, CreatedUtc = clock.Now,
+        UpdatedUtc = clock.Now, Revision = Guid.NewGuid() };
+    db.Agreements.Add(entity); await db.SaveChangesAsync();
+    await new AgreementDeadlineInitializer(factory, clock).EnsureAccountAsync(accountId);
+    return entity.Id;
+}
 int Count(Guid id) => transport.Messages.Count(x => x.AgreementId == id);
-Task<Guid> New(string title) => admin.CreateAsync(account, Request(title, AgreementReminderSchedule.Today(clock.Now, "Europe/Oslo").AddDays(5)));
+Task<Guid> New(string title) => CreateLegacyAsync(account, Request(title, AgreementReminderSchedule.Today(clock.Now, "Europe/Oslo").AddDays(5)));
 async Task Act(AgreementFollowupAction action, string? comment = null) =>
     await owner.FollowupAsync(account, notice, (await owner.GetFollowupAsync(account, agreement)).Revision, action, null, comment);
 async Task Assign(Guid? id) =>

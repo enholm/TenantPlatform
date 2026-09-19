@@ -13,9 +13,13 @@
 - Eksisterende opprettelse/redigering får valgfri `RenewalDate`.
   Den utledes verken fra sluttdato, fritekst eller automatisk fornyelse.
 
-Agreement.NoticeDeadline, EndDate og RenewalDate er eneste redigerbare kilde
-til gjeldende datoer. AgreementDeadline representerer en konkret forekomst med
-egen ID, dato, type og registrert periodestart (Agreement.StartDate).
+Datoene synkroniseres fra Agreement gjennom AgreementNoticeRules og
+AgreementDeadlineSynchronizer. Beregnet NoticeDeadline er avledet fra regelen og
+RenewalDate; manuell frist beholdes som angitt. CessationDate kommer fra registrert
+oppsigelses virkningsdato og lagret varighet. Se [oppsigelsesregler](agreement-notice-rules.md).
+AgreementDeadline representerer en konkret forekomst med egen ID, dato, type og
+registrert periodestart (Agreement.CurrentPeriodStartDate). Vanlig korrigering av
+Agreement.StartDate endrer ikke periodeidentiteten. Ny periode velges eksplisitt ved redigering.
 Endring av dato eller periodestart erstatter forekomsten; fjerning trekker den
 tilbake. Selv retur til samme dato oppretter en ny, ubehandlet forekomst.
 Gamle kommentarer, ansvarstildelinger, fullføringer og påminnelseslogger beholdes.

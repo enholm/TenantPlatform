@@ -96,6 +96,8 @@ public partial class AgreementService(
             Id = a.Id, Title = a.Title, Description = a.Description, Type = a.Type, Status = a.Status,
             CounterpartyOrganizationId = a.CounterpartyOrganizationId, OwnerUserId = a.OwnerUserId,
             StartDate = a.StartDate, EndDate = a.EndDate, NoticeDeadline = a.NoticeDeadline, RenewalDate = a.RenewalDate,
+            Form = a.Form, NoticeMode = a.NoticeMode, NoticeCount = a.NoticeCount, NoticeUnit = a.NoticeUnit,
+            CurrentPeriodStartDate = a.CurrentPeriodStartDate,
             AutoRenew = a.AutoRenew, RenewalMonths = a.RenewalMonths, Terms = a.Terms,
             BuildingId = a.BuildingId, UnitId = a.UnitId, Revision = a.Revision,
             CreatedUtc = a.CreatedUtc, UpdatedUtc = a.UpdatedUtc,
@@ -120,6 +122,7 @@ public partial class AgreementService(
                                     where g.AccountId == accountId && g.AgreementId == agreementId
                                     orderby u.FirstName, u.LastName
                                     select new AgreementAccessDto(u.Id, u.FirstName + " " + u.LastName, g.Level)).ToListAsync(cancellationToken);
+        await LoadNoticeAsync(db, a, details, cancellationToken);
         return details;
     }
 
@@ -148,7 +151,11 @@ public partial class AgreementService(
         if (!admin) throw new UnauthorizedAccessException();
         await ValidateAsync(db, accountId, request, cancellationToken);
         var a = new Agreement { Id = Guid.NewGuid(), AccountId = accountId, CreatedUtc = Clock.GetUtcNow(), CreatedByUserId = userId };
+        if (request.Form == AgreementForm.Legacy || request.BeginNewPeriod)
+            throw new AgreementValidationException("NoticeChooseForm");
+        a.CurrentPeriodStartDate = request.StartDate;
         Apply(a, request); Touch(a, userId);
+        NoticeHistory(db, a, new AgreementNoticeSnapshot(), AgreementNoticeAction.RuleChanged);
         db.Agreements.Add(a);
         await AgreementDeadlineSynchronizer.SynchronizeAsync(db, a, Clock.GetUtcNow(), userId, cancellationToken);
         await SaveAsync(db, cancellationToken);
@@ -162,8 +169,20 @@ public partial class AgreementService(
         CheckRevision(a, request.Revision);
         if (!manage && request.OwnerUserId != a.OwnerUserId) throw new UnauthorizedAccessException();
         await ValidateAsync(db, accountId, request, cancellationToken);
+        if (request.Form == AgreementForm.Legacy && a.Form != AgreementForm.Legacy)
+            throw new AgreementValidationException("NoticeChooseForm");
+        var before = AgreementNoticeSnapshot.From(a);
+        if (request.BeginNewPeriod)
+        {
+            if (a.Form != AgreementForm.Renewing || request.Form != AgreementForm.Renewing ||
+                !request.NewPeriodStartDate.HasValue || request.NewPeriodStartDate <= a.CurrentPeriodStartDate ||
+                !request.RenewalDate.HasValue || request.RenewalDate <= request.NewPeriodStartDate)
+                throw new AgreementValidationException("NoticeInvalidPeriod");
+            a.CurrentPeriodStartDate = request.NewPeriodStartDate.Value;
+        }
         var previousOwner = a.OwnerUserId;
         Apply(a, request); Touch(a, userContext.Current.UserId);
+        NoticeHistory(db, a, before, request.BeginNewPeriod ? AgreementNoticeAction.PeriodStarted : AgreementNoticeAction.RuleChanged);
         await AgreementDeadlineSynchronizer.SynchronizeAsync(db, a, Clock.GetUtcNow(), userContext.Current.UserId, cancellationToken);
         if (previousOwner != a.OwnerUserId)
         {
@@ -271,13 +290,14 @@ public partial class AgreementService(
         a.RenewalDate = r.RenewalDate;
         a.AutoRenew = r.AutoRenew; a.RenewalMonths = r.AutoRenew ? r.RenewalMonths : null; a.Terms = r.Terms?.Trim();
         a.BuildingId = r.BuildingId; a.UnitId = r.UnitId;
+        AgreementNoticeRules.Apply(a, r);
     }
     private static async Task ValidateAsync(TenantPlatformDbContext db, Guid accountId, SaveAgreementRequest r, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(r.Title) || r.Title.Trim().Length > 200 || r.Description?.Length > 4000 || r.Terms?.Length > 10000 ||
             !Enum.IsDefined(r.Type) || !Enum.IsDefined(r.Status)) throw new AgreementValidationException("AgreementInvalidDetails");
-        if (r.StartDate == default || r.EndDate < r.StartDate) throw new AgreementValidationException("AgreementInvalidDates");
-        if (r.RenewalMonths.HasValue && (!r.AutoRenew || r.RenewalMonths <= 0)) throw new AgreementValidationException("AgreementInvalidRenewal");
+        if (r.StartDate == default || (r.Form != AgreementForm.Ongoing && r.EndDate < r.StartDate)) throw new AgreementValidationException("AgreementInvalidDates");
+        if ((r.Form is AgreementForm.Legacy or AgreementForm.Renewing) && r.RenewalMonths.HasValue && (!r.AutoRenew || r.RenewalMonths <= 0)) throw new AgreementValidationException("AgreementInvalidRenewal");
         if (!await db.Organizations.AnyAsync(x => x.AccountId == accountId && x.Id == r.CounterpartyOrganizationId, ct))
             throw new AgreementValidationException("AgreementInvalidCounterparty");
         if (!await db.UserAccounts.AnyAsync(x => x.AccountId == accountId && x.UserId == r.OwnerUserId && x.User.IsActive, ct))

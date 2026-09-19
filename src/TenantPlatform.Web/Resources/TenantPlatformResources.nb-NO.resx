@@ -1510,7 +1510,7 @@
     <value>Sluttdato</value>
   </data>
   <data name="AgreementNoticeDeadline" xml:space="preserve">
-    <value>Siste oppsigelsesdato</value>
+    <value>Siste oppsigelsesfrist</value>
   </data>
   <data name="AgreementAutoRenew" xml:space="preserve">
     <value>Automatisk fornyelse</value>
@@ -1990,4 +1990,59 @@ Vurder fristen og registrer oppfølging på avtalen:
 
 Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   </data>
+  <data name="NoticeForm" xml:space="preserve"><value>Avtaleform</value></data>
+  <data name="NoticeFormLegacy" xml:space="preserve"><value>Ikke avklart</value></data>
+  <data name="NoticeFormFixedTerm" xml:space="preserve"><value>Tidsbegrenset avtale</value></data>
+  <data name="NoticeFormRenewing" xml:space="preserve"><value>Avtale med fornyelse</value></data>
+  <data name="NoticeFormOngoing" xml:space="preserve"><value>Løpende avtale uten fornyelse</value></data>
+  <data name="NoticeMode" xml:space="preserve"><value>Oppsigelsesregel</value></data>
+  <data name="NoticeModeNone" xml:space="preserve"><value>Ingen registrert oppsigelsesfrist</value></data>
+  <data name="NoticeModeManual" xml:space="preserve"><value>Manuell dato</value></data>
+  <data name="NoticeModeBeforeRenewal" xml:space="preserve"><value>Beregnet før fornyelse</value></data>
+  <data name="NoticeDuration" xml:space="preserve"><value>Oppsigelsestid</value></data>
+  <data name="NoticeBeforeRenewal" xml:space="preserve"><value>Oppsigelsesfrist før fornyelse (antall)</value></data>
+  <data name="NoticeUnit" xml:space="preserve"><value>Enhet</value></data>
+  <data name="NoticeUnitDays" xml:space="preserve"><value>dager</value></data>
+  <data name="NoticeUnitMonths" xml:space="preserve"><value>måneder</value></data>
+  <data name="NoticeCalculationHelp" xml:space="preserve"><value>Beregnet som {0} {1} før fornyelse {2}.</value></data>
+  <data name="NoticeCalendarHelp" xml:space="preserve"><value>Oppsigelsestiden regnes fra angitt dato med kalenderdager eller kalendermåneder. Ingen justering for helger, månedsskifte eller kvartalsslutt.</value></data>
+  <data name="NoticeLegacyHelp" xml:space="preserve"><value>Avtaleformen er ikke avklart. Eksisterende datoer beholdes. Velg riktig avtaleform når vilkårene er avklart.</value></data>
+  <data name="NoticeFormChangeFixedTerm" xml:space="preserve"><value>Ved lagring fjernes fornyelsesdato, automatisk fornyelse, fornyelsesperiode og beregningsregel. Tidligere verdier beholdes i historikken. Sluttdato er påkrevd.</value></data>
+  <data name="NoticeFormChangeRenewing" xml:space="preserve"><value>Neste fornyelsesdato er påkrevd. En eventuell tidligere oppsigelsestid brukes bare hvis beregnet frist velges. Tidligere verdier beholdes i historikken.</value></data>
+  <data name="NoticeFormChangeOngoing" xml:space="preserve"><value>Ved lagring fjernes sluttdato, siste oppsigelsesfrist og alle fornyelsesfelt. Oppsigelsestid er påkrevd. Tidligere verdier beholdes i historikken.</value></data>
+  <data name="NoticeNewPeriod" xml:space="preserve"><value>Dette er en faktisk ny avtaleperiode</value></data>
+  <data name="NoticePeriodHelp" xml:space="preserve"><value>Vanlige datokorrigeringer beholder periodeidentiteten. Velg ny periode bare ved faktisk fornyelse; da opprettes ny oppfølging uten tidligere ferdigstatus.</value></data>
+  <data name="NoticePeriodStart" xml:space="preserve"><value>Avtaleperiodens startdato</value></data>
+  <data name="NoticeEffectiveDate" xml:space="preserve"><value>Oppsigelse gjelder fra</value></data>
+  <data name="NoticeEffectiveHelp" xml:space="preserve"><value>Datoen som brukes som utgangspunkt for å beregne oppsigelsestiden.</value></data>
+  <data name="NoticeCessationDate" xml:space="preserve"><value>Beregnet opphørsdato</value></data>
+  <data name="NoticeRegistered" xml:space="preserve"><value>Oppsigelse registrert</value></data>
+  <data name="NoticeRegisteredBy" xml:space="preserve"><value>Registrert av</value></data>
+  <data name="NoticeSnapshotDuration" xml:space="preserve"><value>Oppsigelsestid brukt ved registrering</value></data>
+  <data name="NoticeNoTermination" xml:space="preserve"><value>Ingen oppsigelse er registrert. Avtalen har ingen planlagt opphørsdato.</value></data>
+  <data name="NoticeAction" xml:space="preserve"><value>Handling</value></data>
+  <data name="NoticeActionRegistered" xml:space="preserve"><value>Registrer oppsigelse</value></data>
+  <data name="NoticeActionCorrected" xml:space="preserve"><value>Korriger oppsigelse</value></data>
+  <data name="NoticeActionWithdrawn" xml:space="preserve"><value>Trekk tilbake oppsigelse</value></data>
+  <data name="NoticeActionRuleChanged" xml:space="preserve"><value>Vilkår registrert eller endret</value></data>
+  <data name="NoticeActionPeriodStarted" xml:space="preserve"><value>Ny avtaleperiode</value></data>
+  <data name="NoticeReason" xml:space="preserve"><value>Begrunnelse (påkrevd)</value></data>
+  <data name="NoticeComment" xml:space="preserve"><value>Kommentar (valgfritt)</value></data>
+  <data name="NoticeInternalHelp" xml:space="preserve"><value>Dette er en intern registrering. Ingen juridisk oppsigelse eller e-post sendes til motparten. Avtalestatus endres ikke automatisk. Korrigering bruker oppsigelsestiden fra registreringen.</value></data>
+  <data name="NoticeHistory" xml:space="preserve"><value>Historikk for vilkår og oppsigelse</value></data>
+  <data name="NoticeBefore" xml:space="preserve"><value>Før</value></data>
+  <data name="NoticeAfter" xml:space="preserve"><value>Etter</value></data>
+  <data name="NoticeRules" xml:space="preserve"><value>Avtaleform og oppsigelse</value></data>
+  <data name="NoticeInvalidDuration" xml:space="preserve"><value>Angi et positivt heltall og dager eller måneder. Den beregnede datoen må være innenfor støttet datointervall.</value></data>
+  <data name="NoticeInvalidRule" xml:space="preserve"><value>Oppsigelsesregelen eller handlingen er ugyldig.</value></data>
+  <data name="NoticeWithdrawBeforeFormChange" xml:space="preserve"><value>Trekk tilbake registrert oppsigelse før du bytter avtaleform.</value></data>
+  <data name="NoticeEndRequired" xml:space="preserve"><value>Tidsbegrenset avtale krever sluttdato.</value></data>
+  <data name="NoticeRenewalRequired" xml:space="preserve"><value>Angi neste fornyelsesdato.</value></data>
+  <data name="NoticeManualRequired" xml:space="preserve"><value>Angi en manuell siste oppsigelsesfrist.</value></data>
+  <data name="NoticeChooseForm" xml:space="preserve"><value>Velg en avklart avtaleform.</value></data>
+  <data name="NoticeInvalidPeriod" xml:space="preserve"><value>Ny periode krever en senere periodestart og en fornyelsesdato etter denne. Avtalen må ha fornyelse.</value></data>
+  <data name="NoticeAlreadyRegistered" xml:space="preserve"><value>Avtalen har allerede en aktiv oppsigelse.</value></data>
+  <data name="NoticeNotRegistered" xml:space="preserve"><value>Avtalen har ingen aktiv oppsigelse.</value></data>
+  <data name="NoticeReasonRequired" xml:space="preserve"><value>Angi en begrunnelse for korrigeringen.</value></data>
+  <data name="FollowupKindCessation" xml:space="preserve"><value>Planlagt opphør</value></data>
 </root>

@@ -22,7 +22,9 @@ eller egen plattformkonto. Bygg og leieenhet er valgfrie. Avtaleansvarlig må v�
 en aktiv bruker med medlemskap i samme konto. Datoene er DateOnly; historikktider
 er UTC. Sluttdato må være minst startdato. Oppsigelsesdato kan være før startdato
 og gjelder eksplisitt gjeldende periode. Positiv fornyelsesperiode er valgfri
-og krever automatisk fornyelse. Status endres manuelt; ingen datoavhengige jobber.
+og krever automatisk fornyelse. Status endres manuelt; ingen automatisk fornyelse
+eller statusendring. Se [oppsigelsesregler og avtaleformer](agreement-notice-rules.md)
+for den utvidede datomodellen og integrasjonen med påminnelsesjobben.
 
 AccountAdmin kan opprette og administrere alle kontoens avtaler. Avtaleansvarlig
 kan redigere, laste opp og administrere tilganger, inkludert eierskifte.

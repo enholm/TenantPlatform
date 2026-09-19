@@ -1,0 +1,102 @@
+@inject IAgreementService AgreementsService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<div class="card mb-3"><div class="card-body">
+    <h2 class="h5">@L["NoticeRules"]</h2>
+    <p><strong>@L["NoticeForm"]:</strong> @L[$"NoticeForm{Details.Form}"]</p>
+    @if (Details.Form == AgreementForm.Legacy) { <p class="alert alert-warning">@L["NoticeLegacyHelp"]</p> }
+    @if (Details.NoticeCount.HasValue) { <p>@L[Details.Form == AgreementForm.Ongoing ? "NoticeDuration" : "NoticeBeforeRenewal"]: @Details.NoticeCount @L[$"NoticeUnit{Details.NoticeUnit}"]</p> }
+    @if (Details.Form == AgreementForm.Renewing) { <p>@L["NoticeMode"]: @L[$"NoticeMode{Details.NoticeMode}"]</p> }
+    @if (Details.Form == AgreementForm.Ongoing)
+    {
+        <p class="text-body-secondary">@L["NoticeCalendarHelp"]</p>
+        @if (Details.NoticeSnapshot.EffectiveDate.HasValue)
+        {
+            <span class="badge text-bg-warning mb-2">@L["NoticeRegistered"]</span>
+            <p>@L["NoticeEffectiveDate"]: @Details.NoticeSnapshot.EffectiveDate.Value.ToString("d")<br />
+                @L["NoticeSnapshotDuration"]: @Details.NoticeSnapshot.RegisteredCount @L[$"NoticeUnit{Details.NoticeSnapshot.RegisteredUnit}"]<br />
+                <strong>@L["NoticeCessationDate"]: @Details.NoticeSnapshot.CessationDate?.ToString("d")</strong><br />
+                @L["NoticeRegisteredBy"]: @Details.TerminationRegisteredByName (@Details.NoticeSnapshot.RegisteredUtc?.ToLocalTime().ToString("g"))</p>
+        }
+        else { <p>@L["NoticeNoTermination"]</p> }
+        @if (Details.CanEdit)
+        {
+            @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+            <EditForm Model="request" OnValidSubmit="SaveAsync">
+                <ValidationSummary class="text-danger" />
+                <fieldset disabled="@busy">
+                <div class="row g-3">
+                    <div class="col-md-4"><label for="termination-action" class="form-label">@L["NoticeAction"]</label><InputSelect id="termination-action" class="form-select" @bind-Value="request.Action">
+                        @if (Details.NoticeSnapshot.EffectiveDate.HasValue)
+                        {
+                            <option value="Corrected">@L["NoticeActionCorrected"]</option>
+                            <option value="Withdrawn">@L["NoticeActionWithdrawn"]</option>
+                        }
+                        else { <option value="Registered">@L["NoticeActionRegistered"]</option> }
+                    </InputSelect></div>
+                    @if (request.Action != AgreementNoticeAction.Withdrawn)
+                    {
+                        <div class="col-md-4"><label for="termination-effective" class="form-label">@L["NoticeEffectiveDate"]</label><InputDate id="termination-effective" class="form-control" @bind-Value="request.EffectiveDate" required /><div class="form-text">@L["NoticeEffectiveHelp"]</div></div>
+                        <div class="col-md-4"><label for="cessation-preview" class="form-label">@L["NoticeCessationDate"]</label><input id="cessation-preview" class="form-control" readonly value="@Preview()" /></div>
+                    }
+                    <div class="col-12"><label for="termination-comment" class="form-label">@L[request.Action == AgreementNoticeAction.Corrected ? "NoticeReason" : "NoticeComment"]</label><InputTextArea id="termination-comment" class="form-control" @bind-Value="request.Comment" maxlength="2000" required="@(request.Action == AgreementNoticeAction.Corrected)" /></div>
+                    <div class="col-12"><p class="text-body-secondary">@L["NoticeInternalHelp"]</p><button type="submit" class="btn btn-primary">@L[$"NoticeAction{request.Action}"]</button></div>
+                </div></fieldset>
+            </EditForm>
+        }
+    }
+    @if (Details.NoticeHistory.Count > 0)
+    {
+        <details class="mt-3"><summary>@L["NoticeHistory"]</summary>
+            @foreach (var entry in Details.NoticeHistory)
+            {
+                <div class="border-top pt-3 mt-3">
+                    <p><strong>@L[$"NoticeAction{entry.Action}"]</strong> · @entry.Actor · @entry.CreatedUtc.ToLocalTime().ToString("g")</p>
+                    <p style="white-space: pre-wrap">@entry.Comment</p>
+                    <div class="row"><div class="col-lg-6">@if (entry.Before.StartDate != default) { <h3 class="h6">@L["NoticeBefore"]</h3><AgreementNoticeSnapshotView Value="entry.Before" /> }</div>
+                    <div class="col-lg-6"><h3 class="h6">@L["NoticeAfter"]</h3><AgreementNoticeSnapshotView Value="entry.After" /></div></div>
+                </div>
+            }
+        </details>
+    }
+</div></div>
+@code {
+    [Parameter, EditorRequired] public AgreementDetailsDto Details { get; set; } = default!;
+    [Parameter] public EventCallback Changed { get; set; }
+    private AgreementTerminationRequest request = new();
+    private Guid loadedRevision;
+    private bool busy;
+    private string? error;
+    protected override void OnParametersSet()
+    {
+        if (loadedRevision == Details.Revision) return;
+        loadedRevision = Details.Revision;
+        request = new() { Revision = Details.Revision,
+            Action = Details.NoticeSnapshot.EffectiveDate.HasValue ? AgreementNoticeAction.Corrected : AgreementNoticeAction.Registered,
+            EffectiveDate = Details.NoticeSnapshot.EffectiveDate ?? DateOnly.FromDateTime(DateTime.Today) };
+    }
+    private string Preview()
+    {
+        var snapshot = Details.NoticeSnapshot;
+        try { return AgreementNoticeRules.Calculate(request.EffectiveDate,
+            snapshot.EffectiveDate.HasValue ? snapshot.RegisteredCount : Details.NoticeCount,
+            snapshot.EffectiveDate.HasValue ? snapshot.RegisteredUnit : Details.NoticeUnit, false).ToString("d"); }
+        catch (AgreementValidationException ex) { return L[ex.Message]; }
+    }
+    private async Task SaveAsync()
+    {
+        if (busy) return;
+        busy = true; error = null;
+        try
+        {
+            if (UserContext.Current.CurrentAccountId is not Guid accountId) throw new UnauthorizedAccessException();
+            await AgreementsService.RecordTerminationAsync(accountId, Details.Id, request);
+            await Changed.InvokeAsync();
+        }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception) { error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}

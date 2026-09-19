@@ -95,7 +95,7 @@ await Invalid(r => r.EndDate = r.StartDate.AddDays(-1), "end before start");
 await Invalid(r => { r.AutoRenew = true; r.RenewalMonths = 0; }, "zero renewal");
 await Invalid(r => { r.AutoRenew = true; r.RenewalMonths = -1; }, "negative renewal");
 await Invalid(r => r.RenewalMonths = 12, "renewal without auto renewal");
-var earlyNotice = Request(); earlyNotice.NoticeDeadline = earlyNotice.StartDate.AddDays(-30);
+var earlyNotice = Request(); earlyNotice.NoticeMode = AgreementNoticeMode.Manual; earlyNotice.NoticeDeadline = earlyNotice.StartDate.AddDays(-30);
 var earlyId = await admin.CreateAsync(a, earlyNotice);
 Assert((await admin.GetAsync(a, earlyId)).NoticeDeadline == earlyNotice.NoticeDeadline, "notice before start and open-ended agreement supported");
 var linked = Request(); linked.BuildingId = buildingA; linked.UnitId = unitA; linked.AutoRenew = true; linked.RenewalMonths = 12;
@@ -190,7 +190,7 @@ AgreementService Service(Guid userId, Guid accountId)
     var context = new TestUserContext(userId, accountId);
     return new(factory, context, new TenantAuthorizationService(factory, context), storage, NullLogger<AgreementService>.Instance);
 }
-SaveAgreementRequest Request() => new() { Title = "Agreement", CounterpartyOrganizationId = orgA, OwnerUserId = ownerId, StartDate = new(2030, 1, 1) };
+SaveAgreementRequest Request() => new() { Title = "Agreement", CounterpartyOrganizationId = orgA, OwnerUserId = ownerId, StartDate = new(2030, 1, 1), Form = AgreementForm.Renewing, RenewalDate = new(2031, 1, 1) };
 async Task Invalid(Action<SaveAgreementRequest> change, string name)
 {
     var request = Request(); change(request);

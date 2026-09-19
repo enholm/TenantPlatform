@@ -14,6 +14,18 @@ public class Agreement
     public DateOnly? EndDate { get; set; }
     public DateOnly? NoticeDeadline { get; set; }
     public DateOnly? RenewalDate { get; set; }
+    public AgreementForm Form { get; set; }
+    public AgreementNoticeMode NoticeMode { get; set; }
+    public int? NoticeCount { get; set; }
+    public AgreementNoticeUnit? NoticeUnit { get; set; }
+    public DateOnly CurrentPeriodStartDate { get; set; }
+    // One active registration per agreement, independent of its general notice rule and status.
+    public DateOnly? TerminationEffectiveDate { get; set; }
+    public int? TerminationNoticeCount { get; set; }
+    public AgreementNoticeUnit? TerminationNoticeUnit { get; set; }
+    public DateOnly? CessationDate { get; set; }
+    public DateTimeOffset? TerminationRegisteredUtc { get; set; }
+    public Guid? TerminationRegisteredByUserId { get; set; }
     public bool DeadlinesInitialized { get; set; }
     public bool IsArchived { get; set; }
     public AgreementReminderMode ReminderMode { get; set; }

@@ -1954,4 +1954,59 @@ Review the deadline and record your follow-up on the agreement:
 
 This is a reminder, not a termination or renewal.</value>
   </data>
+  <data name="NoticeForm" xml:space="preserve"><value>Agreement form</value></data>
+  <data name="NoticeFormLegacy" xml:space="preserve"><value>Unclassified</value></data>
+  <data name="NoticeFormFixedTerm" xml:space="preserve"><value>Fixed-term agreement</value></data>
+  <data name="NoticeFormRenewing" xml:space="preserve"><value>Renewing agreement</value></data>
+  <data name="NoticeFormOngoing" xml:space="preserve"><value>Ongoing agreement without renewal</value></data>
+  <data name="NoticeMode" xml:space="preserve"><value>Notice rule</value></data>
+  <data name="NoticeModeNone" xml:space="preserve"><value>No notice deadline recorded</value></data>
+  <data name="NoticeModeManual" xml:space="preserve"><value>Manual date</value></data>
+  <data name="NoticeModeBeforeRenewal" xml:space="preserve"><value>Calculated before renewal</value></data>
+  <data name="NoticeDuration" xml:space="preserve"><value>Notice duration</value></data>
+  <data name="NoticeBeforeRenewal" xml:space="preserve"><value>Notice before renewal (count)</value></data>
+  <data name="NoticeUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="NoticeUnitDays" xml:space="preserve"><value>days</value></data>
+  <data name="NoticeUnitMonths" xml:space="preserve"><value>months</value></data>
+  <data name="NoticeCalculationHelp" xml:space="preserve"><value>Calculated as {0} {1} before renewal on {2}.</value></data>
+  <data name="NoticeCalendarHelp" xml:space="preserve"><value>Notice runs from the specified date in calendar days or months. No adjustment for weekends, the start of a month or quarter end.</value></data>
+  <data name="NoticeLegacyHelp" xml:space="preserve"><value>The agreement form is unclassified. Existing dates are preserved. Select the correct form once the terms have been clarified.</value></data>
+  <data name="NoticeFormChangeFixedTerm" xml:space="preserve"><value>Saving clears renewal date, automatic renewal, renewal interval and calculated notice rule. Previous values remain in history. An end date is required.</value></data>
+  <data name="NoticeFormChangeRenewing" xml:space="preserve"><value>A next renewal date is required. Any previous notice duration is used only if calculated notice is selected. Previous values remain in history.</value></data>
+  <data name="NoticeFormChangeOngoing" xml:space="preserve"><value>Saving clears the end date, notice deadline and all renewal fields. A notice duration is required. Previous values remain in history.</value></data>
+  <data name="NoticeNewPeriod" xml:space="preserve"><value>This is an actual new agreement period</value></data>
+  <data name="NoticePeriodHelp" xml:space="preserve"><value>Date corrections retain the period identity. Select a new period only for an actual renewal; this creates new follow-up without the previous completion status.</value></data>
+  <data name="NoticePeriodStart" xml:space="preserve"><value>Agreement period start date</value></data>
+  <data name="NoticeEffectiveDate" xml:space="preserve"><value>Notice effective from</value></data>
+  <data name="NoticeEffectiveHelp" xml:space="preserve"><value>The date used as the starting point for calculating the notice duration.</value></data>
+  <data name="NoticeCessationDate" xml:space="preserve"><value>Calculated cessation date</value></data>
+  <data name="NoticeRegistered" xml:space="preserve"><value>Notice registered</value></data>
+  <data name="NoticeRegisteredBy" xml:space="preserve"><value>Registered by</value></data>
+  <data name="NoticeSnapshotDuration" xml:space="preserve"><value>Notice duration used at registration</value></data>
+  <data name="NoticeNoTermination" xml:space="preserve"><value>No notice is registered. The agreement has no planned cessation date.</value></data>
+  <data name="NoticeAction" xml:space="preserve"><value>Action</value></data>
+  <data name="NoticeActionRegistered" xml:space="preserve"><value>Register notice</value></data>
+  <data name="NoticeActionCorrected" xml:space="preserve"><value>Correct notice</value></data>
+  <data name="NoticeActionWithdrawn" xml:space="preserve"><value>Withdraw notice</value></data>
+  <data name="NoticeActionRuleChanged" xml:space="preserve"><value>Terms recorded or changed</value></data>
+  <data name="NoticeActionPeriodStarted" xml:space="preserve"><value>New agreement period</value></data>
+  <data name="NoticeReason" xml:space="preserve"><value>Reason (required)</value></data>
+  <data name="NoticeComment" xml:space="preserve"><value>Comment (optional)</value></data>
+  <data name="NoticeInternalHelp" xml:space="preserve"><value>This is an internal record. No legal notice or email is sent to the counterparty. Agreement status does not change automatically. Corrections use the duration saved at registration.</value></data>
+  <data name="NoticeHistory" xml:space="preserve"><value>Terms and notice history</value></data>
+  <data name="NoticeBefore" xml:space="preserve"><value>Before</value></data>
+  <data name="NoticeAfter" xml:space="preserve"><value>After</value></data>
+  <data name="NoticeRules" xml:space="preserve"><value>Agreement form and notice</value></data>
+  <data name="NoticeInvalidDuration" xml:space="preserve"><value>Enter a positive integer and days or months. The calculated date must be within the supported date range.</value></data>
+  <data name="NoticeInvalidRule" xml:space="preserve"><value>The notice rule or action is invalid.</value></data>
+  <data name="NoticeWithdrawBeforeFormChange" xml:space="preserve"><value>Withdraw the registered notice before changing the agreement form.</value></data>
+  <data name="NoticeEndRequired" xml:space="preserve"><value>A fixed-term agreement requires an end date.</value></data>
+  <data name="NoticeRenewalRequired" xml:space="preserve"><value>Enter the next renewal date.</value></data>
+  <data name="NoticeManualRequired" xml:space="preserve"><value>Enter a manual notice deadline.</value></data>
+  <data name="NoticeChooseForm" xml:space="preserve"><value>Select a classified agreement form.</value></data>
+  <data name="NoticeInvalidPeriod" xml:space="preserve"><value>A new period requires a later period start and a renewal date after it. The agreement must support renewal.</value></data>
+  <data name="NoticeAlreadyRegistered" xml:space="preserve"><value>The agreement already has an active notice.</value></data>
+  <data name="NoticeNotRegistered" xml:space="preserve"><value>The agreement has no active notice.</value></data>
+  <data name="NoticeReasonRequired" xml:space="preserve"><value>Enter a reason for the correction.</value></data>
+  <data name="FollowupKindCessation" xml:space="preserve"><value>Planned cessation</value></data>
 </root>

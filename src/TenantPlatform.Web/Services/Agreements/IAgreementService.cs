@@ -4,6 +4,7 @@ namespace TenantPlatform.Web.Services.Agreements;
 
 public interface IAgreementService
 {
+    Task RecordTerminationAsync(Guid accountId, Guid agreementId, AgreementTerminationRequest request, CancellationToken cancellationToken = default);
     long MaxFileSizeBytes { get; }
     Task<AgreementPageDto> ListAsync(Guid accountId, AgreementFilter filter, CancellationToken cancellationToken = default);
     Task<AgreementDetailsDto> GetAsync(Guid accountId, Guid agreementId, CancellationToken cancellationToken = default);

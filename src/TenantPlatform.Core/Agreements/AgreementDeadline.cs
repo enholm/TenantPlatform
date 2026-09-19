@@ -1,6 +1,6 @@
 namespace TenantPlatform.Core.Agreements;
 
-public enum AgreementDeadlineKind { Notice = 1, Expiry = 2, Renewal = 3 }
+public enum AgreementDeadlineKind { Notice = 1, Expiry = 2, Renewal = 3, Cessation = 4 }
 public enum AgreementFollowupStatus { Untreated = 1, InReview = 2, Completed = 3 }
 public enum AgreementDeadlineState { Current = 1, Replaced = 2, Withdrawn = 3 }
 public enum AgreementReminderMode { Inherit = 0, Custom = 1, Disabled = 2 }

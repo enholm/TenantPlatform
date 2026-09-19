@@ -24,11 +24,17 @@ else if (details is not null)
         <dt class="col-sm-4">@L["AgreementType"]</dt><dd class="col-sm-8">@L[$"AgreementType{details.Type}"]</dd>
         <dt class="col-sm-4">@L["Status"]</dt><dd class="col-sm-8">@L[$"AgreementStatus{details.Status}"]</dd>
         <dt class="col-sm-4">@L["AgreementStartDate"]</dt><dd class="col-sm-8">@details.StartDate.ToString("d")</dd>
+        @if (details.Form != AgreementForm.Ongoing)
+        {
         <dt class="col-sm-4">@L["AgreementEndDate"]</dt><dd class="col-sm-8">@details.EndDate?.ToString("d")</dd>
         <dt class="col-sm-4">@L["AgreementNoticeDeadline"]</dt><dd class="col-sm-8">@details.NoticeDeadline?.ToString("d")</dd>
+        }
+        @if (details.Form is AgreementForm.Renewing or AgreementForm.Legacy)
+        {
         <dt class="col-sm-4">@L["FollowupRenewalDate"]</dt><dd class="col-sm-8">@details.RenewalDate?.ToString("d")</dd>
         <dt class="col-sm-4">@L["AgreementAutoRenew"]</dt><dd class="col-sm-8">@L[details.AutoRenew ? "Yes" : "No"]</dd>
         <dt class="col-sm-4">@L["AgreementRenewalMonths"]</dt><dd class="col-sm-8">@details.RenewalMonths</dd>
+        }
         <dt class="col-sm-4">@L["Building"]</dt><dd class="col-sm-8">@details.BuildingName</dd>
         <dt class="col-sm-4">@L["Unit"]</dt><dd class="col-sm-8">@details.UnitName</dd>
         <dt class="col-sm-4">@L["Description"]</dt><dd class="col-sm-8" style="white-space: pre-wrap">@details.Description</dd>
@@ -37,6 +43,7 @@ else if (details is not null)
         <dt class="col-sm-4">@L["AgreementUpdated"]</dt><dd class="col-sm-8">@details.UpdatedUtc.ToString("g") UTC · @details.UpdatedByName</dd>
     </dl><p class="text-body-secondary mt-3 mb-0">@L["AgreementPeriodHelp"]</p></div></div>
 
+    <AgreementNoticePanel Details="details" Changed="LoadAsync" />
     <AgreementFollowupPanel AgreementId="Id" ParentRevision="details.Revision" Changed="LoadAsync" />
     <h2>@L["AgreementDocuments"]</h2>
     @if (details.Documents.Count == 0) { <p>@L["AgreementNoDocuments"]</p> }

@@ -10,14 +10,16 @@ public static class AgreementDeadlineSynchronizer
     public static async Task SynchronizeAsync(TenantPlatformDbContext db, Agreement agreement,
         DateTimeOffset now, Guid? actor, CancellationToken ct)
     {
+        AgreementNoticeRules.Recalculate(agreement);
         var current = await db.AgreementDeadlines.Where(x => x.AccountId == agreement.AccountId &&
             x.AgreementId == agreement.Id && x.State == AgreementDeadlineState.Current).ToListAsync(ct);
         foreach (var (kind, date) in new[] { (AgreementDeadlineKind.Notice, agreement.NoticeDeadline),
-            (AgreementDeadlineKind.Expiry, agreement.EndDate), (AgreementDeadlineKind.Renewal, agreement.RenewalDate) })
+            (AgreementDeadlineKind.Expiry, agreement.EndDate), (AgreementDeadlineKind.Renewal, agreement.RenewalDate),
+            (AgreementDeadlineKind.Cessation, agreement.CessationDate) })
         {
             var old = current.SingleOrDefault(x => x.Kind == kind);
             var due = agreement.IsArchived ? null : date;
-            if (old is not null && old.DueDate == due && old.PeriodStartDate == agreement.StartDate) continue;
+            if (old is not null && old.DueDate == due && old.PeriodStartDate == agreement.CurrentPeriodStartDate) continue;
             if (old is not null)
             {
                 old.State = due.HasValue ? AgreementDeadlineState.Replaced : AgreementDeadlineState.Withdrawn;
@@ -29,7 +31,7 @@ public static class AgreementDeadlineSynchronizer
             if (due.HasValue)
             {
                 var deadline = new AgreementDeadline { Id = Guid.NewGuid(), AccountId = agreement.AccountId,
-                    AgreementId = agreement.Id, Kind = kind, DueDate = due.Value, PeriodStartDate = agreement.StartDate,
+                    AgreementId = agreement.Id, Kind = kind, DueDate = due.Value, PeriodStartDate = agreement.CurrentPeriodStartDate,
                     CreatedUtc = now, UpdatedUtc = now, CreatedByUserId = actor, UpdatedByUserId = actor };
                 db.AgreementDeadlines.Add(deadline);
                 AddHistory(db, deadline, AgreementHistoryKind.Created, now, actor, effectiveAssignee: agreement.OwnerUserId);

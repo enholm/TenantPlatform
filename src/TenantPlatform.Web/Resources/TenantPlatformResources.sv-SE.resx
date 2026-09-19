@@ -1990,4 +1990,59 @@ Granska tidsfristen och registrera uppföljning på avtalet:
 
 Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   </data>
+  <data name="NoticeForm" xml:space="preserve"><value>Avtalsform</value></data>
+  <data name="NoticeFormLegacy" xml:space="preserve"><value>Inte klarlagd</value></data>
+  <data name="NoticeFormFixedTerm" xml:space="preserve"><value>Tidsbegränsat avtal</value></data>
+  <data name="NoticeFormRenewing" xml:space="preserve"><value>Avtal med förnyelse</value></data>
+  <data name="NoticeFormOngoing" xml:space="preserve"><value>Löpande avtal utan förnyelse</value></data>
+  <data name="NoticeMode" xml:space="preserve"><value>Uppsägningsregel</value></data>
+  <data name="NoticeModeNone" xml:space="preserve"><value>Ingen registrerad uppsägningsfrist</value></data>
+  <data name="NoticeModeManual" xml:space="preserve"><value>Manuellt datum</value></data>
+  <data name="NoticeModeBeforeRenewal" xml:space="preserve"><value>Beräknad före förnyelse</value></data>
+  <data name="NoticeDuration" xml:space="preserve"><value>Uppsägningstid</value></data>
+  <data name="NoticeBeforeRenewal" xml:space="preserve"><value>Uppsägningsfrist före förnyelse (antal)</value></data>
+  <data name="NoticeUnit" xml:space="preserve"><value>Enhet</value></data>
+  <data name="NoticeUnitDays" xml:space="preserve"><value>dagar</value></data>
+  <data name="NoticeUnitMonths" xml:space="preserve"><value>månader</value></data>
+  <data name="NoticeCalculationHelp" xml:space="preserve"><value>Beräknad som {0} {1} före förnyelse {2}.</value></data>
+  <data name="NoticeCalendarHelp" xml:space="preserve"><value>Uppsägningstiden räknas från angivet datum i kalenderdagar eller kalendermånader. Ingen justering för helger, månadsskifte eller kvartalsslut.</value></data>
+  <data name="NoticeLegacyHelp" xml:space="preserve"><value>Avtalsformen är inte klarlagd. Befintliga datum behålls. Välj rätt avtalsform när villkoren är klarlagda.</value></data>
+  <data name="NoticeFormChangeFixedTerm" xml:space="preserve"><value>Vid lagring tas förnyelsedatum, automatisk förnyelse, förnyelseperiod och beräkningsregel bort. Tidigare värden bevaras i historiken. Slutdatum krävs.</value></data>
+  <data name="NoticeFormChangeRenewing" xml:space="preserve"><value>Nästa förnyelsedatum krävs. En eventuell tidigare uppsägningstid används endast om beräknad frist väljs. Tidigare värden bevaras i historiken.</value></data>
+  <data name="NoticeFormChangeOngoing" xml:space="preserve"><value>Vid lagring tas slutdatum, sista uppsägningsfrist och alla förnyelsefält bort. Uppsägningstid krävs. Tidigare värden bevaras i historiken.</value></data>
+  <data name="NoticeNewPeriod" xml:space="preserve"><value>Detta är en faktisk ny avtalsperiod</value></data>
+  <data name="NoticePeriodHelp" xml:space="preserve"><value>Vanliga datumkorrigeringar behåller periodidentiteten. Välj ny period endast vid faktisk förnyelse; då skapas ny uppföljning utan tidigare färdigstatus.</value></data>
+  <data name="NoticePeriodStart" xml:space="preserve"><value>Avtalsperiodens startdatum</value></data>
+  <data name="NoticeEffectiveDate" xml:space="preserve"><value>Uppsägning gäller från</value></data>
+  <data name="NoticeEffectiveHelp" xml:space="preserve"><value>Datumet som används som utgångspunkt för att beräkna uppsägningstiden.</value></data>
+  <data name="NoticeCessationDate" xml:space="preserve"><value>Beräknat upphörandedatum</value></data>
+  <data name="NoticeRegistered" xml:space="preserve"><value>Uppsägning registrerad</value></data>
+  <data name="NoticeRegisteredBy" xml:space="preserve"><value>Registrerad av</value></data>
+  <data name="NoticeSnapshotDuration" xml:space="preserve"><value>Uppsägningstid vid registrering</value></data>
+  <data name="NoticeNoTermination" xml:space="preserve"><value>Ingen uppsägning är registrerad. Avtalet har inget planerat upphörandedatum.</value></data>
+  <data name="NoticeAction" xml:space="preserve"><value>Åtgärd</value></data>
+  <data name="NoticeActionRegistered" xml:space="preserve"><value>Registrera uppsägning</value></data>
+  <data name="NoticeActionCorrected" xml:space="preserve"><value>Korrigera uppsägning</value></data>
+  <data name="NoticeActionWithdrawn" xml:space="preserve"><value>Återkalla uppsägning</value></data>
+  <data name="NoticeActionRuleChanged" xml:space="preserve"><value>Villkor registrerade eller ändrade</value></data>
+  <data name="NoticeActionPeriodStarted" xml:space="preserve"><value>Ny avtalsperiod</value></data>
+  <data name="NoticeReason" xml:space="preserve"><value>Motivering (obligatorisk)</value></data>
+  <data name="NoticeComment" xml:space="preserve"><value>Kommentar (valfritt)</value></data>
+  <data name="NoticeInternalHelp" xml:space="preserve"><value>Detta är en intern registrering. Ingen juridisk uppsägning eller e-post skickas till motparten. Avtalsstatus ändras inte automatiskt. Korrigering använder uppsägningstiden från registreringen.</value></data>
+  <data name="NoticeHistory" xml:space="preserve"><value>Historik för villkor och uppsägning</value></data>
+  <data name="NoticeBefore" xml:space="preserve"><value>Före</value></data>
+  <data name="NoticeAfter" xml:space="preserve"><value>Efter</value></data>
+  <data name="NoticeRules" xml:space="preserve"><value>Avtalsform och uppsägning</value></data>
+  <data name="NoticeInvalidDuration" xml:space="preserve"><value>Ange ett positivt heltal och dagar eller månader. Det beräknade datumet måste vara inom det giltiga datumintervallet.</value></data>
+  <data name="NoticeInvalidRule" xml:space="preserve"><value>Uppsägningsregeln eller åtgärden är ogiltig.</value></data>
+  <data name="NoticeWithdrawBeforeFormChange" xml:space="preserve"><value>Återkalla den registrerade uppsägningen innan du byter avtalsform.</value></data>
+  <data name="NoticeEndRequired" xml:space="preserve"><value>Ett tidsbegränsat avtal kräver slutdatum.</value></data>
+  <data name="NoticeRenewalRequired" xml:space="preserve"><value>Ange nästa förnyelsedatum.</value></data>
+  <data name="NoticeManualRequired" xml:space="preserve"><value>Ange en manuell sista uppsägningsfrist.</value></data>
+  <data name="NoticeChooseForm" xml:space="preserve"><value>Välj en klarlagd avtalsform.</value></data>
+  <data name="NoticeInvalidPeriod" xml:space="preserve"><value>En ny period kräver en senare periodstart och ett förnyelsedatum efter denna. Avtalet måste ha förnyelse.</value></data>
+  <data name="NoticeAlreadyRegistered" xml:space="preserve"><value>Avtalet har redan en aktiv uppsägning.</value></data>
+  <data name="NoticeNotRegistered" xml:space="preserve"><value>Avtalet har ingen aktiv uppsägning.</value></data>
+  <data name="NoticeReasonRequired" xml:space="preserve"><value>Ange en motivering för korrigeringen.</value></data>
+  <data name="FollowupKindCessation" xml:space="preserve"><value>Planerat upphörande</value></data>
 </root>

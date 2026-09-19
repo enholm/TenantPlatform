@@ -14,6 +14,12 @@ public class SaveAgreementRequest
     public DateOnly? EndDate { get; set; }
     public DateOnly? NoticeDeadline { get; set; }
     public DateOnly? RenewalDate { get; set; }
+    public AgreementForm Form { get; set; }
+    public AgreementNoticeMode NoticeMode { get; set; }
+    public int? NoticeCount { get; set; }
+    public AgreementNoticeUnit? NoticeUnit { get; set; }
+    public bool BeginNewPeriod { get; set; }
+    public DateOnly? NewPeriodStartDate { get; set; }
     public bool AutoRenew { get; set; }
     public int? RenewalMonths { get; set; }
     public string? Terms { get; set; }
@@ -24,6 +30,10 @@ public class SaveAgreementRequest
 
 public class AgreementDetailsDto : SaveAgreementRequest
 {
+    public DateOnly CurrentPeriodStartDate { get; init; }
+    public AgreementNoticeSnapshot NoticeSnapshot { get; set; } = new();
+    public string? TerminationRegisteredByName { get; set; }
+    public List<AgreementNoticeHistoryDto> NoticeHistory { get; set; } = [];
     public bool IsArchived { get; init; }
     public Guid Id { get; init; }
     public string CounterpartyName { get; init; } = string.Empty;

@@ -1,0 +1,19 @@
+<dl class="row mb-0">
+    <dt class="col-sm-5">@L["NoticeForm"]</dt><dd class="col-sm-7">@L[$"NoticeForm{Value.Form}"]</dd>
+    <dt class="col-sm-5">@L["AgreementStartDate"]</dt><dd class="col-sm-7">@Value.StartDate.ToString("d")</dd>
+    <dt class="col-sm-5">@L["NoticePeriodStart"]</dt><dd class="col-sm-7">@Value.PeriodStartDate.ToString("d")</dd>
+    <dt class="col-sm-5">@L["NoticeMode"]</dt><dd class="col-sm-7">@L[$"NoticeMode{Value.NoticeMode}"]</dd>
+    @if (Value.NoticeCount.HasValue) { <dt class="col-sm-5">@L["NoticeDuration"]</dt><dd class="col-sm-7">@Value.NoticeCount @L[$"NoticeUnit{Value.NoticeUnit}"]</dd> }
+    @if (Value.NoticeDeadline.HasValue) { <dt class="col-sm-5">@L["AgreementNoticeDeadline"]</dt><dd class="col-sm-7">@Value.NoticeDeadline.Value.ToString("d")</dd> }
+    @if (Value.EndDate.HasValue) { <dt class="col-sm-5">@L["AgreementEndDate"]</dt><dd class="col-sm-7">@Value.EndDate.Value.ToString("d")</dd> }
+    @if (Value.RenewalDate.HasValue) { <dt class="col-sm-5">@L["FollowupRenewalDate"]</dt><dd class="col-sm-7">@Value.RenewalDate.Value.ToString("d")</dd> }
+    @if (Value.AutoRenew) { <dt class="col-sm-5">@L["AgreementAutoRenew"]</dt><dd class="col-sm-7">@L["Yes"] (@Value.RenewalMonths @L["NoticeUnitMonths"])</dd> }
+    @if (Value.EffectiveDate.HasValue)
+    {
+        <dt class="col-sm-5">@L["NoticeEffectiveDate"]</dt><dd class="col-sm-7">@Value.EffectiveDate.Value.ToString("d")</dd>
+        <dt class="col-sm-5">@L["NoticeSnapshotDuration"]</dt><dd class="col-sm-7">@Value.RegisteredCount @L[$"NoticeUnit{Value.RegisteredUnit}"]</dd>
+        <dt class="col-sm-5">@L["NoticeCessationDate"]</dt><dd class="col-sm-7">@Value.CessationDate?.ToString("d")</dd>
+    }
+    @if (!string.IsNullOrWhiteSpace(Value.Terms)) { <dt class="col-sm-5">@L["AgreementTerms"]</dt><dd class="col-sm-7" style="white-space: pre-wrap">@Value.Terms</dd> }
+</dl>
+@code { [Parameter, EditorRequired] public AgreementNoticeSnapshot Value { get; set; } = default!; }

@@ -1,0 +1,82 @@
+<div class="col-md-6"><label for="agreement-form" class="form-label">@L["NoticeForm"]</label>
+    <InputSelect id="agreement-form" class="form-select" @bind-Value="Model.Form" @bind-Value:after="FormChanged">
+        @if (OriginalForm == AgreementForm.Legacy) { <option value="Legacy">@L["NoticeFormLegacy"]</option> }
+        @foreach (var value in Enum.GetValues<AgreementForm>().Where(x => x != AgreementForm.Legacy))
+        { <option value="@value">@L[$"NoticeForm{value}"]</option> }
+    </InputSelect>
+</div>
+@if (Model.Form == AgreementForm.Legacy) { <div class="col-12"><div class="alert alert-warning">@L["NoticeLegacyHelp"]</div></div> }
+@if (Model.Form != OriginalForm)
+{
+    <div class="col-12"><div class="alert alert-info">@L[$"NoticeFormChange{Model.Form}"]</div></div>
+}
+<div class="col-md-4"><label for="start" class="form-label">@L["AgreementStartDate"]</label><InputDate id="start" class="form-control" @bind-Value="Model.StartDate" required /></div>
+@if (Model.Form != AgreementForm.Ongoing)
+{
+    <div class="col-md-4"><label for="end" class="form-label">@L["AgreementEndDate"]</label><InputDate id="end" class="form-control" @bind-Value="Model.EndDate" /></div>
+}
+@if (Model.Form is AgreementForm.Renewing or AgreementForm.Legacy)
+{
+    <div class="col-md-4"><label for="renewal-date" class="form-label">@L["FollowupRenewalDate"]</label><InputDate id="renewal-date" class="form-control" @bind-Value="Model.RenewalDate" /></div>
+    <div class="col-md-6"><div class="form-check"><InputCheckbox id="renew" class="form-check-input" @bind-Value="Model.AutoRenew" @bind-Value:after="RenewChanged" /><label for="renew" class="form-check-label">@L["AgreementAutoRenew"]</label></div></div>
+    <div class="col-md-6"><label for="months" class="form-label">@L["AgreementRenewalMonths"]</label><InputNumber id="months" class="form-control" @bind-Value="Model.RenewalMonths" min="1" disabled="@(!Model.AutoRenew)" /></div>
+}
+@if (Model.Form is AgreementForm.FixedTerm or AgreementForm.Renewing)
+{
+    <div class="col-md-6"><label for="notice-mode" class="form-label">@L["NoticeMode"]</label><InputSelect id="notice-mode" class="form-select" @bind-Value="Model.NoticeMode" @bind-Value:after="ModeChanged">
+        @foreach (var mode in Enum.GetValues<AgreementNoticeMode>().Where(x => Model.Form == AgreementForm.Renewing || x != AgreementNoticeMode.BeforeRenewal))
+        { <option value="@mode">@L[$"NoticeMode{mode}"]</option> }
+    </InputSelect></div>
+}
+@if (Model.Form == AgreementForm.Legacy || (Model.Form != AgreementForm.Ongoing && Model.NoticeMode == AgreementNoticeMode.Manual))
+{
+    <div class="col-md-4"><label for="notice" class="form-label">@L["AgreementNoticeDeadline"]</label><InputDate id="notice" class="form-control" @bind-Value="Model.NoticeDeadline" /></div>
+}
+@if (Model.Form == AgreementForm.Ongoing || Model.NoticeMode == AgreementNoticeMode.BeforeRenewal)
+{
+    <div class="col-md-4"><label for="notice-count" class="form-label">@L[Model.Form == AgreementForm.Ongoing ? "NoticeDuration" : "NoticeBeforeRenewal"]</label>
+        <input id="notice-count" type="number" class="form-control" value="@Model.NoticeCount" @oninput="CountChanged" min="1" step="1" required />
+    </div>
+    <div class="col-md-4"><label for="notice-unit" class="form-label">@L["NoticeUnit"]</label><InputSelect id="notice-unit" class="form-select" @bind-Value="Model.NoticeUnit">
+        <option value="">@L["AgreementSelect"]</option>
+        @foreach (var unit in Enum.GetValues<AgreementNoticeUnit>()) { <option value="@unit">@L[$"NoticeUnit{unit}"]</option> }
+    </InputSelect></div>
+    @if (Model.Form == AgreementForm.Ongoing) { <div class="col-12 text-body-secondary">@L["NoticeCalendarHelp"]</div> }
+    else
+    {
+        <div class="col-md-4"><label for="notice-calculated" class="form-label">@L["AgreementNoticeDeadline"]</label><input id="notice-calculated" class="form-control" readonly value="@Preview()" /></div>
+        <div class="col-12 text-body-secondary">@L["NoticeCalculationHelp", Model.NoticeCount?.ToString() ?? "–", Model.NoticeUnit.HasValue ? L[$"NoticeUnit{Model.NoticeUnit}"] : "–", Model.RenewalDate?.ToString("d") ?? "–"]</div>
+    }
+}
+@if (Existing && OriginalForm == AgreementForm.Renewing && Model.Form == AgreementForm.Renewing)
+{
+    <div class="col-12"><div class="form-check"><InputCheckbox id="new-period" class="form-check-input" @bind-Value="Model.BeginNewPeriod" /><label for="new-period" class="form-check-label">@L["NoticeNewPeriod"]</label></div><p class="text-body-secondary">@L["NoticePeriodHelp"]</p></div>
+    @if (Model.BeginNewPeriod) { <div class="col-md-4"><label for="period-start" class="form-label">@L["NoticePeriodStart"]</label><InputDate id="period-start" class="form-control" @bind-Value="Model.NewPeriodStartDate" /></div> }
+}
+@code {
+    [Parameter, EditorRequired] public SaveAgreementRequest Model { get; set; } = default!;
+    [Parameter] public AgreementForm OriginalForm { get; set; }
+    [Parameter] public bool Existing { get; set; }
+    private void CountChanged(ChangeEventArgs e) => Model.NoticeCount = int.TryParse(e.Value?.ToString(), out var n) ? n : null;
+    private void RenewChanged() { if (!Model.AutoRenew) Model.RenewalMonths = null; }
+    private void FormChanged()
+    {
+        Model.BeginNewPeriod = false;
+        if (Model.Form != AgreementForm.Renewing && Model.NoticeMode == AgreementNoticeMode.BeforeRenewal)
+            Model.NoticeMode = AgreementNoticeMode.None;
+    }
+    private void ModeChanged()
+    {
+        if (Model.NoticeMode == AgreementNoticeMode.Manual && Model.RenewalDate.HasValue && Model.NoticeCount.HasValue)
+        {
+            try { Model.NoticeDeadline = AgreementNoticeRules.Calculate(Model.RenewalDate.Value, Model.NoticeCount, Model.NoticeUnit, true); }
+            catch (AgreementValidationException) { }
+        }
+    }
+    private string Preview()
+    {
+        if (!Model.RenewalDate.HasValue) return L["NoticeRenewalRequired"];
+        try { return AgreementNoticeRules.Calculate(Model.RenewalDate.Value, Model.NoticeCount, Model.NoticeUnit, true).ToString("d"); }
+        catch (AgreementValidationException ex) { return L[ex.Message]; }
+    }
+}
