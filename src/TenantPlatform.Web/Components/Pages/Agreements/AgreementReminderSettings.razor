@@ -16,7 +16,7 @@ else
     <div class="card"><div class="card-body"><fieldset disabled="@busy">
         <div class="form-check mb-3"><input id="reminder-enabled" type="checkbox" class="form-check-input" @bind="settings.Enabled" /><label for="reminder-enabled">@L["FollowupEnable"]</label></div>
         <div class="mb-3"><label for="reminder-days" class="form-label">@L["FollowupThresholds"]</label><input id="reminder-days" class="form-control" @bind="days" /></div>
-        <div class="mb-3"><label for="reminder-zone" class="form-label">@L["FollowupTimeZone"]</label><input id="reminder-zone" class="form-control" @bind="settings.TimeZoneId" maxlength="100" /></div>
+        <AgreementTimeZoneSelect @bind-Value="settings.TimeZoneId" />
         <div class="mb-3"><label for="reminder-time" class="form-label">@L["FollowupSendAt"]</label><input id="reminder-time" type="time" class="form-control" @bind="settings.SendAt" /></div>
         <button class="btn btn-primary" @onclick="SaveAsync">@L["Save"]</button>
         <a class="btn btn-outline-secondary ms-2" href="/agreements/follow-up">@L["Cancel"]</a>
@@ -48,4 +48,3 @@ else
         finally { busy = false; }
     }
 }
-

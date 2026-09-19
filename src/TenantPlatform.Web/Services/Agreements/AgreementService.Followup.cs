@@ -196,8 +196,7 @@ public partial class AgreementService
         await using var db = await factory.CreateDbContextAsync(ct);
         if (!(await RequireMemberAsync(db, accountId, ct)).Admin) throw new UnauthorizedAccessException();
         var days = AgreementReminderSchedule.ValidateDays(request.Days);
-        var zone = AgreementReminderSchedule.Zone(request.TimeZoneId).Id;
-        if (zone.Length > 100) throw new AgreementValidationException("FollowupInvalidTimeZone");
+        var zone = AgreementTimeZones.Validate(request.TimeZoneId);
         var settings = await db.AgreementReminderSettings.SingleOrDefaultAsync(x => x.AccountId == accountId, ct);
         if ((settings?.Revision ?? Guid.Empty) != request.Revision) throw new AgreementValidationException("AgreementConcurrencyConflict");
         if (settings is null) { settings = new() { AccountId = accountId }; db.AgreementReminderSettings.Add(settings); }

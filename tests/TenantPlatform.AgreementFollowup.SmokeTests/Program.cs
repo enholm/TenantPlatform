@@ -64,6 +64,42 @@ AgreementService Service(Guid userId, Guid accountId) {
 }
 var admin = Service(adminId, account); var owner = Service(ownerId, account); var reader = Service(readerId, account);
 var editor = Service(editorId, account); var stranger = Service(strangerId, account); var foreign = Service(foreignId, otherAccount);
+// Time-zone catalog and settings round-trips use the same runtime as the worker.
+var zones = AgreementTimeZones.Ids;
+Assert(zones.Contains("Europe/Oslo") && zones.Contains("America/Chicago") && zones.Contains("UTC"), "IANA catalog includes default, Chicago and UTC");
+Assert(zones.SequenceEqual(zones.Order(StringComparer.Ordinal)) && zones.Distinct().Count() == zones.Count, "time zones are sorted and unique");
+Assert(zones.All(id => AgreementTimeZones.IsSupported(id) && AgreementReminderSchedule.Zone(id) != null), "every selectable IANA ID resolves in reminder scheduler");
+Assert(zones.All(id => id == "UTC" || AgreementReminderSchedule.Zone(id).HasIanaId), "catalog never exposes Windows IDs");
+foreach (var invalid in new[] { "Invalid/Zone", "Central Standard Time", "localtime", "../Europe/Oslo", "", " Europe/Oslo " })
+    ExpectSync(() => AgreementTimeZones.Validate(invalid), "invalid or non-IANA ID rejected: " + invalid);
+var zoneSettings = await admin.GetReminderSettingsAsync(account);
+Assert(zoneSettings.TimeZoneId == "Europe/Oslo", "new reminder settings retain Oslo default");
+zoneSettings.TimeZoneId = "America/Chicago";
+await admin.SaveReminderSettingsAsync(account, zoneSettings);
+zoneSettings = await admin.GetReminderSettingsAsync(account);
+Assert(zoneSettings.TimeZoneId == "America/Chicago" && zoneSettings.SendAt == new TimeOnly(8, 0) && zoneSettings.Days.SequenceEqual(new[] { 90, 30, 7 }), "selected IANA ID persists without changing time or intervals");
+zoneSettings.TimeZoneId = "US/Central";
+Assert(AgreementTimeZones.Options(zoneSettings.TimeZoneId).Contains("US/Central"), "supported legacy alias is included verbatim in options");
+await admin.SaveReminderSettingsAsync(account, zoneSettings);
+zoneSettings = await admin.GetReminderSettingsAsync(account);
+Assert(zoneSettings.TimeZoneId == "US/Central", "legacy alias is saved and restored without canonicalization");
+zoneSettings.TimeZoneId = "Central Standard Time";
+await Expect<AgreementValidationException>(() => admin.SaveReminderSettingsAsync(account, zoneSettings), "server rejects manipulated Windows ID");
+zoneSettings.TimeZoneId = "Invalid/Zone";
+await Expect<AgreementValidationException>(() => admin.SaveReminderSettingsAsync(account, zoneSettings), "server rejects invalid time zone");
+await Expect<UnauthorizedAccessException>(() => editor.SaveReminderSettingsAsync(account, zoneSettings), "non-admin cannot save settings");
+await Expect<UnauthorizedAccessException>(() => admin.GetReminderSettingsAsync(otherAccount), "cannot read settings for forged account");
+await Expect<UnauthorizedAccessException>(() => admin.SaveReminderSettingsAsync(otherAccount, zoneSettings), "cannot save settings for forged account");
+Assert((await foreign.GetReminderSettingsAsync(otherAccount)).TimeZoneId == "Europe/Oslo", "other account defaults remain unchanged");
+await using (var db = factory.CreateDbContext())
+{
+    var savedSettings = await db.AgreementReminderSettings.SingleAsync(x => x.AccountId == account);
+    savedSettings.TimeZoneId = "Invalid/Legacy"; await db.SaveChangesAsync();
+}
+zoneSettings = await admin.GetReminderSettingsAsync(account);
+Assert(zoneSettings.TimeZoneId == "Invalid/Legacy" && !AgreementTimeZones.IsSupported(zoneSettings.TimeZoneId), "unsupported stored value is returned unchanged for display");
+await Expect<AgreementValidationException>(() => admin.SaveReminderSettingsAsync(account, zoneSettings), "unsupported stored value must be corrected before save");
+zoneSettings.TimeZoneId = "Europe/Oslo"; await admin.SaveReminderSettingsAsync(account, zoneSettings);
 SaveAgreementRequest Request(string title, DateOnly? notice = null) => new() { Title = title, CounterpartyOrganizationId = org, OwnerUserId = ownerId,
     Status = AgreementStatus.Active, StartDate = today.AddYears(-1), NoticeDeadline = notice };
 var request = Request("Initial", today.AddDays(90)); request.Status = AgreementStatus.Draft;
@@ -128,6 +164,19 @@ await Task.WhenAll(Processor().RunAccountAsync(account), Processor().RunAccountA
 Assert(Count(remindersAgreement) == 1, "parallel workers reserve and send exactly one 90-day reminder");
 await Processor().RunAccountAsync(account);
 Assert(Count(remindersAgreement) == 1, "repeated job is idempotent");
+// Changing the zone reschedules existing pending thresholds on the next planning pass.
+var zoneBefore = await owner.GetFollowupAsync(account, remindersAgreement);
+var queueBefore = zoneBefore.Deadlines.Single().Reminders.Single(x => x.DaysBefore == 30);
+var changeZone = await admin.GetReminderSettingsAsync(account); changeZone.TimeZoneId = "America/Chicago";
+await admin.SaveReminderSettingsAsync(account, changeZone);
+await Processor().PlanAccountAsync(account);
+var zoneAfter = await owner.GetFollowupAsync(account, remindersAgreement);
+var queueAfter = zoneAfter.Deadlines.Single().Reminders.Single(x => x.DaysBefore == 30);
+Assert(queueAfter.ScheduledUtc == AgreementReminderSchedule.Scheduled(today.AddDays(90), 30, "America/Chicago", new(8, 0)) &&
+    queueAfter.ScheduledUtc != queueBefore.ScheduledUtc && zoneAfter.Deadlines.Single().Reminders.Count == 3 && Count(remindersAgreement) == 1,
+    "pending reminders reschedule without duplicate rows or resending sent threshold");
+changeZone = await admin.GetReminderSettingsAsync(account); changeZone.TimeZoneId = "Europe/Oslo";
+await admin.SaveReminderSettingsAsync(account, changeZone); await Processor().PlanAccountAsync(account);
 var reminderDetails = await owner.GetFollowupAsync(account, remindersAgreement);
 var reminderDeadline = reminderDetails.Deadlines.Single().Deadline.Id;
 Assert(reminderDetails.Deadlines.Single().Reminders.Count == 3, "unique 90/30/7 queue identities");

@@ -1,0 +1,46 @@
+<div class="mb-3">
+    <label for="reminder-zone-search" class="form-label">@L["FollowupTimeZoneSearch"]</label>
+    <input id="reminder-zone-search" type="search" class="form-control mb-2" value="@search"
+           @oninput="SearchChanged" aria-controls="reminder-zone" autocomplete="off" />
+    <label for="reminder-zone" class="form-label">@L["FollowupTimeZone"]</label>
+    <select id="reminder-zone" class="form-select" value="@Value" @onchange="SelectAsync"
+            aria-invalid="@(!AgreementTimeZones.IsSupported(Value) ? "true" : "false")"
+            aria-describedby="reminder-zone-help reminder-zone-status">
+        @if (!AgreementTimeZones.IsSupported(Value))
+        {
+            <option value="@Value" disabled selected>@Value</option>
+        }
+        @foreach (var id in Filtered)
+        {
+            <option value="@id" selected="@(id == Value)">@id</option>
+        }
+    </select>
+    <div id="reminder-zone-help" class="form-text">@L["FollowupTimeZoneHelp"]</div>
+    <div id="reminder-zone-status" role="status" aria-live="polite">
+        @if (!AgreementTimeZones.IsSupported(Value))
+        {
+            <p class="text-danger mb-0">@L["FollowupUnsupportedSavedTimeZone", Value]</p>
+        }
+        @if (!options.Any(Matches))
+        {
+            <p class="text-body-secondary mb-0">@L["FollowupTimeZoneNoMatches"]</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    private string search = string.Empty;
+    private IReadOnlyList<string> options = [];
+    // Searching never silently changes the selection, even when it falls outside the results.
+    private IEnumerable<string> Filtered => options.Where(x => x == Value || Matches(x));
+    private bool Matches(string id) => id.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase);
+    protected override void OnParametersSet() => options = AgreementTimeZones.Options(Value);
+    private void SearchChanged(ChangeEventArgs e) => search = e.Value?.ToString() ?? string.Empty;
+    private async Task SelectAsync(ChangeEventArgs e)
+    {
+        var id = e.Value?.ToString();
+        if (id is not null && options.Contains(id, StringComparer.Ordinal)) await ValueChanged.InvokeAsync(id);
+    }
+}

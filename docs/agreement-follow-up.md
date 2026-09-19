@@ -197,3 +197,52 @@ Kjørt 16.09.2026:
   bakgrunnsbehandling. Loggen viste én fanget 7-dagerspåminnelse og 90-/30-dager
   som forbigått, med capture-ID og uten reell e-post.
 - Språkressurser kontrollert for manglende statiske nøkler og duplikater.
+
+## Søkbar IANA-tidssonevelger
+
+`/agreements/reminder-settings` bruker `AgreementTimeZoneSelect`: et søkefelt som
+filtrerer en vanlig Bootstrap-stylet HTML-select. Begge har eksplisitte labels.
+Søk etter f.eks. Oslo, Europe eller America/Chicago; søket endrer aldri valgt
+verdi. Gjeldende valg beholdes i listen selv om det ikke matcher søket. Valg skjer
+med mus eller nettleserens vanlige tastaturnavigasjon (Tab, mellomrom, piltaster,
+Enter). Ingen ny UI-pakke eller JavaScript-komponent er innført.
+
+`AgreementTimeZones` bygger en alfabetisk, duplikatfri liste én gang per prosess
+fra .NET 10 `TimeZoneInfo.GetSystemTimeZones()`. IANA-ID-er beholdes; Windows-ID-er
+konverteres gjennom `TryConvertWindowsIdToIanaId`. Hvert valg kontrolleres mot
+samme `AgreementReminderSchedule.Zone` som påminnelsesjobben bruker. UTC er
+eksplisitt tilgjengelig, og Europe/Oslo er fortsatt standarden. Det vises ikke
+faste offsetter. Sommer-/vintertidsreglene og eksisterende håndtering av tvetydige
+eller manglende klokkeslett er uendret.
+
+Datakilden er runtime/operativsystemets tzdata og ICU, uten nettverksoppslag per
+sidevisning eller ny NuGet-avhengighet. Repositoryets Dockerfile bruker standard
+`mcr.microsoft.com/dotnet/aspnet:10.0` på Linux; prosjektet bruker ikke invariant
+Globalization eller NLS. Windows-drift krever ICU med IANA-støtte. Runtime-listen
+kan variere mellom OS; Windows-listen kan representere flere IANA-steder med én
+konvertert ID. Standardverdien og et støttet lagret alias legges derfor til ved
+behov. Oppdater runtime/OS-tidssonedata og start prosessen på nytt for ny katalog.
+Se [Microsofts dokumentasjon om Windows/IANA-konvertering](https://learn.microsoft.com/en-us/dotnet/api/system.timezoneinfo.tryconvertwindowsidtoianaid?view=net-10.0).
+
+Serveren krever en støttet IANA-ID, og avviser Windows-ID-er, ugyldige verdier og
+OS-lokale tzfiler som `localtime`. Støttede eldre aliaser gjenkjennes av ICU og
+beholdes nøyaktig, også når de ikke finnes i standardlisten. En ugyldig lagret
+verdi vises som den er, med lokaliserte instruksjoner om å velge på nytt; ingen
+fallback lagres automatisk. Eksisterende tekstkolonne, Revision, AccountId-filter
+og AccountAdmin-krav er uendret. Ingen migrering er nødvendig.
+
+Ved tidssoneendring oppdaterer neste planleggingskjøring `ScheduledUtc` for
+ventende og automatisk repeterbare mislykkede påminnelser. Sendte/avsluttede rader
+blir ikke sendt igjen. Kontroll før sending leser innstillingene på nytt og kan
+sette en reservert påminnelse tilbake til Pending når den ennå ikke er aktuell.
+Dette skjer ikke synkront ved lagring, og en allerede påbegynt transport kan ikke
+trekkes tilbake. Denne eksisterende oppførselen er beholdt.
+
+Verifisert med `dotnet build TenantPlatform.sln` og utvidet
+`TenantPlatform.AgreementFollowup.SmokeTests` mot isolert PostgreSQL-skjema:
+alle katalogverdier kan brukes av scheduler, standard/lagring/gjenlesing,
+US/Central-alias, ugyldig/Windows-ID, ugyldig eldre verdi, kontotilgang og
+omplanlegging uten duplikater. Norsk UI er kontrollert i nettleser med Oslo som
+valgt, søk etter Oslo/Europe/America/Chicago, tastaturvalg av Chicago, lagring og
+omlasting. Windows-runtime og skjermleser er ikke kjørt i dette miljøet. Testene
+bruker simulert transport; UI-testen har bakgrunnsutsending deaktivert.

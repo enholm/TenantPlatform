@@ -2009,4 +2009,8 @@ This is a reminder, not a termination or renewal.</value>
   <data name="NoticeNotRegistered" xml:space="preserve"><value>The agreement has no active notice.</value></data>
   <data name="NoticeReasonRequired" xml:space="preserve"><value>Enter a reason for the correction.</value></data>
   <data name="FollowupKindCessation" xml:space="preserve"><value>Planned cessation</value></data>
+  <data name="FollowupTimeZoneSearch" xml:space="preserve"><value>Search time zones</value></data>
+  <data name="FollowupTimeZoneHelp" xml:space="preserve"><value>Search for a location or IANA ID, then select a time zone from the list. Searching does not change the selected value.</value></data>
+  <data name="FollowupUnsupportedSavedTimeZone" xml:space="preserve"><value>The saved time zone “{0}” is invalid or unsupported. Select a valid time zone before saving.</value></data>
+  <data name="FollowupTimeZoneNoMatches" xml:space="preserve"><value>No matches. The current value is retained.</value></data>
 </root>

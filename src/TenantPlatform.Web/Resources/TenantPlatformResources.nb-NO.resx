@@ -2045,4 +2045,8 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="NoticeNotRegistered" xml:space="preserve"><value>Avtalen har ingen aktiv oppsigelse.</value></data>
   <data name="NoticeReasonRequired" xml:space="preserve"><value>Angi en begrunnelse for korrigeringen.</value></data>
   <data name="FollowupKindCessation" xml:space="preserve"><value>Planlagt opphør</value></data>
+  <data name="FollowupTimeZoneSearch" xml:space="preserve"><value>Søk i tidssoner</value></data>
+  <data name="FollowupTimeZoneHelp" xml:space="preserve"><value>Søk etter sted eller IANA-ID, og velg en tidssone fra listen. Søket endrer ikke valgt verdi.</value></data>
+  <data name="FollowupUnsupportedSavedTimeZone" xml:space="preserve"><value>Lagret tidssone «{0}» er ugyldig eller støttes ikke. Velg en gyldig tidssone før du lagrer.</value></data>
+  <data name="FollowupTimeZoneNoMatches" xml:space="preserve"><value>Ingen treff. Gjeldende verdi beholdes.</value></data>
 </root>
