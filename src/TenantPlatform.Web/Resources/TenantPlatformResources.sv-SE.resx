@@ -2049,4 +2049,77 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="FollowupTimeZoneHelp" xml:space="preserve"><value>Sök efter plats eller IANA-ID och välj en tidszon i listan. Sökningen ändrar inte valt värde.</value></data>
   <data name="FollowupUnsupportedSavedTimeZone" xml:space="preserve"><value>Den sparade tidszonen ”{0}” är ogiltig eller stöds inte. Välj en giltig tidszon innan du sparar.</value></data>
   <data name="FollowupTimeZoneNoMatches" xml:space="preserve"><value>Inga träffar. Det aktuella värdet behålls.</value></data>
+  <data name="FinanceLinesAndForecast" xml:space="preserve"><value>Avtalsrader och prognos</value></data>
+  <data name="FinanceDirection" xml:space="preserve"><value>Ekonomisk riktning</value></data>
+  <data name="FinanceDirectionIncome" xml:space="preserve"><value>Förväntade intäkter</value></data>
+  <data name="FinanceDirectionCost" xml:space="preserve"><value>Förväntade kostnader</value></data>
+  <data name="FinanceCurrency" xml:space="preserve"><value>Valuta</value></data>
+  <data name="FinanceUnclassified" xml:space="preserve"><value>Inte klarlagd</value></data>
+  <data name="FinanceSetupHelp" xml:space="preserve"><value>En valuta per avtal. Belopp är exklusive skatt. Riktning, valuta och motpart låses efter första aktiverade raden.</value></data>
+  <data name="FinanceSetupRequired" xml:space="preserve"><value>Välj ekonomisk riktning och valuta på huvudavtalet först.</value></data>
+  <data name="FinanceAgreementLocked" xml:space="preserve"><value>Riktning, valuta och motpart kan inte ändras efter att en rad har aktiverats.</value></data>
+  <data name="FinanceInvalidSettings" xml:space="preserve"><value>Välj en giltig ekonomisk riktning och valuta.</value></data>
+  <data name="FinanceForecastHelp" xml:space="preserve"><value>Detta är förväntade belopp exklusive skatt, inte bokförda intäkter eller redovisningsmässig periodisering. Inga fakturor skapas. Sökningen visar hela perioder som överlappar intervallet utan att klippa beloppen.</value></data>
+  <data name="FinanceAddLine" xml:space="preserve"><value>Lägg till avtalsrad</value></data>
+  <data name="FinanceGroups" xml:space="preserve"><value>Leveransgrupp</value></data>
+  <data name="FinanceAddGroup" xml:space="preserve"><value>Skapa grupp</value></data>
+  <data name="FinanceEditHelp" xml:space="preserve"><value>Utkast kan ändras före aktivering. Därefter krävs en senare periodgräns och motivering. Leveransstart och första betalbara datum är låsta. Använd den separata avslutsåtgärden. Nya versioner bevarar historiken.</value></data>
+  <data name="FinanceDeliveryStart" xml:space="preserve"><value>Leveransstart</value></data>
+  <data name="FinanceLastDelivery" xml:space="preserve"><value>Sista leveransdag (inklusive)</value></data>
+  <data name="FinanceFirstPayable" xml:space="preserve"><value>Första betalbara datum</value></data>
+  <data name="FinancePayableSource" xml:space="preserve"><value>Beräkna från en annan rads leveransstart</value></data>
+  <data name="FinanceDirectDate" xml:space="preserve"><value>Ange datum direkt</value></data>
+  <data name="FinanceOffsetMonths" xml:space="preserve"><value>Månader efter källans leveransstart</value></data>
+  <data name="FinanceFrequency" xml:space="preserve"><value>Prisfrekvens</value></data>
+  <data name="FinanceFrequencyOnce" xml:space="preserve"><value>Engångsbelopp</value></data>
+  <data name="FinanceFrequencyMonthly" xml:space="preserve"><value>Månadsvis</value></data>
+  <data name="FinanceFrequencyQuarterly" xml:space="preserve"><value>Kvartalsvis</value></data>
+  <data name="FinanceFrequencyHalfYearly" xml:space="preserve"><value>Halvårsvis</value></data>
+  <data name="FinanceFrequencyYearly" xml:space="preserve"><value>Årligen</value></data>
+  <data name="FinanceAnchor" xml:space="preserve"><value>Periodförankring</value></data>
+  <data name="FinanceAnchorCalendar" xml:space="preserve"><value>Kalender</value></data>
+  <data name="FinanceAnchorDate" xml:space="preserve"><value>Angivet datum</value></data>
+  <data name="FinanceAnchorDateLabel" xml:space="preserve"><value>Ursprungligt förankringsdatum</value></data>
+  <data name="FinanceBillingTiming" xml:space="preserve"><value>Planerad fakturering</value></data>
+  <data name="FinanceTimingAdvance" xml:space="preserve"><value>Förskott – första betalbara dagen</value></data>
+  <data name="FinanceTimingArrears" xml:space="preserve"><value>Efterskott – dagen efter perioden</value></data>
+  <data name="FinanceQuantity" xml:space="preserve"><value>Antal</value></data>
+  <data name="FinanceUnitPrice" xml:space="preserve"><value>Enhetspris per vald frekvens</value></data>
+  <data name="FinanceEffectiveFrom" xml:space="preserve"><value>Gäller från</value></data>
+  <data name="FinanceActivate" xml:space="preserve"><value>Aktivera raden vid lagring</value></data>
+  <data name="FinanceCloseLine" xml:space="preserve"><value>Avsluta eller avaktivera raden</value></data>
+  <data name="FinanceDeactivate" xml:space="preserve"><value>Avaktivering med motivering</value></data>
+  <data name="FinanceDeactivateFrom" xml:space="preserve"><value>Tas ur behandling från datum</value></data>
+  <data name="FinanceNoLines" xml:space="preserve"><value>Inga avtalsrader är registrerade.</value></data>
+  <data name="FinanceLatestVersion" xml:space="preserve"><value>Senast registrerade version (kan gälla i framtiden)</value></data>
+  <data name="FinanceVersions" xml:space="preserve"><value>Versioner och dokumentreferenser</value></data>
+  <data name="FinanceLineVersion" xml:space="preserve"><value>Radversion</value></data>
+  <data name="FinancePriceVersion" xml:space="preserve"><value>Prisversion</value></data>
+  <data name="FinanceRecorded" xml:space="preserve"><value>Registrerad (UTC)</value></data>
+  <data name="FinancePreview" xml:space="preserve"><value>Förhandsvisning av förväntade belopp</value></data>
+  <data name="FinanceFrom" xml:space="preserve"><value>Från datum</value></data>
+  <data name="FinanceTo" xml:space="preserve"><value>Till datum (max. tio år)</value></data>
+  <data name="FinanceCalculate" xml:space="preserve"><value>Beräkna prognos</value></data>
+  <data name="FinanceReferencePeriod" xml:space="preserve"><value>Hel referensperiod</value></data>
+  <data name="FinanceActualPeriod" xml:space="preserve"><value>Faktisk period</value></data>
+  <data name="FinanceExpectedInvoice" xml:space="preserve"><value>Förväntat fakturadatum</value></data>
+  <data name="FinancePlannedInvoice" xml:space="preserve"><value>Planerat fakturadatum</value></data>
+  <data name="FinanceCalculation" xml:space="preserve"><value>Beräkning</value></data>
+  <data name="FinanceAmount" xml:space="preserve"><value>Förväntat belopp</value></data>
+  <data name="FinanceEvent" xml:space="preserve"><value>Händelse-ID</value></data>
+  <data name="FinanceIncluded" xml:space="preserve"><value>Ingår – utan separat betalning</value></data>
+  <data name="FinanceCalculationText" xml:space="preserve"><value>{0} × {1} × {2}/{3} kalenderdagar</value></data>
+  <data name="FinanceStatusDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="FinanceStatusActive" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="FinanceStatusEnded" xml:space="preserve"><value>Avslutad från angiven gräns</value></data>
+  <data name="FinanceStatusDeactivated" xml:space="preserve"><value>Avaktiverad från angivet datum</value></data>
+  <data name="FinanceInvalidRange" xml:space="preserve"><value>Välj ett giltigt intervall på högst tio år, senast år 9998. Begränsa sökningen vid för många perioder.</value></data>
+  <data name="FinanceMissingPrice" xml:space="preserve"><value>En prisversion saknas för perioden.</value></data>
+  <data name="FinanceInvalidLine" xml:space="preserve"><value>Kontrollera namn, periodregler och belopp. Antal måste vara positivt och pris inte negativt; högst fyra decimaler och 100 miljoner.</value></data>
+  <data name="FinanceInvalidDates" xml:space="preserve"><value>Kontrollera leveransdatum, betalningsstart och giltighetsdatum. Förankringen får inte vara efter leveransstart. Ange motivering vid avslut eller avaktivering.</value></data>
+  <data name="FinanceInvalidReference" xml:space="preserve"><value>Rad, dokument eller grupp måste tillhöra samma huvudavtal och konto.</value></data>
+  <data name="FinanceSourceCycle" xml:space="preserve"><value>Betalningsstart får inte ha cirkulära radreferenser.</value></data>
+  <data name="FinanceLineClosed" xml:space="preserve"><value>Raden är inte aktiv eller är redan avslutad/avaktiverad.</value></data>
+  <data name="FinanceBoundaryRequired" xml:space="preserve"><value>Ändringen kräver motivering och en senare gräns som är giltig för både gammal och ny period. Aktiverade engångsrader kan inte prisändras.</value></data>
+  <data name="FinanceStartLocked" xml:space="preserve"><value>Aktiverad leveransstart, betalningsgrund och leveransslut kan inte ändras här. Använd den separata avslutsåtgärden.</value></data>
 </root>

@@ -6,6 +6,8 @@ public class SaveAgreementRequest
 {
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public AgreementDirection? Direction { get; set; }
+    public string? Currency { get; set; }
     public AgreementType Type { get; set; } = AgreementType.Other;
     public Guid CounterpartyOrganizationId { get; set; }
     public Guid OwnerUserId { get; set; }

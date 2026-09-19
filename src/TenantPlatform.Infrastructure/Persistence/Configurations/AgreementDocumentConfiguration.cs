@@ -15,6 +15,7 @@ public class AgreementDocumentConfiguration : IEntityTypeConfiguration<Agreement
             t.HasCheckConstraint("CK_agreement_documents_category", "\"Category\" IN (1,2)");
         });
         b.HasKey(x => x.Id);
+        b.HasAlternateKey(x => new { x.AccountId, x.AgreementId, x.Id });
         b.Property(x => x.OriginalFileName).HasMaxLength(200).IsRequired();
         b.Property(x => x.StorageKey).HasMaxLength(80).IsRequired();
         b.Property(x => x.MediaType).HasMaxLength(150).IsRequired();

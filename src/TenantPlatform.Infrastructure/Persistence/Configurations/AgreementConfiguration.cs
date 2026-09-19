@@ -36,6 +36,7 @@ public class AgreementConfiguration : IEntityTypeConfiguration<Agreement>
         });
         b.HasKey(x => x.Id);
         b.HasAlternateKey(x => new { x.AccountId, x.Id });
+        b.Property(x => x.Currency).HasMaxLength(3);
         b.Property(x => x.Title).HasMaxLength(200).IsRequired();
         b.Property(x => x.Description).HasMaxLength(4000);
         b.Property(x => x.Terms).HasMaxLength(10000);

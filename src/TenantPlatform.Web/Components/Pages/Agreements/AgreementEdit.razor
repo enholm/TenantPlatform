@@ -19,7 +19,7 @@ else if (options is not null)
         <div class="col-md-4"><label for="status" class="form-label">@L["Status"]</label><InputSelect id="status" class="form-select" @bind-Value="model.Status">
             @foreach (var value in Enum.GetValues<AgreementStatus>()) { <option value="@value">@L[$"AgreementStatus{value}"]</option> }
         </InputSelect></div>
-        <div class="col-md-4"><label for="type" class="form-label">@L["AgreementType"]</label><InputSelect id="type" class="form-select" @bind-Value="model.Type">
+        <div class="col-md-4"><label for="type" class="form-label">@L["AgreementType"]</label><InputSelect id="type" class="form-select" @bind-Value="model.Type" @bind-Value:after="TypeChanged">
             @foreach (var value in Enum.GetValues<AgreementType>()) { <option value="@value">@L[$"AgreementType{value}"]</option> }
         </InputSelect></div>
         <div class="col-md-4"><label for="counterparty" class="form-label">@L["AgreementCounterparty"]</label><InputSelect id="counterparty" class="form-select" @bind-Value="model.CounterpartyOrganizationId">
@@ -30,6 +30,14 @@ else if (options is not null)
             <option value="@Guid.Empty">@L["AgreementSelect"]</option>
             @foreach (var item in options.Members) { <option value="@item.Id">@item.Name</option> }
         </InputSelect></div>
+        <div class="col-md-6"><label for="finance-direction" class="form-label">@L["FinanceDirection"]</label><InputSelect id="finance-direction" class="form-select" @bind-Value="model.Direction">
+            <option value="">@L["FinanceUnclassified"]</option>
+            @foreach (var value in Enum.GetValues<AgreementDirection>()) { <option value="@value">@L[$"FinanceDirection{value}"]</option> }
+        </InputSelect></div>
+        <div class="col-md-6"><label for="finance-currency" class="form-label">@L["FinanceCurrency"]</label><InputSelect id="finance-currency" class="form-select" @bind-Value="model.Currency">
+            <option value="">@L["AgreementSelect"]</option>
+            @foreach (var value in AgreementPeriodCalculator.Currencies) { <option value="@value">@value</option> }
+        </InputSelect><div class="form-text">@L["FinanceSetupHelp"]</div></div>
         <AgreementNoticeEditor Model="model" OriginalForm="originalForm" Existing="Id.HasValue" />
         <div class="col-md-6"><label for="building" class="form-label">@L["Building"]</label><InputSelect id="building" class="form-select" @bind-Value="model.BuildingId" @bind-Value:after="BuildingChanged">
             <option value="">@L["AgreementNone"]</option>
@@ -73,6 +81,7 @@ else if (options is not null)
         catch (Exception) { error = "AgreementOperationFailed"; }
         finally { loading = false; }
     }
+    private void TypeChanged() { if (!Id.HasValue && model.Direction is null && model.Type == AgreementType.Supplier) model.Direction = AgreementDirection.Cost; }
     private void BuildingChanged() => model.UnitId = null;
     private async Task SaveAsync()
     {

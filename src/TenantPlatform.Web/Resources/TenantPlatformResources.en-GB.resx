@@ -2013,4 +2013,77 @@ This is a reminder, not a termination or renewal.</value>
   <data name="FollowupTimeZoneHelp" xml:space="preserve"><value>Search for a location or IANA ID, then select a time zone from the list. Searching does not change the selected value.</value></data>
   <data name="FollowupUnsupportedSavedTimeZone" xml:space="preserve"><value>The saved time zone “{0}” is invalid or unsupported. Select a valid time zone before saving.</value></data>
   <data name="FollowupTimeZoneNoMatches" xml:space="preserve"><value>No matches. The current value is retained.</value></data>
+  <data name="FinanceLinesAndForecast" xml:space="preserve"><value>Agreement lines and forecast</value></data>
+  <data name="FinanceDirection" xml:space="preserve"><value>Financial direction</value></data>
+  <data name="FinanceDirectionIncome" xml:space="preserve"><value>Expected income</value></data>
+  <data name="FinanceDirectionCost" xml:space="preserve"><value>Expected costs</value></data>
+  <data name="FinanceCurrency" xml:space="preserve"><value>Currency</value></data>
+  <data name="FinanceUnclassified" xml:space="preserve"><value>Unclassified</value></data>
+  <data name="FinanceSetupHelp" xml:space="preserve"><value>One currency per agreement. Amounts exclude tax. Direction, currency and counterparty are locked after the first line is activated.</value></data>
+  <data name="FinanceSetupRequired" xml:space="preserve"><value>Select a financial direction and currency on the agreement first.</value></data>
+  <data name="FinanceAgreementLocked" xml:space="preserve"><value>Direction, currency and counterparty cannot change after a line has been activated.</value></data>
+  <data name="FinanceInvalidSettings" xml:space="preserve"><value>Select a supported financial direction and currency.</value></data>
+  <data name="FinanceForecastHelp" xml:space="preserve"><value>These are expected amounts excluding tax, not recognised revenue or accounting accruals. No invoices are created. The search returns whole periods overlapping the range without clipping amounts.</value></data>
+  <data name="FinanceAddLine" xml:space="preserve"><value>Add agreement line</value></data>
+  <data name="FinanceGroups" xml:space="preserve"><value>Delivery group</value></data>
+  <data name="FinanceAddGroup" xml:space="preserve"><value>Create group</value></data>
+  <data name="FinanceEditHelp" xml:space="preserve"><value>Drafts can change before activation. Afterwards, a later period boundary and reason are required. Delivery start and first payable date are locked. Use the separate closing action. New versions preserve history.</value></data>
+  <data name="FinanceDeliveryStart" xml:space="preserve"><value>Delivery start</value></data>
+  <data name="FinanceLastDelivery" xml:space="preserve"><value>Last delivery day (inclusive)</value></data>
+  <data name="FinanceFirstPayable" xml:space="preserve"><value>First payable date</value></data>
+  <data name="FinancePayableSource" xml:space="preserve"><value>Calculate from another line’s delivery start</value></data>
+  <data name="FinanceDirectDate" xml:space="preserve"><value>Enter date directly</value></data>
+  <data name="FinanceOffsetMonths" xml:space="preserve"><value>Months after source delivery start</value></data>
+  <data name="FinanceFrequency" xml:space="preserve"><value>Price frequency</value></data>
+  <data name="FinanceFrequencyOnce" xml:space="preserve"><value>One-off</value></data>
+  <data name="FinanceFrequencyMonthly" xml:space="preserve"><value>Monthly</value></data>
+  <data name="FinanceFrequencyQuarterly" xml:space="preserve"><value>Quarterly</value></data>
+  <data name="FinanceFrequencyHalfYearly" xml:space="preserve"><value>Half-yearly</value></data>
+  <data name="FinanceFrequencyYearly" xml:space="preserve"><value>Yearly</value></data>
+  <data name="FinanceAnchor" xml:space="preserve"><value>Period anchor</value></data>
+  <data name="FinanceAnchorCalendar" xml:space="preserve"><value>Calendar</value></data>
+  <data name="FinanceAnchorDate" xml:space="preserve"><value>Specified date</value></data>
+  <data name="FinanceAnchorDateLabel" xml:space="preserve"><value>Original anchor date</value></data>
+  <data name="FinanceBillingTiming" xml:space="preserve"><value>Planned billing</value></data>
+  <data name="FinanceTimingAdvance" xml:space="preserve"><value>Advance – first payable day</value></data>
+  <data name="FinanceTimingArrears" xml:space="preserve"><value>Arrears – day after the period</value></data>
+  <data name="FinanceQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="FinanceUnitPrice" xml:space="preserve"><value>Unit price per selected frequency</value></data>
+  <data name="FinanceEffectiveFrom" xml:space="preserve"><value>Effective from</value></data>
+  <data name="FinanceActivate" xml:space="preserve"><value>Activate the line on save</value></data>
+  <data name="FinanceCloseLine" xml:space="preserve"><value>End or deactivate the line</value></data>
+  <data name="FinanceDeactivate" xml:space="preserve"><value>Deactivation with reason</value></data>
+  <data name="FinanceDeactivateFrom" xml:space="preserve"><value>Exclude from processing from date</value></data>
+  <data name="FinanceNoLines" xml:space="preserve"><value>No agreement lines are registered.</value></data>
+  <data name="FinanceLatestVersion" xml:space="preserve"><value>Latest recorded version (may be future-dated)</value></data>
+  <data name="FinanceVersions" xml:space="preserve"><value>Versions and document references</value></data>
+  <data name="FinanceLineVersion" xml:space="preserve"><value>Line version</value></data>
+  <data name="FinancePriceVersion" xml:space="preserve"><value>Price version</value></data>
+  <data name="FinanceRecorded" xml:space="preserve"><value>Recorded (UTC)</value></data>
+  <data name="FinancePreview" xml:space="preserve"><value>Expected amounts preview</value></data>
+  <data name="FinanceFrom" xml:space="preserve"><value>From date</value></data>
+  <data name="FinanceTo" xml:space="preserve"><value>To date (max. ten years)</value></data>
+  <data name="FinanceCalculate" xml:space="preserve"><value>Calculate forecast</value></data>
+  <data name="FinanceReferencePeriod" xml:space="preserve"><value>Full reference period</value></data>
+  <data name="FinanceActualPeriod" xml:space="preserve"><value>Actual period</value></data>
+  <data name="FinanceExpectedInvoice" xml:space="preserve"><value>Expected invoice date</value></data>
+  <data name="FinancePlannedInvoice" xml:space="preserve"><value>Planned invoice date</value></data>
+  <data name="FinanceCalculation" xml:space="preserve"><value>Calculation</value></data>
+  <data name="FinanceAmount" xml:space="preserve"><value>Expected amount</value></data>
+  <data name="FinanceEvent" xml:space="preserve"><value>Event ID</value></data>
+  <data name="FinanceIncluded" xml:space="preserve"><value>Included – no separate payment</value></data>
+  <data name="FinanceCalculationText" xml:space="preserve"><value>{0} × {1} × {2}/{3} calendar days</value></data>
+  <data name="FinanceStatusDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="FinanceStatusActive" xml:space="preserve"><value>Active</value></data>
+  <data name="FinanceStatusEnded" xml:space="preserve"><value>Ended from specified boundary</value></data>
+  <data name="FinanceStatusDeactivated" xml:space="preserve"><value>Deactivated from specified date</value></data>
+  <data name="FinanceInvalidRange" xml:space="preserve"><value>Select a valid range of at most ten years, no later than year 9998. Narrow the search if there are too many periods.</value></data>
+  <data name="FinanceMissingPrice" xml:space="preserve"><value>A price version is missing for the period.</value></data>
+  <data name="FinanceInvalidLine" xml:space="preserve"><value>Check the name, period rules and amounts. Quantity must be positive and price non-negative; maximum four decimal places and 100 million.</value></data>
+  <data name="FinanceInvalidDates" xml:space="preserve"><value>Check delivery dates, payment start and effective date. The anchor cannot follow delivery start. Provide a reason when ending or deactivating.</value></data>
+  <data name="FinanceInvalidReference" xml:space="preserve"><value>The line, document or group must belong to the same agreement and account.</value></data>
+  <data name="FinanceSourceCycle" xml:space="preserve"><value>Payment start cannot contain circular line references.</value></data>
+  <data name="FinanceLineClosed" xml:space="preserve"><value>The line is not active or has already been ended/deactivated.</value></data>
+  <data name="FinanceBoundaryRequired" xml:space="preserve"><value>The change requires a reason and a later boundary valid for both the old and new period. Activated one-off lines cannot be repriced.</value></data>
+  <data name="FinanceStartLocked" xml:space="preserve"><value>Activated delivery start, payment basis and delivery end cannot change here. Use the separate closing action.</value></data>
 </root>

@@ -7,6 +7,8 @@ public class Agreement
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public AgreementType Type { get; set; }
+    public AgreementDirection? Direction { get; set; }
+    public string? Currency { get; set; }
     public Guid CounterpartyOrganizationId { get; set; }
     public Guid OwnerUserId { get; set; }
     public AgreementStatus Status { get; set; } = AgreementStatus.Draft;

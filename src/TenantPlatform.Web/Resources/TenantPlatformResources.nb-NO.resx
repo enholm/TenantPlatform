@@ -2049,4 +2049,77 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="FollowupTimeZoneHelp" xml:space="preserve"><value>Søk etter sted eller IANA-ID, og velg en tidssone fra listen. Søket endrer ikke valgt verdi.</value></data>
   <data name="FollowupUnsupportedSavedTimeZone" xml:space="preserve"><value>Lagret tidssone «{0}» er ugyldig eller støttes ikke. Velg en gyldig tidssone før du lagrer.</value></data>
   <data name="FollowupTimeZoneNoMatches" xml:space="preserve"><value>Ingen treff. Gjeldende verdi beholdes.</value></data>
+  <data name="FinanceLinesAndForecast" xml:space="preserve"><value>Avtalelinjer og prognose</value></data>
+  <data name="FinanceDirection" xml:space="preserve"><value>Økonomisk retning</value></data>
+  <data name="FinanceDirectionIncome" xml:space="preserve"><value>Forventede inntekter</value></data>
+  <data name="FinanceDirectionCost" xml:space="preserve"><value>Forventede kostnader</value></data>
+  <data name="FinanceCurrency" xml:space="preserve"><value>Valuta</value></data>
+  <data name="FinanceUnclassified" xml:space="preserve"><value>Ikke avklart</value></data>
+  <data name="FinanceSetupHelp" xml:space="preserve"><value>Én valuta per avtale. Beløp er ekskl. avgift. Retning, valuta og motpart låses etter første aktiverte linje.</value></data>
+  <data name="FinanceSetupRequired" xml:space="preserve"><value>Velg økonomisk retning og valuta på hovedavtalen først.</value></data>
+  <data name="FinanceAgreementLocked" xml:space="preserve"><value>Retning, valuta og motpart kan ikke endres etter at en linje er aktivert.</value></data>
+  <data name="FinanceInvalidSettings" xml:space="preserve"><value>Velg en støttet økonomisk retning og valuta.</value></data>
+  <data name="FinanceForecastHelp" xml:space="preserve"><value>Dette er forventede beløp ekskl. avgift, ikke regnskapsført inntekt eller regnskapsmessig periodisering. Ingen fakturaer opprettes. Søket viser hele perioder som overlapper intervallet; beløp klippes ikke.</value></data>
+  <data name="FinanceAddLine" xml:space="preserve"><value>Legg til avtalelinje</value></data>
+  <data name="FinanceGroups" xml:space="preserve"><value>Leveransegruppe</value></data>
+  <data name="FinanceAddGroup" xml:space="preserve"><value>Opprett gruppe</value></data>
+  <data name="FinanceEditHelp" xml:space="preserve"><value>Utkast kan endres før aktivering. Etter aktivering kreves en senere periodegrense og begrunnelse. Leveransestart og første betalbare dato er låst. Bruk egen handling for avslutning. Nye versjoner bevarer historikken.</value></data>
+  <data name="FinanceDeliveryStart" xml:space="preserve"><value>Leveransestart</value></data>
+  <data name="FinanceLastDelivery" xml:space="preserve"><value>Siste leveransedag (inkludert)</value></data>
+  <data name="FinanceFirstPayable" xml:space="preserve"><value>Første betalbare dato</value></data>
+  <data name="FinancePayableSource" xml:space="preserve"><value>Beregn fra en annen linjes leveransestart</value></data>
+  <data name="FinanceDirectDate" xml:space="preserve"><value>Angi dato direkte</value></data>
+  <data name="FinanceOffsetMonths" xml:space="preserve"><value>Måneder etter kildens leveransestart</value></data>
+  <data name="FinanceFrequency" xml:space="preserve"><value>Pris gjelder per frekvens</value></data>
+  <data name="FinanceFrequencyOnce" xml:space="preserve"><value>Engangsbeløp</value></data>
+  <data name="FinanceFrequencyMonthly" xml:space="preserve"><value>Månedlig</value></data>
+  <data name="FinanceFrequencyQuarterly" xml:space="preserve"><value>Kvartalsvis</value></data>
+  <data name="FinanceFrequencyHalfYearly" xml:space="preserve"><value>Halvårlig</value></data>
+  <data name="FinanceFrequencyYearly" xml:space="preserve"><value>Årlig</value></data>
+  <data name="FinanceAnchor" xml:space="preserve"><value>Periodeforankring</value></data>
+  <data name="FinanceAnchorCalendar" xml:space="preserve"><value>Kalender</value></data>
+  <data name="FinanceAnchorDate" xml:space="preserve"><value>Angitt dato</value></data>
+  <data name="FinanceAnchorDateLabel" xml:space="preserve"><value>Opprinnelig forankringsdato</value></data>
+  <data name="FinanceBillingTiming" xml:space="preserve"><value>Planlagt fakturering</value></data>
+  <data name="FinanceTimingAdvance" xml:space="preserve"><value>Forskudd – første betalbare dag</value></data>
+  <data name="FinanceTimingArrears" xml:space="preserve"><value>Etterskudd – dagen etter perioden</value></data>
+  <data name="FinanceQuantity" xml:space="preserve"><value>Antall</value></data>
+  <data name="FinanceUnitPrice" xml:space="preserve"><value>Enhetspris per valgt frekvens</value></data>
+  <data name="FinanceEffectiveFrom" xml:space="preserve"><value>Gjelder fra</value></data>
+  <data name="FinanceActivate" xml:space="preserve"><value>Aktiver linjen ved lagring</value></data>
+  <data name="FinanceCloseLine" xml:space="preserve"><value>Avslutt eller deaktiver linjen</value></data>
+  <data name="FinanceDeactivate" xml:space="preserve"><value>Deaktivering med begrunnelse</value></data>
+  <data name="FinanceDeactivateFrom" xml:space="preserve"><value>Tas ut av behandling fra dato</value></data>
+  <data name="FinanceNoLines" xml:space="preserve"><value>Ingen avtalelinjer er registrert.</value></data>
+  <data name="FinanceLatestVersion" xml:space="preserve"><value>Siste registrerte versjon (kan være fremtidig)</value></data>
+  <data name="FinanceVersions" xml:space="preserve"><value>Versjoner og dokumentreferanser</value></data>
+  <data name="FinanceLineVersion" xml:space="preserve"><value>Linjeversjon</value></data>
+  <data name="FinancePriceVersion" xml:space="preserve"><value>Prisversjon</value></data>
+  <data name="FinanceRecorded" xml:space="preserve"><value>Registrert (UTC)</value></data>
+  <data name="FinancePreview" xml:space="preserve"><value>Forhåndsvisning av forventede beløp</value></data>
+  <data name="FinanceFrom" xml:space="preserve"><value>Fra dato</value></data>
+  <data name="FinanceTo" xml:space="preserve"><value>Til dato (maks. ti år)</value></data>
+  <data name="FinanceCalculate" xml:space="preserve"><value>Beregn prognose</value></data>
+  <data name="FinanceReferencePeriod" xml:space="preserve"><value>Hel referanseperiode</value></data>
+  <data name="FinanceActualPeriod" xml:space="preserve"><value>Faktisk periode</value></data>
+  <data name="FinanceExpectedInvoice" xml:space="preserve"><value>Forventet fakturadato</value></data>
+  <data name="FinancePlannedInvoice" xml:space="preserve"><value>Planlagt fakturadato</value></data>
+  <data name="FinanceCalculation" xml:space="preserve"><value>Beregning</value></data>
+  <data name="FinanceAmount" xml:space="preserve"><value>Forventet beløp</value></data>
+  <data name="FinanceEvent" xml:space="preserve"><value>Hendelses-ID</value></data>
+  <data name="FinanceIncluded" xml:space="preserve"><value>Inkludert – uten separat betaling</value></data>
+  <data name="FinanceCalculationText" xml:space="preserve"><value>{0} × {1} × {2}/{3} kalenderdager</value></data>
+  <data name="FinanceStatusDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="FinanceStatusActive" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="FinanceStatusEnded" xml:space="preserve"><value>Avsluttet fra angitt grense</value></data>
+  <data name="FinanceStatusDeactivated" xml:space="preserve"><value>Deaktivert fra angitt dato</value></data>
+  <data name="FinanceInvalidRange" xml:space="preserve"><value>Velg et gyldig intervall på maksimalt ti år, senest år 9998. Begrens søket ved for mange perioder.</value></data>
+  <data name="FinanceMissingPrice" xml:space="preserve"><value>En prisversjon mangler for perioden.</value></data>
+  <data name="FinanceInvalidLine" xml:space="preserve"><value>Kontroller navn, perioderegler og beløp. Antall må være positivt og pris ikke negativ; maksimalt fire desimaler og 100 millioner.</value></data>
+  <data name="FinanceInvalidDates" xml:space="preserve"><value>Kontroller leveransedatoer, betalingsstart og virkningsdato. Forankring må ikke være etter leveransestart. Oppgi begrunnelse ved avslutning/deaktivering.</value></data>
+  <data name="FinanceInvalidReference" xml:space="preserve"><value>Linje, dokument eller gruppe må tilhøre samme hovedavtale og konto.</value></data>
+  <data name="FinanceSourceCycle" xml:space="preserve"><value>Betalingsstart kan ikke ha sirkulære linjereferanser.</value></data>
+  <data name="FinanceLineClosed" xml:space="preserve"><value>Linjen er ikke aktiv eller er allerede avsluttet/deaktivert.</value></data>
+  <data name="FinanceBoundaryRequired" xml:space="preserve"><value>Endringen krever begrunnelse og en senere grense som er gyldig for både gammel og ny periode. Aktiverte engangslinjer kan ikke prisendres.</value></data>
+  <data name="FinanceStartLocked" xml:space="preserve"><value>Aktivert leveransestart, betalingsgrunnlag og leveranseslutt kan ikke endres her. Bruk egen avslutningshandling.</value></data>
 </root>

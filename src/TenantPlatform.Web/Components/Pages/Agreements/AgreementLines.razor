@@ -1,0 +1,171 @@
+@page "/agreements/{AgreementId:guid}/lines"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementLines> Logger
+
+<PageTitle>@L["FinanceLinesAndForecast"]</PageTitle>
+<a href="@($"/agreements/{AgreementId}")">@L["Agreements"]</a>
+<h1>@L["FinanceLinesAndForecast"]</h1>
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (data is null) { <p>@L["Loading"]</p> }
+else
+{
+    <p><strong>@title</strong> · @(data.Direction.HasValue ? L[$"FinanceDirection{data.Direction}"] : L["FinanceUnclassified"]) · @data.Currency</p>
+    <p class="text-body-secondary">@L["FinanceForecastHelp"]</p>
+    @if (data.Direction is null || data.Currency is null)
+    {
+        <div class="alert alert-warning">@L["FinanceSetupRequired"] <a href="@($"/agreements/{AgreementId}/edit")">@L["Edit"]</a></div>
+    }
+    <fieldset disabled="@busy">
+    @if (data.CanEdit && data.Direction.HasValue && data.Currency is not null)
+    {
+        <button class="btn btn-primary mb-3" @onclick="NewLine">@L["FinanceAddLine"]</button>
+        <details class="mb-3"><summary>@L["FinanceGroups"]</summary><div class="input-group my-2">
+            <label for="group-name" class="input-group-text">@L["Name"]</label><input id="group-name" class="form-control" @bind="groupName" maxlength="200" />
+            <button class="btn btn-outline-primary" @onclick="AddGroupAsync">@L["FinanceAddGroup"]</button>
+        </div>@foreach (var group in data.Groups) { <span class="badge text-bg-secondary me-2">@group.Name</span> }</details>
+    }
+    @if (editing is not null)
+    {
+        <EditForm Model="editing" OnValidSubmit="SaveLineAsync"><ValidationSummary class="text-danger" />
+        <div class="card mb-3"><div class="card-body"><h2 class="h5">@L[editingId.HasValue ? "Edit" : "FinanceAddLine"]</h2>
+        <p class="text-body-secondary">@L["FinanceEditHelp"]</p><div class="row g-3">
+            <div class="col-md-6"><label for="line-name" class="form-label">@L["Name"]</label><InputText id="line-name" class="form-control" @bind-Value="editing.Name" maxlength="200" required /></div>
+            <div class="col-md-6"><label for="line-group" class="form-label">@L["FinanceGroups"]</label><InputSelect id="line-group" class="form-select" @bind-Value="editing.DeliveryGroupId"><option value="">@L["AgreementNone"]</option>@foreach (var g in data.Groups) { <option value="@g.Id">@g.Name</option> }</InputSelect></div>
+            <div class="col-md-4"><label for="line-start" class="form-label">@L["FinanceDeliveryStart"]</label><InputDate id="line-start" class="form-control" @bind-Value="editing.StartDate" disabled="@editingActive" /></div>
+            <div class="col-md-4"><label for="line-end" class="form-label">@L["FinanceLastDelivery"]</label><InputDate id="line-end" class="form-control" @bind-Value="editing.EndDate" disabled="@editingActive" /></div>
+            <div class="col-md-4"><label for="line-payable" class="form-label">@L["FinanceFirstPayable"]</label><InputDate id="line-payable" class="form-control" @bind-Value="editing.FirstPayableDate" disabled="@(editingActive || editing.PayableSourceLineId.HasValue)" /></div>
+            <div class="col-md-6"><label for="line-source" class="form-label">@L["FinancePayableSource"]</label><InputSelect id="line-source" class="form-select" @bind-Value="editing.PayableSourceLineId" disabled="@editingActive"><option value="">@L["FinanceDirectDate"]</option>@foreach (var item in data.Lines.Where(x => x.Line.Id != editingId)) { <option value="@item.Line.Id">@item.Versions[0].Name</option> }</InputSelect></div>
+            <div class="col-md-6"><label for="line-offset" class="form-label">@L["FinanceOffsetMonths"]</label><InputNumber id="line-offset" class="form-control" @bind-Value="editing.PayableOffsetMonths" min="0" max="1200" disabled="@(editingActive || !editing.PayableSourceLineId.HasValue)" />
+                @if (editing.PayableSourceLineId.HasValue) { <p class="form-text">@L["FinanceFirstPayable"]: @PayablePreview()</p> }
+            </div>
+            <div class="col-md-4"><label for="line-frequency" class="form-label">@L["FinanceFrequency"]</label><InputSelect id="line-frequency" class="form-select" @bind-Value="editing.Frequency">@foreach (var f in Enum.GetValues<AgreementFrequency>()) { <option value="@f">@L[$"FinanceFrequency{f}"]</option> }</InputSelect></div>
+            <div class="col-md-4"><label for="line-anchor" class="form-label">@L["FinanceAnchor"]</label><InputSelect id="line-anchor" class="form-select" @bind-Value="editing.Anchor">@foreach (var f in Enum.GetValues<AgreementAnchor>()) { <option value="@f">@L[$"FinanceAnchor{f}"]</option> }</InputSelect></div>
+            <div class="col-md-4"><label for="line-anchor-date" class="form-label">@L["FinanceAnchorDateLabel"]</label><InputDate id="line-anchor-date" class="form-control" @bind-Value="editing.AnchorDate" disabled="@(editing.Anchor == AgreementAnchor.Calendar)" /></div>
+            <div class="col-md-4"><label for="line-timing" class="form-label">@L["FinanceBillingTiming"]</label><InputSelect id="line-timing" class="form-select" @bind-Value="editing.BillingTiming">@foreach (var f in Enum.GetValues<AgreementBillingTiming>()) { <option value="@f">@L[$"FinanceTiming{f}"]</option> }</InputSelect></div>
+            <div class="col-md-4"><label for="line-quantity" class="form-label">@L["FinanceQuantity"]</label><InputNumber id="line-quantity" class="form-control" @bind-Value="editing.Quantity" min="0.0001" step="0.0001" /></div>
+            <div class="col-md-4"><label for="line-price" class="form-label">@L["FinanceUnitPrice"] (@data.Currency)</label><InputNumber id="line-price" class="form-control" @bind-Value="editing.UnitPrice" min="0" step="0.0001" /></div>
+            @if (editingActive)
+            {
+                <div class="col-md-6"><label for="line-effective" class="form-label">@L["FinanceEffectiveFrom"]</label><InputDate id="line-effective" class="form-control" @bind-Value="editing.EffectiveFrom" /></div>
+                <div class="col-md-6"><label for="line-reason" class="form-label">@L["NoticeReason"]</label><InputText id="line-reason" class="form-control" @bind-Value="editing.Reason" required maxlength="2000" /></div>
+            }
+            else { <div class="col-12 form-check ms-2"><InputCheckbox id="line-activate" class="form-check-input" @bind-Value="editing.Activate" /><label for="line-activate">@L["FinanceActivate"]</label></div> }
+            <div class="col-12"><label for="line-description" class="form-label">@L["Description"]</label><InputTextArea id="line-description" class="form-control" @bind-Value="editing.Description" maxlength="4000" /></div>
+            <div class="col-12"><strong>@L["AgreementDocuments"]</strong>
+            @foreach (var doc in data.Documents) { <div class="form-check"><input id="@($"line-doc-{doc.Id}")" type="checkbox" class="form-check-input" checked="@editing.DocumentIds.Contains(doc.Id)" @onchange="e => ToggleDocument(doc.Id, e)" /><label for="@($"line-doc-{doc.Id}")">@doc.FileName (@doc.UploadedUtc.ToString("g"))</label></div> }
+            </div>
+        </div><button type="submit" class="btn btn-primary mt-3">@L["Save"]</button><button type="button" class="btn btn-outline-secondary mt-3 ms-2" @onclick="() => editing = null">@L["Cancel"]</button>
+        </div></div></EditForm>
+    }
+    @if (closingId.HasValue)
+    {
+        <div class="card mb-3"><div class="card-body"><h2 class="h5">@L["FinanceCloseLine"]</h2>
+            <div class="form-check"><input id="line-deactivate" class="form-check-input" type="checkbox" @bind="deactivate" /><label for="line-deactivate">@L["FinanceDeactivate"]</label></div>
+            <label for="line-close-date" class="form-label">@L[deactivate ? "FinanceDeactivateFrom" : "FinanceLastDelivery"]</label><input id="line-close-date" type="date" class="form-control" @bind="closeDate" />
+            <label for="line-close-reason" class="form-label">@L["NoticeReason"]</label><input id="line-close-reason" class="form-control" @bind="closeReason" maxlength="2000" />
+            <button class="btn btn-primary mt-2" @onclick="CloseAsync">@L["Save"]</button><button class="btn btn-outline-secondary mt-2 ms-2" @onclick="() => closingId = null">@L["Cancel"]</button>
+        </div></div>
+    }
+    @if (data.Lines.Count == 0) { <p>@L["FinanceNoLines"]</p> }
+    @foreach (var line in data.Lines.OrderBy(x => x.Versions[0].Name))
+    {
+        var latest = line.Versions[0];
+        <div class="card mb-3"><div class="card-body">
+            <h2 class="h5">@latest.Name <span class="badge text-bg-secondary">@L[$"FinanceStatus{latest.Status}"]</span></h2>
+            <p>@L["FinanceLatestVersion"]: @latest.EffectiveFrom.ToString("d") · @L[$"FinanceFrequency{latest.Frequency}"] · @line.Prices[0].Quantity × @line.Prices[0].UnitPrice @data.Currency</p>
+            @if (data.CanEdit && latest.Status is AgreementLineStatus.Draft or AgreementLineStatus.Active)
+            {
+                @if (latest.Frequency != AgreementFrequency.Once || latest.Status == AgreementLineStatus.Draft) { <button class="btn btn-outline-primary me-2" @onclick="() => EditLine(line)">@L["Edit"]</button> }
+                @if (latest.Status == AgreementLineStatus.Active) { <button class="btn btn-outline-secondary" @onclick="() => BeginClose(line.Line.Id)">@L["FinanceCloseLine"]</button> }
+            }
+            <details class="mt-2"><summary>@L["FinanceVersions"]</summary>
+            @foreach (var v in line.Versions)
+            {
+                <div class="border-top mt-2 pt-2"><strong>@L["FinanceLineVersion"] @v.Sequence · @v.Id</strong>
+                    <p>@L["FinanceEffectiveFrom"]: @v.EffectiveFrom.ToString("d") · @L["FinanceRecorded"]: @v.RecordedUtc.ToString("u") · @data.ActorNames.GetValueOrDefault(v.ActorUserId)<br />@v.Reason</p>
+                    <p>@v.Name · @v.Description · @L[$"FinanceStatus{v.Status}"]<br />@L["FinanceDeliveryStart"]: @v.StartDate.ToString("d") · @L["FinanceLastDelivery"]: @v.EndDate?.ToString("d")<br />
+                    @L["FinanceFirstPayable"]: @v.FirstPayableDate.ToString("d") · @L[$"FinanceFrequency{v.Frequency}"] · @L[$"FinanceAnchor{v.Anchor}"] @(v.Anchor == AgreementAnchor.Date ? v.AnchorDate.ToString("d") : "") · @L[$"FinanceTiming{v.BillingTiming}"]<br />
+                    @L["FinanceGroups"]: @data.Groups.FirstOrDefault(g => g.Id == v.DeliveryGroupId)?.Name</p>
+                    @if (v.PayableSourceLineId.HasValue) { <p>@L["FinancePayableSource"]: @data.Lines.FirstOrDefault(x => x.Line.Id == v.PayableSourceLineId)?.Versions[0].Name (@v.PayableSourceLineId) · @v.PayableSourceStartDate?.ToString("d") + @v.PayableOffsetMonths @L["NoticeUnitMonths"]</p> }
+                    @foreach (var doc in v.Documents) { <a class="me-2" href="@($"/agreements/documents/{doc.DocumentId}/download")" data-enhance-nav="false">@data.Documents.FirstOrDefault(d => d.Id == doc.DocumentId)?.FileName</a> }
+                </div>
+            }
+            @foreach (var p in line.Prices) { <p class="border-top mt-2">@L["FinancePriceVersion"] @p.Sequence · @p.Id<br />@L["FinanceEffectiveFrom"]: @p.EffectiveFrom.ToString("d") · @p.Quantity × @p.UnitPrice @data.Currency<br />@L["FinanceRecorded"]: @p.RecordedUtc.ToString("u") · @data.ActorNames.GetValueOrDefault(p.ActorUserId) · @p.Reason</p> }
+            </details>
+        </div></div>
+    }
+    <div class="card"><div class="card-body"><h2 class="h4">@L["FinancePreview"]</h2><div class="row g-3 mb-3">
+        <div class="col-md-4"><label for="forecast-from" class="form-label">@L["FinanceFrom"]</label><input id="forecast-from" class="form-control" type="date" @bind="from" /></div>
+        <div class="col-md-4"><label for="forecast-to" class="form-label">@L["FinanceTo"]</label><input id="forecast-to" class="form-control" type="date" @bind="to" /></div>
+        <div class="col-md-4 align-self-end"><button class="btn btn-primary" @onclick="PreviewAsync">@L["FinanceCalculate"]</button></div>
+    </div>
+    @if (forecast is not null)
+    {
+        <p><strong>@L["FinanceDirectionIncome"]: @forecast.Income.ToString("N2") @forecast.Currency</strong> · <strong>@L["FinanceDirectionCost"]: @forecast.Cost.ToString("N2") @forecast.Currency</strong></p>
+        <div class="table-responsive"><table class="table table-hover"><thead><tr><th>@L["Name"]</th><th>@L["FinanceReferencePeriod"]</th><th>@L["FinanceActualPeriod"]</th><th>@L[data.Direction == AgreementDirection.Cost ? "FinanceExpectedInvoice" : "FinancePlannedInvoice"]</th><th>@L["FinanceCalculation"]</th><th>@L["FinanceAmount"]</th></tr></thead><tbody>
+        @foreach (var p in forecast.Periods)
+        {
+            <tr><td>@p.LineName<details><summary>@L["FinanceVersions"]</summary>@L["FinanceLineVersion"]: @p.LineVersionId<br />@L["FinancePriceVersion"]: @p.PriceVersionId<br />@L["FinanceEvent"]: @p.EventKey
+                @foreach (var id in p.DocumentIds) { <div><a href="@($"/agreements/documents/{id}/download")" data-enhance-nav="false">@data.Documents.FirstOrDefault(d => d.Id == id)?.FileName</a></div> }</details></td>
+                <td>@p.ReferenceFrom.ToString("d")–@p.ReferenceTo.ToString("d")</td><td>@p.From.ToString("d")–@p.To.ToString("d")</td><td>@(p.Included ? "–" : p.InvoiceDate.ToString("d"))</td>
+                <td>@if (p.Included) { <span class="badge text-bg-info">@L["FinanceIncluded"]</span> } else { @L["FinanceCalculationText", p.Quantity, p.UnitPrice, p.ActiveDays, p.ReferenceDays] }</td><td>@p.Amount.ToString("N2") @p.Currency</td></tr>
+        }
+        </tbody></table></div>
+    }
+    </div></div></fieldset>
+}
+
+@code {
+    [Parameter] public Guid AgreementId { get; set; }
+    private Guid accountId;
+    private AgreementLinesDto? data;
+    private string title = "", groupName = "", closeReason = "";
+    private string? error;
+    private bool busy, editingActive, deactivate;
+    private SaveAgreementLineRequest? editing;
+    private Guid? editingId, closingId;
+    private DateOnly from = DateOnly.FromDateTime(DateTime.Today), to = DateOnly.FromDateTime(DateTime.Today).AddYears(1).AddDays(-1), closeDate = DateOnly.FromDateTime(DateTime.Today);
+    private AgreementForecastDto? forecast;
+    protected override async Task OnParametersSetAsync()
+    {
+        data = null; editing = null; forecast = null;
+        if (UserContext.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; }
+        accountId = id; await Run(async () => { title = (await Service.GetAsync(accountId, AgreementId)).Title; await Load(); });
+    }
+    private async Task Load() { data = await Service.GetLinesAsync(accountId, AgreementId); forecast = null; }
+    private void NewLine() { editingId = null; closingId = null; editingActive = false; editing = new() { Revision = data!.Revision, StartDate = from, FirstPayableDate = from, AnchorDate = from, EffectiveFrom = from }; }
+    private void EditLine(AgreementLineDetails line)
+    {
+        var v = line.Versions[0]; var p = line.Prices[0]; editingId = line.Line.Id; closingId = null; editingActive = line.Line.ActivatedUtc.HasValue;
+        editing = new() { Revision = data!.Revision, Name = v.Name, Description = v.Description, StartDate = v.StartDate, EndDate = v.EndDate,
+            FirstPayableDate = v.FirstPayableDate, PayableSourceLineId = v.PayableSourceLineId, PayableOffsetMonths = v.PayableOffsetMonths,
+            Frequency = v.Frequency, Anchor = v.Anchor, AnchorDate = v.AnchorDate, BillingTiming = v.BillingTiming, Quantity = p.Quantity, UnitPrice = p.UnitPrice,
+            DeliveryGroupId = v.DeliveryGroupId, DocumentIds = v.Documents.Select(d => d.DocumentId).ToList(), EffectiveFrom = v.EffectiveFrom };
+    }
+    private void ToggleDocument(Guid id, ChangeEventArgs e) { if (e.Value is true) editing!.DocumentIds.Add(id); else editing!.DocumentIds.Remove(id); }
+    private string PayablePreview()
+    {
+        if (editingActive) return editing!.FirstPayableDate.ToString("d");
+        var source = data!.Lines.FirstOrDefault(x => x.Line.Id == editing!.PayableSourceLineId)?.Versions[0];
+        try { return source is null || !editing!.PayableOffsetMonths.HasValue ? "–" : source.StartDate.AddMonths(editing.PayableOffsetMonths.Value).ToString("d"); }
+        catch (ArgumentOutOfRangeException) { return L["FinanceInvalidDates"]; }
+    }
+    private Task SaveLineAsync() => Run(async () => { await Service.SaveLineAsync(accountId, AgreementId, editingId, editing!); editing = null; await Load(); });
+    private Task AddGroupAsync() => Run(async () => { await Service.AddDeliveryGroupAsync(accountId, AgreementId, data!.Revision, groupName); groupName = ""; await Load(); });
+    private void BeginClose(Guid id) { closingId = id; editing = null; closeReason = ""; deactivate = false; }
+    private Task CloseAsync() => Run(async () => { await Service.CloseLineAsync(accountId, AgreementId, closingId!.Value, data!.Revision, closeDate, deactivate, closeReason); closingId = null; await Load(); });
+    private Task PreviewAsync() => Run(async () => { forecast = await Service.ForecastAsync(accountId, AgreementId, from, to); });
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return; busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Agreement line operation failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; }
+    }
+}

@@ -93,6 +93,7 @@ public partial class AgreementService(
             .ToDictionaryAsync(x => x.Id, x => x.FirstName + " " + x.LastName, cancellationToken);
         var details = new AgreementDetailsDto
         {
+            Direction = a.Direction, Currency = a.Currency,
             Id = a.Id, Title = a.Title, Description = a.Description, Type = a.Type, Status = a.Status,
             CounterpartyOrganizationId = a.CounterpartyOrganizationId, OwnerUserId = a.OwnerUserId,
             StartDate = a.StartDate, EndDate = a.EndDate, NoticeDeadline = a.NoticeDeadline, RenewalDate = a.RenewalDate,
@@ -153,6 +154,7 @@ public partial class AgreementService(
         var a = new Agreement { Id = Guid.NewGuid(), AccountId = accountId, CreatedUtc = Clock.GetUtcNow(), CreatedByUserId = userId };
         if (request.Form == AgreementForm.Legacy || request.BeginNewPeriod)
             throw new AgreementValidationException("NoticeChooseForm");
+        request.Direction ??= request.Type == AgreementType.Supplier ? AgreementDirection.Cost : null;
         a.CurrentPeriodStartDate = request.StartDate;
         Apply(a, request); Touch(a, userId);
         NoticeHistory(db, a, new AgreementNoticeSnapshot(), AgreementNoticeAction.RuleChanged);
@@ -171,6 +173,9 @@ public partial class AgreementService(
         await ValidateAsync(db, accountId, request, cancellationToken);
         if (request.Form == AgreementForm.Legacy && a.Form != AgreementForm.Legacy)
             throw new AgreementValidationException("NoticeChooseForm");
+        if ((a.Direction != request.Direction || a.Currency != request.Currency || a.CounterpartyOrganizationId != request.CounterpartyOrganizationId) &&
+            await db.AgreementLines.AnyAsync(x => x.AccountId == accountId && x.AgreementId == agreementId && x.ActivatedUtc != null, cancellationToken))
+            throw new AgreementValidationException("FinanceAgreementLocked");
         var before = AgreementNoticeSnapshot.From(a);
         if (request.BeginNewPeriod)
         {
@@ -284,6 +289,7 @@ public partial class AgreementService(
     }
     private static void Apply(Agreement a, SaveAgreementRequest r)
     {
+        a.Direction = r.Direction; a.Currency = string.IsNullOrEmpty(r.Currency) ? null : r.Currency;
         a.Title = r.Title.Trim(); a.Description = r.Description?.Trim(); a.Type = r.Type;
         a.CounterpartyOrganizationId = r.CounterpartyOrganizationId; a.OwnerUserId = r.OwnerUserId; a.Status = r.Status;
         a.StartDate = r.StartDate; a.EndDate = r.EndDate; a.NoticeDeadline = r.NoticeDeadline;
@@ -294,6 +300,9 @@ public partial class AgreementService(
     }
     private static async Task ValidateAsync(TenantPlatformDbContext db, Guid accountId, SaveAgreementRequest r, CancellationToken ct)
     {
+        if ((r.Direction.HasValue && !Enum.IsDefined(r.Direction.Value)) ||
+            (!string.IsNullOrEmpty(r.Currency) && !AgreementPeriodCalculator.Currencies.Contains(r.Currency)))
+            throw new AgreementValidationException("FinanceInvalidSettings");
         if (string.IsNullOrWhiteSpace(r.Title) || r.Title.Trim().Length > 200 || r.Description?.Length > 4000 || r.Terms?.Length > 10000 ||
             !Enum.IsDefined(r.Type) || !Enum.IsDefined(r.Status)) throw new AgreementValidationException("AgreementInvalidDetails");
         if (r.StartDate == default || (r.Form != AgreementForm.Ongoing && r.EndDate < r.StartDate)) throw new AgreementValidationException("AgreementInvalidDates");

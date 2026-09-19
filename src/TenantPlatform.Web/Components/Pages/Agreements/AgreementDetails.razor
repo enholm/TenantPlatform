@@ -43,6 +43,10 @@ else if (details is not null)
         <dt class="col-sm-4">@L["AgreementUpdated"]</dt><dd class="col-sm-8">@details.UpdatedUtc.ToString("g") UTC · @details.UpdatedByName</dd>
     </dl><p class="text-body-secondary mt-3 mb-0">@L["AgreementPeriodHelp"]</p></div></div>
 
+    <div class="card mb-3"><div class="card-body">
+        <strong>@L["FinanceDirection"]:</strong> @(details.Direction.HasValue ? L[$"FinanceDirection{details.Direction}"] : L["FinanceUnclassified"]) · @details.Currency
+        <a class="btn btn-outline-primary ms-2" href="@($"/agreements/{Id}/lines")">@L["FinanceLinesAndForecast"]</a>
+    </div></div>
     <AgreementNoticePanel Details="details" Changed="LoadAsync" />
     <AgreementFollowupPanel AgreementId="Id" ParentRevision="details.Revision" Changed="LoadAsync" />
     <h2>@L["AgreementDocuments"]</h2>

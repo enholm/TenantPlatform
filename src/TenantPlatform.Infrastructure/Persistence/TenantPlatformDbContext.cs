@@ -15,6 +15,11 @@ namespace TenantPlatform.Infrastructure.Persistence;
 public class TenantPlatformDbContext : DbContext
 {
     public DbSet<AgreementNoticeHistory> AgreementNoticeHistory => Set<AgreementNoticeHistory>();
+    public DbSet<AgreementLine> AgreementLines => Set<AgreementLine>();
+    public DbSet<AgreementLineVersion> AgreementLineVersions => Set<AgreementLineVersion>();
+    public DbSet<AgreementPriceVersion> AgreementPriceVersions => Set<AgreementPriceVersion>();
+    public DbSet<AgreementDeliveryGroup> AgreementDeliveryGroups => Set<AgreementDeliveryGroup>();
+    public DbSet<AgreementLineDocument> AgreementLineDocuments => Set<AgreementLineDocument>();
     public DbSet<Agreement> Agreements => Set<Agreement>();
     public DbSet<AgreementDeadline> AgreementDeadlines => Set<AgreementDeadline>();
     public DbSet<AgreementDeadlineHistory> AgreementDeadlineHistory => Set<AgreementDeadlineHistory>();
