@@ -46,8 +46,8 @@ lagres forklaringen i grunnlagets eksisterende JSON-øyeblikksbilde. Eldre manue
 reguleringer beholdes som lesbar historikk på avtalens reguleringsside.
 
 Indeksregisteret har Rediger for både metadata og perioder. Perioderedigering
-oppretter en ny revisjon og krever begrunnelse. Ved flytting bevares de gamle
-revisjonene som utgåtte; bare siste gjeldende revisjon deltar i ny beregning.
+oppretter en ny revisjon og krever begrunnelse. Alle erstattede revisjoner bevares med `Superseded = true`, både ved endring
+av verdi og flytting av periode; bare siste gjeldende revisjon deltar i ny beregning.
 Dupliserte perioder, ugyldige nivåer og utdaterte redigeringsforsøk avvises.
 Korrigerte nivåer brukes i nye prognoser og beregninger. Berørte utkast blir
 utdaterte og må regenereres. Godkjente grunnlag endres aldri automatisk; avvik
@@ -122,7 +122,7 @@ Ingen delt database er oppdatert. Migreringen kjøres ellers av vanlig oppstart.
   sporbarhet. Ingen aktiv tjeneste kan opprette slike regler, og beregningen leser
   dem ikke. Historiske avanserte forklaringer kan fortsatt vises.
 
-Berørte avtaler viser varsel på detalj-/redigerings-/reguleringssiden. Brukeren
+Berørte avtaler viser varsel på detalj- og redigeringssiden. Brukeren
 velger riktig indeks, kontrollerer linjenes ja/nei-valg og bekrefter i
 avtaleredigering at fremtidig regulering bruker 100 %. Inntil da blokkeres bare
 ny regulering. Vanlig redigering og behandling med gjeldende pris fungerer.

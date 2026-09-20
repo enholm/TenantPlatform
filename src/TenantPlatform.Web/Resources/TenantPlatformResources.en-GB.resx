@@ -1437,6 +1437,9 @@
 <data name="RoomBookingStatus_Confirmed" xml:space="preserve"><value>Confirmed</value></data>
 <data name="RoomBookingStatus_Cancelled" xml:space="preserve"><value>Cancelled</value></data>
 <data name="BuildingContainsMeetingRooms" xml:space="preserve"><value>The building contains meeting rooms and cannot be deleted.</value></data>
+  <data name="Agreement" xml:space="preserve">
+    <value>Agreement</value>
+  </data>
   <data name="Agreements" xml:space="preserve">
     <value>Agreements</value>
   </data>
@@ -2138,10 +2141,6 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ProcessingActualChange" xml:space="preserve"><value>Change from previous price</value></data>
   <data name="ProcessingApprove" xml:space="preserve"><value>Approve and apply</value></data>
   <data name="ProcessingReject" xml:space="preserve"><value>Reject</value></data>
-  <data name="ProcessingProposalPending" xml:space="preserve"><value>Pending review</value></data>
-  <data name="ProcessingProposalApproved" xml:space="preserve"><value>Applied</value></data>
-  <data name="ProcessingProposalRejected" xml:space="preserve"><value>Rejected</value></data>
-  <data name="ProcessingProposalStale" xml:space="preserve"><value>Stale</value></data>
   <data name="ProcessingManualPrice" xml:space="preserve"><value>Dated manual price correction</value></data>
   <data name="ProcessingManualHelp" xml:space="preserve"><value>A new price version does not overwrite historical snapshots. Affected approved bases require a separate correction. The price applies until the next recorded price version.</value></data>
   <data name="ProcessingBases" xml:space="preserve"><value>Invoice and cost bases</value></data>
@@ -2198,12 +2197,11 @@ This is a reminder, not a termination or renewal.</value>
   <data name="FinanceEditHelp" xml:space="preserve"><value>Active lines can be edited directly. Financial corrections create versions from the effective date and require a reason. Documents and descriptions can change without changing the price. Approved bases are preserved.</value></data>
   <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Select a registered index period and preview the lines. The full change applies, including decreases. The first adjustment compares with the preceding registered period; later adjustments use the last applied period for that index. Latest index revisions are used. The effective date is the selected period’s start date.</value></data>
   <data name="ProcessingCalculationOrder" xml:space="preserve"><value>New price = current price × comparison value / base value, rounded to two decimal places.</value></data>
-  <data name="SimpleSuperseded" xml:space="preserve"><value>Superseded period date</value></data>
+  <data name="SimpleSuperseded" xml:space="preserve"><value>Superseded revision</value></data>
   <data name="SimpleDuplicateIndex" xml:space="preserve"><value>An index with this code already exists.</value></data>
   <data name="ProcessingIndexHelp" xml:space="preserve"><value>Register index levels and use Edit to correct metadata or periods. Corrections preserve previous revisions and prices.</value></data>
   <data name="ProcessingPeriodLocked" xml:space="preserve"><value>A payment event has conflicting invoice dates. Review the periods and regenerate the basis.</value></data>
   <data name="AutoIndexHelp" xml:space="preserve"><value>Index-adjusted lines are calculated automatically in forecasts and financial bases. Register index levels once; no approval per line is needed. New levels apply from the period start. Where later levels are missing, the last known price is carried forward.</value></data>
-  <data name="AutoLegacyHistory" xml:space="preserve"><value>Previous manual adjustments (history)</value></data>
   <data name="AutoIndexCalculation" xml:space="preserve"><value>Automatic index calculation</value></data>
   <data name="AutoRegisteredPrice" xml:space="preserve"><value>Registered base price</value></data>
   <data name="AutoIndexSwitchHelp" xml:space="preserve"><value>The first index selection applies from the agreement start. Later switches apply from today’s UTC date and preserve earlier calculation periods.</value></data>

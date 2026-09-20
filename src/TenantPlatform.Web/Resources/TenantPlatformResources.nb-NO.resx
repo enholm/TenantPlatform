@@ -1473,6 +1473,9 @@
 <data name="RoomBookingStatus_Confirmed" xml:space="preserve"><value>Bekreftet</value></data>
 <data name="RoomBookingStatus_Cancelled" xml:space="preserve"><value>Avbestilt</value></data>
 <data name="BuildingContainsMeetingRooms" xml:space="preserve"><value>Bygget inneholder møterom og kan ikke slettes.</value></data>
+  <data name="Agreement" xml:space="preserve">
+    <value>Avtale</value>
+  </data>
   <data name="Agreements" xml:space="preserve">
     <value>Avtaler</value>
   </data>
@@ -2174,10 +2177,6 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ProcessingActualChange" xml:space="preserve"><value>Endring fra gammel pris</value></data>
   <data name="ProcessingApprove" xml:space="preserve"><value>Godkjenn og gjennomfør</value></data>
   <data name="ProcessingReject" xml:space="preserve"><value>Avvis</value></data>
-  <data name="ProcessingProposalPending" xml:space="preserve"><value>Til kontroll</value></data>
-  <data name="ProcessingProposalApproved" xml:space="preserve"><value>Gjennomført</value></data>
-  <data name="ProcessingProposalRejected" xml:space="preserve"><value>Avvist</value></data>
-  <data name="ProcessingProposalStale" xml:space="preserve"><value>Utdatert</value></data>
   <data name="ProcessingManualPrice" xml:space="preserve"><value>Datert manuell priskorrigering</value></data>
   <data name="ProcessingManualHelp" xml:space="preserve"><value>Ny prisversjon erstatter ikke historiske snapshots. Berørt godkjent grunnlag må korrigeres separat. Virkning varer til neste registrerte prisversjon.</value></data>
   <data name="ProcessingBases" xml:space="preserve"><value>Faktura- og kostnadsgrunnlag</value></data>
@@ -2234,12 +2233,11 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="FinanceEditHelp" xml:space="preserve"><value>Aktive linjer kan rettes direkte. Økonomiske rettelser lagres som nye versjoner fra Gjelder fra-datoen og krever en begrunnelse. Dokumenter og beskrivelse kan endres uten prisendring. Godkjente grunnlag bevares.</value></data>
   <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Velg en registrert indeksperiode og forhåndsvis linjene. Hele indeksendringen brukes, også ved nedgang. Første regulering sammenligner med forrige registrerte periode; senere brukes siste gjennomførte periode for samme indeks. Nyeste indeksrevisjoner brukes. Virkningsdato er valgt periodes startdato.</value></data>
   <data name="ProcessingCalculationOrder" xml:space="preserve"><value>Ny pris = gjeldende pris × sammenligningsverdi / basisverdi, avrundet til to desimaler.</value></data>
-  <data name="SimpleSuperseded" xml:space="preserve"><value>Utgått periodedato</value></data>
+  <data name="SimpleSuperseded" xml:space="preserve"><value>Erstattet revisjon</value></data>
   <data name="SimpleDuplicateIndex" xml:space="preserve"><value>En indeks med denne koden finnes allerede.</value></data>
   <data name="ProcessingIndexHelp" xml:space="preserve"><value>Registrer indeksnivåer og bruk Rediger for å rette metadata eller perioder. Rettelser bevarer tidligere revisjoner og priser.</value></data>
   <data name="ProcessingPeriodLocked" xml:space="preserve"><value>En betalingshendelse har motstridende fakturadatoer. Kontroller periodene og generer grunnlaget på nytt.</value></data>
   <data name="AutoIndexHelp" xml:space="preserve"><value>Indeksregulerte linjer beregnes automatisk i prognose og fakturagrunnlag. Registrer indeksnivåene én gang i indeksregisteret; ingen godkjenning per linje er nødvendig. Nye nivåer gjelder fra periodens start. Når senere nivåer mangler, videreføres siste kjente pris.</value></data>
-  <data name="AutoLegacyHistory" xml:space="preserve"><value>Tidligere manuelle reguleringer (historikk)</value></data>
   <data name="AutoIndexCalculation" xml:space="preserve"><value>Automatisk indeksberegning</value></data>
   <data name="AutoRegisteredPrice" xml:space="preserve"><value>Registrert grunnpris</value></data>
   <data name="AutoIndexSwitchHelp" xml:space="preserve"><value>Første indeksvalg gjelder fra avtalens start. Senere bytte gjelder fra dagens UTC-dato og bevarer tidligere beregningsperioder.</value></data>

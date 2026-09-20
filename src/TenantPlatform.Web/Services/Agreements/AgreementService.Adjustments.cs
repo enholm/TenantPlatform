@@ -97,14 +97,14 @@ public partial class AgreementService
                 ?? throw new UnauthorizedAccessException();
             periodKey = original.PeriodKey;
             revision = Math.Max(revision, original.Revision);
-            if (original.Superseded || await db.AgreementIndexValueRecords.AnyAsync(x => x.AccountId == accountId && x.IndexId == indexId && x.Period == original.Period && x.Revision > original.Revision, ct))
+            if (original.Superseded || await db.AgreementIndexValueRecords.AnyAsync(x => x.AccountId == accountId && x.IndexId == indexId && x.PeriodKey == periodKey && x.Revision > original.Revision, ct))
                 throw new AgreementValidationException("ProcessingStale");
             if (original.Period != period)
             {
                 if (await db.AgreementIndexValueRecords.AnyAsync(x => x.AccountId == accountId && x.IndexId == indexId && x.Period == period && x.PeriodKey != periodKey, ct)) throw new AgreementValidationException("SimpleDuplicatePeriod");
-                // A moved period retains all original revisions for historical references.
-                foreach (var old in await db.AgreementIndexValueRecords.Where(x => x.AccountId == accountId && x.IndexId == indexId && x.Period == original.Period).ToListAsync(ct)) old.Superseded = true;
             }
+            // Keep every replaced revision for historical references, including corrections on the same date.
+            foreach (var old in await db.AgreementIndexValueRecords.Where(x => x.AccountId == accountId && x.IndexId == indexId && x.PeriodKey == periodKey && !x.Superseded).ToListAsync(ct)) old.Superseded = true;
         }
         foreach (var proposal in await db.AgreementAdjustmentProposalRecords.Where(x => x.AccountId == accountId && x.Status == AgreementProposalStatus.Pending).ToListAsync(ct))
         {
@@ -114,13 +114,6 @@ public partial class AgreementService
         db.AgreementIndexValueRecords.Add(new() { Id = Guid.NewGuid(), AccountId = accountId, IndexId = indexId, Period = period, Value = value, PeriodKey = periodKey,
             Revision = revision + 1, PublishedDate = published, Reason = reason.Trim(), RecordedUtc = Clock.GetUtcNow(), ActorUserId = userContext.Current.UserId });
         await SaveAsync(db, ct); await tx.CommitAsync(ct);
-    }
-    public async Task<AgreementProcessingView> GetProcessingAsync(Guid accountId, Guid agreementId, CancellationToken ct = default)
-    {
-        await using var db = await factory.CreateDbContextAsync(ct);
-        var (a, edit, manage) = await RequireAsync(db, accountId, agreementId, false, false, ct);
-        return new(edit && !a.IsArchived, manage && !a.IsArchived,
-            await db.AgreementAdjustmentProposalRecords.AsNoTracking().Where(x => x.AccountId == accountId && x.AgreementId == agreementId).OrderByDescending(x => x.RecordedUtc).ToListAsync(ct));
     }
     private sealed record FinancialSource(Agreement Agreement, List<AgreementLineVersion> Versions, List<AgreementPriceVersion> Prices,
         Dictionary<Guid, List<AgreementAutomaticPrice>> AutomaticPrices);

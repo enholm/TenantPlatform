@@ -34,10 +34,62 @@
 @if (data.Indices.Count == 0) { <p>@L["ProcessingEmpty"]</p> }
 @foreach(var i in data.Indices)
 {
-<div class="card mb-3 p-3"><h2 class="h5">@i.Code — @i.Name</h2>@if (data.CanWrite) { <button class="btn btn-outline-primary" @onclick="() => EditIndex(i)">@L["Edit"]</button> }<p>@i.Description · @i.Source · @L[$"ProcessingResolution{i.Resolution}"]</p>
-<h3 class="h6">@L["ProcessingHistory"]</h3><div class="table-responsive"><table class="table table-hover"><thead><tr><th>@L["ProcessingIndexPeriod"]</th><th>@L["ProcessingIndexValue"]</th><th>@L["ProcessingRevision"]</th><th>@L["ProcessingPublished"]</th><th>@L["FinanceRecorded"]</th><th>@L["NoticeReason"]</th></tr></thead><tbody>
-@foreach(var v in data.Values.Where(x=>x.IndexId==i.Id)){<tr><td>@v.Period.ToString("d")</td><td>@v.Value</td><td>@v.Revision @if (v.Superseded) { <span class="badge text-bg-secondary">@L["SimpleSuperseded"]</span> } <small>@v.Id</small></td><td>@v.PublishedDate?.ToString("d")</td><td>@v.RecordedUtc.ToString("u") · @v.ActorUserId</td><td>@v.Reason @if (data.CanWrite && !v.Superseded && !data.Values.Any(x => x.IndexId == i.Id && x.Period == v.Period && x.Revision > v.Revision)) { <button class="btn btn-sm btn-outline-primary" @onclick="() => EditValue(v)">@L["Edit"]</button> }</td></tr>}
-</tbody></table></div></div>
+<div class="card mb-3 p-3">
+    <h2 class="h5">
+        @i.Code — @i.Name
+    </h2>
+    @if (data.CanWrite) 
+    { 
+        <button class="btn btn-outline-primary" @onclick="() => EditIndex(i)">@L["Edit"]</button> 
+    }
+    <p>@i.Description · @i.Source · @L[$"ProcessingResolution{i.Resolution}"]</p>
+    <h3 class="h6">@L["ProcessingHistory"]</h3>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>@L["ProcessingIndexPeriod"]</th>
+                    <th>@L["ProcessingIndexValue"]</th>
+                    <th>@L["ProcessingRevision"]</th>
+                    <th>@L["ProcessingPublished"]</th>
+                    <th>@L["FinanceRecorded"]</th>
+                    <th>@L["NoticeReason"]</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var v in data.Values.Where(x=>x.IndexId==i.Id))
+                {
+                    <tr>
+                        <td>@v.Period.ToString("d")</td>
+                        <td>@v.Value</td>
+                        <td>
+                            @if (v.Superseded) 
+                            { 
+                                <span class="badge text-bg-secondary">@L["SimpleSuperseded"]</span> 
+                            }
+                            else 
+                            {
+                                @v.Revision 
+                            }
+                        </td>
+                        <td>@v.PublishedDate?.ToString("d")</td>
+                        <td>@v.RecordedUtc.ToString("u")</td>
+                        <td>
+                            @v.Reason 
+                        </td>
+                        <td>
+                            @if (data.CanWrite && !v.Superseded && !data.Values.Any(x => x.IndexId == i.Id && x.Period == v.Period && x.Revision > v.Revision)) 
+                            { 
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => EditValue(v)">@L["Edit"]</button> 
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 }
 </fieldset>
 }

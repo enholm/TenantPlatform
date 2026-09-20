@@ -6,8 +6,6 @@ public record AgreementAdjustmentCalculation(AgreementAdjustmentRule? Rule, Agre
     AgreementPriceVersion CurrentPrice, AgreementLineVersion Line, AgreementIndexValue? BaseIndex,
     AgreementIndexValue? ComparisonIndex, DateOnly ScheduledDate, DateOnly EffectiveDate,
     decimal RawIndexPercent, decimal AppliedPercent, decimal NewPrice, string Fingerprint);
-public record AgreementProcessingView(bool CanEdit, bool CanApprove,
-    List<AgreementAdjustmentProposal> Proposals);
 public record AgreementBasisEventData(string EventKey, Guid LineId, List<AgreementCalculatedPeriod> Segments,
     decimal Amount, decimal PreviousAmount, decimal TargetAmount, List<AgreementAdjustmentProposal> Adjustments);
 public record AgreementBasisData(Guid AccountId, string AccountName, Guid AgreementId, string AgreementTitle,

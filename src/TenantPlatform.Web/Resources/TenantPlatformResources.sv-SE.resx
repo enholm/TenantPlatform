@@ -1473,6 +1473,9 @@
 <data name="RoomBookingStatus_Confirmed" xml:space="preserve"><value>Bekräftad</value></data>
 <data name="RoomBookingStatus_Cancelled" xml:space="preserve"><value>Avbokad</value></data>
 <data name="BuildingContainsMeetingRooms" xml:space="preserve"><value>Byggnaden innehåller mötesrum och kan inte raderas.</value></data>
+  <data name="Agreement" xml:space="preserve">
+    <value>Avtal</value>
+  </data>
   <data name="Agreements" xml:space="preserve">
     <value>Avtal</value>
   </data>
@@ -2174,10 +2177,6 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="ProcessingActualChange" xml:space="preserve"><value>Förändring från föregående pris</value></data>
   <data name="ProcessingApprove" xml:space="preserve"><value>Godkänn och genomför</value></data>
   <data name="ProcessingReject" xml:space="preserve"><value>Avvisa</value></data>
-  <data name="ProcessingProposalPending" xml:space="preserve"><value>För granskning</value></data>
-  <data name="ProcessingProposalApproved" xml:space="preserve"><value>Genomförd</value></data>
-  <data name="ProcessingProposalRejected" xml:space="preserve"><value>Avvisad</value></data>
-  <data name="ProcessingProposalStale" xml:space="preserve"><value>Inaktuell</value></data>
   <data name="ProcessingManualPrice" xml:space="preserve"><value>Daterad manuell priskorrigering</value></data>
   <data name="ProcessingManualHelp" xml:space="preserve"><value>En ny prisversion skriver inte över historiska snapshots. Berört godkänt underlag kräver separat korrigering. Priset gäller till nästa registrerade prisversion.</value></data>
   <data name="ProcessingBases" xml:space="preserve"><value>Faktura- och kostnadsunderlag</value></data>
@@ -2234,12 +2233,11 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="FinanceEditHelp" xml:space="preserve"><value>Aktiva rader kan redigeras direkt. Ekonomiska rättelser skapar versioner från giltighetsdatumet och kräver en orsak. Dokument och beskrivningar kan ändras utan prisändring. Godkända underlag bevaras.</value></data>
   <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Välj en registrerad indexperiod och förhandsgranska raderna. Hela ändringen används, även vid minskning. Första regleringen jämför med föregående registrerade period; senare används senast genomförda period för samma index. Senaste indexrevisioner används. Giltighetsdatum är den valda periodens startdatum.</value></data>
   <data name="ProcessingCalculationOrder" xml:space="preserve"><value>Nytt pris = nuvarande pris × jämförelsevärde / basvärde, avrundat till två decimaler.</value></data>
-  <data name="SimpleSuperseded" xml:space="preserve"><value>Ersatt perioddatum</value></data>
+  <data name="SimpleSuperseded" xml:space="preserve"><value>Ersatt revision</value></data>
   <data name="SimpleDuplicateIndex" xml:space="preserve"><value>Ett index med denna kod finns redan.</value></data>
   <data name="ProcessingIndexHelp" xml:space="preserve"><value>Registrera indexnivåer och använd Redigera för att rätta metadata eller perioder. Rättelser bevarar tidigare revisioner och priser.</value></data>
   <data name="ProcessingPeriodLocked" xml:space="preserve"><value>En betalningshändelse har motstridiga fakturadatum. Kontrollera perioderna och skapa underlaget på nytt.</value></data>
   <data name="AutoIndexHelp" xml:space="preserve"><value>Indexreglerade rader beräknas automatiskt i prognos och fakturaunderlag. Registrera indexnivåerna en gång; inget godkännande per rad krävs. Nya nivåer gäller från periodens början. Saknas senare nivåer används senast kända pris.</value></data>
-  <data name="AutoLegacyHistory" xml:space="preserve"><value>Tidigare manuella regleringar (historik)</value></data>
   <data name="AutoIndexCalculation" xml:space="preserve"><value>Automatisk indexberäkning</value></data>
   <data name="AutoRegisteredPrice" xml:space="preserve"><value>Registrerat grundpris</value></data>
   <data name="AutoIndexSwitchHelp" xml:space="preserve"><value>Första indexvalet gäller från avtalets start. Senare byten gäller från dagens UTC-datum och bevarar tidigare beräkningsperioder.</value></data>

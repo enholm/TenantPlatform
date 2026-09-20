@@ -128,7 +128,20 @@ await using (var db = factory.CreateDbContext())
             FROM agreement_adjustment_rules r CROSS JOIN migration_cases c WHERE r."Id"={legacyLine} AND c.label='Migration mixed';
         DROP TABLE migration_cases;
         """);
+    await db.GetService<IMigrator>().MigrateAsync("20260920010742_AutomaticAgreementIndexPricing");
+    // Simulate existing same-date revisions followed by a moved period and another correction.
+    await db.Database.ExecuteSqlInterpolatedAsync($"""
+        INSERT INTO agreement_index_values ("Id","AccountId","IndexId","Period","Revision","Value","RecordedUtc","ActorUserId","Reason","PeriodKey","Superseded")
+        VALUES (gen_random_uuid(),{account},{legacyLine},'2020-01-01',2,101,{clock.Now},{ownerId},'Old correction',{legacyDocument},false),
+               (gen_random_uuid(),{account},{legacyLine},'2020-02-01',3,101,{clock.Now},{ownerId},'Moved period',{legacyDocument},false),
+               (gen_random_uuid(),{account},{legacyLine},'2020-02-01',4,102,{clock.Now},{ownerId},'Latest correction',{legacyDocument},false),
+               (gen_random_uuid(),{account},{legacyLine},'2021-01-01',1,105,{clock.Now},{ownerId},'Separate period',gen_random_uuid(),false);
+        UPDATE agreement_index_values SET "Superseded"=true WHERE "Id"={legacyDocument};
+        """);
     await db.Database.MigrateAsync();
+    var migratedValues = await db.AgreementIndexValueRecords.AsNoTracking().Where(x=>x.AccountId==account && x.IndexId==legacyLine).ToListAsync();
+    Assert(migratedValues.Where(x=>x.PeriodKey==legacyDocument).All(x=>x.Superseded==(x.Revision<4)),"migration supersedes all replaced revisions across period moves and preserves the current revision");
+    Assert(!migratedValues.Single(x=>x.PeriodKey!=legacyDocument).Superseded,"migration leaves independent periods current");
     var preserved = await db.AgreementPriceVersions.SingleAsync(x=>x.AccountId==account && x.Id==legacyPrice);
     Assert(preserved.UnitPrice==123.4567m && preserved.Quantity==2 && !preserved.Independent && preserved.AdjustmentId==null,"phase 4 migration preserves existing price identity, precision and draft semantics");
     Assert(!db.Database.HasPendingModelChanges(), "model and generated migration match");
@@ -189,7 +202,9 @@ var repeated=await reader.ForecastAsync(account,id,new(2026,1,1),new(2027,12,31)
 Assert(System.Text.Json.JsonSerializer.Serialize(repeated)==System.Text.Json.JsonSerializer.Serialize(forecast),"repeated forecasts are deterministic and never compound twice");
 var narrow=await reader.ForecastAsync(account,id,new(2027,1,1),new(2027,1,31));
 Assert(narrow.Periods.Single(x=>x.LineId==line).UnitPrice==1039.60m,"starting forecast in 2027 still includes prior index basis");
-Assert((await owner.GetAsync(account,id)).Revision==revisionBefore && (await owner.GetLinesAsync(account,id)).Lines.All(x=>x.Prices.Count==1) && (await owner.GetProcessingAsync(account,id)).Proposals.Count==0,"forecast is read-only: no new prices, proposals or approval steps");
+Assert((await owner.GetAsync(account,id)).Revision==revisionBefore && (await owner.GetLinesAsync(account,id)).Lines.All(x=>x.Prices.Count==1),"forecast is read-only: no new prices, proposals or approval steps");
+await using (var db = factory.CreateDbContext())
+    Assert(!await db.AgreementAdjustmentProposalRecords.AnyAsync(x=>x.AccountId==account && x.AgreementId==id),"forecast creates no adjustment proposals");
 var preview=await reader.PreviewBasisAsync(account,id,AgreementDirection.Income,new(2027,1,1),new(2027,1,31));
 Assert(preview.Income==narrow.Income,"basis preview and forecast use identical automatic prices");
 var indexBasis=(await editor.GenerateBasisAsync(account,id,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Single();
@@ -202,6 +217,9 @@ Assert((await editor.GenerateBasisAsync(account,id,AgreementDirection.Income,new
 var originalValue=(await admin.GetIndicesAsync(account)).Values.Single(x=>x.IndexId==indexId && x.Period==new DateOnly(2027,1,1));
 await Expect<AgreementValidationException>(()=>admin.RecordIndexValueAsync(account,indexId,new(2027,1,1),106,null,"Duplicate"),"duplicate periods require explicit edit");
 await admin.RecordIndexValueAsync(account,indexId,new(2027,1,1),106,null,"Corrected value",originalValue.Id);
+var correctedValues=(await admin.GetIndicesAsync(account)).Values.Where(x=>x.IndexId==indexId && x.Period==originalValue.Period).ToList();
+Assert(correctedValues.Single(x=>x.Id==originalValue.Id).Superseded && !correctedValues.Single(x=>x.Revision==2).Superseded,"same-date correction supersedes the previous revision only");
+await Expect<AgreementValidationException>(()=>admin.RecordIndexValueAsync(account,indexId,new(2027,1,1),107,null,"Stale correction",originalValue.Id),"superseded same-date revision cannot be edited");
 Assert((await owner.GetBasisAsync(account,indexDraft)).Stale,"index correction invalidates an unapproved draft automatically");
 await Expect<AgreementValidationException>(()=>owner.ApproveBasisAsync(account,indexDraft,1),"stale index draft cannot be approved");
 Assert((await owner.GetBasisAsync(account,indexBasis)).Snapshots[0].DataJson==lockedIndexSnapshot,"used value correction never rewrites an approved basis");
@@ -278,6 +296,11 @@ var movedRequest=AgreementRequest();movedRequest.StartDate=new(2026,1,1);movedRe
 var movedAgreement=await admin.CreateAsync(account,movedRequest);await Save(movedAgreement,null,legacyAutoLineRequest);
 var movedValue=(await admin.GetIndicesAsync(account)).Values.First(x=>x.IndexId==movedIndex);
 await admin.RecordIndexValueAsync(account,movedIndex,new(2027,2,1),105,null,"Corrected period",movedValue.Id);
+var movedRevisions=(await admin.GetIndicesAsync(account)).Values.Where(x=>x.IndexId==movedIndex && x.Period.Year==2027).ToList();
+Assert(movedRevisions.Single(x=>x.Id==movedValue.Id).Superseded && !movedRevisions.Single(x=>x.Revision==2).Superseded,"period move supersedes its original revision");
+await admin.RecordIndexValueAsync(account,movedIndex,new(2027,2,1),105,null,"Same-date revision after move",movedRevisions.Single(x=>!x.Superseded).Id);
+var finalMovedRevisions=(await admin.GetIndicesAsync(account)).Values.Where(x=>x.IndexId==movedIndex && x.Period.Year==2027).ToList();
+Assert(finalMovedRevisions.Count==3 && finalMovedRevisions.All(x=>x.Superseded==(x.Revision<3)),"correction after move leaves only the newest revision current");
 var movedForecast=await owner.ForecastAsync(account,movedAgreement,new(2027,1,1),new(2027,3,31));
 Assert(movedForecast.Periods[0].UnitPrice==1000 && movedForecast.Periods.Skip(1).All(x=>x.UnitPrice==1039.60m),"moved index period takes effect once on the corrected date");
 await Expect<AgreementValidationException>(()=>admin.RecordIndexValueAsync(account,movedIndex,new(2027,2,1),107,null,"Stale editor",movedValue.Id),"stale period editor still rejected");

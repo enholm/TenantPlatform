@@ -8,7 +8,6 @@ public interface IAgreementService
     Task<Guid> CreateIndexAsync(Guid accountId, string code, string name, string description, string source, AgreementIndexResolution resolution, CancellationToken ct = default);
     Task UpdateIndexAsync(Guid accountId, Guid indexId, string code, string name, string description, string source, AgreementIndexResolution resolution, CancellationToken ct = default);
     Task RecordIndexValueAsync(Guid accountId, Guid indexId, DateOnly period, decimal value, DateOnly? published, string reason, Guid? originalValueId = null, CancellationToken ct = default);
-    Task<AgreementProcessingView> GetProcessingAsync(Guid accountId, Guid agreementId, CancellationToken ct = default);
     Task<AgreementForecastDto> PreviewBasisAsync(Guid accountId, Guid agreementId, AgreementDirection direction, DateOnly from, DateOnly to, CancellationToken ct = default);
     Task<AgreementBasisRun> GenerateBasisAsync(Guid accountId, Guid agreementId, AgreementDirection direction, DateOnly from, DateOnly to, CancellationToken ct = default);
     Task<List<AgreementBasisSummary>> ListBasisAsync(Guid accountId, AgreementDirection direction, CancellationToken ct = default);

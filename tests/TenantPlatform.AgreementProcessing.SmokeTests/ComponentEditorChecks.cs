@@ -58,12 +58,6 @@ static class ComponentEditorChecks
             Require(System.Net.WebUtility.HtmlDecode(html()).Contains(1049.50m.ToString("N2")),"forecast HTML includes calculated index price");
             Require(html().Contains("106") && html().Contains("101"),"forecast HTML includes index evidence");
         });
-        await Check(service, context, typeof(AgreementAdjustments), new() { ["AgreementId"] = agreementId }, (component, html) =>
-        {
-            var rendered=html();
-            Require(!rendered.Contains("adjust-period") && !rendered.Contains("decision-comment") && !rendered.Contains("btn-success"),"index page has no per-line proposal or approval actions");
-            return Task.CompletedTask;
-        });
     }
     static async Task Check(IAgreementService service, ICurrentUserContextService context, Type type, Dictionary<string,object?> parameters,
         Func<object,Func<string>,Task> check)
