@@ -2061,9 +2061,6 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="FinanceInvalidSettings" xml:space="preserve"><value>Velg en støttet økonomisk retning og valuta.</value></data>
   <data name="FinanceForecastHelp" xml:space="preserve"><value>Dette er forventede beløp ekskl. avgift, ikke regnskapsført inntekt eller regnskapsmessig periodisering. Ingen fakturaer opprettes. Søket viser hele perioder som overlapper intervallet; beløp klippes ikke.</value></data>
   <data name="FinanceAddLine" xml:space="preserve"><value>Legg til avtalelinje</value></data>
-  <data name="FinanceGroups" xml:space="preserve"><value>Leveransegruppe</value></data>
-  <data name="FinanceAddGroup" xml:space="preserve"><value>Opprett gruppe</value></data>
-  <data name="FinanceEditHelp" xml:space="preserve"><value>Utkast kan endres før aktivering. Etter aktivering kreves en senere periodegrense og begrunnelse. Leveransestart og første betalbare dato er låst. Bruk egen handling for avslutning. Nye versjoner bevarer historikken.</value></data>
   <data name="FinanceDeliveryStart" xml:space="preserve"><value>Leveransestart</value></data>
   <data name="FinanceLastDelivery" xml:space="preserve"><value>Siste leveransedag (inkludert)</value></data>
   <data name="FinanceFirstPayable" xml:space="preserve"><value>Første betalbare dato</value></data>
@@ -2120,10 +2117,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="FinanceInvalidReference" xml:space="preserve"><value>Linje, dokument eller gruppe må tilhøre samme hovedavtale og konto.</value></data>
   <data name="FinanceSourceCycle" xml:space="preserve"><value>Betalingsstart kan ikke ha sirkulære linjereferanser.</value></data>
   <data name="FinanceLineClosed" xml:space="preserve"><value>Linjen er ikke aktiv eller er allerede avsluttet/deaktivert.</value></data>
-  <data name="FinanceBoundaryRequired" xml:space="preserve"><value>Endringen krever begrunnelse og en senere grense som er gyldig for både gammel og ny periode. Aktiverte engangslinjer kan ikke prisendres.</value></data>
-  <data name="FinanceStartLocked" xml:space="preserve"><value>Aktivert leveransestart, betalingsgrunnlag og leveranseslutt kan ikke endres her. Bruk egen avslutningshandling.</value></data>
   <data name="ProcessingIndices" xml:space="preserve"><value>Indeksregister</value></data>
-  <data name="ProcessingIndexHelp" xml:space="preserve"><value>Indekser tilhører kontoen. Kontoadministrator registrerer verdier; korrigering oppretter en ny revisjon.</value></data>
   <data name="ProcessingNewIndex" xml:space="preserve"><value>Ny indeks</value></data>
   <data name="ProcessingCode" xml:space="preserve"><value>Kode</value></data>
   <data name="ProcessingResolution" xml:space="preserve"><value>Periodeoppløsning</value></data>
@@ -2139,8 +2133,6 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ProcessingHistory" xml:space="preserve"><value>Verdihistorikk</value></data>
   <data name="ProcessingRevision" xml:space="preserve"><value>Revisjon</value></data>
   <data name="ProcessingEmpty" xml:space="preserve"><value>Ingen resultater.</value></data>
-  <data name="ProcessingAdjustments" xml:space="preserve"><value>Prisjusteringer</value></data>
-  <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Beregn forslag og kontroller grunnlaget før eksplisitt godkjenning. Ingen faktura eller e-post sendes.</value></data>
   <data name="ProcessingNewRule" xml:space="preserve"><value>Ny regelversjon</value></data>
   <data name="ProcessingRuleHelp" xml:space="preserve"><value>Regler lagres som daterte versjoner. Justeringstakt er uavhengig av betalingstakt. Gulv og tak gjelder samlet sats etter tillegg.</value></data>
   <data name="ProcessingLine" xml:space="preserve"><value>Avtalelinje</value></data>
@@ -2216,23 +2208,14 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ProcessingRuleVersion" xml:space="preserve"><value>Regelversjon</value></data>
   <data name="ProcessingYes" xml:space="preserve"><value>Ja</value></data>
   <data name="ProcessingNo" xml:space="preserve"><value>Nei</value></data>
-  <data name="ProcessingCalculationOrder" xml:space="preserve"><value>Indeksratio → avtalt andel → prosentpoeng eller påslag → reduksjonsregel → samlet gulv/tak → avrunding. Opprinnelig basis kumulerer ikke tidligere tillegg.</value></data>
   <data name="ProcessingBasePrice" xml:space="preserve"><value>Basispris</value></data>
   <data name="ProcessingRawIndex" xml:space="preserve"><value>Indeksendring</value></data>
   <data name="ProcessingAppliedRate" xml:space="preserve"><value>Samlet sats mot basispris</value></data>
   <data name="ProcessingComparisonPeriod" xml:space="preserve"><value>Sammenligningsperiode</value></data>
   <data name="ProcessingTaxExclusive" xml:space="preserve"><value>Beløp ekskl. avgift; avgift er ikke beregnet.</value></data>
-  <data name="ProcessingPeriodLocked" xml:space="preserve"><value>Betalingsfrekvens og forankring kan ikke endres etter generering av grunnlag. Bruk ny linje for nytt tidsløp.</value></data>
   <data name="ProcessingReasonRequired" xml:space="preserve"><value>Oppgi en begrunnelse på 1–2000 tegn.</value></data>
   <data name="ProcessingInvalidIndex" xml:space="preserve"><value>Kontroller indeksfeltene. Verdien må være positiv, og perioden må være første dag i riktig måned, kvartal eller år.</value></data>
-  <data name="ProcessingInvalidRule" xml:space="preserve"><value>Regelkombinasjonen eller beregningsresultatet er ugyldig. Kontroller datoer, basis, prosenter, gulv og tak.</value></data>
-  <data name="ProcessingRuleOrder" xml:space="preserve"><value>Ny regelversjon må gjelde fra en senere dato enn tidligere registrerte regler.</value></data>
   <data name="ProcessingMissingIndex" xml:space="preserve"><value>Eksakt basis- eller sammenligningsverdi mangler. Registrer indeksperioden før beregning.</value></data>
-  <data name="ProcessingChoiceRequired" xml:space="preserve"><value>Tillatt ramme krever en eksplisitt valgt prosentsats.</value></data>
-  <data name="ProcessingOutsideLimit" xml:space="preserve"><value>Valgt justering er utenfor den tillatte rammen.</value></data>
-  <data name="ProcessingFixedPrice" xml:space="preserve"><value>Fast pris har ingen justering.</value></data>
-  <data name="ProcessingMissingRule" xml:space="preserve"><value>Ingen gjeldende justeringsregel på denne datoen.</value></data>
-  <data name="ProcessingNotDue" xml:space="preserve"><value>Datoen er ikke en tillatt justeringsdato for gjeldende regel og linje.</value></data>
   <data name="ProcessingAlreadyAdjusted" xml:space="preserve"><value>Justeringen er allerede gjennomført, eller intervallet siden forrige justering er for kort.</value></data>
   <data name="ProcessingStale" xml:space="preserve"><value>Forutsetningene er endret. Beregn forslaget på nytt eller regenerer utkastet, og kontroller ny revisjon før godkjenning.</value></data>
   <data name="ProcessingWrongDirection" xml:space="preserve"><value>Avtalens økonomiske retning stemmer ikke med valgt grunnlagstype.</value></data>
@@ -2240,6 +2223,25 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ProcessingInvoiceDateChanged" xml:space="preserve"><value>Planlagt fakturadato er endret. Annuller utkastet og generer nytt grunnlag.</value></data>
   <data name="ProcessingCancelCorrectionsFirst" xml:space="preserve"><value>Annuller tilhørende korreksjoner før originalgrunnlaget.</value></data>
   <data name="ProcessingNoDifference" xml:space="preserve"><value>Ingen differanse mot gjeldende godkjent nettogrunnlag.</value></data>
-  <data name="ProcessingPriceIndexBasisChanged" xml:space="preserve"><value>Gjeldende pris mangler entydig tilhørende indeksperiode etter en manuell prisendring. Registrer en ny regel med denne prisversjonen og riktig basisperiode.</value></data>
   <data name="ProcessingTreatmentHistory" xml:space="preserve"><value>Behandlingshistorikk</value></data>
+  <data name="SimpleIndexRequired" xml:space="preserve"><value>Velg en indeks på hovedavtalen før du slår på indeksregulering.</value></data>
+  <data name="SimpleIndexRegulated" xml:space="preserve"><value>Indeksreguleres</value></data>
+  <data name="SimpleNotRegulated" xml:space="preserve"><value>Linjen er ikke indeksregulert.</value></data>
+  <data name="SimpleIndexReview" xml:space="preserve"><value>Tidligere indeksoppsett må avklares. Gjeldende priser beholdes. Velg indeks, kontroller linjenes ja/nei-valg og bekreft oppsettet i avtaleredigering før ny regulering.</value></data>
+  <data name="SimpleIndexResolve" xml:space="preserve"><value>Jeg har kontrollert oppsettet. Fremtidige reguleringer bruker 100 % av indeksendringen.</value></data>
+  <data name="SimpleDuplicatePeriod" xml:space="preserve"><value>Perioden finnes allerede. Bruk Rediger på den registrerte perioden.</value></data>
+  <data name="SimpleAffectedBases" xml:space="preserve"><value>Disse grunnlagene er berørt. Regenerer utdaterte utkast, eller opprett korreksjon for godkjent grunnlag. Hvis fakturadato er endret, kanseller utkastet og generer på nytt.</value></data>
+  <data name="FinanceEditHelp" xml:space="preserve"><value>Aktive linjer kan rettes direkte. Økonomiske rettelser lagres som nye versjoner fra Gjelder fra-datoen og krever en begrunnelse. Dokumenter og beskrivelse kan endres uten prisendring. Godkjente grunnlag bevares.</value></data>
+  <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Velg en registrert indeksperiode og forhåndsvis linjene. Hele indeksendringen brukes, også ved nedgang. Første regulering sammenligner med forrige registrerte periode; senere brukes siste gjennomførte periode for samme indeks. Nyeste indeksrevisjoner brukes. Virkningsdato er valgt periodes startdato.</value></data>
+  <data name="ProcessingCalculationOrder" xml:space="preserve"><value>Ny pris = gjeldende pris × sammenligningsverdi / basisverdi, avrundet til to desimaler.</value></data>
+  <data name="SimpleSuperseded" xml:space="preserve"><value>Utgått periodedato</value></data>
+  <data name="SimpleDuplicateIndex" xml:space="preserve"><value>En indeks med denne koden finnes allerede.</value></data>
+  <data name="ProcessingIndexHelp" xml:space="preserve"><value>Registrer indeksnivåer og bruk Rediger for å rette metadata eller perioder. Rettelser bevarer tidligere revisjoner og priser.</value></data>
+  <data name="ProcessingPeriodLocked" xml:space="preserve"><value>En betalingshendelse har motstridende fakturadatoer. Kontroller periodene og generer grunnlaget på nytt.</value></data>
+  <data name="AutoIndexHelp" xml:space="preserve"><value>Indeksregulerte linjer beregnes automatisk i prognose og fakturagrunnlag. Registrer indeksnivåene én gang i indeksregisteret; ingen godkjenning per linje er nødvendig. Nye nivåer gjelder fra periodens start. Når senere nivåer mangler, videreføres siste kjente pris.</value></data>
+  <data name="AutoLegacyHistory" xml:space="preserve"><value>Tidligere manuelle reguleringer (historikk)</value></data>
+  <data name="AutoIndexCalculation" xml:space="preserve"><value>Automatisk indeksberegning</value></data>
+  <data name="AutoRegisteredPrice" xml:space="preserve"><value>Registrert grunnpris</value></data>
+  <data name="AutoIndexSwitchHelp" xml:space="preserve"><value>Første indeksvalg gjelder fra avtalens start. Senere bytte gjelder fra dagens UTC-dato og bevarer tidligere beregningsperioder.</value></data>
+  <data name="ProcessingAdjustments" xml:space="preserve"><value>Indeksregulering og historikk</value></data>
 </root>

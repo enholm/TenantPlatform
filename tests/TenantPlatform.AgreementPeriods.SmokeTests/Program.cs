@@ -159,12 +159,10 @@ await Expect<AgreementValidationException>(()=>owner.UpdateAsync(account,id,sett
 // Document references are immutable IDs, not copies; all FK scopes include agreement and account.
 await owner.UploadAsync(account,id,(await owner.GetAsync(account,id)).Revision,"contract.pdf",new MemoryStream("%PDF-1.4\n%%EOF"u8.ToArray()),AgreementDocumentCategory.Contract,null);
 var doc = (await owner.GetAsync(account,id)).Documents.Single().Id;
-await owner.AddDeliveryGroupAsync(account,id,(await owner.GetAsync(account,id)).Revision,"Software delivery");
-var groupId = (await owner.GetLinesAsync(account,id)).Groups.Single().Id;
-var licensed = LineRequest("Perpetual license",24000); licensed.Frequency = AgreementFrequency.Once; licensed.StartDate = new(2027,3,15); licensed.FirstPayableDate = licensed.StartDate; licensed.DocumentIds = [doc]; licensed.DeliveryGroupId = groupId;
+var licensed = LineRequest("Perpetual license",24000); licensed.Frequency = AgreementFrequency.Once; licensed.StartDate = new(2027,3,15); licensed.FirstPayableDate = licensed.StartDate; licensed.DocumentIds = [doc];
 var licenseId = await Save(id,null,licensed);
 var maintained = LineRequest("Maintenance",12000); maintained.StartDate = licensed.StartDate; maintained.Frequency = AgreementFrequency.Yearly; maintained.Anchor = AgreementAnchor.Date; maintained.AnchorDate = licensed.StartDate;
-maintained.PayableSourceLineId = licenseId; maintained.PayableOffsetMonths = 12; maintained.DocumentIds = [doc]; maintained.DeliveryGroupId = groupId;
+maintained.PayableSourceLineId = licenseId; maintained.PayableOffsetMonths = 12; maintained.DocumentIds = [doc];
 var maintenanceId = await Save(id,null,maintained);
 var lineData = await reader.GetLinesAsync(account,id);
 Assert(lineData.Lines.Single(x=>x.Line.Id == maintenanceId).Versions[0].FirstPayableDate == new DateOnly(2028,3,15) &&
@@ -183,19 +181,17 @@ await Save(id,baseLine,priceChange);
 var changed = await owner.ForecastAsync(account,id,new(2027,1,1),new(2027,2,28));
 Assert(changed.Periods.Single(x=>x.LineId==baseLine && x.From.Month==1).Amount == 10000 && changed.Periods.Single(x=>x.LineId==baseLine && x.From.Month==2).Amount == 12000, "dated price version preserves old amounts");
 priceChange.EffectiveFrom = new(2027,3,15);
-await Expect<AgreementValidationException>(()=>Save(id,baseLine,priceChange), "mid-period price change rejected");
+await Save(id,baseLine,priceChange); // Corrections are allowed inside a period.
 priceChange.EffectiveFrom=new(2027,4,1); priceChange.Frequency=AgreementFrequency.Quarterly; priceChange.Quantity=2;
 await Save(id,baseLine,priceChange);
 var ruleForecast=await owner.ForecastAsync(account,id,new(2027,3,1),new(2027,6,30));
-Assert(ruleForecast.Periods.Single(x=>x.LineId==baseLine && x.From.Month==3).Amount==12000 && ruleForecast.Periods.Single(x=>x.LineId==baseLine && x.From.Month==4).Amount==24000,
+Assert(ruleForecast.Periods.Where(x=>x.LineId==baseLine && x.From.Month==3).Sum(x=>x.Amount)==12000 && ruleForecast.Periods.Single(x=>x.LineId==baseLine && x.From.Month==4).Amount==24000,
     "dated frequency and quantity changes retain old monthly period and create full quarterly price");
-var wrongGroup=LineRequest(); wrongGroup.DeliveryGroupId=groupId;
-await Expect<AgreementValidationException>(()=>Save(supplier,null,wrongGroup),"cross-agreement group rejected");
 foreach(var invalid in new[]{0m,-1m,0.00001m}) { var invalidQuantity=LineRequest(); invalidQuantity.Quantity=invalid;
     await Expect<AgreementValidationException>(()=>Save(id,null,invalidQuantity),"invalid quantity rejected"); }
 await owner.CloseLineAsync(account,id,parkingId,(await owner.GetAsync(account,id)).Revision,new(2027,2,10),false,"Space returned");
 var afterClose = await owner.ForecastAsync(account,id,new(2027,2,1),new(2027,3,31));
-Assert(afterClose.Periods.Single(x=>x.LineId==parkingId).Amount == decimal.Round(3100m*10/28,2,MidpointRounding.AwayFromZero) && afterClose.Periods.Count(x=>x.LineId==baseLine)==2,
+Assert(afterClose.Periods.Single(x=>x.LineId==parkingId).Amount == decimal.Round(3100m*10/28,2,MidpointRounding.AwayFromZero) && afterClose.Periods.Where(x=>x.LineId==baseLine).Select(x=>x.ReferenceFrom).Distinct().Count()==2,
     "dated ending retains partial final period and other lines continue");
 var deactivateId = await Save(id,null,LineRequest("Deactivate",3100));
 await owner.CloseLineAsync(account,id,deactivateId,(await owner.GetAsync(account,id)).Revision,new(2027,1,11),true,"Removed from processing");

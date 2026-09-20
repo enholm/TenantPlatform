@@ -35,6 +35,7 @@ public class AgreementConfiguration : IEntityTypeConfiguration<Agreement>
             t.HasCheckConstraint("CK_agreements_type", "\"Type\" IN (1,2,3,4,5)");
         });
         b.HasKey(x => x.Id);
+        b.HasOne<AgreementIndex>().WithMany().HasForeignKey(x => new { x.AccountId, x.IndexId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         b.HasAlternateKey(x => new { x.AccountId, x.Id });
         b.Property(x => x.Currency).HasMaxLength(3);
         b.Property(x => x.Title).HasMaxLength(200).IsRequired();

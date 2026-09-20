@@ -21,12 +21,12 @@ public class SaveAgreementLineRequest
     public decimal UnitPrice { get; set; }
     public bool Activate { get; set; }
     public string? Reason { get; set; }
-    public Guid? DeliveryGroupId { get; set; }
+    public bool IndexRegulated { get; set; }
     public List<Guid> DocumentIds { get; set; } = [];
 }
 
 public record AgreementLineDetails(AgreementLine Line, List<AgreementLineVersion> Versions, List<AgreementPriceVersion> Prices);
 public record AgreementLinesDto(Guid Revision, bool CanEdit, AgreementDirection? Direction, string? Currency,
-    List<AgreementLineDetails> Lines, List<AgreementDeliveryGroup> Groups, List<AgreementDocumentDto> Documents,
+    List<AgreementLineDetails> Lines, List<AgreementDocumentDto> Documents,
     Dictionary<Guid, string> ActorNames);
 public record AgreementForecastDto(List<AgreementCalculatedPeriod> Periods, decimal Income, decimal Cost, string Currency);

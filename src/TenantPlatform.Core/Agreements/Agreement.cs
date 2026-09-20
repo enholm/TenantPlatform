@@ -9,6 +9,8 @@ public class Agreement
     public AgreementType Type { get; set; }
     public AgreementDirection? Direction { get; set; }
     public string? Currency { get; set; }
+    public Guid? IndexId { get; set; }
+    public bool IndexSetupNeedsReview { get; set; }
     public Guid CounterpartyOrganizationId { get; set; }
     public Guid OwnerUserId { get; set; }
     public AgreementStatus Status { get; set; } = AgreementStatus.Draft;

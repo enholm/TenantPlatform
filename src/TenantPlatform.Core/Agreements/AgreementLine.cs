@@ -6,16 +6,6 @@ public enum AgreementFrequency { Once = 0, Monthly = 1, Quarterly = 3, HalfYearl
 public enum AgreementAnchor { Calendar = 1, Date = 2 }
 public enum AgreementBillingTiming { Advance = 1, Arrears = 2 }
 
-public class AgreementDeliveryGroup
-{
-    public Guid Id { get; set; }
-    public Guid AccountId { get; set; }
-    public Guid AgreementId { get; set; }
-    public string Name { get; set; } = "";
-    public DateTimeOffset CreatedUtc { get; set; }
-    public Guid CreatedByUserId { get; set; }
-}
-
 public class AgreementLine
 {
     public Guid Id { get; set; }
@@ -48,7 +38,7 @@ public class AgreementLineVersion
     public DateOnly AnchorDate { get; set; }
     public AgreementBillingTiming BillingTiming { get; set; }
     public AgreementLineStatus Status { get; set; }
-    public Guid? DeliveryGroupId { get; set; }
+    public bool IndexRegulated { get; set; }
     public List<AgreementLineDocument> Documents { get; set; } = [];
 }
 
@@ -62,6 +52,8 @@ public class AgreementPriceVersion
     public bool Independent { get; set; }
     public Guid? AdjustmentId { get; set; }
     public DateOnly EffectiveFrom { get; set; }
+    // Internal price anchor, preserved when only quantity changes. Not a configurable index rule.
+    public DateOnly? IndexBaseDate { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public DateTimeOffset RecordedUtc { get; set; }

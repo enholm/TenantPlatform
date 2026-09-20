@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TenantPlatform.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using TenantPlatform.Infrastructure.Persistence;
 namespace TenantPlatform.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TenantPlatformDbContext))]
-    partial class TenantPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260919235529_SimplifyAgreementIndexAndLineEditing")]
+    partial class SimplifyAgreementIndexAndLineEditing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -836,45 +839,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.ToTable("agreement_indices", (string)null);
                 });
 
-            modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementIndexSelection", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ActorUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AgreementId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("EffectiveFrom")
-                        .HasColumnType("date");
-
-                    b.Property<Guid?>("IndexId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("RecordedUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Sequence")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActorUserId");
-
-                    b.HasIndex("AccountId", "IndexId");
-
-                    b.HasIndex("AccountId", "AgreementId", "Sequence")
-                        .IsUnique();
-
-                    b.ToTable("agreement_index_selections", (string)null);
-                });
-
             modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementIndexValue", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1128,9 +1092,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("Independent")
                         .HasColumnType("boolean");
-
-                    b.Property<DateOnly?>("IndexBaseDate")
-                        .HasColumnType("date");
 
                     b.Property<Guid>("LineId")
                         .HasColumnType("uuid");
@@ -2615,28 +2576,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ActorUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementIndexSelection", b =>
-                {
-                    b.HasOne("TenantPlatform.Core.Identity.User", null)
-                        .WithMany()
-                        .HasForeignKey("ActorUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TenantPlatform.Core.Agreements.Agreement", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId", "AgreementId")
-                        .HasPrincipalKey("AccountId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TenantPlatform.Core.Agreements.AgreementIndex", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId", "IndexId")
-                        .HasPrincipalKey("AccountId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementIndexValue", b =>

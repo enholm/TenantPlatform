@@ -15,18 +15,6 @@ public class AgreementLineConfiguration : IEntityTypeConfiguration<AgreementLine
             .HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
     }
 }
-public class AgreementDeliveryGroupConfiguration : IEntityTypeConfiguration<AgreementDeliveryGroup>
-{
-    public void Configure(EntityTypeBuilder<AgreementDeliveryGroup> b)
-    {
-        b.ToTable("agreement_delivery_groups"); b.HasKey(x => x.Id);
-        b.HasAlternateKey(x => new { x.AccountId, x.AgreementId, x.Id });
-        b.Property(x => x.Name).HasMaxLength(200);
-        b.HasOne<Agreement>().WithMany().HasForeignKey(x => new { x.AccountId, x.AgreementId })
-            .HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne<User>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
-    }
-}
 public class AgreementLineVersionConfiguration : IEntityTypeConfiguration<AgreementLineVersion>
 {
     public void Configure(EntityTypeBuilder<AgreementLineVersion> b)
@@ -39,8 +27,6 @@ public class AgreementLineVersionConfiguration : IEntityTypeConfiguration<Agreem
         b.HasOne<AgreementLine>().WithMany().HasForeignKey(x => new { x.AccountId, x.AgreementId, x.LineId })
             .HasPrincipalKey(x => new { x.AccountId, x.AgreementId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<AgreementLine>().WithMany().HasForeignKey(x => new { x.AccountId, x.AgreementId, x.PayableSourceLineId })
-            .HasPrincipalKey(x => new { x.AccountId, x.AgreementId, x.Id }).OnDelete(DeleteBehavior.Restrict);
-        b.HasOne<AgreementDeliveryGroup>().WithMany().HasForeignKey(x => new { x.AccountId, x.AgreementId, x.DeliveryGroupId })
             .HasPrincipalKey(x => new { x.AccountId, x.AgreementId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<User>().WithMany().HasForeignKey(x => x.ActorUserId).OnDelete(DeleteBehavior.Restrict);
     }

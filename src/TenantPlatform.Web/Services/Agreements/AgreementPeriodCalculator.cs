@@ -8,6 +8,7 @@ public record AgreementCalculatedPeriod(Guid AgreementId, Guid LineId, string Li
     int ActiveDays, int ReferenceDays, decimal Amount, bool Included, Guid LineVersionId,
     Guid PriceVersionId, string EventKey, IReadOnlyList<Guid> DocumentIds)
 {
+    public IReadOnlyList<AgreementAutomaticAdjustment> IndexAdjustments { get; init; } = [];
     public decimal Fraction => (decimal)ActiveDays / ReferenceDays;
     public string ExplanationKey => Included ? "FinanceIncluded" : "FinanceCalculationText";
 }
@@ -36,7 +37,7 @@ public static class AgreementPeriodCalculator
 
     public static List<AgreementCalculatedPeriod> Calculate(Guid agreementId, AgreementDirection direction, string currency,
         IEnumerable<AgreementLineVersion> lineVersions, IEnumerable<AgreementPriceVersion> priceVersions,
-        DateOnly from, DateOnly to)
+        DateOnly from, DateOnly to, IReadOnlyDictionary<Guid, List<AgreementAutomaticPrice>>? automaticPrices = null)
     {
         if (from > to || from == default || to.Year > 9998 || to.DayNumber - from.DayNumber > 3660 ||
             !Enum.IsDefined(direction) || !Currencies.Contains(currency))
@@ -49,7 +50,10 @@ public static class AgreementPeriodCalculator
         var prices = priceVersions.Where(x => x.Independent || publishedSequences.Contains((x.LineId, x.Sequence))).ToLookup(x => x.LineId);
         foreach (var line in published.GroupBy(x => x.LineId))
         {
-            var versions = line.OrderBy(x => x.EffectiveFrom).ThenBy(x => x.Sequence).ToArray();
+            // A later recorded correction supersedes older definitions from its effective date,
+            // including an older definition whose start was mistakenly registered too late.
+            var versions = line.Where(v => !line.Any(newer => newer.Sequence > v.Sequence && newer.EffectiveFrom <= v.EffectiveFrom))
+                .OrderBy(x => x.EffectiveFrom).ToArray();
             for (var i = 0; i < versions.Length; i++)
             {
                 var v = versions[i];
@@ -88,11 +92,16 @@ public static class AgreementPeriodCalculator
         foreach (var group in result.GroupBy(x => x.EventKey))
         {
             decimal raw = 0, previous = 0;
+            var payable = group.Where(x => !x.Included).ToArray();
+            if (payable.Length == 0) payable = group.ToArray();
+            var latest = payable.OrderByDescending(x => x.From).First();
+            var timing = published.Single(x => x.Id == latest.LineVersionId).BillingTiming;
+            var invoice = timing == AgreementBillingTiming.Advance ? payable.Min(x => x.From) : payable.Max(x => x.To).AddDays(1);
             foreach (var row in group.OrderBy(x => x.From).ThenBy(x => x.PriceVersionId))
             {
                 raw += row.Included ? 0 : row.Quantity * row.UnitPrice * row.ActiveDays / row.ReferenceDays;
                 var cumulative = decimal.Round(raw, 2, MidpointRounding.AwayFromZero);
-                rounded.Add(row with { Amount = cumulative - previous }); previous = cumulative;
+                rounded.Add(row with { Amount = cumulative - previous, InvoiceDate = invoice }); previous = cumulative;
             }
         }
         return rounded.Where(x => x.From <= to && x.To >= from).OrderBy(x => x.From).ThenBy(x => x.LineId).ThenBy(x => x.Included).ToList();
@@ -101,19 +110,22 @@ public static class AgreementPeriodCalculator
             DateOnly actualFrom, DateOnly actualUntil, bool included, bool once)
         {
             var invoice = v.BillingTiming == AgreementBillingTiming.Advance ? actualFrom : actualUntil;
+            var projected = automaticPrices?.GetValueOrDefault(v.LineId) ?? [];
             var boundaries = prices[v.LineId].Where(x => x.EffectiveFrom > actualFrom && x.EffectiveFrom < actualUntil)
-                .Select(x => x.EffectiveFrom).Append(actualFrom).Append(actualUntil).Distinct().Order().ToArray();
+                .Select(x => x.EffectiveFrom).Concat(projected.Where(x => x.EffectiveFrom > actualFrom && x.EffectiveFrom < actualUntil).Select(x => x.EffectiveFrom))
+                .Append(actualFrom).Append(actualUntil).Distinct().Order().ToArray();
             for (var part = 0; part < boundaries.Length - 1; part++)
             {
                 var partFrom = boundaries[part]; var partUntil = boundaries[part + 1];
                 var price = prices[v.LineId].Where(x => x.AgreementId == agreementId && x.EffectiveFrom <= partFrom)
-                    .OrderByDescending(x => x.EffectiveFrom).ThenByDescending(x => x.Sequence).FirstOrDefault()
+                    .OrderByDescending(x => x.Sequence).FirstOrDefault()
                     ?? throw new AgreementValidationException("FinanceMissingPrice");
+                var automatic = projected.LastOrDefault(x => x.EffectiveFrom <= partFrom && x.PriceVersionId == price.Id);
                 int days = partUntil.DayNumber - partFrom.DayNumber, totalDays = referenceUntil.DayNumber - referenceFrom.DayNumber;
                 result.Add(new(agreementId, v.LineId, v.Name, direction, currency, referenceFrom, referenceUntil.AddDays(-1),
-                    partFrom, partUntil.AddDays(-1), invoice, price.Quantity, price.UnitPrice, days, totalDays, 0, included,
+                    partFrom, partUntil.AddDays(-1), invoice, price.Quantity, automatic?.UnitPrice ?? price.UnitPrice, days, totalDays, 0, included,
                     v.Id, price.Id, once ? $"{v.LineId:N}:once" : $"{v.LineId:N}:{referenceFrom:yyyyMMdd}",
-                    v.Documents.Select(x => x.DocumentId).Order().ToArray()));
+                    v.Documents.Select(x => x.DocumentId).Order().ToArray()) { IndexAdjustments = automatic?.Adjustments ?? [] });
                 if (result.Count > 20000) throw new AgreementValidationException("FinanceInvalidRange");
             }
         }

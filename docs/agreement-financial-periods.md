@@ -1,8 +1,6 @@
-# Avtalelinjer og forventede inntekter/kostnader – fase 1–3
+# Avtalelinjer og forventede inntekter/kostnader
 
-Fase 4–5 viderefører denne modellen. Se [indekser, justeringer og grunnlag](agreement-adjustments-basis.md)
-for utvidede prisregler, segmentering, avrunding og lagrede grunnlag. Avgrensningene
-nedenfor beskriver den opprinnelige leveransen av fase 1–3.
+Se [indeksregulering, redigering og grunnlag](agreement-adjustments-basis.md) for gjeldende arbeidsflyt og migrering.
 
 ## Spesifikasjon og beslutninger før implementering
 
@@ -14,14 +12,13 @@ motpart låses også da, slik at historiske dokument-/kundereferanser ikke flytt
 
 En avtalelinje har stabil identitet. Linjeversjoner lagrer navn, beskrivelse,
 leveransestart/-slutt, første betalbare dato, periode-/fakturaregler, status,
-leveransegruppe og dokumentreferanser. En prisversjon lagrer antall og enhetspris
-med egen virkningsdato. En leveransegruppe er en valgfri navngitt gruppering av
-uavhengige linjer på samme avtale, uten felles økonomisk behandling.
+indeksreguleringsvalg og dokumentreferanser. En prisversjon lagrer antall og enhetspris
+med egen virkningsdato. Linjer tilhører hovedavtalen direkte.
 
 Alle versjoner har registreringstid i UTC og aktør, atskilt fra virkningsdato.
 Ingen linjer eller versjoner hard-slettes. Utkast kan få nye snapshots før
-aktivering. Aktiverte leveranse-/betalingsstarter fryses; nye periode-/prisregler
-må gjelde fra en senere periodegrense. Linje- og prisversjoner er append-only.
+aktivering. Aktive linjer kan rettes med en enkel Gjelder fra-dato; også startdatoer,
+frekvens og perioderegler kan korrigeres tilbake i tid. Linje- og prisversjoner er append-only.
 Pris/antall endres samlet som ny prisversjon. Det finnes ingen generell pause.
 
 UI-datoer for leveransestart og siste leveransedag er inkluderende. Internt brukes
@@ -73,17 +70,16 @@ leveranseretten. Beregningen tar eksplisitte datoer og leser ingen klokke.
    avvises på serveren og i databasereferansene.
 7. Forankring 31.01.2028 gir grensene 31.01, 29.02, 31.03 og 30.04.
 8. Kalenderpris 100 i januar, ny pris 120 fra 01.02.2027: januar 100, februar 120.
-   Endring fra 15.02 avvises. Søk bare 10.–12. januar viser fortsatt januarbeløp 100.
+   Endring fra 15.02 deler perioden og bevarer historikk. Søk bare 10.–12. januar viser fortsatt januarbeløp 100.
 
-Ingen indeksregulering, fakturakjøring, betaling, purring, selvbetjening eller
-økonomiintegrasjon innføres. Fremtidige faser kan bruke stabile linje-/versjons-
-og hendelsesidentifikatorer. Account er tenantgrensen; motpart er eksisterende
+Indeksregulering og lagrede økonomiske grunnlag bruker stabile linje-/versjons-
+og hendelsesidentifikatorer. Ingen betaling, purring eller økonomiintegrasjon innføres. Account er tenantgrensen; motpart er eksisterende
 Organization innen denne kontoen, ikke en ny tenantmodell.
 
 ## Implementering og migrering
 
 Domenet ligger i `Core/Agreements/AgreementLine.cs`. EF-konfigurasjonen bruker
-sammensatte fremmednøkler som låser linjer, kildehenvisninger, leveransegrupper og
+sammensatte fremmednøkler som låser linjer, kildehenvisninger og
 dokumentreferanser til samme AccountId og AgreementId. Applikasjonstjenesten
 `AgreementService.Lines.cs` gjenbruker avtalens eksisterende tilgangskontroll og
 revisjonskontroll. Hver operasjon bruker kortlivet factory-context; lesing av

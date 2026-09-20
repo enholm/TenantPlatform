@@ -3,5 +3,5 @@
 @if(Calculation.BaseIndex is {} basis){<p>@L["ProcessingBasePeriod"]: @basis.Period.ToString("d") · @basis.Value · @L["ProcessingRevision"] @basis.Revision · @basis.Id</p>}
 @if(Calculation.ComparisonIndex is {} compare){<p>@L["ProcessingComparisonPeriod"]: @compare.Period.ToString("d") · @compare.Value · @L["ProcessingRevision"] @compare.Revision · @compare.Id</p>}
 <p>@L["FinanceLineVersion"]: @Calculation.Line.Id · @L["FinancePriceVersion"]: @Calculation.CurrentPrice.Id · @L["FinanceEffectiveFrom"]: @Calculation.EffectiveDate.ToString("d")</p>
-<AgreementRuleSummary Rule="Calculation.Rule" />
+@if (Calculation.Rule is not null) { <AgreementRuleSummary Rule="Calculation.Rule" /> }
 @code { [Parameter, EditorRequired] public AgreementAdjustmentCalculation Calculation {get;set;} = default!; }

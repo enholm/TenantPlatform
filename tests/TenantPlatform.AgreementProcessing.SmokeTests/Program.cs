@@ -85,204 +85,271 @@ await using (var db = factory.CreateDbContext())
         INSERT INTO agreement_price_versions ("Id","AccountId","AgreementId","LineId","Sequence","EffectiveFrom","Quantity","UnitPrice","RecordedUtc","ActorUserId")
         VALUES ({legacyPrice},{account},{legacy},{legacyLine},1,{today},2,123.4567,{clock.Now},{ownerId});
         """);
+    await db.GetService<IMigrator>().MigrateAsync("20260919214314_AddAgreementAdjustmentsAndBases");
+    // Populate the immediately previous model, including groups, documents and conflicting rules.
+    await db.Database.ExecuteSqlInterpolatedAsync($"""
+        INSERT INTO agreement_delivery_groups ("Id","AccountId","AgreementId","Name","CreatedUtc","CreatedByUserId")
+        VALUES ({legacyLine},{account},{legacy},'Old group',{clock.Now},{ownerId});
+        UPDATE agreement_line_versions SET "DeliveryGroupId"={legacyLine} WHERE "LineId"={legacyLine};
+        INSERT INTO agreement_line_documents ("AccountId","AgreementId","LineVersionId","DocumentId")
+        SELECT {account},{legacy},"Id",{legacyDocument} FROM agreement_line_versions WHERE "LineId"={legacyLine};
+        INSERT INTO agreement_indices ("Id","AccountId","Code","Name","Description","Source","Resolution","RecordedUtc","ActorUserId")
+        VALUES ({legacyLine},{account},'LEGACY','Legacy index','','Test',1,{clock.Now},{ownerId}),
+               ({legacyPrice},{account},'LEGACY2','Other legacy index','','Test',1,{clock.Now},{ownerId});
+        INSERT INTO agreement_index_values ("Id","AccountId","IndexId","Period","Revision","Value","RecordedUtc","ActorUserId","Reason")
+        VALUES ({legacyDocument},{account},{legacyLine},'2020-01-01',1,100,{clock.Now},{ownerId},'Legacy base');
+        INSERT INTO agreement_adjustment_rules
+          ("Id","AccountId","AgreementId","LineId","EffectiveFrom","RecordedUtc","ActorUserId","Reason","Kind","IndexId","SharePercent","Addition","AdditionPercent","FixedPercent","AllowDecrease","Basis","BasePriceVersionId","BaseIndexPeriod","FirstAllowedDate","IntervalMonths","Anchor","AnchorDate","ComparisonOffsetMonths","PriceTiming")
+        VALUES ({legacyLine},{account},{legacy},{legacyLine},'2020-01-01',{clock.Now},{ownerId},'Advanced legacy',1,{legacyLine},70,0,0,0,true,2,{legacyPrice},'2020-01-01','2021-01-01',1,1,'2021-01-01',0,2);
+        """);
+    await db.Database.ExecuteSqlInterpolatedAsync($"""
+        CREATE TEMP TABLE migration_cases (id uuid, line uuid, price uuid, label text, kind integer);
+        INSERT INTO migration_cases VALUES (gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),'Migration pure',1),
+            (gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),'Migration mixed',1),
+            (gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),'Migration fixed',0);
+        INSERT INTO agreements SELECT (jsonb_populate_record(NULL::agreements,to_jsonb(a) || jsonb_build_object('Id',c.id,'Title',c.label))).*
+            FROM agreements a CROSS JOIN migration_cases c WHERE a."Id"={legacy};
+        INSERT INTO agreement_lines SELECT (jsonb_populate_record(NULL::agreement_lines,to_jsonb(l) || jsonb_build_object('Id',c.line,'AgreementId',c.id))).*
+            FROM agreement_lines l CROSS JOIN migration_cases c WHERE l."Id"={legacyLine};
+        INSERT INTO agreement_line_versions SELECT (jsonb_populate_record(NULL::agreement_line_versions,to_jsonb(v) || jsonb_build_object('Id',gen_random_uuid(),'AgreementId',c.id,'LineId',c.line,'DeliveryGroupId',NULL))).*
+            FROM agreement_line_versions v CROSS JOIN migration_cases c WHERE v."LineId"={legacyLine};
+        INSERT INTO agreement_price_versions SELECT (jsonb_populate_record(NULL::agreement_price_versions,to_jsonb(p) || jsonb_build_object('Id',c.price,'AgreementId',c.id,'LineId',c.line))).*
+            FROM agreement_price_versions p CROSS JOIN migration_cases c WHERE p."Id"={legacyPrice};
+        INSERT INTO agreement_adjustment_rules SELECT (jsonb_populate_record(NULL::agreement_adjustment_rules,to_jsonb(r) || jsonb_build_object('Id',gen_random_uuid(),'AgreementId',c.id,'LineId',c.line,'BasePriceVersionId',c.price,'SharePercent',100,'Kind',c.kind,'IndexId',CASE WHEN c.kind=1 THEN {legacyLine} ELSE NULL END))).*
+            FROM agreement_adjustment_rules r CROSS JOIN migration_cases c WHERE r."Id"={legacyLine};
+        UPDATE migration_cases SET line=gen_random_uuid(),price=gen_random_uuid() WHERE label='Migration mixed';
+        INSERT INTO agreement_lines SELECT (jsonb_populate_record(NULL::agreement_lines,to_jsonb(l) || jsonb_build_object('Id',c.line,'AgreementId',c.id))).*
+            FROM agreement_lines l CROSS JOIN migration_cases c WHERE l."Id"={legacyLine} AND c.label='Migration mixed';
+        INSERT INTO agreement_line_versions SELECT (jsonb_populate_record(NULL::agreement_line_versions,to_jsonb(v) || jsonb_build_object('Id',gen_random_uuid(),'AgreementId',c.id,'LineId',c.line,'DeliveryGroupId',NULL))).*
+            FROM agreement_line_versions v CROSS JOIN migration_cases c WHERE v."LineId"={legacyLine} AND c.label='Migration mixed';
+        INSERT INTO agreement_price_versions SELECT (jsonb_populate_record(NULL::agreement_price_versions,to_jsonb(p) || jsonb_build_object('Id',c.price,'AgreementId',c.id,'LineId',c.line))).*
+            FROM agreement_price_versions p CROSS JOIN migration_cases c WHERE p."Id"={legacyPrice} AND c.label='Migration mixed';
+        INSERT INTO agreement_adjustment_rules SELECT (jsonb_populate_record(NULL::agreement_adjustment_rules,to_jsonb(r) || jsonb_build_object('Id',gen_random_uuid(),'AgreementId',c.id,'LineId',c.line,'BasePriceVersionId',c.price,'SharePercent',100,'IndexId',{legacyPrice}))).*
+            FROM agreement_adjustment_rules r CROSS JOIN migration_cases c WHERE r."Id"={legacyLine} AND c.label='Migration mixed';
+        DROP TABLE migration_cases;
+        """);
     await db.Database.MigrateAsync();
     var preserved = await db.AgreementPriceVersions.SingleAsync(x=>x.AccountId==account && x.Id==legacyPrice);
     Assert(preserved.UnitPrice==123.4567m && preserved.Quantity==2 && !preserved.Independent && preserved.AdjustmentId==null,"phase 4 migration preserves existing price identity, precision and draft semantics");
     Assert(!db.Database.HasPendingModelChanges(), "model and generated migration match");
+    var pure=await db.Agreements.SingleAsync(x=>x.AccountId==account && x.Title=="Migration pure");
+    var mixed=await db.Agreements.SingleAsync(x=>x.AccountId==account && x.Title=="Migration mixed");
+    var fixedAgreement=await db.Agreements.SingleAsync(x=>x.AccountId==account && x.Title=="Migration fixed");
+    Assert(pure.IndexId==legacyLine && !pure.IndexSetupNeedsReview,"unambiguous full-index legacy setup migrates automatically");
+    Assert(mixed.IndexId==null && mixed.IndexSetupNeedsReview,"mixed indices never choose arbitrary index");
+    Assert(fixedAgreement.IndexId==null && !fixedAgreement.IndexSetupNeedsReview && !(await db.AgreementLineVersions.SingleAsync(x=>x.AgreementId==fixedAgreement.Id)).IndexRegulated,"fixed price migrates to no regulation");
+
+}
+await using (var db = factory.CreateDbContext())
+{
+    Assert((await db.AgreementLineVersions.Include(x => x.Documents).SingleAsync(x => x.LineId == legacyLine)).Documents.Single().DocumentId == legacyDocument,"group removal preserves line identity and document links");
+    Assert(await db.AgreementAdjustmentRuleRecords.CountAsync(x => x.AgreementId == legacy)==1,"legacy calculation configuration retained only for audit");
 }
 var migrated = await admin.GetAsync(account, legacy);
+Assert(migrated.IndexId==legacyLine && migrated.IndexSetupNeedsReview,"migration infers unique index but flags advanced rule");
+Assert(AgreementAutomaticIndexCalculator.Project(true, [], [], [], [], []).Count==0,"ambiguous legacy setup disables only automatic index projection");
+migrated.Title="Legacy still editable";await admin.UpdateAsync(account,legacy,migrated);
+Assert((await admin.GetAsync(account,legacy)).Title=="Legacy still editable","review flag does not block ordinary agreement editing");
+migrated=await admin.GetAsync(account,legacy);migrated.ResolveIndexSetup=true;await admin.UpdateAsync(account,legacy,migrated);
+Assert(!(await admin.GetAsync(account,legacy)).IndexSetupNeedsReview,"explicit review resolves migration flag");
 Assert(migrated.Direction == null && migrated.Currency == null && migrated.Documents.Single().Id == legacyDocument, "migration preserves contracts and document identity without guessing direction");
 
-// Pure adjustment calculations.
-var rule = new AgreementAdjustmentRule { Kind=AgreementAdjustmentKind.Index, AllowDecrease=true };
-decimal Calc(decimal share,AgreementAdjustmentAddition addition=AgreementAdjustmentAddition.None,decimal extra=0)
-{ rule.SharePercent=share;rule.Addition=addition;rule.AdditionPercent=extra;return AgreementAdjustmentCalculator.Calculate(rule,1000,100,104,null).Price; }
-Assert(Calc(100)==1040,"whole index change"); Assert(Calc(70)==1028,"70 percent share");
-Assert(Calc(100,AgreementAdjustmentAddition.PercentagePoints,2)==1060,"percentage points");
-Assert(Calc(100,AgreementAdjustmentAddition.PriceMarkup,2)==1060.80m,"markup after index adjustment");
-rule.Addition=AgreementAdjustmentAddition.None;rule.AllowDecrease=true;
-Assert(AgreementAdjustmentCalculator.Calculate(rule,1000,100,96,null).Price==960,"negative index reduces price");
-rule.FloorPercent=0;Assert(AgreementAdjustmentCalculator.Calculate(rule,1000,100,96,null).Price==1000,"floor zero prevents reduction");
-var limit=new AgreementAdjustmentRule{Kind=AgreementAdjustmentKind.Limit,CeilingPercent=5};
-Assert(AgreementAdjustmentCalculator.Calculate(limit,1000,null,null,3).Price==1030,"explicit 3 percent within cap");
-await Expect<AgreementValidationException>(()=>Task.FromResult(AgreementAdjustmentCalculator.Calculate(limit,1000,null,null,6)),"6 percent exceeds cap");
-await Expect<AgreementValidationException>(()=>Task.FromResult(AgreementAdjustmentCalculator.Calculate(limit,1000,null,null,null)),"cap never applied without explicit choice");
-rule.FloorPercent=6;rule.CeilingPercent=5;
-await Expect<AgreementValidationException>(()=>Task.FromResult(AgreementAdjustmentCalculator.Calculate(rule,1000,100,104,null)),"inverted floor ceiling rejected");
 
+AutomaticIndexChecks.Run();
+Assert(AgreementAdjustmentCalculator.Calculate(1000,100,104).Price==1040,"full index change");
+Assert(AgreementAdjustmentCalculator.Calculate(1000,100,96).Price==960,"full negative index change");
 SaveAgreementRequest AgreementRequest(AgreementDirection direction=AgreementDirection.Income)=>new(){Title="Processing agreement",Form=AgreementForm.Renewing,RenewalDate=new(2035,1,1),StartDate=new(2027,1,1),OwnerUserId=ownerId,CounterpartyOrganizationId=org,Direction=direction,Currency="NOK",Status=AgreementStatus.Active};
 async Task<Guid> NewAgreement(AgreementDirection direction=AgreementDirection.Income)=>await admin.CreateAsync(account,AgreementRequest(direction));
-async Task<Guid> Line(Guid a,decimal price=1000,AgreementFrequency frequency=AgreementFrequency.Monthly,AgreementBillingTiming timing=AgreementBillingTiming.Advance)=>await owner.SaveLineAsync(account,a,null,new(){Revision=(await owner.GetAsync(account,a)).Revision,Name="Test line",StartDate=new(2027,1,1),FirstPayableDate=new(2027,1,1),AnchorDate=new(2027,1,1),UnitPrice=price,Activate=true,Frequency=frequency,BillingTiming=timing});
-async Task Manual(Guid a,Guid l,DateOnly d,decimal p,AgreementPriceTiming timing=AgreementPriceTiming.Split)=>await owner.ChangePriceAsync(account,a,l,(await owner.GetAsync(account,a)).Revision,d,p,timing,"Manual correction");
-async Task<AgreementAdjustmentRule> Rule(Guid a,Guid l,Guid? idx=null,DateOnly? effective=null)=>new(){LineId=l,Kind=idx.HasValue?AgreementAdjustmentKind.Index:AgreementAdjustmentKind.Percentage,IndexId=idx,FixedPercent=4,BasePriceVersionId=(await owner.GetLinesAsync(account,a)).Lines.Single(x=>x.Line.Id==l).Prices[0].Id,BaseIndexPeriod=new(2027,1,1),EffectiveFrom=effective??new(2027,1,1),FirstAllowedDate=new(2028,1,1),AnchorDate=new(2028,1,1),Reason="Agreed adjustment",IntervalMonths=12};
-async Task SaveRule(Guid a,AgreementAdjustmentRule r)=>await owner.SaveAdjustmentRuleAsync(account,a,(await owner.GetAsync(account,a)).Revision,r);
+SaveAgreementLineRequest LineRequest(bool regulated=false)=>new(){Name="Active line",StartDate=new(2027,1,1),FirstPayableDate=new(2027,1,1),AnchorDate=new(2027,1,1),EffectiveFrom=new(2027,1,1),UnitPrice=1000,Activate=true,IndexRegulated=regulated};
+async Task<Guid> Save(Guid a,Guid? l,SaveAgreementLineRequest r){r.Revision=(await owner.GetAsync(account,a)).Revision;return await owner.SaveLineAsync(account,a,l,r);}
+async Task SetIndex(Guid a,Guid? index){var r=await owner.GetAsync(account,a);r.IndexId=index;await owner.UpdateAsync(account,a,r);}
 AgreementBasisData Body(AgreementBasisDetails d)=>System.Text.Json.JsonSerializer.Deserialize<AgreementBasisData>(d.Snapshots[0].DataJson)!;
-
-var indexId=await admin.CreateIndexAsync(account,"CPI","Consumer prices","Manual test","Statistics",AgreementIndexResolution.Month);
-await admin.RecordIndexValueAsync(account,indexId,new(2027,1,1),100,null,"Base");
-var id=await NewAgreement();var line=await Line(id);await SaveRule(id,await Rule(id,line,indexId));
+var indexId=await admin.CreateIndexAsync(account,"CPI","Consumer prices","Test","Statistics",AgreementIndexResolution.Year);
+await admin.RecordIndexValueAsync(account,indexId,new(2026,1,1),101,null,"Base");
+await admin.RecordIndexValueAsync(account,indexId,new(2027,1,1),105,null,"Published");
+await admin.RecordIndexValueAsync(account,indexId,new(2028,1,1),108,null,"Published");
+var automaticRequest=AgreementRequest();automaticRequest.StartDate=new(2026,1,1);
+var id=await admin.CreateAsync(account,automaticRequest);
+await Expect<AgreementValidationException>(()=>Save(id,null,LineRequest(true)),"index required for regulated line");
+await SetIndex(id,indexId);
+var r=LineRequest(true);r.StartDate=r.FirstPayableDate=r.AnchorDate=r.EffectiveFrom=new(2026,1,1);
+var line=await Save(id,null,r);var secondLine=await Save(id,null,r);
+var fixedRequest=LineRequest();fixedRequest.StartDate=fixedRequest.FirstPayableDate=new(2026,1,1);
+var fixedLine=await Save(id,null,fixedRequest);
 await owner.SetAccessAsync(account,id,readerId,AgreementAccessLevel.Read,(await owner.GetAsync(account,id)).Revision);
 await owner.SetAccessAsync(account,id,editorId,AgreementAccessLevel.Edit,(await owner.GetAsync(account,id)).Revision);
-var due=await reader.FindAdjustmentsAsync(account,id,new(2028,1,1),new(2028,12,31));
-Assert(due.Count==1 && due[0].BlockedKey=="ProcessingMissingIndex","missing exact index blocks annual adjustment on monthly line");
-await admin.RecordIndexValueAsync(account,indexId,new(2028,1,1),104,null,"Published");
-var proposal=await editor.ProposeAdjustmentAsync(account,id,line,new(2028,1,1),null);
-await Expect<UnauthorizedAccessException>(()=>editor.DecideAdjustmentAsync(account,id,proposal,true,"Approve"),"editor cannot approve");
-await admin.RecordIndexValueAsync(account,indexId,new(2028,1,1),105,null,"Correction");
-await Expect<AgreementValidationException>(()=>owner.DecideAdjustmentAsync(account,id,proposal,true,"Approve"),"index revision makes proposal stale");
-Assert((await owner.GetProcessingAsync(account,id)).Proposals.Single(x=>x.Id==proposal).Status==AgreementProposalStatus.Stale,"stale status persisted");
-proposal=await owner.ProposeAdjustmentAsync(account,id,line,new(2028,1,1),null);
-await Task.WhenAll(owner.DecideAdjustmentAsync(account,id,proposal,true,"Reviewed"),owner.DecideAdjustmentAsync(account,id,proposal,true,"Reviewed"));
-var prices=(await owner.GetLinesAsync(account,id)).Lines.Single().Prices;
-Assert(prices.Count(x=>x.AdjustmentId==proposal)==1 && prices[0].UnitPrice==1050,"parallel approvals create one price version");
-await Expect<AgreementValidationException>(()=>owner.ProposeAdjustmentAsync(account,id,line,new(2028,2,1),null),"monthly billing cannot adjust before annual interval");
-var captured=(await owner.GetProcessingAsync(account,id)).Proposals.Single(x=>x.Id==proposal).CalculationJson;
-await admin.RecordIndexValueAsync(account,indexId,new(2028,1,1),106,null,"Later correction");
-Assert((await owner.GetProcessingAsync(account,id)).Proposals.Single(x=>x.Id==proposal).CalculationJson==captured,"applied adjustment keeps exact old index revision");
-await Expect<UnauthorizedAccessException>(()=>reader.RecordIndexValueAsync(account,indexId,new(2028,1,1),107,null,"No access"),"index write admin-only");
-await Expect<UnauthorizedAccessException>(()=>foreign.RecordIndexValueAsync(otherAccount,indexId,new(2028,1,1),107,null,"Foreign"),"index tenant isolation");
-await Expect<AgreementValidationException>(()=>admin.RecordIndexValueAsync(account,indexId,new(2028,1,2),104,null,"Wrong boundary"),"index period cannot interpolate");
-var quarter=await admin.CreateIndexAsync(account,"Q","Quarterly","","Source",AgreementIndexResolution.Quarter);
-await Expect<AgreementValidationException>(()=>admin.RecordIndexValueAsync(account,quarter,new(2028,2,1),104,null,"Wrong quarter"),"quarterly boundary validation");
+await Expect<AgreementValidationException>(()=>SetIndex(id,null),"cannot remove index while regulated lines exist");
+var revisionBefore=(await owner.GetAsync(account,id)).Revision;
+var forecast=await reader.ForecastAsync(account,id,new(2026,1,1),new(2027,12,31));
+Assert(forecast.Periods.Where(x=>x.From.Year==2026).All(x=>x.UnitPrice==1000),"2026 forecast uses registered base price at index 101");
+Assert(forecast.Periods.Where(x=>x.From.Year==2027 && x.LineId!=fixedLine).All(x=>x.UnitPrice==1039.60m),"2027 forecast automatically applies 105/101 to every regulated line");
+Assert(forecast.Periods.Where(x=>x.LineId==fixedLine).All(x=>x.UnitPrice==1000 && x.IndexAdjustments.Count==0),"fixed line is excluded from automatic regulation");
+Assert(forecast.Periods.First(x=>x.From.Year==2027 && x.LineId==line).IndexAdjustments.Single().BaseIndex.Value==101,"forecast exposes exact index calculation");
+var repeated=await reader.ForecastAsync(account,id,new(2026,1,1),new(2027,12,31));
+Assert(System.Text.Json.JsonSerializer.Serialize(repeated)==System.Text.Json.JsonSerializer.Serialize(forecast),"repeated forecasts are deterministic and never compound twice");
+var narrow=await reader.ForecastAsync(account,id,new(2027,1,1),new(2027,1,31));
+Assert(narrow.Periods.Single(x=>x.LineId==line).UnitPrice==1039.60m,"starting forecast in 2027 still includes prior index basis");
+Assert((await owner.GetAsync(account,id)).Revision==revisionBefore && (await owner.GetLinesAsync(account,id)).Lines.All(x=>x.Prices.Count==1) && (await owner.GetProcessingAsync(account,id)).Proposals.Count==0,"forecast is read-only: no new prices, proposals or approval steps");
+var preview=await reader.PreviewBasisAsync(account,id,AgreementDirection.Income,new(2027,1,1),new(2027,1,31));
+Assert(preview.Income==narrow.Income,"basis preview and forecast use identical automatic prices");
+var indexBasis=(await editor.GenerateBasisAsync(account,id,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Single();
+Assert(Body(await owner.GetBasisAsync(account,indexBasis)).Events.Single(x=>x.LineId==line).Segments.Single().UnitPrice==1039.60m,"generation automatically snapshots regulated price without per-line approval");
+await Expect<UnauthorizedAccessException>(()=>editor.ApproveBasisAsync(account,indexBasis,1),"basis approval still requires its own permission");
+await owner.ApproveBasisAsync(account,indexBasis,1);
+var lockedIndexSnapshot=(await owner.GetBasisAsync(account,indexBasis)).Snapshots[0].DataJson;
+var indexDraft=(await editor.GenerateBasisAsync(account,id,AgreementDirection.Income,new(2027,2,1),new(2027,2,28))).Created.Single();
+Assert((await editor.GenerateBasisAsync(account,id,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Count==0,"repeated generation does not duplicate events or apply index twice");
+var originalValue=(await admin.GetIndicesAsync(account)).Values.Single(x=>x.IndexId==indexId && x.Period==new DateOnly(2027,1,1));
+await Expect<AgreementValidationException>(()=>admin.RecordIndexValueAsync(account,indexId,new(2027,1,1),106,null,"Duplicate"),"duplicate periods require explicit edit");
+await admin.RecordIndexValueAsync(account,indexId,new(2027,1,1),106,null,"Corrected value",originalValue.Id);
+Assert((await owner.GetBasisAsync(account,indexDraft)).Stale,"index correction invalidates an unapproved draft automatically");
+await Expect<AgreementValidationException>(()=>owner.ApproveBasisAsync(account,indexDraft,1),"stale index draft cannot be approved");
+Assert((await owner.GetBasisAsync(account,indexBasis)).Snapshots[0].DataJson==lockedIndexSnapshot,"used value correction never rewrites an approved basis");
+Assert((await owner.GetBasisAsync(account,indexBasis)).NeedsCorrection,"used value correction reports difference on approved basis");
+var indexCorrection=await owner.CreateCorrectionAsync(account,indexBasis,"Index corrected");
+Assert(Body(await owner.GetBasisAsync(account,indexCorrection)).Events.Sum(x=>x.Amount)==19.80m,"correction uses new index value once for both regulated lines");
+await owner.ApproveBasisAsync(account,indexCorrection,1);
+await owner.RegenerateBasisAsync(account,indexDraft,1,"New index revision");await owner.ApproveBasisAsync(account,indexDraft,2);
+Assert(!(await owner.GetBasisAsync(account,indexBasis)).NeedsCorrection,"approved index correction reconciles the old basis");
+Assert(Body(await owner.GetBasisAsync(account,indexDraft)).Events.Single(x=>x.LineId==line).Segments.Single().IndexAdjustments.Single().ComparisonIndex.Revision==2,"new basis keeps exact revised index value");
+await admin.UpdateIndexAsync(account,indexId,"CPI2","Corrected name","Description","https://example.test/source",AgreementIndexResolution.Year);
+Assert((await admin.GetIndicesAsync(account)).Indices.Single(x=>x.Id==indexId).Name=="Corrected name","index metadata editable");
+await Expect<AgreementValidationException>(()=>admin.RecordIndexValueAsync(account,indexId,new(2030,1,1),0,null,"Invalid"),"invalid index value rejected");
+await Expect<UnauthorizedAccessException>(()=>owner.UpdateIndexAsync(account,indexId,"X","No","","No",AgreementIndexResolution.Year),"index editing requires account administrator");
+await Expect<UnauthorizedAccessException>(()=>foreign.RecordIndexValueAsync(otherAccount,indexId,new(2030,1,1),110,null,"Foreign"),"cross-account index edit rejected");
 
-var split=await NewAgreement();var splitLine=await Line(split,3100);await Manual(split,splitLine,new(2027,1,16),6200);
-var periods=(await owner.ForecastAsync(account,split,new(2027,1,1),new(2027,1,31))).Periods;
-Assert(periods.Count==2 && periods[0].Amount==1500 && periods[1].Amount==3200 && periods.All(x=>x.ReferenceDays==31),"mid-month split uses original denominator");
-Assert(periods.Select(x=>x.EventKey).Distinct().Count()==1 && periods.Select(x=>x.InvoiceDate).Distinct().Count()==1,"price segments keep payment identity and invoice date");
-var narrow=await owner.ForecastAsync(account,split,new(2027,1,20),new(2027,1,21));
-Assert(narrow.Periods.Single().Amount==3200,"narrow search does not clip segment amount");
-var next=await NewAgreement();var nextLine=await Line(next,3100);await Manual(next,nextLine,new(2027,1,16),6200,AgreementPriceTiming.NextPeriod);
-var nextRows=(await owner.ForecastAsync(account,next,new(2027,1,1),new(2027,2,28))).Periods;
-Assert(nextRows[0].Amount==3100 && nextRows[1].Amount==6200,"next full period keeps January price");
-// Rounding allocation must equal rounded aggregate of unrounded segments.
-var roundId=await NewAgreement();var roundLine=await Line(roundId,1);await Manual(roundId,roundLine,new(2027,1,16),1);
-var rounded=(await owner.ForecastAsync(account,roundId,new(2027,1,1),new(2027,1,31))).Periods;
-Assert(rounded.Count==2 && rounded.Sum(x=>x.Amount)==1,"rounding remainder allocated consistently");
+// Quantity/schedule edits retain the price anchor; actual price edits reset it.
+r.Quantity=2;r.EffectiveFrom=new(2027,3,1);r.Reason="Quantity correction";await Save(id,line,r);
+Assert((await owner.ForecastAsync(account,id,new(2027,3,1),new(2027,3,31))).Periods.Single(x=>x.LineId==line).Amount==2099m,"quantity-only edit preserves automatic unit price");
+r.Frequency=AgreementFrequency.Quarterly;r.EffectiveFrom=new(2027,4,1);await Save(id,line,r);
+Assert((await owner.ForecastAsync(account,id,new(2027,4,1),new(2027,6,30))).Periods.Single(x=>x.LineId==line).UnitPrice==1049.50m,"schedule-only edit does not reset index basis");
+r.UnitPrice=2000;r.EffectiveFrom=new(2027,7,1);r.Reason="Registered price corrected";await Save(id,line,r);
+Assert((await owner.ForecastAsync(account,id,new(2027,7,1),new(2027,9,30))).Periods.Single(x=>x.LineId==line).UnitPrice==2000,"manual price correction becomes new anchor at its effective date");
+Assert((await owner.ForecastAsync(account,id,new(2028,1,1),new(2028,3,31))).Periods.Single(x=>x.LineId==line).UnitPrice==2037.74m,"later index regulation uses corrected registered price");
 
-var runs=await Task.WhenAll(owner.GenerateBasisAsync(account,split,AgreementDirection.Income,new(2027,1,1),new(2027,1,31)),owner.GenerateBasisAsync(account,split,AgreementDirection.Income,new(2027,1,1),new(2027,1,31)));
-Assert(runs.Sum(x=>x.Created.Count)==1 && runs.Sum(x=>x.Existing.Count)==1,"parallel generation returns one active basis");
-var basisId=runs.SelectMany(x=>x.Created).Single();var basis=await owner.GetBasisAsync(account,basisId);
-Assert(!basis.Stale && Body(basis).Events.Single().Amount==4700 && Body(basis).Events.Single().Segments.Count==2,"draft snapshot retains both segments");
-Assert((await owner.GenerateBasisAsync(account,split,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Count==0,"rerun idempotent");
-await Task.WhenAll(owner.ApproveBasisAsync(account,basisId,1),owner.ApproveBasisAsync(account,basisId,1));
-var approved=(await owner.GetBasisAsync(account,basisId)).Snapshots[0].DataJson;
-await Expect<AgreementValidationException>(()=>owner.RegenerateBasisAsync(account,basisId,1,"No"),"approved basis cannot regenerate");
-await Manual(split,splitLine,new(2027,1,16),9300);
-var needs=await owner.GetBasisAsync(account,basisId);
-Assert(needs.NeedsCorrection && needs.Snapshots[0].DataJson==approved,"retroactive price signals correction without changing original");
-var c1s=await Task.WhenAll(owner.CreateCorrectionAsync(account,basisId,"Retroactive change"),owner.CreateCorrectionAsync(account,basisId,"Retroactive change"));
-Assert(c1s[0]==c1s[1],"parallel correction creation returns one draft");
-var correction=c1s[0];var cbody=Body(await owner.GetBasisAsync(account,correction));
-Assert(cbody.Events.Single().Amount==1600 && cbody.Events.Single().PreviousAmount==4700 && cbody.Events.Single().TargetAmount==6300,"positive correction uses approved net");
-await Task.WhenAll(owner.ApproveBasisAsync(account,correction,1),owner.ApproveBasisAsync(account,correction,1));
-await Expect<AgreementValidationException>(()=>owner.CreateCorrectionAsync(account,basisId,"Rerun"),"same correction never generated twice");
-await Manual(split,splitLine,new(2027,1,16),7750);
-var c2=await owner.CreateCorrectionAsync(account,basisId,"Reduce price");var c2data=Body(await owner.GetBasisAsync(account,c2));
-Assert(c2data.Events.Single().Amount==-800 && c2data.Events.Single().PreviousAmount==6300,"later negative correction accounts for earlier approved correction");
-await owner.ApproveBasisAsync(account,c2,1);
-Assert(!(await owner.GetBasisAsync(account,basisId)).NeedsCorrection,"net corrected total matches target");
-await Expect<AgreementValidationException>(()=>owner.CancelBasisAsync(account,basisId,1,"Cancel"),"original cannot cancel with live corrections");
-await owner.CancelBasisAsync(account,c2,1,"Undo correction");
-Assert((await owner.GetBasisAsync(account,basisId)).NeedsCorrection,"cancelled correction removed from approved net");
+// Changing the agreement's index never changes earlier forecast periods.
+var alternate=await admin.CreateIndexAsync(account,"ALT","Alternative","","Local",AgreementIndexResolution.Year);
+await admin.RecordIndexValueAsync(account,alternate,new(2027,1,1),200,null,"Base");
+await admin.RecordIndexValueAsync(account,alternate,new(2028,1,1),220,null,"Next");
+var beforeSwitch=await owner.ForecastAsync(account,id,new(2027,1,1),new(2027,5,31));
+var oldClock=clock.Now;clock.Now=new(2027,6,1,12,0,0,TimeSpan.Zero);
+await SetIndex(id,alternate);clock.Now=oldClock;
+var afterSwitch=await owner.ForecastAsync(account,id,new(2027,1,1),new(2027,5,31));
+Assert(System.Text.Json.JsonSerializer.Serialize(beforeSwitch)==System.Text.Json.JsonSerializer.Serialize(afterSwitch),"index switch preserves prior forecast prices and index evidence");
+Assert((await owner.ForecastAsync(account,id,new(2028,1,1),new(2028,1,31))).Periods.Single(x=>x.LineId==secondLine).UnitPrice==1154.45m,"all lines use the new agreement index only after the switch");
+Assert((await owner.GetBasisAsync(account,indexBasis)).Snapshots[0].DataJson==lockedIndexSnapshot,"index switch preserves approved calculation byte for byte");
 
-var staleId=await NewAgreement();var staleLine=await Line(staleId);var draft=(await owner.GenerateBasisAsync(account,staleId,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Single();
-await Manual(staleId,staleLine,new(2027,1,1),1100);
-await Expect<AgreementValidationException>(()=>owner.ApproveBasisAsync(account,draft,1),"stale draft cannot approve");
-await owner.RegenerateBasisAsync(account,draft,1,"Review changed price");
-var regenerated=await owner.GetBasisAsync(account,draft);
-Assert(regenerated.Snapshots.Count==2 && Body(regenerated).Events.Single().Amount==1100 && !regenerated.Stale,"regeneration preserves before and after snapshots");
-await Expect<AgreementValidationException>(()=>owner.ApproveBasisAsync(account,draft,1),"old revision cannot approve regenerated draft");
-await owner.ApproveBasisAsync(account,draft,2);
-await owner.CancelBasisAsync(account,draft,2,"Release claim");
-var replacement=(await owner.GenerateBasisAsync(account,staleId,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Single();
-Assert(replacement!=draft,"cancellation releases original event for controlled regeneration");
+// Many lines need only one register entry, with no generated price rows or proposals.
+var bulkRequest=AgreementRequest();bulkRequest.StartDate=new(2026,1,1);bulkRequest.IndexId=indexId;
+var bulk=await admin.CreateAsync(account,bulkRequest);
+for(var n=0;n<30;n++){var item=LineRequest(true);item.StartDate=item.FirstPayableDate=new(2026,1,1);await Save(bulk,null,item);}
+var bulkForecast=await owner.ForecastAsync(account,bulk,new(2027,1,1),new(2027,1,31));
+Assert(bulkForecast.Periods.Count==30 && bulkForecast.Periods.All(x=>x.UnitPrice==1049.50m),"all thirty regulated lines update automatically from one index entry");
+Assert((await owner.GetLinesAsync(account,bulk)).Lines.All(x=>x.Prices.Count==1),"automatic pricing never writes a per-line price change");
 
-var cost=await NewAgreement(AgreementDirection.Cost);await Line(cost,1200);
-await Expect<AgreementValidationException>(()=>owner.GenerateBasisAsync(account,cost,AgreementDirection.Income,new(2027,1,1),new(2027,1,31)),"cost rejected by outgoing basis service");
+// A price already regulated by the old workflow is a price anchor, not an extra multiplier.
+var legacyAutoRequest=AgreementRequest();legacyAutoRequest.StartDate=new(2026,1,1);legacyAutoRequest.IndexId=indexId;
+var legacyAuto=await admin.CreateAsync(account,legacyAutoRequest);
+var legacyAutoLineRequest=LineRequest(true);legacyAutoLineRequest.StartDate=legacyAutoLineRequest.FirstPayableDate=new(2026,1,1);
+var legacyAutoLine=await Save(legacyAuto,null,legacyAutoLineRequest);
+var legacyData=(await owner.GetLinesAsync(account,legacyAuto)).Lines.Single();var legacyAdjustment=Guid.NewGuid();
+var baseValue=(await admin.GetIndicesAsync(account)).Values.Single(x=>x.IndexId==indexId && x.Period==new DateOnly(2026,1,1));
+await using(var db=factory.CreateDbContext())
+{
+    var calculation=new AgreementAdjustmentCalculation(null,legacyData.Prices[0],legacyData.Prices[0],legacyData.Versions[0],baseValue,originalValue,new(2027,1,1),new(2027,1,1),3.960396m,3.960396m,1039.60m,"legacy");
+    db.AgreementAdjustmentProposalRecords.Add(new(){Id=legacyAdjustment,AccountId=account,AgreementId=legacyAuto,LineId=legacyAutoLine,IndexId=indexId,
+        ScheduledDate=new(2027,1,1),EffectiveDate=new(2027,1,1),OldPrice=1000,NewPrice=1039.60m,Status=AgreementProposalStatus.Approved,
+        RecordedUtc=clock.Now,ActorUserId=ownerId,CalculationJson=System.Text.Json.JsonSerializer.Serialize(calculation)});
+    db.AgreementPriceVersions.Add(new(){Id=Guid.NewGuid(),AccountId=account,AgreementId=legacyAuto,LineId=legacyAutoLine,Sequence=2,Independent=true,AdjustmentId=legacyAdjustment,
+        EffectiveFrom=new(2027,1,1),Quantity=1,UnitPrice=1039.60m,RecordedUtc=clock.Now,ActorUserId=ownerId});
+    await db.SaveChangesAsync();
+}
+Assert((await owner.ForecastAsync(account,legacyAuto,new(2027,1,1),new(2027,1,31))).Periods.Single().UnitPrice==1039.60m,"previously approved index adjustment is never applied twice");
+var legacyAutoBasis=(await owner.GenerateBasisAsync(account,legacyAuto,AgreementDirection.Income,new(2028,1,1),new(2028,1,31))).Created.Single();
+var legacyAutoBody=Body(await owner.GetBasisAsync(account,legacyAutoBasis));
+Assert(legacyAutoBody.Events.Single().Segments.Single().UnitPrice==1059.22m && legacyAutoBody.Events.Single().Adjustments.Single().Id==legacyAdjustment,
+    "automatic continuation retains old adjustment evidence and only applies the next period");
+
+// Changing a period's date moves its one current revision; it never creates a second multiplication.
+var movedIndex=await admin.CreateIndexAsync(account,"MOVE","Moved period","","Local",AgreementIndexResolution.Month);
+await admin.RecordIndexValueAsync(account,movedIndex,new(2026,1,1),101,null,"Base");
+await admin.RecordIndexValueAsync(account,movedIndex,new(2027,1,1),105,null,"Next");
+var movedRequest=AgreementRequest();movedRequest.StartDate=new(2026,1,1);movedRequest.IndexId=movedIndex;
+var movedAgreement=await admin.CreateAsync(account,movedRequest);await Save(movedAgreement,null,legacyAutoLineRequest);
+var movedValue=(await admin.GetIndicesAsync(account)).Values.First(x=>x.IndexId==movedIndex);
+await admin.RecordIndexValueAsync(account,movedIndex,new(2027,2,1),105,null,"Corrected period",movedValue.Id);
+var movedForecast=await owner.ForecastAsync(account,movedAgreement,new(2027,1,1),new(2027,3,31));
+Assert(movedForecast.Periods[0].UnitPrice==1000 && movedForecast.Periods.Skip(1).All(x=>x.UnitPrice==1039.60m),"moved index period takes effect once on the corrected date");
+await Expect<AgreementValidationException>(()=>admin.RecordIndexValueAsync(account,movedIndex,new(2027,2,1),107,null,"Stale editor",movedValue.Id),"stale period editor still rejected");
+
+// Active editing and basis snapshots, including documents and economic correction.
+var editable=await NewAgreement();var editRequest=LineRequest();var editLine=await Save(editable,null,editRequest);
+await owner.UploadAsync(account,editable,(await owner.GetAsync(account,editable)).Revision,"contract.pdf",new MemoryStream("%PDF-1.4\n%%EOF"u8.ToArray()),AgreementDocumentCategory.Contract,null);
+var document=(await owner.GetAsync(account,editable)).Documents.Single().Id;
+editRequest.DocumentIds=[document]; editRequest.Name="Corrected name"; editRequest.Description="Corrected description";
+await Save(editable,editLine,editRequest);
+Assert((await owner.GetLinesAsync(account,editable)).Lines.Single().Versions[0].Documents.Single().DocumentId==document,"active line accepts documents and descriptive corrections without a reason");
+Assert((await owner.GetLinesAsync(account,editable)).Lines.Single().Prices.Count==1,"descriptive edits do not create price versions");
+var jan=(await owner.GenerateBasisAsync(account,editable,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Single();
+await owner.ApproveBasisAsync(account,jan,1);var approved=(await owner.GetBasisAsync(account,jan)).Snapshots[0].DataJson;
+var feb=(await owner.GenerateBasisAsync(account,editable,AgreementDirection.Income,new(2027,2,1),new(2027,2,28))).Created.Single();
+editRequest.DocumentIds=[];await Save(editable,editLine,editRequest);
+Assert((await owner.GetLinesAsync(account,editable)).Lines.Single().Versions[0].Documents.Count==0,"active document reference removable");
+Assert((await owner.GetBasisAsync(account,jan)).Snapshots[0].DataJson==approved && Body(await owner.GetBasisAsync(account,jan)).Events.Single().Segments.Single().DocumentIds.Contains(document),"approved document snapshot immutable");
+editRequest.Quantity=2;editRequest.UnitPrice=600;editRequest.EffectiveFrom=new(2027,1,1);editRequest.Reason="Correct entry";
+await Save(editable,editLine,editRequest);
+Assert((await owner.GetBasisAsync(account,feb)).Stale,"affected draft marked stale");
+await Expect<AgreementValidationException>(()=>owner.ApproveBasisAsync(account,feb,1),"stale draft cannot be approved");
+Assert((await owner.GetBasisAsync(account,jan)).NeedsCorrection,"approved basis identifies correction need");
+var correction=await owner.CreateCorrectionAsync(account,jan,"Correct price and quantity");
+Assert(Body(await owner.GetBasisAsync(account,correction)).Events.Single().Amount==200,"existing correction flow calculates delta");
+await owner.ApproveBasisAsync(account,correction,1);
+Assert(!(await owner.GetBasisAsync(account,jan)).NeedsCorrection,"approved correction resolves difference");
+await owner.RegenerateBasisAsync(account,feb,1,"Refresh");await owner.ApproveBasisAsync(account,feb,2);
+Assert(Body(await owner.GetBasisAsync(account,feb)).Events.Single().Amount==1200,"controlled draft regeneration uses corrected price");
+editRequest.Frequency=AgreementFrequency.Quarterly;editRequest.Anchor=AgreementAnchor.Date;editRequest.AnchorDate=new(2027,1,15);
+editRequest.StartDate=new(2027,1,15);editRequest.EndDate=new(2029,12,31);editRequest.FirstPayableDate=new(2027,2,1);editRequest.BillingTiming=AgreementBillingTiming.Arrears;
+await Save(editable,editLine,editRequest);
+var updated=(await owner.GetLinesAsync(account,editable)).Lines.Single();
+Assert(updated.Line.Id==editLine && updated.Versions[0].Frequency==AgreementFrequency.Quarterly && updated.Versions[0].FirstPayableDate==new DateOnly(2027,2,1) && updated.Versions[0].BillingTiming==AgreementBillingTiming.Arrears,"active frequency, dates, anchor and invoice timing editable with stable identity");
+Assert((await owner.GetBasisAsync(account,jan)).Snapshots[0].DataJson==approved,"financial corrections never overwrite approved snapshot");
+Assert((await owner.GetBasisAsync(account,jan)).NeedsCorrection,"changed event identity identifies correction");
+var periodCorrection=await owner.CreateCorrectionAsync(account,jan,"Correct period definition");
+Assert(Body(await owner.GetBasisAsync(account,periodCorrection)).Events.Single().Amount==-1200,"old event credited when corrected schedule replaces it");
+await owner.ApproveBasisAsync(account,periodCorrection,1);
+var once=LineRequest();once.Frequency=AgreementFrequency.Once;var onceId=await Save(editable,null,once);once.UnitPrice=1200;once.Reason="Correct one-off";await Save(editable,onceId,once);
+Assert((await owner.GetLinesAsync(account,editable)).Lines.Single(x=>x.Line.Id==onceId).Prices[0].UnitPrice==1200,"active one-off line editable");
+var backdated=await NewAgreement();var backdatedRequest=LineRequest();backdatedRequest.StartDate=new(2027,1,15);backdatedRequest.FirstPayableDate=backdatedRequest.StartDate;
+var backdatedLine=await Save(backdated,null,backdatedRequest);backdatedRequest.StartDate=new(2027,1,1);backdatedRequest.FirstPayableDate=backdatedRequest.StartDate;backdatedRequest.EffectiveFrom=backdatedRequest.StartDate;backdatedRequest.UnitPrice=2000;backdatedRequest.Reason="Original start was wrong";
+await Save(backdated,backdatedLine,backdatedRequest);
+var correctedForecast=await owner.ForecastAsync(account,backdated,new(2027,1,1),new(2027,2,28));
+Assert(correctedForecast.Income==4000 && correctedForecast.Periods.All(x=>x.UnitPrice==2000),"backdated correction does not resurrect later-dated older version");
+var partial=await NewAgreement();var partialRequest=LineRequest();partialRequest.FirstPayableDate=new(2027,1,15);var partialLine=await Save(partial,null,partialRequest);
+var partialPreview=await owner.PreviewBasisAsync(account,partial,AgreementDirection.Income,new(2027,1,1),new(2027,1,31));
+Assert(partialPreview.Periods.Single().InvoiceDate==new DateOnly(2027,1,15),"included days do not move the payable invoice date");
+partialRequest.EffectiveFrom=new(2027,1,20);partialRequest.UnitPrice=1200;partialRequest.Reason="Mid-period correction";await Save(partial,partialLine,partialRequest);
+var partialBasis=(await owner.GenerateBasisAsync(account,partial,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Single();
+Assert(Body(await owner.GetBasisAsync(account,partialBasis)).Events.Single().Segments.All(x=>x.InvoiceDate==new DateOnly(2027,1,15)),"mid-period edit creates one coherent invoice event");
+var invalid=LineRequest();invalid.DocumentIds=[document];await Expect<AgreementValidationException>(()=>Save(id,null,invalid),"documents restricted to same agreement");
+await Expect<UnauthorizedAccessException>(()=>reader.SaveLineAsync(account,id,line,LineRequest()),"read grant cannot edit active line");
+await Expect<UnauthorizedAccessException>(()=>stranger.GetLinesAsync(account,id),"unrelated organization/member has no access");
+await Expect<UnauthorizedAccessException>(()=>foreign.GetLinesAsync(otherAccount,id),"cross-account line access denied");
+var foreignIndex=await foreign.CreateIndexAsync(otherAccount,"OTHER","Other","","Other",AgreementIndexResolution.Year);
+await Expect<AgreementValidationException>(()=>SetIndex(id,foreignIndex),"agreement rejects foreign tenant index");
+var cost=await NewAgreement(AgreementDirection.Cost);await SetIndex(cost,indexId);await Save(cost,null,LineRequest(true));
+Assert((await owner.PreviewBasisAsync(account,cost,AgreementDirection.Cost,new(2028,1,1),new(2028,1,31))).Periods.Single().UnitPrice==1018.87m,"cost lines receive the same automatic index pricing");
+await Expect<AgreementValidationException>(()=>owner.GenerateBasisAsync(account,cost,AgreementDirection.Income,new(2027,1,1),new(2027,1,31)),"cost cannot produce outgoing invoice basis");
 var costBasis=(await owner.GenerateBasisAsync(account,cost,AgreementDirection.Cost,new(2027,1,1),new(2027,1,31))).Created.Single();
-Assert((await owner.GetBasisAsync(account,costBasis)).Basis.Direction==AgreementDirection.Cost,"separate cost basis");
-var arrears=await NewAgreement();await Line(arrears,12000,AgreementFrequency.Yearly,AgreementBillingTiming.Arrears);
-Assert((await owner.PreviewBasisAsync(account,arrears,AgreementDirection.Income,new(2028,1,1),new(2028,1,1))).Income==12000,"generation filters annual arrears invoice date, not delivery overlap");
-Assert((await owner.PreviewBasisAsync(account,arrears,AgreementDirection.Income,new(2027,1,1),new(2027,12,31))).Periods.Count==0,"no premature annual arrears basis");
-// Existing software delivery: once plus twelve months included maintenance.
-var software=await NewAgreement();var once=await Line(software,24000,AgreementFrequency.Once);
-await owner.SaveLineAsync(account,software,null,new(){Revision=(await owner.GetAsync(account,software)).Revision,Name="Maintenance",StartDate=new(2027,1,1),FirstPayableDate=new(2028,1,1),AnchorDate=new(2027,1,1),PayableSourceLineId=once,PayableOffsetMonths=12,UnitPrice=12000,Frequency=AgreementFrequency.Yearly,Activate=true});
-Assert((await owner.PreviewBasisAsync(account,software,AgreementDirection.Income,new(2027,1,1),new(2027,12,31))).Income==24000,"included maintenance creates no basis in first year");
-Assert((await owner.PreviewBasisAsync(account,software,AgreementDirection.Income,new(2028,1,1),new(2028,12,31))).Income==12000,"maintenance starts after included year; no repeated once event");
+Assert((await owner.GetBasisAsync(account,costBasis)).Basis.Direction==AgreementDirection.Cost,"cost basis remains separate");
+await Expect<UnauthorizedAccessException>(()=>foreign.GetBasisAsync(otherAccount,jan),"basis tenant isolation");
 
-await Expect<UnauthorizedAccessException>(()=>foreign.GetBasisAsync(otherAccount,basisId),"foreign account cannot read basis snapshot");
-await Expect<UnauthorizedAccessException>(()=>stranger.GetBasisAsync(account,basisId),"same-account stranger cannot read basis");
-await Expect<UnauthorizedAccessException>(()=>reader.GenerateBasisAsync(account,id,AgreementDirection.Income,new(2027,1,1),new(2027,1,31)),"reader cannot generate");
-var allowedDraft=(await editor.GenerateBasisAsync(account,id,AgreementDirection.Income,new(2027,1,1),new(2027,1,31))).Created.Single();
-await Expect<UnauthorizedAccessException>(()=>editor.ApproveBasisAsync(account,allowedDraft,1),"editor cannot approve basis");
-await Expect<UnauthorizedAccessException>(()=>reader.CreateCorrectionAsync(account,basisId,"No"),"reader cannot create correction");
-await Expect<UnauthorizedAccessException>(()=>foreign.CancelBasisAsync(otherAccount,basisId,1,"No"),"foreign cannot cancel basis");
-Assert(!(await stranger.ListBasisAsync(account,AgreementDirection.Income)).Any(),"list respects agreement grants");
-// Relational protection independently of application checks.
-await using(var db=factory.CreateDbContext())
-{
- var claim=await db.AgreementBasisEventRecords.AsNoTracking().FirstAsync(x=>x.AccountId==account&&x.BasisId==basisId&&x.Active);
- db.AgreementBasisEventRecords.Add(new(){Id=Guid.NewGuid(),AccountId=account,AgreementId=split,BasisId=basisId,LineId=claim.LineId,EventKey=claim.EventKey});
- await Expect<DbUpdateException>(()=>db.SaveChangesAsync(),"database rejects duplicate active event");
-}
-await using(var db=factory.CreateDbContext())
-{
- db.AgreementBasisEventRecords.Add(new(){Id=Guid.NewGuid(),AccountId=account,AgreementId=cost,BasisId=basisId,LineId=splitLine,EventKey="forged"});
- await Expect<DbUpdateException>(()=>db.SaveChangesAsync(),"database rejects cross-agreement claims");
-}
-await owner.UploadAsync(account,id,(await owner.GetAsync(account,id)).Revision,"contract.pdf",new MemoryStream("%PDF-1.4\n%%EOF"u8.ToArray()),AgreementDocumentCategory.Contract,null);
-var document=(await owner.GetAsync(account,id)).Documents.Single().Id;
-var forgedRule=await Rule(cost,(await owner.GetLinesAsync(account,cost)).Lines.Single().Line.Id);forgedRule.Documents=[new(){DocumentId=document}];
-await Expect<AgreementValidationException>(()=>SaveRule(cost,forgedRule),"rule document must belong to same agreement");
-var edited=await owner.GetAsync(account,id);edited.Title="Changed title";await owner.UpdateAsync(account,id,edited);
-await Expect<AgreementValidationException>(()=>owner.ApproveBasisAsync(account,allowedDraft,1),"header changes invalidate draft approval");
-// Approved data does not read current title or corrected index values.
-Assert((await owner.GetBasisAsync(account,basisId)).Snapshots[0].DataJson==approved,"approved original remains byte-identical through all corrections");
 
-// Further audit paths: rules, line/price changes, manual index basis, explicit limits and revisions.
-var ruleCase=await NewAgreement();var ruleLine=await Line(ruleCase);var rr=await Rule(ruleCase,ruleLine,indexId);rr.Documents=[new(){DocumentId=document}];
-await Expect<AgreementValidationException>(()=>SaveRule(ruleCase,rr),"foreign-agreement document rejected for index rule");
-await owner.UploadAsync(account,ruleCase,(await owner.GetAsync(account,ruleCase)).Revision,"terms.pdf",new MemoryStream("%PDF-1.4\n%%EOF"u8.ToArray()),AgreementDocumentCategory.Contract,null);
-var ruleDoc=(await owner.GetAsync(account,ruleCase)).Documents.Single().Id;
-rr.Documents=[new(){DocumentId=ruleDoc}];await SaveRule(ruleCase,rr);
-var rp=await owner.ProposeAdjustmentAsync(account,ruleCase,ruleLine,new(2028,1,1),null);
-var newer=await Rule(ruleCase,ruleLine,indexId,new(2027,2,1));newer.SharePercent=70;newer.Documents=rr.Documents;await SaveRule(ruleCase,newer);
-await Expect<AgreementValidationException>(()=>owner.DecideAdjustmentAsync(account,ruleCase,rp,true,"Rule changed"),"new effective rule makes proposal stale");
-rp=await owner.ProposeAdjustmentAsync(account,ruleCase,ruleLine,new(2028,1,1),null);
-await Manual(ruleCase,ruleLine,new(2027,6,1),1100);
-await Expect<AgreementValidationException>(()=>owner.DecideAdjustmentAsync(account,ruleCase,rp,true,"Price changed"),"manual price makes proposal stale");
-await Expect<AgreementValidationException>(()=>owner.ProposeAdjustmentAsync(account,ruleCase,ruleLine,new(2028,1,1),null),"manual price needs explicit matching index period");
-newer=await Rule(ruleCase,ruleLine,indexId,new(2027,7,1));newer.Documents=rr.Documents;await SaveRule(ruleCase,newer);
-rp=await owner.ProposeAdjustmentAsync(account,ruleCase,ruleLine,new(2028,1,1),null);await owner.DecideAdjustmentAsync(account,ruleCase,rp,true,"Checked document");
-var docBasis=(await owner.GenerateBasisAsync(account,ruleCase,AgreementDirection.Income,new(2028,1,1),new(2028,1,31))).Created.Single();
-var docBody=Body(await owner.GetBasisAsync(account,docBasis));
-var docCalc=System.Text.Json.JsonSerializer.Deserialize<AgreementAdjustmentCalculation>(docBody.Events.Single().Adjustments.Single().CalculationJson)!;
-Assert(docCalc.Rule.Documents.Single().DocumentId==ruleDoc && docCalc.ComparisonIndex!.Revision==3,"basis snapshots exact rule document and index revision");
-await owner.ApproveBasisAsync(account,docBasis,1);
-var lockedDoc=(await owner.GetBasisAsync(account,docBasis)).Snapshots[0].DataJson;
-await admin.RecordIndexValueAsync(account,indexId,new(2028,1,1),107,null,"Another revision");
-Assert((await owner.GetBasisAsync(account,docBasis)).Snapshots[0].DataJson==lockedDoc,"later index revision leaves approved basis unchanged");
-var limitCase=await NewAgreement();var limitLine=await Line(limitCase);var lr=await Rule(limitCase,limitLine);lr.Kind=AgreementAdjustmentKind.Limit;lr.CeilingPercent=5;await SaveRule(limitCase,lr);
-await Expect<AgreementValidationException>(()=>owner.ProposeAdjustmentAsync(account,limitCase,limitLine,new(2028,1,1),null),"service rejects empty limit choice");
-await Expect<AgreementValidationException>(()=>owner.ProposeAdjustmentAsync(account,limitCase,limitLine,new(2028,1,1),6),"service rejects excessive limit choice");
-var lp=await owner.ProposeAdjustmentAsync(account,limitCase,limitLine,new(2028,1,1),3);await owner.DecideAdjustmentAsync(account,limitCase,lp,true,"Chosen 3 percent");
-Assert((await owner.GetLinesAsync(account,limitCase)).Lines.Single().Prices[0].UnitPrice==1030,"service applies explicit permitted rate");
-var forbiddenChange=new SaveAgreementLineRequest{Revision=(await owner.GetAsync(account,staleId)).Revision,Name="Test line",StartDate=new(2027,1,1),FirstPayableDate=new(2027,1,1),Frequency=AgreementFrequency.Quarterly,EffectiveFrom=new(2027,4,1),UnitPrice=1000,Reason="New frequency"};
-await Expect<AgreementValidationException>(()=>owner.SaveLineAsync(account,staleId,staleLine,forbiddenChange),"claimed event locks payment anchor and frequency");
+await ComponentEditorChecks.Automatic(owner, new UserContext(ownerId,account), bulk);
 
-await admin.RecordIndexValueAsync(account,indexId,new(2029,1,1),108,null,"Next year");
-var nextAnnual=await owner.ProposeAdjustmentAsync(account,id,line,new(2029,1,1),null);
-var nextAnnualCalc=System.Text.Json.JsonSerializer.Deserialize<AgreementAdjustmentCalculation>((await owner.GetProcessingAsync(account,id)).Proposals.Single(x=>x.Id==nextAnnual).CalculationJson)!;
-Assert(nextAnnualCalc.BaseIndex!.Value==105 && nextAnnualCalc.NewPrice==1080,"latest basis carries exact revision associated with last applied price");
-var originalCase=await NewAgreement();var originalLine=await Line(originalCase);var originalRule=await Rule(originalCase,originalLine,indexId);
-originalRule.Basis=AgreementAdjustmentBasis.Original;originalRule.Addition=AgreementAdjustmentAddition.PercentagePoints;originalRule.AdditionPercent=2;
-await SaveRule(originalCase,originalRule);
-var originalProposal=await owner.ProposeAdjustmentAsync(account,originalCase,originalLine,new(2028,1,1),null);await owner.DecideAdjustmentAsync(account,originalCase,originalProposal,true,"First year");
-var originalNext=await owner.ProposeAdjustmentAsync(account,originalCase,originalLine,new(2029,1,1),null);
-Assert((await owner.GetProcessingAsync(account,originalCase)).Proposals.Single(x=>x.Id==originalNext).NewPrice==1100,"original basis does not compound earlier additions");
-var leapRule=new AgreementAdjustmentRule{EffectiveFrom=new(2024,1,1),FirstAllowedDate=new(2024,2,29),AnchorDate=new(2024,2,29),Anchor=AgreementAdjustmentAnchor.AnnualDate,IntervalMonths=12};
-Assert(AgreementAdjustmentCalculator.IsScheduled(leapRule,new(2024,1,1),new(2025,2,28)) && AgreementAdjustmentCalculator.IsScheduled(leapRule,new(2024,1,1),new(2028,2,29)),"annual adjustment anchor survives leap years");
-Console.WriteLine("All adjustment/basis tests passed. No external transport or email used.");
+// Exercise the actual Razor editor handlers and inspect rendered HTML without a browser.
+await ComponentEditorChecks.Run(owner, admin, new UserContext(ownerId,account), new UserContext(adminId,account), editable, editLine, indexId);
+
+Console.WriteLine("All automatic index, basis and active editing tests passed.");
 static void Assert(bool value,string name){if(!value)throw new Exception("FAIL: "+name);Console.WriteLine("PASS: "+name);}
 static async Task Expect<T>(Func<Task> action,string name) where T:Exception{try{await action();}catch(T){Console.WriteLine("PASS: "+name);return;}throw new Exception("FAIL: "+name);}
 sealed class Factory(DbContextOptions<TenantPlatformDbContext> options):IDbContextFactory<TenantPlatformDbContext>{public TenantPlatformDbContext CreateDbContext()=>new(options);}

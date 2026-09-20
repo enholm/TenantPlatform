@@ -38,6 +38,8 @@ else if (options is not null)
             <option value="">@L["AgreementSelect"]</option>
             @foreach (var value in AgreementPeriodCalculator.Currencies) { <option value="@value">@value</option> }
         </InputSelect><div class="form-text">@L["FinanceSetupHelp"]</div></div>
+        <div class="col-md-6"><label for="agreement-index" class="form-label">@L["ProcessingIndex"]</label><InputSelect id="agreement-index" class="form-select" @bind-Value="model.IndexId"><option value="">@L["AgreementNone"]</option>@foreach (var i in options.Indices) { <option value="@i.Id">@i.Name</option> }</InputSelect><div class="form-text">@L["AutoIndexSwitchHelp"]</div></div>
+        @if (model is AgreementDetailsDto { IndexSetupNeedsReview: true }) { <div class="col-12 alert alert-warning">@L["SimpleIndexReview"]<div><InputCheckbox id="resolve-index" @bind-Value="model.ResolveIndexSetup" /><label for="resolve-index">@L["SimpleIndexResolve"]</label></div></div> }
         <AgreementNoticeEditor Model="model" OriginalForm="originalForm" Existing="Id.HasValue" />
         <div class="col-md-6"><label for="building" class="form-label">@L["Building"]</label><InputSelect id="building" class="form-select" @bind-Value="model.BuildingId" @bind-Value:after="BuildingChanged">
             <option value="">@L["AgreementNone"]</option>

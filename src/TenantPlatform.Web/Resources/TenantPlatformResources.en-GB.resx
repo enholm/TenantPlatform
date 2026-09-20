@@ -2025,9 +2025,6 @@ This is a reminder, not a termination or renewal.</value>
   <data name="FinanceInvalidSettings" xml:space="preserve"><value>Select a supported financial direction and currency.</value></data>
   <data name="FinanceForecastHelp" xml:space="preserve"><value>These are expected amounts excluding tax, not recognised revenue or accounting accruals. No invoices are created. The search returns whole periods overlapping the range without clipping amounts.</value></data>
   <data name="FinanceAddLine" xml:space="preserve"><value>Add agreement line</value></data>
-  <data name="FinanceGroups" xml:space="preserve"><value>Delivery group</value></data>
-  <data name="FinanceAddGroup" xml:space="preserve"><value>Create group</value></data>
-  <data name="FinanceEditHelp" xml:space="preserve"><value>Drafts can change before activation. Afterwards, a later period boundary and reason are required. Delivery start and first payable date are locked. Use the separate closing action. New versions preserve history.</value></data>
   <data name="FinanceDeliveryStart" xml:space="preserve"><value>Delivery start</value></data>
   <data name="FinanceLastDelivery" xml:space="preserve"><value>Last delivery day (inclusive)</value></data>
   <data name="FinanceFirstPayable" xml:space="preserve"><value>First payable date</value></data>
@@ -2084,10 +2081,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="FinanceInvalidReference" xml:space="preserve"><value>The line, document or group must belong to the same agreement and account.</value></data>
   <data name="FinanceSourceCycle" xml:space="preserve"><value>Payment start cannot contain circular line references.</value></data>
   <data name="FinanceLineClosed" xml:space="preserve"><value>The line is not active or has already been ended/deactivated.</value></data>
-  <data name="FinanceBoundaryRequired" xml:space="preserve"><value>The change requires a reason and a later boundary valid for both the old and new period. Activated one-off lines cannot be repriced.</value></data>
-  <data name="FinanceStartLocked" xml:space="preserve"><value>Activated delivery start, payment basis and delivery end cannot change here. Use the separate closing action.</value></data>
   <data name="ProcessingIndices" xml:space="preserve"><value>Index register</value></data>
-  <data name="ProcessingIndexHelp" xml:space="preserve"><value>Indices belong to this account. Account administrators record values; corrections create a new revision.</value></data>
   <data name="ProcessingNewIndex" xml:space="preserve"><value>New index</value></data>
   <data name="ProcessingCode" xml:space="preserve"><value>Code</value></data>
   <data name="ProcessingResolution" xml:space="preserve"><value>Period resolution</value></data>
@@ -2103,8 +2097,6 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ProcessingHistory" xml:space="preserve"><value>Value history</value></data>
   <data name="ProcessingRevision" xml:space="preserve"><value>Revision</value></data>
   <data name="ProcessingEmpty" xml:space="preserve"><value>No results.</value></data>
-  <data name="ProcessingAdjustments" xml:space="preserve"><value>Price adjustments</value></data>
-  <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Calculate proposals and review the evidence before explicit approval. No invoices or emails are sent.</value></data>
   <data name="ProcessingNewRule" xml:space="preserve"><value>New rule version</value></data>
   <data name="ProcessingRuleHelp" xml:space="preserve"><value>Rules are saved as dated versions. Adjustment frequency is independent of billing frequency. Floor and ceiling apply to the total rate after additions.</value></data>
   <data name="ProcessingLine" xml:space="preserve"><value>Agreement line</value></data>
@@ -2180,23 +2172,14 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ProcessingRuleVersion" xml:space="preserve"><value>Rule version</value></data>
   <data name="ProcessingYes" xml:space="preserve"><value>Yes</value></data>
   <data name="ProcessingNo" xml:space="preserve"><value>No</value></data>
-  <data name="ProcessingCalculationOrder" xml:space="preserve"><value>Index ratio → agreed share → percentage points or markup → reduction rule → total floor/ceiling → rounding. Original basis does not compound previous additions.</value></data>
   <data name="ProcessingBasePrice" xml:space="preserve"><value>Base price</value></data>
   <data name="ProcessingRawIndex" xml:space="preserve"><value>Index change</value></data>
   <data name="ProcessingAppliedRate" xml:space="preserve"><value>Total rate against base price</value></data>
   <data name="ProcessingComparisonPeriod" xml:space="preserve"><value>Comparison period</value></data>
   <data name="ProcessingTaxExclusive" xml:space="preserve"><value>Amounts exclude tax; tax has not been calculated.</value></data>
-  <data name="ProcessingPeriodLocked" xml:space="preserve"><value>Billing frequency and anchor cannot change after basis generation. Use a new line for a new schedule.</value></data>
   <data name="ProcessingReasonRequired" xml:space="preserve"><value>Enter a reason of 1–2000 characters.</value></data>
   <data name="ProcessingInvalidIndex" xml:space="preserve"><value>Check the index fields. Value must be positive and period must be the first day of the correct month, quarter or year.</value></data>
-  <data name="ProcessingInvalidRule" xml:space="preserve"><value>Rule combination or calculation result is invalid. Check dates, basis, percentages, floor and ceiling.</value></data>
-  <data name="ProcessingRuleOrder" xml:space="preserve"><value>A new rule version must start after previously recorded rules.</value></data>
   <data name="ProcessingMissingIndex" xml:space="preserve"><value>The exact base or comparison value is missing. Record the index period before calculation.</value></data>
-  <data name="ProcessingChoiceRequired" xml:space="preserve"><value>An allowed range requires an explicitly chosen percentage.</value></data>
-  <data name="ProcessingOutsideLimit" xml:space="preserve"><value>Chosen adjustment is outside the allowed range.</value></data>
-  <data name="ProcessingFixedPrice" xml:space="preserve"><value>Fixed price has no adjustment.</value></data>
-  <data name="ProcessingMissingRule" xml:space="preserve"><value>No effective adjustment rule on this date.</value></data>
-  <data name="ProcessingNotDue" xml:space="preserve"><value>The date is not an allowed adjustment date for the current rule and line.</value></data>
   <data name="ProcessingAlreadyAdjusted" xml:space="preserve"><value>The adjustment is already applied or the interval since the previous adjustment is too short.</value></data>
   <data name="ProcessingStale" xml:space="preserve"><value>Inputs have changed. Recalculate the proposal or regenerate the draft and review the new revision before approval.</value></data>
   <data name="ProcessingWrongDirection" xml:space="preserve"><value>The agreement direction does not match the requested basis type.</value></data>
@@ -2204,6 +2187,25 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ProcessingInvoiceDateChanged" xml:space="preserve"><value>The planned invoice date changed. Cancel the draft and generate a new basis.</value></data>
   <data name="ProcessingCancelCorrectionsFirst" xml:space="preserve"><value>Cancel related corrections before the original basis.</value></data>
   <data name="ProcessingNoDifference" xml:space="preserve"><value>No difference from the current approved net basis.</value></data>
-  <data name="ProcessingPriceIndexBasisChanged" xml:space="preserve"><value>The current price has no unambiguous index period after a manual price change. Record a new rule with this price version and the correct base period.</value></data>
   <data name="ProcessingTreatmentHistory" xml:space="preserve"><value>Processing history</value></data>
+  <data name="SimpleIndexRequired" xml:space="preserve"><value>Choose an index on the agreement before enabling index adjustment.</value></data>
+  <data name="SimpleIndexRegulated" xml:space="preserve"><value>Index adjusted</value></data>
+  <data name="SimpleNotRegulated" xml:space="preserve"><value>This line is not index adjusted.</value></data>
+  <data name="SimpleIndexReview" xml:space="preserve"><value>Review the previous index setup. Current prices are preserved. Select an index, review each line’s yes/no setting and confirm the setup in agreement editing before further adjustments.</value></data>
+  <data name="SimpleIndexResolve" xml:space="preserve"><value>I have reviewed the setup. Future adjustments use 100% of the index change.</value></data>
+  <data name="SimpleDuplicatePeriod" xml:space="preserve"><value>This period already exists. Use Edit on the registered period.</value></data>
+  <data name="SimpleAffectedBases" xml:space="preserve"><value>These bases are affected. Regenerate stale drafts or create a correction for approved bases. If the invoice date changed, cancel the draft and generate it again.</value></data>
+  <data name="FinanceEditHelp" xml:space="preserve"><value>Active lines can be edited directly. Financial corrections create versions from the effective date and require a reason. Documents and descriptions can change without changing the price. Approved bases are preserved.</value></data>
+  <data name="ProcessingAdjustmentHelp" xml:space="preserve"><value>Select a registered index period and preview the lines. The full change applies, including decreases. The first adjustment compares with the preceding registered period; later adjustments use the last applied period for that index. Latest index revisions are used. The effective date is the selected period’s start date.</value></data>
+  <data name="ProcessingCalculationOrder" xml:space="preserve"><value>New price = current price × comparison value / base value, rounded to two decimal places.</value></data>
+  <data name="SimpleSuperseded" xml:space="preserve"><value>Superseded period date</value></data>
+  <data name="SimpleDuplicateIndex" xml:space="preserve"><value>An index with this code already exists.</value></data>
+  <data name="ProcessingIndexHelp" xml:space="preserve"><value>Register index levels and use Edit to correct metadata or periods. Corrections preserve previous revisions and prices.</value></data>
+  <data name="ProcessingPeriodLocked" xml:space="preserve"><value>A payment event has conflicting invoice dates. Review the periods and regenerate the basis.</value></data>
+  <data name="AutoIndexHelp" xml:space="preserve"><value>Index-adjusted lines are calculated automatically in forecasts and financial bases. Register index levels once; no approval per line is needed. New levels apply from the period start. Where later levels are missing, the last known price is carried forward.</value></data>
+  <data name="AutoLegacyHistory" xml:space="preserve"><value>Previous manual adjustments (history)</value></data>
+  <data name="AutoIndexCalculation" xml:space="preserve"><value>Automatic index calculation</value></data>
+  <data name="AutoRegisteredPrice" xml:space="preserve"><value>Registered base price</value></data>
+  <data name="AutoIndexSwitchHelp" xml:space="preserve"><value>The first index selection applies from the agreement start. Later switches apply from today’s UTC date and preserve earlier calculation periods.</value></data>
+  <data name="ProcessingAdjustments" xml:space="preserve"><value>Index adjustment and history</value></data>
 </root>

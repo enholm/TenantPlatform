@@ -93,7 +93,8 @@ public partial class AgreementService(
             .ToDictionaryAsync(x => x.Id, x => x.FirstName + " " + x.LastName, cancellationToken);
         var details = new AgreementDetailsDto
         {
-            Direction = a.Direction, Currency = a.Currency,
+            Direction = a.Direction, Currency = a.Currency, IndexId = a.IndexId, IndexSetupNeedsReview = a.IndexSetupNeedsReview,
+            IndexName = await db.AgreementIndexRecords.Where(x => x.AccountId == accountId && x.Id == a.IndexId).Select(x => x.Name).SingleOrDefaultAsync(cancellationToken),
             Id = a.Id, Title = a.Title, Description = a.Description, Type = a.Type, Status = a.Status,
             CounterpartyOrganizationId = a.CounterpartyOrganizationId, OwnerUserId = a.OwnerUserId,
             StartDate = a.StartDate, EndDate = a.EndDate, NoticeDeadline = a.NoticeDeadline, RenewalDate = a.RenewalDate,
@@ -134,6 +135,7 @@ public partial class AgreementService(
         else if (!(await RequireMemberAsync(db, accountId, cancellationToken)).Admin) throw new UnauthorizedAccessException();
         return new AgreementOptionsDto
         {
+            Indices = await db.AgreementIndexRecords.Where(x => x.AccountId == accountId).OrderBy(x => x.Name).Select(x => new AgreementOptionDto(x.Id, x.Name, null)).ToListAsync(cancellationToken),
             Counterparties = await db.Organizations.Where(x => x.AccountId == accountId).OrderBy(x => x.Name)
                 .Select(x => new AgreementOptionDto(x.Id, x.Name, null)).ToListAsync(cancellationToken),
             Members = await db.UserAccounts.Where(x => x.AccountId == accountId && x.User.IsActive).OrderBy(x => x.User.FirstName)
@@ -159,6 +161,7 @@ public partial class AgreementService(
         Apply(a, request); Touch(a, userId);
         NoticeHistory(db, a, new AgreementNoticeSnapshot(), AgreementNoticeAction.RuleChanged);
         db.Agreements.Add(a);
+        if (a.IndexId.HasValue) AddIndexSelection(db, a, a.IndexId, 1, a.StartDate);
         await AgreementDeadlineSynchronizer.SynchronizeAsync(db, a, Clock.GetUtcNow(), userId, cancellationToken);
         await SaveAsync(db, cancellationToken);
         return a.Id;
@@ -167,6 +170,8 @@ public partial class AgreementService(
     public async Task UpdateAsync(Guid accountId, Guid agreementId, SaveAgreementRequest request, CancellationToken cancellationToken = default)
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await LockFinancialAsync(db, accountId, agreementId, cancellationToken);
         var (a, _, manage) = await RequireAsync(db, accountId, agreementId, true, false, cancellationToken);
         CheckRevision(a, request.Revision);
         if (!manage && request.OwnerUserId != a.OwnerUserId) throw new UnauthorizedAccessException();
@@ -185,6 +190,21 @@ public partial class AgreementService(
                 throw new AgreementValidationException("NoticeInvalidPeriod");
             a.CurrentPeriodStartDate = request.NewPeriodStartDate.Value;
         }
+        if (!request.IndexId.HasValue && (!a.IndexSetupNeedsReview || request.ResolveIndexSetup) &&
+            (await db.AgreementLineVersions.Where(x => x.AccountId == accountId && x.AgreementId == agreementId).ToListAsync(cancellationToken))
+                .GroupBy(x => x.LineId).Any(g => g.MaxBy(x => x.Sequence)!.IndexRegulated))
+            throw new AgreementValidationException("SimpleIndexRequired");
+        if (a.IndexId != request.IndexId || request.ResolveIndexSetup)
+            foreach (var proposal in await db.AgreementAdjustmentProposalRecords.Where(x => x.AccountId == accountId && x.AgreementId == agreementId && x.Status == AgreementProposalStatus.Pending).ToListAsync(cancellationToken))
+                proposal.Status = AgreementProposalStatus.Stale;
+        if (a.IndexId != request.IndexId)
+        {
+            var last = await db.AgreementIndexSelections.Where(x => x.AccountId == accountId && x.AgreementId == agreementId)
+                .OrderByDescending(x => x.Sequence).FirstOrDefaultAsync(cancellationToken);
+            var today = DateOnly.FromDateTime(Clock.GetUtcNow().UtcDateTime);
+            AddIndexSelection(db, a, request.IndexId, (last?.Sequence ?? 0) + 1,
+                last is null ? a.StartDate : today > a.StartDate ? today : a.StartDate);
+        }
         var previousOwner = a.OwnerUserId;
         Apply(a, request); Touch(a, userContext.Current.UserId);
         NoticeHistory(db, a, before, request.BeginNewPeriod ? AgreementNoticeAction.PeriodStarted : AgreementNoticeAction.RuleChanged);
@@ -201,6 +221,7 @@ public partial class AgreementService(
             }
         }
         await SaveAsync(db, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task SetAccessAsync(Guid accountId, Guid agreementId, Guid userId, AgreementAccessLevel? level, Guid revision, CancellationToken cancellationToken = default)
@@ -287,8 +308,14 @@ public partial class AgreementService(
         catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: "23503" })
         { throw new AgreementValidationException("AgreementReferenceChanged"); }
     }
+    private void AddIndexSelection(TenantPlatformDbContext db, Agreement a, Guid? indexId, int sequence, DateOnly date) =>
+        db.AgreementIndexSelections.Add(new() { Id = Guid.NewGuid(), AccountId = a.AccountId, AgreementId = a.Id,
+            IndexId = indexId, Sequence = sequence, EffectiveFrom = date, RecordedUtc = Clock.GetUtcNow(), ActorUserId = userContext.Current.UserId });
+
     private static void Apply(Agreement a, SaveAgreementRequest r)
     {
+        a.IndexId = r.IndexId;
+        if (r.ResolveIndexSetup) a.IndexSetupNeedsReview = false;
         a.Direction = r.Direction; a.Currency = string.IsNullOrEmpty(r.Currency) ? null : r.Currency;
         a.Title = r.Title.Trim(); a.Description = r.Description?.Trim(); a.Type = r.Type;
         a.CounterpartyOrganizationId = r.CounterpartyOrganizationId; a.OwnerUserId = r.OwnerUserId; a.Status = r.Status;
@@ -300,6 +327,8 @@ public partial class AgreementService(
     }
     private static async Task ValidateAsync(TenantPlatformDbContext db, Guid accountId, SaveAgreementRequest r, CancellationToken ct)
     {
+        if (r.IndexId.HasValue && !await db.AgreementIndexRecords.AnyAsync(x => x.AccountId == accountId && x.Id == r.IndexId, ct))
+            throw new AgreementValidationException("FinanceInvalidReference");
         if ((r.Direction.HasValue && !Enum.IsDefined(r.Direction.Value)) ||
             (!string.IsNullOrEmpty(r.Currency) && !AgreementPeriodCalculator.Currencies.Contains(r.Currency)))
             throw new AgreementValidationException("FinanceInvalidSettings");

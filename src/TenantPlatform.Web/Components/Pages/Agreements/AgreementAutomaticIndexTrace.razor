@@ -1,0 +1,14 @@
+@if (Adjustments.Count > 0)
+{
+    <details class="mt-1"><summary>@L["AutoIndexCalculation"]</summary>
+        @foreach (var a in Adjustments)
+        {
+            <p><strong>@a.IndexName</strong> · @L["FinanceEffectiveFrom"]: @a.EffectiveDate.ToString("d")<br />
+                @a.OldPrice.ToString("N2") × @a.ComparisonIndex.Value / @a.BaseIndex.Value = @a.NewPrice.ToString("N2") (@a.Percent.ToString("N4") %)<br />
+                @L["ProcessingBasePeriod"]: @a.BaseIndex.Period.ToString("d") · @L["ProcessingRevision"] @a.BaseIndex.Revision<br />
+                @L["ProcessingComparisonPeriod"]: @a.ComparisonIndex.Period.ToString("d") · @L["ProcessingRevision"] @a.ComparisonIndex.Revision
+            </p>
+        }
+    </details>
+}
+@code { [Parameter] public IReadOnlyList<AgreementAutomaticAdjustment> Adjustments { get; set; } = []; }

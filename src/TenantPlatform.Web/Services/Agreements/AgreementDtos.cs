@@ -8,6 +8,8 @@ public class SaveAgreementRequest
     public string? Description { get; set; }
     public AgreementDirection? Direction { get; set; }
     public string? Currency { get; set; }
+    public Guid? IndexId { get; set; }
+    public bool ResolveIndexSetup { get; set; }
     public AgreementType Type { get; set; } = AgreementType.Other;
     public Guid CounterpartyOrganizationId { get; set; }
     public Guid OwnerUserId { get; set; }
@@ -32,6 +34,8 @@ public class SaveAgreementRequest
 
 public class AgreementDetailsDto : SaveAgreementRequest
 {
+    public bool IndexSetupNeedsReview { get; init; }
+    public string? IndexName { get; init; }
     public DateOnly CurrentPeriodStartDate { get; init; }
     public AgreementNoticeSnapshot NoticeSnapshot { get; set; } = new();
     public string? TerminationRegisteredByName { get; set; }
@@ -66,6 +70,7 @@ public class AgreementFilter
 }
 public class AgreementOptionsDto
 {
+    public List<AgreementOptionDto> Indices { get; init; } = [];
     public List<AgreementOptionDto> Counterparties { get; init; } = [];
     public List<AgreementOptionDto> Members { get; init; } = [];
     public List<AgreementOptionDto> Buildings { get; init; } = [];

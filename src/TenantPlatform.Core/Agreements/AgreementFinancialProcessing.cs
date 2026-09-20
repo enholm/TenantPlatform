@@ -28,12 +28,15 @@ public class AgreementIndexValue
     public Guid IndexId { get; set; }
     public DateOnly Period { get; set; }
     public int Revision { get; set; }
+    public bool Superseded { get; set; }
+    public Guid PeriodKey { get; set; }
     public decimal Value { get; set; }
     public DateOnly? PublishedDate { get; set; }
     public DateTimeOffset RecordedUtc { get; set; }
     public Guid ActorUserId { get; set; }
     public string Reason { get; set; } = "";
 }
+// Read-only legacy configuration, retained solely for historical snapshots and migration review.
 public class AgreementAdjustmentRule
 {
     public Guid Id { get; set; }
@@ -77,7 +80,8 @@ public class AgreementAdjustmentProposal
     public Guid AccountId { get; set; }
     public Guid AgreementId { get; set; }
     public Guid LineId { get; set; }
-    public Guid RuleId { get; set; }
+    public Guid? RuleId { get; set; }
+    public Guid? IndexId { get; set; }
     public DateOnly ScheduledDate { get; set; }
     public DateOnly EffectiveDate { get; set; }
     public decimal? ChosenPercent { get; set; }

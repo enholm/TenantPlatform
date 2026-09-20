@@ -13,7 +13,7 @@ public partial class AgreementService
     }
     private static List<AgreementCalculatedPeriod> CalculateSource(FinancialSource source, DateOnly from, DateOnly to) =>
         AgreementPeriodCalculator.Calculate(source.Agreement.Id, source.Agreement.Direction ?? throw new AgreementValidationException("FinanceSetupRequired"),
-            source.Agreement.Currency ?? throw new AgreementValidationException("FinanceSetupRequired"), source.Versions, source.Prices, from, to);
+            source.Agreement.Currency ?? throw new AgreementValidationException("FinanceSetupRequired"), source.Versions, source.Prices, from, to, source.AutomaticPrices);
     private static List<AgreementCalculatedPeriod> InvoicePeriods(FinancialSource source, DateOnly from, DateOnly to)
     {
         if (from > to || from.Year < 3 || to.Year > 9996 || to.DayNumber - from.DayNumber > 366) throw new AgreementValidationException("FinanceInvalidRange");
@@ -124,6 +124,20 @@ public partial class AgreementService
             result.Add(new(b, data.AgreementTitle, data.CounterpartyName, data.Currency, data.Events.Sum(x => x.Amount)));
         }
         return result;
+    }
+    public async Task<List<AgreementBasisDetails>> GetAffectedBasesAsync(Guid accountId, Guid agreementId, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        await RequireAsync(db, accountId, agreementId, false, false, ct);
+        var ids = await db.AgreementBasisRecords.AsNoTracking().Where(x => x.AccountId == accountId && x.AgreementId == agreementId && x.Status != AgreementBasisStatus.Cancelled)
+            .OrderBy(x => x.InvoiceDate).Select(x => x.Id).ToListAsync(ct);
+        var affected = new List<AgreementBasisDetails>();
+        foreach (var id in ids)
+        {
+            var details = await GetBasisAsync(accountId, id, ct);
+            if (details.Stale || details.NeedsCorrection) affected.Add(details);
+        }
+        return affected;
     }
     public async Task<AgreementBasisDetails> GetBasisAsync(Guid accountId, Guid basisId, CancellationToken ct = default)
     {

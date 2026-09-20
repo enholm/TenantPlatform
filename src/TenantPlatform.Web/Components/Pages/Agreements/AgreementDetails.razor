@@ -44,6 +44,8 @@ else if (details is not null)
     </dl><p class="text-body-secondary mt-3 mb-0">@L["AgreementPeriodHelp"]</p></div></div>
 
     <div class="card mb-3"><div class="card-body">
+        <p><strong>@L["ProcessingIndex"]:</strong> @(details.IndexName ?? L["AgreementNone"].Value)</p>
+        @if (details.IndexSetupNeedsReview) { <div class="alert alert-warning">@L["SimpleIndexReview"]</div> }
         <strong>@L["FinanceDirection"]:</strong> @(details.Direction.HasValue ? L[$"FinanceDirection{details.Direction}"] : L["FinanceUnclassified"]) · @details.Currency
         <a class="btn btn-outline-primary ms-2" href="@($"/agreements/{Id}/lines")">@L["FinanceLinesAndForecast"]</a>
     </div></div>
