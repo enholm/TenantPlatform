@@ -39,13 +39,42 @@ else if (result is not null)
     else
     {
         <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
-        <thead><tr><th>@L["Name"]</th><th>@L["AgreementCounterparty"]</th><th>@L["AgreementType"]</th><th>@L["Status"]</th><th>@L["AgreementOwner"]</th><th>@L["AgreementEndDate"]</th><th>@L["AgreementNoticeDeadline"]</th></tr></thead>
+        <thead><tr><th>@L["Name"]</th><th>@L["AgreementCounterparty"]</th><th>@L["AgreementType"]</th><th>@L["Status"]</th><th>@L["AgreementOwner"]</th><th>@L["AgreementEndDate"]</th><th>@L["AgreementNoticeDeadline"]</th><th></th></tr></thead>
         <tbody>@foreach (var item in result.Items)
         {
-            <tr><td><a href="@($"/agreements/{item.Id}")">@item.Title</a>
-                @if (item.IsArchived) { <span class="badge text-bg-secondary">@L["FollowupArchived"]</span> }
-            </td><td>@item.CounterpartyName</td><td>@L[$"AgreementType{item.Type}"]</td>
-            <td><span class="badge text-bg-secondary">@L[$"AgreementStatus{item.Status}"]</span></td><td>@item.OwnerName</td><td>@item.EndDate?.ToString("d")</td><td>@item.NoticeDeadline?.ToString("d")</td></tr>
+            <tr>
+                <td>
+                    @item.Title
+                    @if (item.IsArchived) 
+                    { 
+                        <span class="badge text-bg-secondary">@L["FollowupArchived"]</span> 
+                    }
+                </td>
+            <td>
+                @item.CounterpartyName
+            </td>
+            <td>
+                @L[$"AgreementType{item.Type}"]
+            </td>
+            <td>
+                <span class="badge text-bg-secondary">@L[$"AgreementStatus{item.Status}"]</span>
+            </td>
+            <td>
+                @item.OwnerName
+            </td>
+            <td>
+                @item.EndDate?.ToString("d")
+            </td>
+            <td>
+                @item.NoticeDeadline?.ToString("d")
+            </td>
+            <td class="text-end">
+                <a href="@($"/agreements/{item.Id}")"
+                    class="btn btn-outline-secondary btn-sm">
+                    @L["Open"]
+                </a>
+            </td>            
+        </tr>
         }</tbody></table></div></div>
         <div class="d-flex justify-content-between align-items-center mt-3">
             <button class="btn btn-outline-secondary" disabled="@(result.Page <= 1)" @onclick="PreviousAsync">@L["AgreementPrevious"]</button>
