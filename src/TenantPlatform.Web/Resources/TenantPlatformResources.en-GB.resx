@@ -2236,4 +2236,26 @@ This is a reminder, not a termination or renewal.</value>
   <data name="BulkResults" xml:space="preserve"><value>Generation results</value></data>
   <data name="BulkFollowupCount" xml:space="preserve"><value>Agreements requiring follow-up: {0}</value></data>
   <data name="BulkCreatedTotals" xml:space="preserve"><value>Created bases by currency</value></data>
+  <data name="ApprovalTitle" xml:space="preserve"><value>Approve and lock bases</value></data>
+  <data name="ApprovalHelp" xml:space="preserve"><value>Review and select drafts to approve and lock. This action does not transfer, post, issue or send invoices.</value></data>
+  <data name="ApprovalReturn" xml:space="preserve"><value>Back to selection</value></data>
+  <data name="ApprovalSelectionChanged" xml:space="preserve"><value>Selection has been checked again. Changed or no longer eligible bases have been removed from the selection.</value></data>
+  <data name="ApprovalBusy" xml:space="preserve"><value>Approving and locking selected bases …</value></data>
+  <data name="ApprovalFrom" xml:space="preserve"><value>Invoice date from</value></data>
+  <data name="ApprovalTo" xml:space="preserve"><value>Invoice date to</value></data>
+  <data name="ApprovalInvoiceDate" xml:space="preserve"><value>Planned / expected invoice date</value></data>
+  <data name="ApprovalRefresh" xml:space="preserve"><value>Refresh and review the list</value></data>
+  <data name="ApprovalSelectAll" xml:space="preserve"><value>Select all eligible bases in the entire filtered result</value></data>
+  <data name="ApprovalSelected" xml:space="preserve"><value>Selected bases across all pages: {0}</value></data>
+  <data name="ApprovalEmpty" xml:space="preserve"><value>No drafts await approval with these filters.</value></data>
+  <data name="ApprovalBasis" xml:space="preserve"><value>Basis</value></data>
+  <data name="ApprovalSelectBasis" xml:space="preserve"><value>Select basis {0}</value></data>
+  <data name="ApprovalResults" xml:space="preserve"><value>Approval results</value></data>
+  <data name="ApprovalResultCounts" xml:space="preserve"><value>Approved: {0}. Already processed: {1}. Failed: {2}.</value></data>
+  <data name="ApprovalOutcomeApproved" xml:space="preserve"><value>Approved and locked</value></data>
+  <data name="ApprovalOutcomeAlreadyProcessed" xml:space="preserve"><value>Already processed</value></data>
+  <data name="ApprovalOutcomeFailed" xml:space="preserve"><value>Not approved</value></data>
+  <data name="ApprovalReviewRequired" xml:space="preserve"><value>Review required. Open the details or refresh the list before trying again.</value></data>
+  <data name="ApprovalPermissionRequired" xml:space="preserve"><value>You can view this basis but do not have permission to approve for this agreement.</value></data>
+  <data name="ApprovalAccessDenied" xml:space="preserve"><value>You do not have access or approval permission for this basis.</value></data>
 </root>

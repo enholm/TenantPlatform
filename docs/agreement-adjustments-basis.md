@@ -195,3 +195,44 @@ eller varig kjøringshistorikk er innført. Ved avbrudd kan forhåndsvisning og
 kjøring gjentas trygt. Svært store avtaleutvalg er ikke lasttestet.
 Regresjonstestene omfatter tjenesteflyten og rendering/handlinger i de faktiske
 Razor-komponentene; dette erstatter ikke en nettlesertest av visuell utforming.
+
+## Samlet godkjenning og låsing
+
+Grunnlagsoversikten `/agreements/bases` har en handling til
+`/agreements/bases/approve`. Enkeltgodkjenning er beholdt. Den samlede siden
+viser tilgjengelige utkast, med filter på avtalepart, avtale, fakturadato og
+økonomisk retning. Inntekter og kostnader merkes separat, og valgte beløp
+summeres per valuta og retning, eksklusive avgift.
+
+Listen har 25 rader per side, men tjenesten returnerer hele det filtrerte
+resultatet uten grensen på 500 fra den ordinære grunnlagsoversikten. «Velg
+alle» velger konkrete grunnlags-ID-er og revisjoner i hele resultatet.
+Sidebytte beholder utvalget. Nye grunnlag legges ikke til automatisk.
+Filterendringer fjerner hele utvalget umiddelbart.
+
+Detaljer vises med den eksisterende detaljkomponenten inne på siden.
+«Tilbake til utvalget» leser listen på nytt og fjerner valgte grunnlag som ikke
+lenger er godkjennbare eller har fått ny revisjon. Uendret utvalg og side
+beholdes. Utvalget ligger bare i sidens minne; en full nettleseroppdatering
+starter et nytt utvalg.
+
+`ApproveBasesAsync` og `ApproveBasisAsync` bruker samme private
+godkjenningsoperasjon. Den tar eksisterende konto-/avtalelås, verifiserer
+tilgang og godkjenningsrettighet, status, revisjon og øyeblikksbildets
+fingeravtrykk mot dagens beregningsdata. Hvert grunnlag behandles i egen
+transaksjon. Bare status, godkjenner, tidspunkt og avtalens revisjon oppdateres;
+verken beløp eller øyeblikksbilde regenereres. Allerede godkjente grunnlag
+rapporteres som behandlet uten ny lagring. Enkeltgodkjenning beholder sin
+opprinnelige kontroll av forespurt revisjon også ved gjentatte kall.
+
+Vellykkede og allerede behandlede grunnlag fjernes fra den ventende listen.
+Feil vises per grunnlag, og mislykkede rader må kontrolleres på nytt via
+detaljer eller oppdatering av listen før nytt utvalg. Godkjenning setter ikke i
+gang overføring, bokføring, fakturautstedelse eller sending.
+
+Testene dekker delvis feil, revisjons- og prisendringer, korreksjoner,
+rettigheter, kundeisolasjon, samtidige individuelle/samlede godkjenninger,
+uforandrede øyeblikksbilder, godkjenner/tidspunkt, sidebytte, eksplisitt utvalg
+og retur fra detaljer. UI-testene kjører de faktiske Razor-komponentene i en
+renderer; nettleserbasert visuell kontroll er ikke utført i dette miljøet.
+Store utvalg utover regresjonstestene er ikke lasttestet.

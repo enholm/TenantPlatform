@@ -7,7 +7,8 @@
 @inject ILogger<AgreementBasisDetailsPage> Logger
 @using System.Text.Json
 
-<PageTitle>@L["ProcessingBasisDetails"]</PageTitle><a href="/agreements/bases">@L["ProcessingBases"]</a><h1>@L["ProcessingBasisDetails"]</h1><p>@L["ProcessingBasisHelp"]</p>
+<PageTitle>@L["ProcessingBasisDetails"]</PageTitle>@if (ReturnToApproval.HasDelegate) { <button class="btn btn-link ps-0" disabled="@busy" @onclick="() => ReturnToApproval.InvokeAsync()">@L["ApprovalReturn"]</button> }
+else { <a href="/agreements/bases">@L["ProcessingBases"]</a> }<h1>@L["ProcessingBasisDetails"]</h1><p>@L["ProcessingBasisHelp"]</p>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (busy) { <p role="status">@L["Loading"]</p> }
 
@@ -48,6 +49,7 @@ var body=JsonSerializer.Deserialize<AgreementBasisData>(snapshot.DataJson)!;
 
 @code {
     [Parameter] public Guid BasisId {get;set;}
+    [Parameter] public EventCallback ReturnToApproval { get; set; }
     private AgreementBasisDetails? data;
     private string reason="";
     protected override Task OnParametersSetAsync()=>Run(Load);

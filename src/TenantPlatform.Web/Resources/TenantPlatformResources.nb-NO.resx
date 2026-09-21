@@ -2272,4 +2272,26 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="BulkResults" xml:space="preserve"><value>Resultat av generering</value></data>
   <data name="BulkFollowupCount" xml:space="preserve"><value>Avtaler som krever oppfølging: {0}</value></data>
   <data name="BulkCreatedTotals" xml:space="preserve"><value>Opprettede grunnlag per valuta</value></data>
+  <data name="ApprovalTitle" xml:space="preserve"><value>Godkjenn og lås grunnlag</value></data>
+  <data name="ApprovalHelp" xml:space="preserve"><value>Kontroller og velg utkast som skal godkjennes og låses. Handlingen overfører, bokfører, utsteder eller sender ingen fakturaer.</value></data>
+  <data name="ApprovalReturn" xml:space="preserve"><value>Tilbake til utvalget</value></data>
+  <data name="ApprovalSelectionChanged" xml:space="preserve"><value>Utvalget er kontrollert på nytt. Endrede eller ikke lenger godkjennbare grunnlag er fjernet fra utvalget.</value></data>
+  <data name="ApprovalBusy" xml:space="preserve"><value>Godkjenner og låser valgte grunnlag …</value></data>
+  <data name="ApprovalFrom" xml:space="preserve"><value>Fakturadato fra</value></data>
+  <data name="ApprovalTo" xml:space="preserve"><value>Fakturadato til</value></data>
+  <data name="ApprovalInvoiceDate" xml:space="preserve"><value>Planlagt / forventet fakturadato</value></data>
+  <data name="ApprovalRefresh" xml:space="preserve"><value>Oppdater og kontroller listen på nytt</value></data>
+  <data name="ApprovalSelectAll" xml:space="preserve"><value>Velg alle godkjennbare i hele det filtrerte resultatet</value></data>
+  <data name="ApprovalSelected" xml:space="preserve"><value>Valgte grunnlag på tvers av alle sider: {0}</value></data>
+  <data name="ApprovalEmpty" xml:space="preserve"><value>Ingen utkast venter på godkjenning med disse filtrene.</value></data>
+  <data name="ApprovalBasis" xml:space="preserve"><value>Grunnlag</value></data>
+  <data name="ApprovalSelectBasis" xml:space="preserve"><value>Velg grunnlag {0}</value></data>
+  <data name="ApprovalResults" xml:space="preserve"><value>Resultat av godkjenning</value></data>
+  <data name="ApprovalResultCounts" xml:space="preserve"><value>Godkjent: {0}. Allerede behandlet: {1}. Feilet: {2}.</value></data>
+  <data name="ApprovalOutcomeApproved" xml:space="preserve"><value>Godkjent og låst</value></data>
+  <data name="ApprovalOutcomeAlreadyProcessed" xml:space="preserve"><value>Allerede behandlet</value></data>
+  <data name="ApprovalOutcomeFailed" xml:space="preserve"><value>Ikke godkjent</value></data>
+  <data name="ApprovalReviewRequired" xml:space="preserve"><value>Krever ny kontroll. Åpne detaljene eller oppdater listen før nytt forsøk.</value></data>
+  <data name="ApprovalPermissionRequired" xml:space="preserve"><value>Du har lesetilgang, men mangler rettighet til å godkjenne denne avtalen.</value></data>
+  <data name="ApprovalAccessDenied" xml:space="preserve"><value>Du har ikke tilgang eller godkjenningsrettighet for dette grunnlaget.</value></data>
 </root>

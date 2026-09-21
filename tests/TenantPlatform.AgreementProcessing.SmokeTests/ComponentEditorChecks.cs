@@ -95,6 +95,71 @@ static class ComponentEditorChecks
             Require(results.Values.Sum(x => x.Created.Count) == 2, "second click does not process completed selection again");
         });
     }
+    public static async Task Approvals(IAgreementService service, ICurrentUserContextService context, Guid party, Guid agreement,
+        Guid euroBasis, Guid costBasis, Func<Task<Guid>> createLater)
+    {
+        await Check(service, context, typeof(AgreementBases), new(), (component, html) =>
+        {
+            Require(html().Contains("href=\"/agreements/bases/approve\""), "basis overview links to collective approval");
+            Require(html().Contains("/agreements/bases/"), "basis overview retains individual detail links");
+            return Task.CompletedTask;
+        });
+        await Check(service, context, typeof(AgreementBasisApproval), new(), async (component, html) =>
+        {
+            Set(component, "counterpartyId", party); Set(component, "agreementId", agreement);
+            await (Task)Call(component, "FiltersChanged")!; Refresh(component);
+            var selected = (Dictionary<Guid, int>)Field(component, "selected")!;
+            var rows = (List<AgreementBasisApprovalItem>)Field(component, "items")!;
+            Require(rows.Count == 30, "approval list includes pending rows beyond the first page");
+            Require(System.Text.RegularExpressions.Regex.IsMatch(html(), "id=\"approval-submit\"[^>]*disabled"), "approve button disabled with empty selection");
+            Call(component, "SelectAll"); Call(component, "Next"); Refresh(component);
+            Require(selected.Count == 30 && (int)Field(component, "page")! == 2, "select all spans pages and survives page navigation");
+            var later = await createLater(); await (Task)Call(component, "Refresh")!; Refresh(component);
+            Require(selected.Count == 30 && !selected.ContainsKey(later), "new drafts do not silently join an existing selection");
+            var reviewed = selected.First(); Call(component, "OpenDetails", reviewed.Key); Refresh(component);
+            Require((Guid?)Field(component, "reviewId") == reviewed.Key && !html().Contains("id=\"approval-party\""), "full individual details open inside the approval page");
+            await service.RegenerateBasisAsync(context.Current.CurrentAccountId!.Value, reviewed.Key, reviewed.Value, "Changed during review");
+            await (Task)Call(component, "ReturnFromDetails")!; Refresh(component);
+            Require(selected.Count == 29 && !selected.ContainsKey(reviewed.Key) && (int)Field(component, "page")! == 2, "return preserves page and selection while removing changed revisions");
+            Set(component, "agreementId", null!); await (Task)Call(component, "FiltersChanged")!; Refresh(component);
+            Require(selected.Count == 0 && (int)Field(component, "page")! == 1, "changing filters clears all selections and resets page");
+            Call(component, "SelectAll"); Refresh(component);
+            Require(System.Text.RegularExpressions.Regex.Matches(html(), "class=\"approval-total\"").Count == 3, "selected totals separate both currencies and income versus cost");
+            Call(component, "ClearSelection");
+            rows = (List<AgreementBasisApprovalItem>)Field(component, "items")!;
+            var blocked = rows.First(x => !x.CanApprove); Call(component, "Toggle", blocked, true);
+            Require(selected.Count == 0, "blocked draft cannot be selected");
+            Call(component, "Toggle", rows.Single(x => x.BasisId == euroBasis), true);
+            Call(component, "Toggle", rows.Single(x => x.BasisId == costBasis), true);
+            Require(selected.Count == 2, "explicit subset selects definite bases");
+            Set(component, "busy", true); await (Task)Call(component, "Approve")!;
+            Require(selected.Count == 2, "busy guard prevents repeated approval clicks"); Set(component, "busy", false);
+            await (Task)Call(component, "Approve")!; Refresh(component);
+            var results = (List<AgreementBasisApprovalResult>)Field(component, "results")!;
+            Require(results.Count == 2 && results.All(x => x.Outcome == AgreementBasisApprovalOutcome.Approved), "UI approves and locks selected income and cost bases");
+            rows = (List<AgreementBasisApprovalItem>)Field(component, "items")!;
+            Require(!rows.Any(x => x.BasisId == euroBasis || x.BasisId == costBasis) && selected.Count == 0,
+                "successful approvals leave pending list and selection");
+            Require((Guid?)Field(component, "counterpartyId") == party && html().Contains("href=\"/agreements/bases\""), "approval result retains filters and overview navigation");
+            var changed = rows.First(x => x.CanApprove); Call(component, "Toggle", changed, true);
+            await service.RegenerateBasisAsync(context.Current.CurrentAccountId!.Value, changed.BasisId, changed.Revision, "Changed after selection");
+            await (Task)Call(component, "Approve")!; Refresh(component);
+            rows = (List<AgreementBasisApprovalItem>)Field(component, "items")!;
+            Require(!rows.Single(x => x.BasisId == changed.BasisId).CanApprove && selected.Count == 0,
+                "failed changed draft requires explicit new review before retry");
+            await (Task)Call(component, "Refresh")!;
+            rows = (List<AgreementBasisApprovalItem>)Field(component, "items")!;
+            var rechecked = rows.Single(x => x.BasisId == changed.BasisId);
+            Require(rechecked.CanApprove && rechecked.Revision == changed.Revision + 1, "refresh shows the revised draft for a new explicit selection");
+            Call(component, "Toggle", rechecked, true); await (Task)Call(component, "Approve")!;
+            Require(((List<AgreementBasisApprovalResult>)Field(component, "results")!).Single().Outcome == AgreementBasisApprovalOutcome.Approved, "single selected draft can be approved after renewed review");
+            Set(component, "agreementId", agreement); await (Task)Call(component, "FiltersChanged")!;
+            rows = (List<AgreementBasisApprovalItem>)Field(component, "items")!;
+            var remaining = rows.Count; Call(component, "SelectAll"); await (Task)Call(component, "Approve")!;
+            results = (List<AgreementBasisApprovalResult>)Field(component, "results")!;
+            Require(remaining > 25 && results.Count == remaining && results.All(x => x.Outcome == AgreementBasisApprovalOutcome.Approved), "all selected bases across pages can be approved in one action");
+        });
+    }
     static async Task Check(IAgreementService service, ICurrentUserContextService context, Type type, Dictionary<string,object?> parameters,
         Func<object,Func<string>,Task> check, ITenantAuthorizationService? authorization = null)
     {

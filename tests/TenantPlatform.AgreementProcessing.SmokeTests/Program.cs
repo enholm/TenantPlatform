@@ -373,7 +373,8 @@ await ComponentEditorChecks.Automatic(owner, new UserContext(ownerId,account), b
 await ComponentEditorChecks.Run(owner, admin, new UserContext(ownerId,account), new UserContext(adminId,account), editable, editLine, indexId);
 
 await BulkBasisChecks.Run(factory, admin, owner, reader, foreign, account, otherAccount, ownerId, readerId, org, foreignOrg, foreignId);
-Console.WriteLine("All automatic index, basis, bulk generation and active editing tests passed.");
+await BasisApprovalChecks.Run(factory, admin, owner, editor, foreign, account, otherAccount, ownerId, editorId, foreignId, foreignOrg, clock);
+Console.WriteLine("All automatic index, basis, bulk generation, bulk approval and active editing tests passed.");
 static void Assert(bool value,string name){if(!value)throw new Exception("FAIL: "+name);Console.WriteLine("PASS: "+name);}
 static async Task Expect<T>(Func<Task> action,string name) where T:Exception{try{await action();}catch(T){Console.WriteLine("PASS: "+name);return;}throw new Exception("FAIL: "+name);}
 sealed class Factory(DbContextOptions<TenantPlatformDbContext> options):IDbContextFactory<TenantPlatformDbContext>{public TenantPlatformDbContext CreateDbContext()=>new(options);}

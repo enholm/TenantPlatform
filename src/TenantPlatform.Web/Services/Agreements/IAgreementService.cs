@@ -4,6 +4,8 @@ namespace TenantPlatform.Web.Services.Agreements;
 
 public interface IAgreementService
 {
+    Task<AgreementBasisApprovalList> ListPendingBasisApprovalsAsync(Guid accountId, AgreementBasisApprovalFilter filter, CancellationToken ct = default);
+    Task<List<AgreementBasisApprovalResult>> ApproveBasesAsync(Guid accountId, IReadOnlyList<AgreementBasisApprovalSelection> selection, CancellationToken ct = default);
     Task<List<AgreementBulkBasisOption>> GetBulkBasisOptionsAsync(Guid accountId, CancellationToken ct = default);
     Task<List<AgreementBulkBasisPreview>> PreviewBulkBasisAsync(Guid accountId, AgreementBulkBasisFilter filter, CancellationToken ct = default);
     Task<List<AgreementBulkBasisResult>> GenerateBulkBasisAsync(Guid accountId, DateOnly from, DateOnly to, IReadOnlyList<AgreementBulkBasisSelection> selection, CancellationToken ct = default);

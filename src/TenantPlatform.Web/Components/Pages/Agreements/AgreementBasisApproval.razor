@@ -1,0 +1,161 @@
+@page "/agreements/bases/approve"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementBasisApproval> Logger
+
+@if (reviewId is Guid basisId)
+{
+    <AgreementBasisDetailsPage @key="basisId" BasisId="basisId" ReturnToApproval="ReturnFromDetails" />
+}
+else
+{
+    <PageTitle>@L["ApprovalTitle"]</PageTitle>
+    <a href="/agreements/bases">@L["ProcessingBases"]</a>
+    <h1>@L["ApprovalTitle"]</h1>
+    <p>@L["ApprovalHelp"]</p>
+    <p class="text-body-secondary">@L["ProcessingTaxExclusive"]</p>
+    @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+    @if (selectionChanged) { <div class="alert alert-warning" role="status">@L["ApprovalSelectionChanged"]</div> }
+    @if (busy) { <p role="status">@L[approving ? "ApprovalBusy" : "Loading"]</p> }
+    <fieldset disabled="@busy">
+        <div class="card mb-3"><div class="card-body row g-3">
+            <div class="col-md-3"><label for="approval-party" class="form-label">@L["AgreementCounterparty"]</label>
+                <select id="approval-party" class="form-select" @bind="counterpartyId" @bind:after="PartyChanged"><option value="">@L["AgreementAll"]</option>
+                    @foreach (var party in options.DistinctBy(x => x.CounterpartyId).OrderBy(x => x.Counterparty)) { <option value="@party.CounterpartyId">@party.Counterparty</option> }
+                </select></div>
+            <div class="col-md-3"><label for="approval-agreement" class="form-label">@L["Agreement"]</label>
+                <select id="approval-agreement" class="form-select" @bind="agreementId" @bind:after="FiltersChanged"><option value="">@L["AgreementAll"]</option>
+                    @foreach (var a in options.Where(x => !counterpartyId.HasValue || x.CounterpartyId == counterpartyId)) { <option value="@a.Id">@a.Title</option> }
+                </select></div>
+            <div class="col-md-2"><label for="approval-direction" class="form-label">@L["FinanceDirection"]</label>
+                <select id="approval-direction" class="form-select" @bind="direction" @bind:after="FiltersChanged"><option value="">@L["AgreementAll"]</option>
+                    @foreach (var d in Enum.GetValues<AgreementDirection>()) { <option value="@d">@L[$"ProcessingDirection{d}"]</option> }
+                </select></div>
+            <div class="col-md-2"><label for="approval-from" class="form-label">@L["ApprovalFrom"]</label><InputDate id="approval-from" class="form-control" @bind-Value="from" @bind-Value:after="FiltersChanged" /></div>
+            <div class="col-md-2"><label for="approval-to" class="form-label">@L["ApprovalTo"]</label><InputDate id="approval-to" class="form-control" @bind-Value="to" @bind-Value:after="FiltersChanged" /></div>
+            <div><button id="approval-refresh" class="btn btn-outline-primary" @onclick="Refresh">@L["ApprovalRefresh"]</button></div>
+        </div></div>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button id="approval-all" class="btn btn-outline-secondary" @onclick="SelectAll">@L["ApprovalSelectAll"]</button>
+            <button class="btn btn-outline-secondary" @onclick="ClearSelection">@L["BulkSelectNone"]</button>
+            <button id="approval-submit" class="btn btn-success" disabled="@(selected.Count == 0)" @onclick="Approve">@L["ProcessingApproveLock"] (@selected.Count)</button>
+        </div>
+        <p>@L["ApprovalSelected", selected.Count]</p>
+        @foreach (var total in SelectedItems.GroupBy(x => new { x.Direction, x.Currency }).OrderBy(x => x.Key.Direction).ThenBy(x => x.Key.Currency))
+        { <p class="approval-total">@L[$"ProcessingDirection{total.Key.Direction}"]: @total.Sum(x => x.Amount).ToString("N2") @total.Key.Currency</p> }
+        @if (items.Count == 0 && !busy) { <p>@L["ApprovalEmpty"]</p> }
+        <div class="table-responsive"><table class="table align-middle">
+            <thead><tr><th>@L["BulkSelection"]</th><th>@L["ApprovalBasis"]</th><th>@L["AgreementCounterparty"]</th><th>@L["Agreement"]</th><th>@L["FinanceDirection"]</th><th>@L["ApprovalInvoiceDate"]</th><th>@L["FinanceActualPeriod"]</th><th>@L["FinanceAmount"]</th><th>@L["Status"]</th><th></th></tr></thead>
+            <tbody>@foreach (var item in PageItems)
+            {
+                <tr @key="item.BasisId">
+                    <td><input type="checkbox" aria-label="@L["ApprovalSelectBasis", item.BasisId]" checked="@selected.ContainsKey(item.BasisId)" disabled="@(!item.CanApprove)" @onchange="e => Toggle(item, e.Value is true)" /></td>
+                    <td><small>@item.BasisId</small> · @L["ProcessingRevision"] @item.Revision
+                        @if (item.IsCorrection) { <span class="badge text-bg-info">@L["ProcessingCorrection"]</span> }</td>
+                    <td>@item.Counterparty</td><td>@item.Title</td><td>@L[$"ProcessingDirection{item.Direction}"]</td><td>@item.InvoiceDate.ToString("d")</td>
+                    <td>@item.PeriodFrom?.ToString("d") – @item.PeriodTo?.ToString("d")</td>
+                    <td>@if (item.Currency.Length > 0) { @item.Amount.ToString("N2") @item.Currency } else { <span>—</span> }</td>
+                    <td>@if (item.Reason is not null) { <span class="text-danger">@L[item.Reason]</span> } else { @L["BulkStatusReady"] }</td>
+                    <td><button class="btn btn-outline-secondary btn-sm" @onclick="() => OpenDetails(item.BasisId)">@L["Open"]</button></td>
+                </tr>
+            }</tbody>
+        </table></div>
+        <div class="d-flex justify-content-between align-items-center">
+            <button id="approval-previous" class="btn btn-outline-secondary" disabled="@(page <= 1)" @onclick="Previous">@L["AgreementPrevious"]</button>
+            <span>@L["AgreementPageSummary", page, PageCount, items.Count]</span>
+            <button id="approval-next" class="btn btn-outline-secondary" disabled="@(page >= PageCount)" @onclick="Next">@L["AgreementNext"]</button>
+        </div>
+    </fieldset>
+    @if (results.Count > 0)
+    {
+        <section class="mt-4" aria-live="polite">
+            <h2>@L["ApprovalResults"]</h2>
+            <p>@L["ApprovalResultCounts", results.Count(x => x.Outcome == AgreementBasisApprovalOutcome.Approved), results.Count(x => x.Outcome == AgreementBasisApprovalOutcome.AlreadyProcessed), results.Count(x => x.Outcome == AgreementBasisApprovalOutcome.Failed)]</p>
+            @foreach (var result in results)
+            {
+                <p><button class="btn btn-link ps-0" disabled="@busy" @onclick="() => OpenDetails(result.BasisId)">@result.BasisId</button> · @L[$"ApprovalOutcome{result.Outcome}"]
+                    @if (result.Reason is not null) { <span class="text-danger">@L[result.Reason]</span> }</p>
+            }
+        </section>
+    }
+}
+
+@code {
+    private List<AgreementBasisApprovalItem> items = [];
+    private List<AgreementBulkBasisOption> options = [];
+    private readonly Dictionary<Guid, int> selected = [];
+    private List<AgreementBasisApprovalResult> results = [];
+    private Guid? counterpartyId, agreementId, reviewId;
+    private DateOnly? from, to;
+    private AgreementDirection? direction;
+    private int page = 1;
+    private const int PageSize = 25;
+    private bool busy, approving, selectionChanged;
+    private string? error;
+    private Guid AccountId => UserContext.Current.CurrentAccountId ?? throw new UnauthorizedAccessException();
+    private AgreementBasisApprovalFilter Filter => new(counterpartyId, agreementId, from, to, direction);
+    private int PageCount => Math.Max(1, (items.Count + PageSize - 1) / PageSize);
+    private IEnumerable<AgreementBasisApprovalItem> PageItems => items.Skip((page - 1) * PageSize).Take(PageSize);
+    private IEnumerable<AgreementBasisApprovalItem> SelectedItems => items.Where(x => selected.ContainsKey(x.BasisId));
+    protected override Task OnInitializedAsync() => Refresh();
+    private Task Refresh() => Run(Load);
+    private async Task Load()
+    {
+        var list = await Service.ListPendingBasisApprovalsAsync(AccountId, Filter);
+        items = list.Items; options = list.Agreements;
+        selectionChanged = false;
+        var eligible = items.Where(x => x.CanApprove).ToDictionary(x => x.BasisId, x => x.Revision);
+        foreach (var selection in selected.ToArray())
+            if (!eligible.TryGetValue(selection.Key, out var revision) || revision != selection.Value)
+            { selected.Remove(selection.Key); selectionChanged = true; }
+        page = Math.Min(page, PageCount);
+    }
+    private Task FiltersChanged()
+    {
+        selected.Clear(); items = []; results = []; selectionChanged = false; page = 1;
+        return Refresh();
+    }
+    private Task PartyChanged()
+    {
+        if (!options.Any(x => x.Id == agreementId && (!counterpartyId.HasValue || x.CounterpartyId == counterpartyId))) agreementId = null;
+        return FiltersChanged();
+    }
+    private void SelectAll() { foreach (var item in items.Where(x => x.CanApprove)) selected[item.BasisId] = item.Revision; }
+    private void ClearSelection() => selected.Clear();
+    private void Toggle(AgreementBasisApprovalItem item, bool value)
+    {
+        if (value && item.CanApprove) selected[item.BasisId] = item.Revision;
+        else selected.Remove(item.BasisId);
+    }
+    private void Previous() => page = Math.Max(1, page - 1);
+    private void Next() => page = Math.Min(PageCount, page + 1);
+    private void OpenDetails(Guid id) { if (!busy) reviewId = id; }
+    private async Task ReturnFromDetails() { reviewId = null; await Refresh(); }
+    private Task Approve() => Run(async () =>
+    {
+        if (selected.Count == 0) return;
+        approving = true;
+        var selection = selected.Select(x => new AgreementBasisApprovalSelection(x.Key, x.Value)).ToList();
+        results = await Service.ApproveBasesAsync(AccountId, selection);
+        selected.Clear();
+        var processed = results.Where(x => x.Outcome != AgreementBasisApprovalOutcome.Failed).Select(x => x.BasisId).ToHashSet();
+        items.RemoveAll(x => processed.Contains(x.BasisId));
+        // Failed rows need explicit review/reload; never silently select a newer revision for retry.
+        var failed = results.Where(x => x.Outcome == AgreementBasisApprovalOutcome.Failed).ToDictionary(x => x.BasisId);
+        items = items.Select(x => failed.ContainsKey(x.BasisId) ? x with { CanApprove = false, Reason = "ApprovalReviewRequired" } : x).ToList();
+        page = Math.Min(page, PageCount);
+    });
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return;
+        busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Bulk basis approval failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; approving = false; }
+    }
+}

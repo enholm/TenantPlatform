@@ -185,16 +185,22 @@ public partial class AgreementService
     }
     public async Task ApproveBasisAsync(Guid accountId, Guid basisId, int revision, CancellationToken ct = default)
     {
+        var result = await ApproveBasisCoreAsync(accountId, basisId, revision, ct);
+        if (!result.ApprovedNow && result.Revision != revision) throw new AgreementValidationException("ProcessingStale");
+    }
+    private async Task<(bool ApprovedNow, int Revision)> ApproveBasisCoreAsync(Guid accountId, Guid basisId, int revision, CancellationToken ct)
+    {
         await using var db = await factory.CreateDbContextAsync(ct); await using var tx = await db.Database.BeginTransactionAsync(ct);
         await LockFinancialAsync(db, accountId, null, ct);
         var b = await db.AgreementBasisRecords.SingleOrDefaultAsync(x => x.AccountId == accountId && x.Id == basisId, ct) ?? throw new UnauthorizedAccessException();
         await LockFinancialAsync(db, accountId, b.AgreementId, ct); var (a, _, _) = await RequireAsync(db, accountId, b.AgreementId, true, true, ct);
-        if (b.Status == AgreementBasisStatus.Approved && b.Revision == revision) return;
+        if (b.Status == AgreementBasisStatus.Approved) return (false, b.Revision);
         if (b.Status != AgreementBasisStatus.Draft || b.Revision != revision) throw new AgreementValidationException("ProcessingStale");
         var source = await SourceAsync(db, a, ct); var current = await CurrentBasisDataAsync(db, source, b, ct);
         if (BasisFingerprint(source, current) != (await LatestBasisSnapshotAsync(db, b, ct)).Fingerprint) throw new AgreementValidationException("ProcessingStale");
         b.Status = AgreementBasisStatus.Approved; b.ApprovedUtc = Clock.GetUtcNow(); b.ApprovedByUserId = userContext.Current.UserId;
         Touch(a, userContext.Current.UserId); await SaveAsync(db, ct); await tx.CommitAsync(ct);
+        return (true, b.Revision);
     }
     public async Task CancelBasisAsync(Guid accountId, Guid basisId, int revision, string reason, CancellationToken ct = default)
     {

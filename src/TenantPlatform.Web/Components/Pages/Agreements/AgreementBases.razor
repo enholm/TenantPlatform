@@ -8,6 +8,7 @@
 @using System.Text.Json
 
 <PageTitle>@L["ProcessingBases"]</PageTitle><h1>@L["ProcessingBases"]</h1><p>@L["ProcessingBasisHelp"]</p>
+<p><a href="/agreements/bases/approve" class="btn btn-primary">@L["ApprovalTitle"]</a></p>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (busy) { <p role="status">@L["Loading"]</p> }
 

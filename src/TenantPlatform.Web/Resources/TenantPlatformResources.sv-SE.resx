@@ -2272,4 +2272,26 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="BulkResults" xml:space="preserve"><value>Genereringsresultat</value></data>
   <data name="BulkFollowupCount" xml:space="preserve"><value>Avtal som kräver uppföljning: {0}</value></data>
   <data name="BulkCreatedTotals" xml:space="preserve"><value>Skapade underlag per valuta</value></data>
+  <data name="ApprovalTitle" xml:space="preserve"><value>Godkänn och lås underlag</value></data>
+  <data name="ApprovalHelp" xml:space="preserve"><value>Kontrollera och välj utkast som ska godkännas och låsas. Åtgärden överför, bokför, utfärdar eller skickar inga fakturor.</value></data>
+  <data name="ApprovalReturn" xml:space="preserve"><value>Tillbaka till urvalet</value></data>
+  <data name="ApprovalSelectionChanged" xml:space="preserve"><value>Urvalet har kontrollerats igen. Ändrade underlag och underlag som inte längre kan godkännas har tagits bort från urvalet.</value></data>
+  <data name="ApprovalBusy" xml:space="preserve"><value>Godkänner och låser valda underlag …</value></data>
+  <data name="ApprovalFrom" xml:space="preserve"><value>Fakturadatum från</value></data>
+  <data name="ApprovalTo" xml:space="preserve"><value>Fakturadatum till</value></data>
+  <data name="ApprovalInvoiceDate" xml:space="preserve"><value>Planerat / förväntat fakturadatum</value></data>
+  <data name="ApprovalRefresh" xml:space="preserve"><value>Uppdatera och kontrollera listan igen</value></data>
+  <data name="ApprovalSelectAll" xml:space="preserve"><value>Välj alla godkännbara i hela det filtrerade resultatet</value></data>
+  <data name="ApprovalSelected" xml:space="preserve"><value>Valda underlag på alla sidor: {0}</value></data>
+  <data name="ApprovalEmpty" xml:space="preserve"><value>Inga utkast väntar på godkännande med dessa filter.</value></data>
+  <data name="ApprovalBasis" xml:space="preserve"><value>Underlag</value></data>
+  <data name="ApprovalSelectBasis" xml:space="preserve"><value>Välj underlag {0}</value></data>
+  <data name="ApprovalResults" xml:space="preserve"><value>Resultat av godkännande</value></data>
+  <data name="ApprovalResultCounts" xml:space="preserve"><value>Godkända: {0}. Redan behandlade: {1}. Misslyckade: {2}.</value></data>
+  <data name="ApprovalOutcomeApproved" xml:space="preserve"><value>Godkänt och låst</value></data>
+  <data name="ApprovalOutcomeAlreadyProcessed" xml:space="preserve"><value>Redan behandlat</value></data>
+  <data name="ApprovalOutcomeFailed" xml:space="preserve"><value>Inte godkänt</value></data>
+  <data name="ApprovalReviewRequired" xml:space="preserve"><value>Kräver ny kontroll. Öppna detaljerna eller uppdatera listan före ett nytt försök.</value></data>
+  <data name="ApprovalPermissionRequired" xml:space="preserve"><value>Du kan läsa underlaget men saknar behörighet att godkänna för detta avtal.</value></data>
+  <data name="ApprovalAccessDenied" xml:space="preserve"><value>Du saknar tillgång eller behörighet att godkänna detta underlag.</value></data>
 </root>
