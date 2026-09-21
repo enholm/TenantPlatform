@@ -1,0 +1,147 @@
+@page "/agreements/bases/generate"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IAgreementService Service
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+@inject ILogger<AgreementBulkBasisGenerate> Logger
+
+<PageTitle>@L["BulkTitle"]</PageTitle>
+<a href="/agreements">@L["Agreements"]</a>
+<h1>@L["BulkTitle"]</h1>
+<p>@L["BulkHelp"]</p>
+<p class="text-body-secondary">@L["ProcessingTaxExclusive"] · @L["BulkDraftOnly"]</p>
+<a href="/agreements/bases">@L["ProcessingBases"]</a>
+@if (error is not null) { <div class="alert alert-danger mt-3" role="alert">@L[error]</div> }
+@if (busy) { <p class="mt-3" role="status">@L[generating ? "BulkGenerating" : "Loading"]</p> }
+<fieldset disabled="@busy" class="mt-3">
+    <div class="card mb-3"><div class="card-body row g-3">
+        <div class="col-md-3"><label for="bulk-from" class="form-label">@L["BulkFrom"]</label><InputDate id="bulk-from" class="form-control" @bind-Value="from" /></div>
+        <div class="col-md-3"><label for="bulk-to" class="form-label">@L["BulkTo"]</label><InputDate id="bulk-to" class="form-control" @bind-Value="to" /></div>
+        <div class="col-md-3"><label for="bulk-party" class="form-label">@L["AgreementCounterparty"]</label>
+            <select id="bulk-party" class="form-select" @bind="counterpartyId" @bind:after="PartyChanged"><option value="">@L["AgreementAll"]</option>
+                @foreach (var party in options.DistinctBy(x => x.CounterpartyId).OrderBy(x => x.Counterparty)) { <option value="@party.CounterpartyId">@party.Counterparty</option> }
+            </select></div>
+        <div class="col-md-3"><label for="bulk-agreement" class="form-label">@L["Agreement"]</label>
+            <select id="bulk-agreement" class="form-select" @bind="agreementId"><option value="">@L["AgreementAll"]</option>
+                @foreach (var a in options.Where(x => !counterpartyId.HasValue || x.CounterpartyId == counterpartyId)) { <option value="@a.Id">@a.Title</option> }
+            </select></div>
+        <div><button id="bulk-preview" class="btn btn-outline-primary" @onclick="Preview">@L["ProcessingPreview"]</button></div>
+    </div></div>
+    @if (preview is not null)
+    {
+        @if (FiltersChanged) { <div class="alert alert-warning">@L["BulkFilterChanged"]</div> }
+        @if (preview.Count == 0) { <p>@L["ProcessingEmpty"]</p> }
+        <p>@L["BulkPreviewWindow", previewFilter!.From.ToString("d"), previewFilter.To.ToString("d")]</p>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button id="bulk-select-all" class="btn btn-outline-secondary" disabled="@FiltersChanged" @onclick="SelectAll">@L["BulkSelectAll"]</button>
+            <button class="btn btn-outline-secondary" @onclick="ClearSelection">@L["BulkSelectNone"]</button>
+            <button id="bulk-generate" class="btn btn-primary" disabled="@(FiltersChanged || !EligibleSelected.Any())" @onclick="Generate">@L["BulkGenerateSelected", EligibleSelected.Count()]</button>
+        </div>
+        <h2 class="h5">@L["BulkPreviewTotals"]</h2>
+        @foreach (var total in preview.Where(x => x.Currency.Length > 0).GroupBy(x => x.Currency).OrderBy(x => x.Key))
+        { <p>@total.Sum(x => x.Amount).ToString("N2") @total.Key</p> }
+        <h2 class="h5">@L["BulkSelectedTotals"]</h2>
+        @foreach (var total in EligibleSelected.GroupBy(x => x.Currency).OrderBy(x => x.Key))
+        { <p>@total.Sum(x => x.NewAmount).ToString("N2") @total.Key</p> }
+        <div class="table-responsive"><table class="table align-middle">
+            <thead><tr><th>@L["BulkSelection"]</th><th>@L["AgreementCounterparty"]</th><th>@L["Agreement"]</th><th>@L["BulkCounts"]</th><th>@L["FinancePlannedInvoice"]</th><th>@L["FinanceAmount"]</th><th>@L["Status"]</th></tr></thead>
+            <tbody>@foreach (var row in preview)
+            {
+                <tr @key="row.AgreementId">
+                    <td><input type="checkbox" aria-label="@L["BulkSelectAgreement", row.Title]" checked="@selected.Contains(row.AgreementId)" disabled="@(!Selectable(row) || FiltersChanged)" @onchange="e => Toggle(row.AgreementId, e.Value is true)" /></td>
+                    <td>@row.Counterparty</td>
+                    <td><a href="@($"/agreements/{row.AgreementId}")">@row.Title</a></td>
+                    <td>@L["BulkCountValues", row.BasisCount, row.LineCount]</td>
+                    <td>@string.Join(", ", row.Periods.Select(x => x.InvoiceDate).Concat(row.Existing.Select(x => x.InvoiceDate)).Distinct().Order().Select(x => x.ToString("d")))</td>
+                    <td>@row.Amount.ToString("N2") @row.Currency</td>
+                    <td>@L[$"BulkStatus{row.Status}"] @if (row.Reason is not null) { <p class="text-danger mb-0">@L[row.Reason]</p> }</td>
+                </tr>
+                <tr><td colspan="7"><details><summary>@L["BulkDetails"]</summary>
+                    <AgreementPeriodTable Periods="row.Periods" />
+                    @foreach (var basis in row.Existing) { <p><a href="@($"/agreements/bases/{basis.Id}")">@L["BulkStatusExisting"] · @basis.InvoiceDate.ToString("d") · @basis.Amount.ToString("N2") @row.Currency</a></p> }
+                </details></td></tr>
+            }</tbody>
+        </table></div>
+    }
+</fieldset>
+@if (results.Count > 0)
+{
+    <section class="mt-4" aria-live="polite">
+        <h2>@L["BulkResults"]</h2>
+        <p>@L["ProcessingRunResult", results.Values.Sum(x => x.Created.Count), results.Values.Sum(x => x.Existing.Count)]</p>
+        <p>@L["BulkFollowupCount", results.Values.Count(x => x.Status == AgreementBulkBasisStatus.Followup)]</p>
+        <h3 class="h5">@L["BulkCreatedTotals"]</h3>
+        @foreach (var total in results.Values.Where(x => x.Created.Count > 0).GroupBy(x => x.Currency).OrderBy(x => x.Key))
+        { <p>@total.Sum(x => x.Created.Sum(b => b.Amount)).ToString("N2") @total.Key · @L["ProcessingTaxExclusive"]</p> }
+        @foreach (var result in results.Values)
+        {
+            <div class="card mb-2"><div class="card-body">
+                <h3 class="h6">@(options.FirstOrDefault(x => x.Id == result.AgreementId)?.Title ?? result.AgreementId.ToString()) · @L[$"BulkStatus{result.Status}"]</h3>
+                @if (result.Reason is not null) { <p class="text-danger">@L[result.Reason]</p> }
+                @foreach (var basis in result.Created.Concat(result.Existing))
+                { <p><a href="@($"/agreements/bases/{basis.Id}")">@basis.InvoiceDate.ToString("d") · @basis.Amount.ToString("N2") @result.Currency · @L["Open"]</a></p> }
+            </div></div>
+        }
+        <a href="/agreements/bases">@L["ProcessingBases"]</a>
+    </section>
+}
+
+@code {
+    private List<AgreementBulkBasisOption> options = [];
+    private List<AgreementBulkBasisPreview>? preview;
+    private AgreementBulkBasisFilter? previewFilter;
+    private readonly HashSet<Guid> selected = [];
+    private readonly Dictionary<Guid, AgreementBulkBasisResult> results = [];
+    private readonly HashSet<Guid> completed = [];
+    private DateOnly from = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateOnly to = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(1).AddDays(-1);
+    private Guid? counterpartyId, agreementId;
+    private bool busy, generating;
+    private string? error;
+    private Guid AccountId => UserContext.Current.CurrentAccountId ?? throw new UnauthorizedAccessException();
+    private AgreementBulkBasisFilter Filter => new(from, to, counterpartyId, agreementId);
+    private bool FiltersChanged => previewFilter != Filter;
+    private bool Selectable(AgreementBulkBasisPreview row) => row.CanGenerate && !completed.Contains(row.AgreementId);
+    private IEnumerable<AgreementBulkBasisPreview> EligibleSelected => (preview ?? []).Where(x => selected.Contains(x.AgreementId) && Selectable(x));
+    protected override Task OnInitializedAsync() => Run(async () => options = await Service.GetBulkBasisOptionsAsync(AccountId));
+    private void PartyChanged() { if (!options.Any(x => x.Id == agreementId && (!counterpartyId.HasValue || x.CounterpartyId == counterpartyId))) agreementId = null; }
+    private void SelectAll() { foreach (var row in preview ?? []) if (Selectable(row)) selected.Add(row.AgreementId); }
+    private void ClearSelection() => selected.Clear();
+    private void Toggle(Guid id, bool value) { if (value) selected.Add(id); else selected.Remove(id); }
+    private Task Preview() => Run(async () =>
+    {
+        var filter = Filter;
+        preview = await Service.PreviewBulkBasisAsync(AccountId, filter);
+        previewFilter = filter;
+        completed.Clear();
+    });
+    private Task Generate() => Run(async () =>
+    {
+        if (FiltersChanged) { error = "BulkFilterChanged"; return; }
+        generating = true;
+        var selection = EligibleSelected.Select(x => new AgreementBulkBasisSelection(x.AgreementId, x.Fingerprint)).ToList();
+        var run = await Service.GenerateBulkBasisAsync(AccountId, previewFilter!.From, previewFilter.To, selection);
+        foreach (var result in run)
+        {
+            results[result.AgreementId] = result;
+            if (result.Status != AgreementBulkBasisStatus.Followup)
+            {
+                completed.Add(result.AgreementId);
+                var index = preview!.FindIndex(x => x.AgreementId == result.AgreementId);
+                preview[index] = preview[index] with { Status = result.Status, CanGenerate = false, NewPeriods = [],
+                    Existing = result.Created.Concat(result.Existing).ToList() };
+            }
+        }
+    });
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return;
+        busy = true; error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (Exception ex) { Logger.LogError(ex, "Bulk agreement basis processing failed."); error = "AgreementOperationFailed"; }
+        finally { busy = false; generating = false; }
+    }
+}

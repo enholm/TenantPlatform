@@ -8,6 +8,7 @@ using TenantPlatform.Core.Agreements;
 using TenantPlatform.Web.Components.Pages.Agreements;
 using TenantPlatform.Web.Security.CurrentUserContext;
 using TenantPlatform.Web.Services.Agreements;
+using TenantPlatform.Web.Security.Authorization;
 
 static class ComponentEditorChecks
 {
@@ -59,10 +60,46 @@ static class ComponentEditorChecks
             Require(html().Contains("106") && html().Contains("101"),"forecast HTML includes index evidence");
         });
     }
+    public static async Task BulkNavigation(IAgreementService service, ICurrentUserContextService context, ITenantAuthorizationService authorization)
+    {
+        await Check(service, context, typeof(Agreements), new(), (component, html) =>
+        {
+            Require(html().Contains("href=\"/agreements/bases/generate\""), "agreement overview links to bulk generation");
+            return Task.CompletedTask;
+        }, authorization);
+    }
+    public static async Task Bulk(IAgreementService service, ICurrentUserContextService context, Guid nok, Guid eur, DateOnly from, DateOnly to)
+    {
+        await Check(service, context, typeof(AgreementBulkBasisGenerate), new(), async (component, html) =>
+        {
+            Require((DateOnly)Field(component, "from")! == new DateOnly(DateTime.Today.Year, DateTime.Today.Month, 1), "bulk page defaults to current month");
+            Set(component, "from", from); Set(component, "to", to);
+            await (Task)Call(component, "Preview")!; Refresh(component);
+            var rows = (List<AgreementBulkBasisPreview>)Field(component, "preview")!;
+            Require(rows.Any(x => x.AgreementId == nok && x.CanGenerate) && rows.Any(x => x.AgreementId == eur && x.CanGenerate), "bulk page previews multiple eligible agreements");
+            Call(component, "SelectAll"); Refresh(component);
+            var selected = (HashSet<Guid>)Field(component, "selected")!;
+            Require(rows.Where(x => x.CanGenerate).All(x => selected.Contains(x.AgreementId)), "select all covers entire filtered result");
+            Call(component, "ClearSelection"); Call(component, "Toggle", nok, true); Call(component, "Toggle", eur, true); Refresh(component);
+            Require(selected.SetEquals(new[] { nok, eur }), "bulk page supports explicit subset");
+            Require(html().Contains("NOK") && html().Contains("EUR") && html().Contains("<details>") && html().Contains("1000"), "bulk page renders separate currencies and expandable calculation details");
+            Set(component, "to", to.AddDays(1)); Refresh(component);
+            Require(System.Text.RegularExpressions.Regex.IsMatch(html(), "id=\"bulk-generate\"[^>]*disabled"), "changing filters disables generation until new preview");
+            Set(component, "to", to);
+            await (Task)Call(component, "Generate")!; Refresh(component);
+            var results = (Dictionary<Guid, AgreementBulkBasisResult>)Field(component, "results")!;
+            Require(results.Count == 2 && results.Values.All(x => x.Created.Count == 1), "bulk UI generates selected drafts");
+            Require(html().Contains("/agreements/bases/") && html().Contains("href=\"/agreements/bases\""), "bulk UI links to created bases and the overview");
+            Require(selected.SetEquals(new[] { nok, eur }) && (DateOnly)Field(component, "from")! == from, "bulk UI preserves selection and filters");
+            await (Task)Call(component, "Generate")!;
+            Require(results.Values.Sum(x => x.Created.Count) == 2, "second click does not process completed selection again");
+        });
+    }
     static async Task Check(IAgreementService service, ICurrentUserContextService context, Type type, Dictionary<string,object?> parameters,
-        Func<object,Func<string>,Task> check)
+        Func<object,Func<string>,Task> check, ITenantAuthorizationService? authorization = null)
     {
         var services=new ServiceCollection();services.AddLogging();services.AddLocalization(o=>o.ResourcesPath="Resources");
+        if (authorization is not null) services.AddSingleton(authorization);
         services.AddSingleton(service);services.AddSingleton(context);services.AddSingleton<NavigationManager>(new TestNavigation());
         await using var provider=services.BuildServiceProvider();
         await using var renderer=new EditorRenderer(provider,provider.GetRequiredService<ILoggerFactory>());

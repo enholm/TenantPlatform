@@ -2206,4 +2206,34 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AutoRegisteredPrice" xml:space="preserve"><value>Registered base price</value></data>
   <data name="AutoIndexSwitchHelp" xml:space="preserve"><value>The first index selection applies from the agreement start. Later switches apply from today’s UTC date and preserve earlier calculation periods.</value></data>
   <data name="ProcessingAdjustments" xml:space="preserve"><value>Index adjustment and history</value></data>
+  <data name="BulkTitle" xml:space="preserve"><value>Generate invoice bases</value></data>
+  <data name="BulkHelp" xml:space="preserve"><value>Choose a planned invoice date range. Line details show the period covered by each amount. Only income agreements in the selected account are included.</value></data>
+  <data name="BulkDraftOnly" xml:space="preserve"><value>Creates drafts only. Approval and further processing take place in the basis overview.</value></data>
+  <data name="BulkFrom" xml:space="preserve"><value>Planned invoice date from</value></data>
+  <data name="BulkTo" xml:space="preserve"><value>Planned invoice date to</value></data>
+  <data name="BulkGenerating" xml:space="preserve"><value>Generating. Each agreement is processed separately.</value></data>
+  <data name="BulkFilterChanged" xml:space="preserve"><value>Filters have changed. Preview again before generating.</value></data>
+  <data name="BulkPreviewWindow" xml:space="preserve"><value>Preview for planned invoice dates {0}–{1}.</value></data>
+  <data name="BulkSelectAll" xml:space="preserve"><value>Select all eligible agreements in the entire filtered result</value></data>
+  <data name="BulkSelectNone" xml:space="preserve"><value>Clear selection</value></data>
+  <data name="BulkGenerateSelected" xml:space="preserve"><value>Generate for selected agreements ({0})</value></data>
+  <data name="BulkPreviewTotals" xml:space="preserve"><value>Calculated periods by currency (includes already generated)</value></data>
+  <data name="BulkSelectedTotals" xml:space="preserve"><value>New bases for selected agreements by currency</value></data>
+  <data name="BulkSelection" xml:space="preserve"><value>Selection</value></data>
+  <data name="BulkCounts" xml:space="preserve"><value>Bases / lines</value></data>
+  <data name="BulkCountValues" xml:space="preserve"><value>{0} bases / {1} lines</value></data>
+  <data name="BulkSelectAgreement" xml:space="preserve"><value>Select agreement: {0}</value></data>
+  <data name="BulkDetails" xml:space="preserve"><value>Show lines, periods and existing bases</value></data>
+  <data name="BulkStatusReady" xml:space="preserve"><value>Ready</value></data>
+  <data name="BulkStatusExisting" xml:space="preserve"><value>Already generated</value></data>
+  <data name="BulkStatusFollowup" xml:space="preserve"><value>Requires follow-up</value></data>
+  <data name="BulkStatusEmpty" xml:space="preserve"><value>No applicable periods</value></data>
+  <data name="BulkStatusCreated" xml:space="preserve"><value>Drafts created</value></data>
+  <data name="BulkReadOnly" xml:space="preserve"><value>You can preview but do not have permission to generate for this agreement.</value></data>
+  <data name="BulkAccessDenied" xml:space="preserve"><value>You do not have access to this agreement.</value></data>
+  <data name="BulkStaleDraft" xml:space="preserve"><value>An existing draft is stale. Open the basis and regenerate or cancel it before trying again.</value></data>
+  <data name="BulkChanged" xml:space="preserve"><value>The agreement or calculation inputs have changed since the preview. Preview again.</value></data>
+  <data name="BulkResults" xml:space="preserve"><value>Generation results</value></data>
+  <data name="BulkFollowupCount" xml:space="preserve"><value>Agreements requiring follow-up: {0}</value></data>
+  <data name="BulkCreatedTotals" xml:space="preserve"><value>Created bases by currency</value></data>
 </root>

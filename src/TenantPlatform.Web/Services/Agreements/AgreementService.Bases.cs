@@ -56,6 +56,13 @@ public partial class AgreementService
         await using var db = await factory.CreateDbContextAsync(ct); await using var tx = await db.Database.BeginTransactionAsync(ct);
         await LockFinancialAsync(db, accountId, agreementId, ct); var (a, _, _) = await RequireAsync(db, accountId, agreementId, true, false, ct); CheckBasisDirection(a, direction);
         var source = await SourceAsync(db, a, ct); var periods = InvoicePeriods(source, from, to);
+        var result = await GenerateBasisCoreAsync(db, source, periods, ct);
+        await tx.CommitAsync(ct); return result;
+    }
+    private async Task<AgreementBasisRun> GenerateBasisCoreAsync(TenantPlatformDbContext db, FinancialSource source,
+        List<AgreementCalculatedPeriod> periods, CancellationToken ct)
+    {
+        var a = source.Agreement; var accountId = a.AccountId; var agreementId = a.Id; var direction = a.Direction!.Value;
         var claims = await db.AgreementBasisEventRecords.Where(x => x.AccountId == accountId && x.AgreementId == agreementId && x.Active).ToListAsync(ct);
         var existing = claims.Where(x => periods.Any(p => p.EventKey == x.EventKey)).Select(x => x.BasisId).Distinct().ToList();
         var claimed = claims.Select(x => x.EventKey).ToHashSet(); var created = new List<Guid>();
@@ -71,7 +78,7 @@ public partial class AgreementService
             created.Add(b.Id);
         }
         if (created.Count > 0) { Touch(a, userContext.Current.UserId); await SaveAsync(db, ct); }
-        await tx.CommitAsync(ct); return new(created, existing);
+        return new(created, existing);
     }
     private static async Task<AgreementBasisSnapshot> LatestBasisSnapshotAsync(TenantPlatformDbContext db, AgreementBasis b, CancellationToken ct) =>
         await db.AgreementBasisSnapshotRecords.AsNoTracking().SingleAsync(x => x.AccountId == b.AccountId && x.AgreementId == b.AgreementId && x.BasisId == b.Id && x.Revision == b.Revision, ct);

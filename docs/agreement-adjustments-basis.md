@@ -156,3 +156,42 @@ var utilgjengelige for live UI-verifikasjon i utviklingsøkten.
 AGREEMENT_TEST_CONNECTION='Host=127.0.0.1;Port=55449;Username=agreement_test;Database=tenant_agreement_tests' \
   dotnet run --project tests/TenantPlatform.AgreementProcessing.SmokeTests
 ```
+
+## Samlet generering på tvers av avtaler
+
+Avtaleoversikten har handlingen «Generer fakturagrunnlag» til
+`/agreements/bases/generate`. Generering fra den enkelte avtalen er fortsatt
+tilgjengelig. Siden finner alle tilgjengelige inntektsavtaler i valgt Account,
+med filtre for avtalepart og avtale. Avsluttede avtaler utelukkes ikke på status;
+periodemotoren avgjør hvilke linjeperioder som inngår. Arkiverte avtaler og
+avtaler som bare kan leses, vises med forklaring og kan ikke genereres.
+
+Intervallet gjelder planlagt fakturadato, er inklusivt og har samme grense på
+366 dagers differanse som enkeltgenereringen. Standard er inneværende måned.
+Forhåndsvisningen viser beregnede perioder, eksisterende grunnlag, nye beløp og
+oppfølgingsbehov per avtale. Alle summer er eksklusive avgift og grupperes per
+valuta. Resultatet er ikke paginert; «Velg alle» gjelder alle kvalifiserte avtaler
+i hele det filtrerte resultatet. Linjedetaljer bruker samme komponent som
+forhåndsvisningen fra en enkelt avtale.
+
+`GenerateBulkBasisAsync` koordinerer den eksisterende genereringskjernen.
+Hver avtale får egen kortlivet DbContext og transaksjon. Tilgang, retning,
+beregningsdata og eksisterende grunnlag kontrolleres på nytt under eksisterende
+konto-/avtalelås før utkast opprettes. Fingeravtrykket omfatter fakturaintervall,
+økonomiske data, indeksberegning og kansellerte grunnlag. Nye hendelseskrav fra
+en samtidig vellykket kjøring ugyldiggjør ikke forhåndsvisningen: disse
+rapporteres som eksisterende. Kanselleringer krever derimot ny forhåndsvisning,
+fordi de kan øke beløpet som skal opprettes.
+
+Utdaterte utkast og nødvendige korreksjoner blokkerer samlet generering for den
+berørte avtalen. De overskrives ikke. Feil returneres per avtale og hindrer ikke
+øvrige transaksjoner. Brukerens filtre og utvalg bevares, og ferdigbehandlede
+avtaler sendes ikke på nytt ved neste klikk. Etter retting kjøres ny
+forhåndsvisning før nytt forsøk. Godkjenning og videre behandling skjer fortsatt
+fra grunnlagsoversikten.
+
+Kjøringen er sekvensiell og skjer mens siden er tilkoblet; ingen ny bakgrunnskø
+eller varig kjøringshistorikk er innført. Ved avbrudd kan forhåndsvisning og
+kjøring gjentas trygt. Svært store avtaleutvalg er ikke lasttestet.
+Regresjonstestene omfatter tjenesteflyten og rendering/handlinger i de faktiske
+Razor-komponentene; dette erstatter ikke en nettlesertest av visuell utforming.

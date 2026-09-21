@@ -2242,4 +2242,34 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="AutoRegisteredPrice" xml:space="preserve"><value>Registrerat grundpris</value></data>
   <data name="AutoIndexSwitchHelp" xml:space="preserve"><value>Första indexvalet gäller från avtalets start. Senare byten gäller från dagens UTC-datum och bevarar tidigare beräkningsperioder.</value></data>
   <data name="ProcessingAdjustments" xml:space="preserve"><value>Indexreglering och historik</value></data>
+  <data name="BulkTitle" xml:space="preserve"><value>Generera fakturaunderlag</value></data>
+  <data name="BulkHelp" xml:space="preserve"><value>Välj ett intervall för planerat fakturadatum. Raddetaljerna visar perioden som beloppet avser. Endast intäktsavtal i vald kundorganisation ingår.</value></data>
+  <data name="BulkDraftOnly" xml:space="preserve"><value>Skapar endast utkast. Godkännande och vidare behandling sker i underlagsöversikten.</value></data>
+  <data name="BulkFrom" xml:space="preserve"><value>Planerat fakturadatum från</value></data>
+  <data name="BulkTo" xml:space="preserve"><value>Planerat fakturadatum till</value></data>
+  <data name="BulkGenerating" xml:space="preserve"><value>Generering pågår. Varje avtal behandlas separat.</value></data>
+  <data name="BulkFilterChanged" xml:space="preserve"><value>Filtren har ändrats. Förhandsgranska igen före generering.</value></data>
+  <data name="BulkPreviewWindow" xml:space="preserve"><value>Förhandsgranskning för planerat fakturadatum {0}–{1}.</value></data>
+  <data name="BulkSelectAll" xml:space="preserve"><value>Välj alla kvalificerade i hela det filtrerade resultatet</value></data>
+  <data name="BulkSelectNone" xml:space="preserve"><value>Rensa urval</value></data>
+  <data name="BulkGenerateSelected" xml:space="preserve"><value>Generera för valda avtal ({0})</value></data>
+  <data name="BulkPreviewTotals" xml:space="preserve"><value>Beräknade perioder per valuta (inkluderar redan genererade)</value></data>
+  <data name="BulkSelectedTotals" xml:space="preserve"><value>Nya underlag för valda avtal per valuta</value></data>
+  <data name="BulkSelection" xml:space="preserve"><value>Urval</value></data>
+  <data name="BulkCounts" xml:space="preserve"><value>Underlag / rader</value></data>
+  <data name="BulkCountValues" xml:space="preserve"><value>{0} underlag / {1} rader</value></data>
+  <data name="BulkSelectAgreement" xml:space="preserve"><value>Välj avtal: {0}</value></data>
+  <data name="BulkDetails" xml:space="preserve"><value>Visa rader, perioder och befintliga underlag</value></data>
+  <data name="BulkStatusReady" xml:space="preserve"><value>Klar</value></data>
+  <data name="BulkStatusExisting" xml:space="preserve"><value>Redan genererat</value></data>
+  <data name="BulkStatusFollowup" xml:space="preserve"><value>Kräver uppföljning</value></data>
+  <data name="BulkStatusEmpty" xml:space="preserve"><value>Inga aktuella perioder</value></data>
+  <data name="BulkStatusCreated" xml:space="preserve"><value>Utkast skapade</value></data>
+  <data name="BulkReadOnly" xml:space="preserve"><value>Du kan förhandsgranska men saknar behörighet att generera för detta avtal.</value></data>
+  <data name="BulkAccessDenied" xml:space="preserve"><value>Du har inte tillgång till detta avtal.</value></data>
+  <data name="BulkStaleDraft" xml:space="preserve"><value>Ett befintligt utkast är inaktuellt. Öppna underlaget och regenerera eller makulera det före ett nytt försök.</value></data>
+  <data name="BulkChanged" xml:space="preserve"><value>Avtalet eller beräkningsunderlaget har ändrats sedan förhandsgranskningen. Förhandsgranska igen.</value></data>
+  <data name="BulkResults" xml:space="preserve"><value>Genereringsresultat</value></data>
+  <data name="BulkFollowupCount" xml:space="preserve"><value>Avtal som kräver uppföljning: {0}</value></data>
+  <data name="BulkCreatedTotals" xml:space="preserve"><value>Skapade underlag per valuta</value></data>
 </root>

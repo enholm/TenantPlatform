@@ -4,6 +4,9 @@ namespace TenantPlatform.Web.Services.Agreements;
 
 public interface IAgreementService
 {
+    Task<List<AgreementBulkBasisOption>> GetBulkBasisOptionsAsync(Guid accountId, CancellationToken ct = default);
+    Task<List<AgreementBulkBasisPreview>> PreviewBulkBasisAsync(Guid accountId, AgreementBulkBasisFilter filter, CancellationToken ct = default);
+    Task<List<AgreementBulkBasisResult>> GenerateBulkBasisAsync(Guid accountId, DateOnly from, DateOnly to, IReadOnlyList<AgreementBulkBasisSelection> selection, CancellationToken ct = default);
     Task<AgreementIndexRegister> GetIndicesAsync(Guid accountId, CancellationToken ct = default);
     Task<Guid> CreateIndexAsync(Guid accountId, string code, string name, string description, string source, AgreementIndexResolution resolution, CancellationToken ct = default);
     Task UpdateIndexAsync(Guid accountId, Guid indexId, string code, string name, string description, string source, AgreementIndexResolution resolution, CancellationToken ct = default);
