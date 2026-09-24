@@ -14,7 +14,7 @@
 else if (details is not null)
 {
     <div class="d-flex justify-content-between my-3"><h1>@details.Title</h1>
-    @if (details.CanEdit) { <a class="btn btn-outline-primary align-self-center" href="@($"/agreements/{Id}/edit")">@L["Edit"]</a> }
+    @if (details.CanEdit) { <AgreementAnalysisDialog AgreementId="Id" Saved="LoadAsync" /> <a class="btn btn-outline-primary align-self-center" href="@($"/agreements/{Id}/edit")">@L["Edit"]</a> }
     </div>
     @if (details.IsArchived) { <div class="alert alert-secondary">@L["FollowupArchived"]</div> }
     <h2>@L["FollowupContractData"]</h2>
@@ -51,6 +51,7 @@ else if (details is not null)
     </div></div>
     <AgreementNoticePanel Details="details" Changed="LoadAsync" />
     <AgreementFollowupPanel AgreementId="Id" ParentRevision="details.Revision" Changed="LoadAsync" />
+    <AgreementAnalysisHistory AgreementId="Id" Revision="details.Revision" />
     <h2>@L["AgreementDocuments"]</h2>
     @if (details.Documents.Count == 0) { <p>@L["AgreementNoDocuments"]</p> }
     else

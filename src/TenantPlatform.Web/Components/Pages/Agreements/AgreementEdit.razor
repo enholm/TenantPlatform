@@ -15,42 +15,7 @@ else if (options is not null)
     <EditForm Model="model" OnValidSubmit="SaveAsync">
     <ValidationSummary class="text-danger" />
     <fieldset disabled="@busy"><div class="card"><div class="card-body"><div class="row g-3">
-        <div class="col-md-8"><label for="title" class="form-label">@L["Name"]</label><InputText id="title" class="form-control" @bind-Value="model.Title" maxlength="200" required /></div>
-        <div class="col-md-4"><label for="status" class="form-label">@L["Status"]</label><InputSelect id="status" class="form-select" @bind-Value="model.Status">
-            @foreach (var value in Enum.GetValues<AgreementStatus>()) { <option value="@value">@L[$"AgreementStatus{value}"]</option> }
-        </InputSelect></div>
-        <div class="col-md-4"><label for="type" class="form-label">@L["AgreementType"]</label><InputSelect id="type" class="form-select" @bind-Value="model.Type" @bind-Value:after="TypeChanged">
-            @foreach (var value in Enum.GetValues<AgreementType>()) { <option value="@value">@L[$"AgreementType{value}"]</option> }
-        </InputSelect></div>
-        <div class="col-md-4"><label for="counterparty" class="form-label">@L["AgreementCounterparty"]</label><InputSelect id="counterparty" class="form-select" @bind-Value="model.CounterpartyOrganizationId">
-            <option value="@Guid.Empty">@L["AgreementSelect"]</option>
-            @foreach (var item in options.Counterparties) { <option value="@item.Id">@item.Name</option> }
-        </InputSelect></div>
-        <div class="col-md-4"><label for="owner" class="form-label">@L["AgreementOwner"]</label><InputSelect id="owner" class="form-select" @bind-Value="model.OwnerUserId" disabled="@(!canManage)">
-            <option value="@Guid.Empty">@L["AgreementSelect"]</option>
-            @foreach (var item in options.Members) { <option value="@item.Id">@item.Name</option> }
-        </InputSelect></div>
-        <div class="col-md-6"><label for="finance-direction" class="form-label">@L["FinanceDirection"]</label><InputSelect id="finance-direction" class="form-select" @bind-Value="model.Direction">
-            <option value="">@L["FinanceUnclassified"]</option>
-            @foreach (var value in Enum.GetValues<AgreementDirection>()) { <option value="@value">@L[$"FinanceDirection{value}"]</option> }
-        </InputSelect></div>
-        <div class="col-md-6"><label for="finance-currency" class="form-label">@L["FinanceCurrency"]</label><InputSelect id="finance-currency" class="form-select" @bind-Value="model.Currency">
-            <option value="">@L["AgreementSelect"]</option>
-            @foreach (var value in AgreementPeriodCalculator.Currencies) { <option value="@value">@value</option> }
-        </InputSelect><div class="form-text">@L["FinanceSetupHelp"]</div></div>
-        <div class="col-md-6"><label for="agreement-index" class="form-label">@L["ProcessingIndex"]</label><InputSelect id="agreement-index" class="form-select" @bind-Value="model.IndexId"><option value="">@L["AgreementNone"]</option>@foreach (var i in options.Indices) { <option value="@i.Id">@i.Name</option> }</InputSelect><div class="form-text">@L["AutoIndexSwitchHelp"]</div></div>
-        @if (model is AgreementDetailsDto { IndexSetupNeedsReview: true }) { <div class="col-12 alert alert-warning">@L["SimpleIndexReview"]<div><InputCheckbox id="resolve-index" @bind-Value="model.ResolveIndexSetup" /><label for="resolve-index">@L["SimpleIndexResolve"]</label></div></div> }
-        <AgreementNoticeEditor Model="model" OriginalForm="originalForm" Existing="Id.HasValue" />
-        <div class="col-md-6"><label for="building" class="form-label">@L["Building"]</label><InputSelect id="building" class="form-select" @bind-Value="model.BuildingId" @bind-Value:after="BuildingChanged">
-            <option value="">@L["AgreementNone"]</option>
-            @foreach (var item in options.Buildings) { <option value="@item.Id">@item.Name</option> }
-        </InputSelect></div>
-        <div class="col-md-6"><label for="unit" class="form-label">@L["Unit"]</label><InputSelect id="unit" class="form-select" @bind-Value="model.UnitId" disabled="@(!model.BuildingId.HasValue)">
-            <option value="">@L["AgreementNone"]</option>
-            @foreach (var item in options.Units.Where(x => x.BuildingId == model.BuildingId)) { <option value="@item.Id">@item.Name</option> }
-        </InputSelect></div>
-        <div class="col-12"><label for="description" class="form-label">@L["Description"]</label><InputTextArea id="description" class="form-control" @bind-Value="model.Description" maxlength="4000" rows="3" /></div>
-        <div class="col-12"><label for="terms" class="form-label">@L["AgreementTerms"]</label><InputTextArea id="terms" class="form-control" @bind-Value="model.Terms" maxlength="10000" rows="5" /></div>
+        <AgreementFields Model="model" Options="options" CanManage="canManage" Existing="Id.HasValue" OriginalForm="originalForm" />
     </div></div></div>
     <div class="d-flex gap-2 mt-3"><button type="submit" class="btn btn-primary">@L["Save"]</button><a class="btn btn-outline-secondary" href="@(Id.HasValue ? $"/agreements/{Id}" : "/agreements")">@L["Cancel"]</a></div>
     </fieldset></EditForm>
@@ -83,8 +48,6 @@ else if (options is not null)
         catch (Exception) { error = "AgreementOperationFailed"; }
         finally { loading = false; }
     }
-    private void TypeChanged() { if (!Id.HasValue && model.Direction is null && model.Type == AgreementType.Supplier) model.Direction = AgreementDirection.Cost; }
-    private void BuildingChanged() => model.UnitId = null;
     private async Task SaveAsync()
     {
         if (busy) return;

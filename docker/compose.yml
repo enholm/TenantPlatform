@@ -10,6 +10,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      AgreementAnalysis__ApiKey: ${AgreementAnalysis__ApiKey:-}
+      AgreementAnalysis__Model: ${AgreementAnalysis__Model:-}
 
       ConnectionStrings__DefaultConnection: >-
         Host=postgres;

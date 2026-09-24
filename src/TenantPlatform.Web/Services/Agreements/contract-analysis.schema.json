@@ -1,0 +1,176 @@
+{
+  "type": "object",
+  "properties": {
+    "counterparty": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "organizationNumber": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "requiresClarification": {
+          "type": "boolean"
+        },
+        "explanation": {
+          "type": "string",
+          "maxLength": 10000
+        }
+      },
+      "required": [
+        "name",
+        "organizationNumber",
+        "address",
+        "requiresClarification",
+        "explanation"
+      ],
+      "additionalProperties": false
+    },
+    "parties": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 2000
+      },
+      "maxItems": 50
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "maxLength": 36
+          },
+          "processed": {
+            "type": "boolean"
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "documentId",
+          "processed",
+          "explanation"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 10
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "Counterparty",
+              "Liability",
+              "LiabilityLimit",
+              "Exceptions",
+              "IndirectLoss",
+              "Indemnity",
+              "Termination",
+              "Payment",
+              "Insurance",
+              "Confidentiality",
+              "GoverningLaw"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Found",
+              "NotFound",
+              "Unclear"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "parties": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "explanation": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "documentId": {
+                  "type": "string",
+                  "maxLength": 36
+                },
+                "quote": {
+                  "type": "string",
+                  "maxLength": 20000
+                },
+                "section": {
+                  "type": "string",
+                  "maxLength": 2000
+                },
+                "page": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "documentId",
+                "quote",
+                "section",
+                "page"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 30
+          }
+        },
+        "required": [
+          "category",
+          "status",
+          "value",
+          "parties",
+          "explanation",
+          "sources"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 200
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 10000
+      },
+      "maxItems": 50
+    }
+  },
+  "required": [
+    "counterparty",
+    "parties",
+    "documents",
+    "findings",
+    "warnings"
+  ],
+  "additionalProperties": false
+}

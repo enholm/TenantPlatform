@@ -14,7 +14,8 @@ public partial class AgreementService(
     IAgreementDocumentStorage storage,
     ILogger<AgreementService> logger,
     TimeProvider? clock = null,
-    Microsoft.Extensions.Options.IOptions<AgreementReminderOptions>? reminderOptions = null) : IAgreementService, IAgreementFollowupService
+    Microsoft.Extensions.Options.IOptions<AgreementReminderOptions>? reminderOptions = null,
+    IContractAnalysisClient? analysisClient = null) : IAgreementService, IAgreementFollowupService, IAgreementAnalysisService
 {
     private TimeProvider Clock => clock ?? TimeProvider.System;
     public long MaxFileSizeBytes => storage.MaxFileSizeBytes;

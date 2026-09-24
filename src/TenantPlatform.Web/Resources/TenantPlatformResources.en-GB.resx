@@ -2258,4 +2258,66 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ApprovalReviewRequired" xml:space="preserve"><value>Review required. Open the details or refresh the list before trying again.</value></data>
   <data name="ApprovalPermissionRequired" xml:space="preserve"><value>You can view this basis but do not have permission to approve for this agreement.</value></data>
   <data name="ApprovalAccessDenied" xml:space="preserve"><value>You do not have access or approval permission for this basis.</value></data>
+  <data name="AnalysisUpload" xml:space="preserve"><value>Upload and analyse contract</value></data>
+  <data name="AnalysisDiscard" xml:space="preserve"><value>Discard</value></data>
+  <data name="AnalysisApprove" xml:space="preserve"><value>Accept and save</value></data>
+  <data name="AnalysisLimits" xml:space="preserve"><value>PDF · up to {0} MB per file, {1} files and {2} MB total. Drafts expire after 24 hours.</value></data>
+  <data name="AnalysisPrivacy" xml:space="preserve"><value>Documents are sent together to OpenAI when you start the analysis. Check the results against the documents before approving.</value></data>
+  <data name="AnalysisMain" xml:space="preserve"><value>Main contract</value></data>
+  <data name="AnalysisAttachments" xml:space="preserve"><value>Attachments</value></data>
+  <data name="AnalysisStart" xml:space="preserve"><value>Start analysis</value></data>
+  <data name="AnalysisIncomplete" xml:space="preserve"><value>The analysis is incomplete and cannot be approved. Remove or replace documents that could not be processed, then analyse again.</value></data>
+  <data name="AnalysisProcessed" xml:space="preserve"><value>Processed</value></data>
+  <data name="AnalysisUnprocessed" xml:space="preserve"><value>Not fully processed</value></data>
+  <data name="AnalysisParties" xml:space="preserve"><value>Relevant parties</value></data>
+  <data name="AnalysisOriginalCounterparty" xml:space="preserve"><value>Original AI counterparty suggestion</value></data>
+  <data name="AnalysisClarifyCounterparty" xml:space="preserve"><value>The counterparty needs clarification.</value></data>
+  <data name="AnalysisLegalName" xml:space="preserve"><value>Counterparty legal name</value></data>
+  <data name="AnalysisAddress" xml:space="preserve"><value>Address from the contract (saved with the analysis)</value></data>
+  <data name="AnalysisMatch" xml:space="preserve"><value>Find matching organisations</value></data>
+  <data name="AnalysisAmbiguousMatch" xml:space="preserve"><value>Several organisations match. Select the correct organisation:</value></data>
+  <data name="AnalysisOrganization" xml:space="preserve"><value>Organisation to link to the agreement</value></data>
+  <data name="AnalysisNewOrganization" xml:space="preserve"><value>Create a new organisation on approval</value></data>
+  <data name="AnalysisWillLink" xml:space="preserve"><value>The agreement will link to the existing organisation: {0}. Its master data will remain unchanged.</value></data>
+  <data name="AnalysisWillCreate" xml:space="preserve"><value>A new organisation will be created on approval: {0}.</value></data>
+  <data name="AnalysisConfirmCounterparty" xml:space="preserve"><value>I have checked our own business, the counterparty and the organisation link.</value></data>
+  <data name="AnalysisFindings" xml:space="preserve"><value>Contract analysis and findings</value></data>
+  <data name="AnalysisReviewHelp" xml:space="preserve"><value>Summaries are in Norwegian. Check and correct values. Quotes and original AI findings are preserved unchanged. This extracts content and is not a legal assessment.</value></data>
+  <data name="AnalysisOriginalValue" xml:space="preserve"><value>Original AI finding</value></data>
+  <data name="AnalysisValue" xml:space="preserve"><value>Value to approve</value></data>
+  <data name="AnalysisQuote" xml:space="preserve"><value>Show verbatim quote</value></data>
+  <data name="AnalysisPage" xml:space="preserve"><value>Page {0}</value></data>
+  <data name="AnalysisVersionHelp" xml:space="preserve"><value>This saves a new analysis version and its documents. Previous analyses and documents are retained. The counterparty link is updated to the selection above; other agreement fields stay unchanged.</value></data>
+  <data name="AnalysisHistoryHelp" xml:space="preserve"><value>The latest approved analysis appears first. Older versions retain their original sources and approved values.</value></data>
+  <data name="AnalysisApprovedBy" xml:space="preserve"><value>Approved by (user ID)</value></data>
+  <data name="AnalysisStatusFound" xml:space="preserve"><value>Found</value></data>
+  <data name="AnalysisStatusNotFound" xml:space="preserve"><value>Not found</value></data>
+  <data name="AnalysisStatusUnclear" xml:space="preserve"><value>Unclear</value></data>
+  <data name="AnalysisCategoryCounterparty" xml:space="preserve"><value>Counterparty</value></data>
+  <data name="AnalysisCategoryLiability" xml:space="preserve"><value>Liability</value></data>
+  <data name="AnalysisCategoryLiabilityLimit" xml:space="preserve"><value>Liability limit</value></data>
+  <data name="AnalysisCategoryExceptions" xml:space="preserve"><value>Exceptions to liability limits</value></data>
+  <data name="AnalysisCategoryIndirectLoss" xml:space="preserve"><value>Indirect loss</value></data>
+  <data name="AnalysisCategoryIndemnity" xml:space="preserve"><value>Indemnity</value></data>
+  <data name="AnalysisCategoryTermination" xml:space="preserve"><value>Termination and renewal</value></data>
+  <data name="AnalysisCategoryPayment" xml:space="preserve"><value>Payment</value></data>
+  <data name="AnalysisCategoryInsurance" xml:space="preserve"><value>Insurance</value></data>
+  <data name="AnalysisCategoryConfidentiality" xml:space="preserve"><value>Confidentiality</value></data>
+  <data name="AnalysisCategoryGoverningLaw" xml:space="preserve"><value>Governing law and dispute resolution</value></data>
+  <data name="AnalysisUploading" xml:space="preserve"><value>Uploading and validating files …</value></data>
+  <data name="AnalysisAnalyzing" xml:space="preserve"><value>Analysing the main contract and attachments together. This may take a few minutes …</value></data>
+  <data name="AnalysisSaving" xml:space="preserve"><value>Saving the agreement, documents and approved findings …</value></data>
+  <data name="AnalysisNotConfigured" xml:space="preserve"><value>Contract analysis is not configured. An administrator must set the API key and model on the server.</value></data>
+  <data name="AnalysisInvalidResponse" xml:space="preserve"><value>The AI response could not be validated. Your files are retained; retry the analysis.</value></data>
+  <data name="AnalysisApiFailed" xml:space="preserve"><value>OpenAI could not complete the analysis. Your files are retained; try again.</value></data>
+  <data name="AnalysisExpired" xml:space="preserve"><value>The draft has expired or closed. Close this dialog and start a new draft.</value></data>
+  <data name="AnalysisBusy" xml:space="preserve"><value>This draft is already being processed. Wait for the operation to finish.</value></data>
+  <data name="AnalysisPdfOnly" xml:space="preserve"><value>Contract analysis supports PDF. Export other document formats to PDF first.</value></data>
+  <data name="AnalysisFileLimit" xml:space="preserve"><value>A file limit was exceeded, or a main contract is already selected. See the limits above.</value></data>
+  <data name="AnalysisMainRequired" xml:space="preserve"><value>Select one main contract before analysis.</value></data>
+  <data name="AnalysisRequired" xml:space="preserve"><value>Complete the analysis before approval.</value></data>
+  <data name="AnalysisReviewRequired" xml:space="preserve"><value>Review the counterparty, organisation details and findings, and confirm the counterparty link.</value></data>
+  <data name="AnalysisOrganizationChanged" xml:space="preserve"><value>An organisation with the same number or name now exists. Find matching organisations and select the correct one before saving.</value></data>
+  <data name="AnalysisAccessDenied" xml:space="preserve"><value>You no longer have access to this analysis draft.</value></data>
+  <data name="AnalysisOperationFailed" xml:space="preserve"><value>The operation failed. The draft is retained until it expires. Try again.</value></data>
 </root>

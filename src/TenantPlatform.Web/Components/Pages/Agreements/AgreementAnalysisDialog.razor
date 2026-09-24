@@ -1,0 +1,200 @@
+@using AgreementServiceType = TenantPlatform.Web.Services.Agreements.AgreementService
+@using TenantPlatform.Core.Organizations
+@using TenantPlatform.Infrastructure.Agreements
+@implements IAsyncDisposable
+@inject IAgreementAnalysisService AnalysisService
+@inject IAgreementService AgreementService
+@inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
+
+<button class="btn btn-outline-primary align-self-center" @onclick="OpenAsync">@L["AnalysisUpload"]</button>
+@if (open)
+{
+    <div class="modal-backdrop show"></div>
+    <div class="modal d-block" role="dialog" aria-modal="true" aria-labelledby="analysis-title" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header"><h2 class="modal-title fs-5" id="analysis-title">@L["AnalysisUpload"]</h2>
+            <button type="button" class="btn-close" aria-label="@L["AnalysisDiscard"]" disabled="@busy" @onclick="DiscardAsync"></button></div>
+        <div class="modal-body">
+        @if (error is not null) { <div class="alert alert-danger" role="alert">@errorFile @L[error]</div> }
+        @if (busy) { <p role="status" aria-live="polite"><span class="spinner-border spinner-border-sm me-2"></span>@L[progress]</p> }
+        @if (draft is not null && options is not null)
+        {
+            <fieldset disabled="@busy">
+            <p>@L["AnalysisLimits", AnalysisService.MaxAnalysisFileSizeBytes / (1024 * 1024), AgreementServiceType.MaxAnalysisFiles, AgreementServiceType.MaxAnalysisTotalBytes / (1024 * 1024)]</p>
+            <p class="text-body-secondary">@L["AnalysisPrivacy"]</p>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6"><label class="form-label" for="analysis-main">@L["AnalysisMain"]</label>
+                    <InputFile id="analysis-main" class="form-control" accept=".pdf" disabled="@draft.Files.Any(x => x.Category == AgreementDocumentCategory.Contract)" OnChange="UploadMainAsync" /></div>
+                <div class="col-md-6"><label class="form-label" for="analysis-attachments">@L["AnalysisAttachments"]</label>
+                    <InputFile id="analysis-attachments" class="form-control" accept=".pdf" multiple OnChange="UploadAttachmentsAsync" /></div>
+            </div>
+            <ul class="list-group mb-3">
+            @foreach (var file in draft.Files)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><a href="@SourceUrl(file.Id)" target="_blank" rel="noopener" data-enhance-nav="false">@file.FileName</a> · @L[$"AgreementCategory{file.Category}"] · @L["AgreementBytes", file.Size]</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => RemoveAsync(file.Id)">@L["Remove"]</button>
+                </li>
+            }
+            </ul>
+            @if (draft.Result is null)
+            {
+                <button type="button" class="btn btn-primary" disabled="@(!draft.Files.Any(x => x.Category == AgreementDocumentCategory.Contract))" @onclick="AnalyzeAsync">@L["AnalysisStart"]</button>
+            }
+            else
+            {
+                @if (draft.Result.Documents.Any(x => !x.Processed)) { <div class="alert alert-danger">@L["AnalysisIncomplete"]</div> }
+                @foreach (var document in draft.Result.Documents)
+                {
+                    <p><strong>@draft.Files.Single(x => x.Id == document.DocumentId).FileName:</strong> @L[document.Processed ? "AnalysisProcessed" : "AnalysisUnprocessed"] @document.Explanation</p>
+                }
+                @foreach (var warning in draft.Result.Warnings) { <div class="alert alert-warning">@warning</div> }
+                <p><strong>@L["AnalysisParties"]:</strong> @string.Join("; ", draft.Result.Parties)</p>
+                <p class="text-body-secondary">@L["AnalysisOriginalCounterparty"]: @draft.Result.Counterparty.Name · @draft.Result.Counterparty.OrganizationNumber · @draft.Result.Counterparty.Address</p>
+                @if (draft.Result.Counterparty.RequiresClarification) { <div class="alert alert-warning">@L["AnalysisClarifyCounterparty"] @draft.Result.Counterparty.Explanation</div> }
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6"><label for="analysis-name" class="form-label">@L["AnalysisLegalName"]</label><input id="analysis-name" class="form-control" @bind="approval.CounterpartyName" @bind:after="IdentityChanged" maxlength="200" /></div>
+                    <div class="col-md-6"><label for="analysis-number" class="form-label">@L["OrganizationNumber"]</label><input id="analysis-number" class="form-control" @bind="approval.OrganizationNumber" @bind:after="IdentityChanged" maxlength="50" /></div>
+                    <div class="col-12"><label for="analysis-address" class="form-label">@L["AnalysisAddress"]</label><input id="analysis-address" class="form-control" @bind="approval.Address" maxlength="1000" /></div>
+                    <div class="col-12"><button type="button" class="btn btn-outline-secondary" @onclick="MatchAsync">@L["AnalysisMatch"]</button></div>
+                    @if (matches.Count > 1) { <div class="col-12 alert alert-warning">@L["AnalysisAmbiguousMatch"] @string.Join("; ", matches.Select(x => x.Name + " (" + x.OrganizationNumber + ")"))</div> }
+                    <div class="col-md-8"><label for="analysis-organization" class="form-label">@L["AnalysisOrganization"]</label><select id="analysis-organization" class="form-select" @bind="approval.OrganizationId" @bind:after="() => approval.CounterpartyConfirmed = false">
+                        <option value="">@L["AnalysisNewOrganization"]</option>
+                        @foreach (var item in options.Counterparties) { <option value="@item.Id">@item.Name</option> }
+                    </select></div>
+                    @if (!approval.OrganizationId.HasValue)
+                    {
+                        <div class="col-md-4"><label for="analysis-org-type" class="form-label">@L["Type"]</label><select id="analysis-org-type" class="form-select" @bind="approval.OrganizationType">
+                            @foreach (var type in Enum.GetValues<OrganizationType>()) { <option value="@type">@L[type == OrganizationType.ServiceProvider ? "OrganizationType_ServiceProvider" : $"OrganizationType{type}"]</option> }
+                        </select></div>
+                    }
+                </div>
+                <div class="alert alert-info">
+                    @if (approval.OrganizationId.HasValue) { @L["AnalysisWillLink", options.Counterparties.FirstOrDefault(x => x.Id == approval.OrganizationId)?.Name ?? ""] }
+                    else { @L["AnalysisWillCreate", approval.CounterpartyName] }
+                </div>
+                <label class="form-check mb-3"><input class="form-check-input" type="checkbox" @bind="approval.CounterpartyConfirmed" /><span class="form-check-label">@L["AnalysisConfirmCounterparty"]</span></label>
+                <h3 class="fs-5">@L["AnalysisFindings"]</h3>
+                <p>@L["AnalysisReviewHelp"]</p>
+                @for (var i = 0; i < draft.Result.Findings.Count; i++)
+                {
+                    var original = draft.Result.Findings[i]; var correction = approval.Findings[i]; var index = i;
+                    <div class="card mb-3"><div class="card-body">
+                        <h4 class="fs-6">@L[$"AnalysisCategory{original.Category}"] <span class="badge @StatusClass(original.Status)">@L[$"AnalysisStatus{original.Status}"]</span></h4>
+                        <p class="text-body-secondary">@L["AnalysisOriginalValue"]: @original.Value</p>
+                        <label class="form-label" for="@($"finding-value-{index}")">@L["AnalysisValue"]</label><textarea id="@($"finding-value-{index}")" class="form-control mb-2" @bind="correction.Value" maxlength="10000" rows="2"></textarea>
+                        <label class="form-label" for="@($"finding-status-{index}")">@L["Status"]</label><select id="@($"finding-status-{index}")" class="form-select mb-2" @bind="correction.Status">
+                            @foreach (var status in Enum.GetValues<AgreementFindingStatus>()) { <option value="@status">@L[$"AnalysisStatus{status}"]</option> }
+                        </select>
+                        <label class="form-label" for="@($"finding-parties-{index}")">@L["AnalysisParties"]</label><input id="@($"finding-parties-{index}")" class="form-control mb-2" @bind="correction.Parties" maxlength="2000" />
+                        @if (!string.IsNullOrEmpty(original.Explanation)) { <p class="text-warning-emphasis">@original.Explanation</p> }
+                        @foreach (var source in original.Sources)
+                        {
+                            <details class="mb-2"><summary>@L["AnalysisQuote"] · <a href="@SourceUrl(source.DocumentId)" target="_blank" rel="noopener" data-enhance-nav="false">@draft.Files.Single(x => x.Id == source.DocumentId).FileName</a> · @source.Section @if (source.Page.HasValue) { <span>· @L["AnalysisPage", source.Page]</span> }</summary>
+                                <blockquote class="border-start ps-3 mt-2" style="white-space:pre-wrap">@source.Quote</blockquote></details>
+                        }
+                    </div></div>
+                }
+                @if (!AgreementId.HasValue)
+                {
+                    <h3 class="fs-5">@L["AgreementCreate"]</h3>
+                    <EditForm Model="approval.Agreement"><div class="row g-3"><AgreementFields Model="approval.Agreement" Options="options" HideCounterparty="true" OriginalForm="AgreementForm.FixedTerm" /></div></EditForm>
+                }
+                else { <div class="alert alert-info">@L["AnalysisVersionHelp"]</div> }
+            }
+            </fieldset>
+        }
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-danger" disabled="@busy" @onclick="DiscardAsync">@L["AnalysisDiscard"]</button>
+            <button type="button" class="btn btn-primary" disabled="@(busy || draft?.Result is null || !approval.CounterpartyConfirmed || draft.Result.Documents.Any(x => !x.Processed))" @onclick="ApproveAsync">@L["AnalysisApprove"]</button>
+        </div>
+    </div></div></div>
+}
+@code {
+    [Parameter] public Guid? AgreementId { get; set; }
+    [Parameter] public EventCallback Saved { get; set; }
+    private AnalysisDraftDto? draft;
+    private AgreementOptionsDto? options;
+    private ApproveAnalysisRequest approval = new();
+    private List<AnalysisOrganizationDto> matches = [];
+    private bool open, busy;
+    private string? error, errorFile;
+    private string progress = "Loading";
+    private Guid accountId;
+    private readonly CancellationTokenSource lifetime = new();
+    private async Task RunAsync(Func<Task> action, string state = "Loading")
+    {
+        if (busy) return;
+        busy = true; error = null; errorFile = null; progress = state;
+        try { await action(); }
+        catch (AgreementValidationException ex) { error = ex.Message; }
+        catch (AgreementFileException ex) { error = ex.Message; }
+        catch (UnauthorizedAccessException) { error = "AnalysisAccessDenied"; }
+        catch (Exception) { error = "AnalysisOperationFailed"; }
+        finally { busy = false; }
+    }
+    private Task OpenAsync() => RunAsync(async () =>
+    {
+        open = true;
+        if (UserContext.Current.CurrentAccountId is not Guid id) throw new UnauthorizedAccessException();
+        accountId = id;
+        options = await AgreementService.GetOptionsAsync(accountId, AgreementId, lifetime.Token);
+        draft = await AnalysisService.StartAnalysisDraftAsync(accountId, AgreementId, lifetime.Token);
+        approval = new() { Agreement = new() { OwnerUserId = UserContext.Current.UserId, Form = AgreementForm.FixedTerm } };
+    });
+    private Task UploadMainAsync(InputFileChangeEventArgs args) => UploadAsync(args, AgreementDocumentCategory.Contract);
+    private Task UploadAttachmentsAsync(InputFileChangeEventArgs args) => UploadAsync(args, AgreementDocumentCategory.Attachment);
+    private Task UploadAsync(InputFileChangeEventArgs args, AgreementDocumentCategory category) => RunAsync(async () =>
+    {
+        if (args.FileCount > AgreementServiceType.MaxAnalysisFiles) throw new AgreementValidationException("AnalysisFileLimit");
+        foreach (var file in args.GetMultipleFiles(AgreementServiceType.MaxAnalysisFiles))
+        {
+            errorFile = file.Name + ":";
+            if (file.Size > AnalysisService.MaxAnalysisFileSizeBytes) throw new AgreementValidationException("AnalysisFileLimit");
+            await using var stream = file.OpenReadStream(AnalysisService.MaxAnalysisFileSizeBytes, lifetime.Token);
+            draft = await AnalysisService.AddAnalysisFileAsync(accountId, draft!.Id, file.Name, stream, category, lifetime.Token);
+        }
+        errorFile = null;
+    }, "AnalysisUploading");
+    private Task RemoveAsync(Guid id) => RunAsync(async () => draft = await AnalysisService.RemoveAnalysisFileAsync(accountId, draft!.Id, id, lifetime.Token));
+    private Task AnalyzeAsync() => RunAsync(async () =>
+    {
+        draft = await AnalysisService.AnalyzeAsync(accountId, draft!.Id, lifetime.Token);
+        var result = draft.Result!;
+        approval.CounterpartyName = result.Counterparty.Name; approval.OrganizationNumber = result.Counterparty.OrganizationNumber; approval.Address = result.Counterparty.Address;
+        approval.CounterpartyConfirmed = false;
+        approval.Findings = result.Findings.Select(x => new AnalysisFindingCorrection { Value = x.Value, Status = x.Status, Parties = x.Parties }).ToList();
+        await MatchCoreAsync();
+    }, "AnalysisAnalyzing");
+    private void IdentityChanged() { approval.OrganizationId = null; approval.CounterpartyConfirmed = false; matches = []; }
+    private Task MatchAsync() => RunAsync(MatchCoreAsync);
+    private async Task MatchCoreAsync()
+    {
+        options = await AgreementService.GetOptionsAsync(accountId, AgreementId, lifetime.Token);
+        matches = await AnalysisService.FindAnalysisOrganizationsAsync(accountId, draft!.Id, approval.CounterpartyName, approval.OrganizationNumber, lifetime.Token);
+        approval.OrganizationId = matches.Count == 1 ? matches[0].Id : null;
+        approval.CounterpartyConfirmed = false;
+    }
+    private Task DiscardAsync() => RunAsync(async () =>
+    {
+        if (draft is not null) await AnalysisService.DiscardAnalysisAsync(accountId, draft.Id, lifetime.Token);
+        draft = null; open = false;
+    });
+    private Task ApproveAsync() => RunAsync(async () =>
+    {
+        var id = await AnalysisService.ApproveAnalysisAsync(accountId, draft!.Id, approval, lifetime.Token);
+        draft = null; open = false;
+        if (AgreementId.HasValue) await Saved.InvokeAsync(); else Navigation.NavigateTo($"/agreements/{id}");
+    }, "AnalysisSaving");
+    private string SourceUrl(Guid id) => $"/agreements/analysis/{draft!.Id}/files/{id}";
+    private static string StatusClass(AgreementFindingStatus s) => s == AgreementFindingStatus.Found ? "text-bg-success" : s == AgreementFindingStatus.Unclear ? "text-bg-warning" : "text-bg-secondary";
+    public async ValueTask DisposeAsync()
+    {
+        await lifetime.CancelAsync();
+        if (draft is not null)
+            try { await AnalysisService.DiscardAnalysisAsync(accountId, draft.Id); } catch { /* Expiry cleanup retries interrupted/in-flight work. */ }
+        lifetime.Dispose();
+    }
+}

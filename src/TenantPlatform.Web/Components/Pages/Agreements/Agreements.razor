@@ -9,7 +9,7 @@
 <PageTitle>@L["Agreements"]</PageTitle>
 <div class="d-flex justify-content-between mb-3"><h1>@L["Agreements"]</h1>
 @if (allowed) { <a href="/agreements/bases/generate" class="btn btn-outline-primary align-self-center">@L["BulkTitle"]</a> }
-@if (canCreate) { <a href="/agreements/create" class="btn btn-primary align-self-center"><i class="bi bi-plus-lg"></i> @L["AgreementCreate"]</a> }
+@if (canCreate) { <AgreementAnalysisDialog /> <a href="/agreements/create" class="btn btn-primary align-self-center"><i class="bi bi-plus-lg"></i> @L["AgreementCreate"]</a> }
 </div>
 @if (error) { <div class="alert alert-danger" role="alert">@L["AgreementOperationFailed"]</div> }
 @if (allowed)

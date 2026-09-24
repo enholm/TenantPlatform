@@ -6,6 +6,22 @@ public static class AgreementEndpoints
 {
     public static void MapAgreementEndpoints(this WebApplication app)
     {
+        app.MapGet("/agreements/analysis/{draftId:guid}/files/{fileId:guid}", async (
+            Guid draftId, Guid fileId, HttpContext http, ICurrentUserContextService userContext,
+            IAgreementAnalysisService service, CancellationToken ct) =>
+        {
+            if (userContext.Current.CurrentAccountId is not Guid accountId) return Results.NotFound();
+            try
+            {
+                var file = await service.DownloadAnalysisFileAsync(accountId, draftId, fileId, ct);
+                http.Response.Headers.CacheControl = "no-store";
+                http.Response.Headers.XContentTypeOptions = "nosniff";
+                return Results.File(file.Content, file.MediaType, file.FileName);
+            }
+            catch (UnauthorizedAccessException) { return Results.NotFound(); }
+            catch (AgreementValidationException) { return Results.NotFound(); }
+            catch (IOException) { return Results.NotFound(); }
+        }).RequireAuthorization();
         app.MapGet("/agreements/documents/{documentId:guid}/download", async (
             Guid documentId, HttpContext http, ICurrentUserContextService userContext,
             IAgreementService service, CancellationToken cancellationToken) =>

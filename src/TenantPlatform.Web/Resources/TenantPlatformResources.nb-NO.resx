@@ -2294,4 +2294,66 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ApprovalReviewRequired" xml:space="preserve"><value>Krever ny kontroll. Åpne detaljene eller oppdater listen før nytt forsøk.</value></data>
   <data name="ApprovalPermissionRequired" xml:space="preserve"><value>Du har lesetilgang, men mangler rettighet til å godkjenne denne avtalen.</value></data>
   <data name="ApprovalAccessDenied" xml:space="preserve"><value>Du har ikke tilgang eller godkjenningsrettighet for dette grunnlaget.</value></data>
+  <data name="AnalysisUpload" xml:space="preserve"><value>Last opp og analyser kontrakt</value></data>
+  <data name="AnalysisDiscard" xml:space="preserve"><value>Forkast</value></data>
+  <data name="AnalysisApprove" xml:space="preserve"><value>Godta og lagre</value></data>
+  <data name="AnalysisLimits" xml:space="preserve"><value>PDF · maks. {0} MB per fil, {1} filer og {2} MB totalt. Utkast slettes etter 24 timer.</value></data>
+  <data name="AnalysisPrivacy" xml:space="preserve"><value>Dokumentene sendes samlet til OpenAI når du starter analysen. Kontroller resultatene mot dokumentene før godkjenning.</value></data>
+  <data name="AnalysisMain" xml:space="preserve"><value>Hovedkontrakt</value></data>
+  <data name="AnalysisAttachments" xml:space="preserve"><value>Vedlegg</value></data>
+  <data name="AnalysisStart" xml:space="preserve"><value>Start analyse</value></data>
+  <data name="AnalysisIncomplete" xml:space="preserve"><value>Analysen er ufullstendig og kan ikke godkjennes. Fjern eller erstatt dokumenter som ikke kunne behandles, og analyser på nytt.</value></data>
+  <data name="AnalysisProcessed" xml:space="preserve"><value>Behandlet</value></data>
+  <data name="AnalysisUnprocessed" xml:space="preserve"><value>Ikke fullstendig behandlet</value></data>
+  <data name="AnalysisParties" xml:space="preserve"><value>Berørte parter</value></data>
+  <data name="AnalysisOriginalCounterparty" xml:space="preserve"><value>AI-ens opprinnelige motpartsforslag</value></data>
+  <data name="AnalysisClarifyCounterparty" xml:space="preserve"><value>Motparten må avklares.</value></data>
+  <data name="AnalysisLegalName" xml:space="preserve"><value>Motpartens juridiske navn</value></data>
+  <data name="AnalysisAddress" xml:space="preserve"><value>Adresse fra kontrakten (lagres med analysen)</value></data>
+  <data name="AnalysisMatch" xml:space="preserve"><value>Finn organisasjonstreff</value></data>
+  <data name="AnalysisAmbiguousMatch" xml:space="preserve"><value>Flere organisasjoner samsvarer. Velg riktig organisasjon:</value></data>
+  <data name="AnalysisOrganization" xml:space="preserve"><value>Organisasjon som skal kobles til avtalen</value></data>
+  <data name="AnalysisNewOrganization" xml:space="preserve"><value>Opprett ny organisasjon ved godkjenning</value></data>
+  <data name="AnalysisWillLink" xml:space="preserve"><value>Avtalen kobles til eksisterende organisasjon: {0}. Organisasjonens grunndata endres ikke.</value></data>
+  <data name="AnalysisWillCreate" xml:space="preserve"><value>En ny organisasjon opprettes ved godkjenning: {0}.</value></data>
+  <data name="AnalysisConfirmCounterparty" xml:space="preserve"><value>Jeg har kontrollert hvem som er vår virksomhet, motparten og organisasjonskoblingen.</value></data>
+  <data name="AnalysisFindings" xml:space="preserve"><value>Kontraktsanalyse og funn</value></data>
+  <data name="AnalysisReviewHelp" xml:space="preserve"><value>Oppsummeringene er på norsk. Kontroller og korriger verdiene. Sitater og opprinnelige AI-funn beholdes uendret. Dette er uthenting av innhold, ikke en juridisk vurdering.</value></data>
+  <data name="AnalysisOriginalValue" xml:space="preserve"><value>Opprinnelig AI-funn</value></data>
+  <data name="AnalysisValue" xml:space="preserve"><value>Verdi som godkjennes</value></data>
+  <data name="AnalysisQuote" xml:space="preserve"><value>Vis ordrett sitat</value></data>
+  <data name="AnalysisPage" xml:space="preserve"><value>Side {0}</value></data>
+  <data name="AnalysisVersionHelp" xml:space="preserve"><value>Dette lagrer en ny analyseversjon og dokumentene på avtalen. Tidligere analyser og dokumenter beholdes. Motpartskoblingen oppdateres til valget ovenfor; andre avtalefelter endres ikke.</value></data>
+  <data name="AnalysisHistoryHelp" xml:space="preserve"><value>Nyeste godkjente analyse vises først. Eldre versjoner beholdes med sine opprinnelige kilder og godkjente verdier.</value></data>
+  <data name="AnalysisApprovedBy" xml:space="preserve"><value>Godkjent av (bruker-ID)</value></data>
+  <data name="AnalysisStatusFound" xml:space="preserve"><value>Funnet</value></data>
+  <data name="AnalysisStatusNotFound" xml:space="preserve"><value>Ikke funnet</value></data>
+  <data name="AnalysisStatusUnclear" xml:space="preserve"><value>Uklart</value></data>
+  <data name="AnalysisCategoryCounterparty" xml:space="preserve"><value>Kontraktsmotpart</value></data>
+  <data name="AnalysisCategoryLiability" xml:space="preserve"><value>Erstatningsansvar</value></data>
+  <data name="AnalysisCategoryLiabilityLimit" xml:space="preserve"><value>Ansvarsbegrensning</value></data>
+  <data name="AnalysisCategoryExceptions" xml:space="preserve"><value>Unntak fra ansvarsbegrensning</value></data>
+  <data name="AnalysisCategoryIndirectLoss" xml:space="preserve"><value>Indirekte tap</value></data>
+  <data name="AnalysisCategoryIndemnity" xml:space="preserve"><value>Skadesløsholdelse</value></data>
+  <data name="AnalysisCategoryTermination" xml:space="preserve"><value>Oppsigelse og fornyelse</value></data>
+  <data name="AnalysisCategoryPayment" xml:space="preserve"><value>Betaling</value></data>
+  <data name="AnalysisCategoryInsurance" xml:space="preserve"><value>Forsikring</value></data>
+  <data name="AnalysisCategoryConfidentiality" xml:space="preserve"><value>Konfidensialitet</value></data>
+  <data name="AnalysisCategoryGoverningLaw" xml:space="preserve"><value>Lovvalg og tvisteløsning</value></data>
+  <data name="AnalysisUploading" xml:space="preserve"><value>Laster opp og kontrollerer filene …</value></data>
+  <data name="AnalysisAnalyzing" xml:space="preserve"><value>Analyserer hovedkontrakt og vedlegg samlet. Dette kan ta noen minutter …</value></data>
+  <data name="AnalysisSaving" xml:space="preserve"><value>Lagrer avtale, dokumenter og godkjente funn …</value></data>
+  <data name="AnalysisNotConfigured" xml:space="preserve"><value>Kontraktsanalyse er ikke konfigurert. Administrator må sette API-nøkkel og modell på serveren.</value></data>
+  <data name="AnalysisInvalidResponse" xml:space="preserve"><value>AI-svaret kunne ikke valideres. Filene er bevart; prøv analysen igjen.</value></data>
+  <data name="AnalysisApiFailed" xml:space="preserve"><value>OpenAI kunne ikke fullføre analysen. Filene er bevart; prøv igjen.</value></data>
+  <data name="AnalysisExpired" xml:space="preserve"><value>Utkastet er utløpt eller avsluttet. Lukk dialogen og start et nytt utkast.</value></data>
+  <data name="AnalysisBusy" xml:space="preserve"><value>Utkastet behandles allerede. Vent til operasjonen er ferdig.</value></data>
+  <data name="AnalysisPdfOnly" xml:space="preserve"><value>Kontraktsanalyse støtter PDF. Eksporter andre dokumentformater til PDF først.</value></data>
+  <data name="AnalysisFileLimit" xml:space="preserve"><value>Filgrensen er overskredet, eller en hovedkontrakt er allerede valgt. Se grensene ovenfor.</value></data>
+  <data name="AnalysisMainRequired" xml:space="preserve"><value>Velg én hovedkontrakt før analyse.</value></data>
+  <data name="AnalysisRequired" xml:space="preserve"><value>Fullfør analysen før godkjenning.</value></data>
+  <data name="AnalysisReviewRequired" xml:space="preserve"><value>Kontroller motpart, organisasjonsopplysninger og funn, og bekreft motpartskoblingen.</value></data>
+  <data name="AnalysisOrganizationChanged" xml:space="preserve"><value>En organisasjon med samme nummer eller navn finnes nå. Søk etter organisasjonstreff og velg riktig organisasjon før du lagrer.</value></data>
+  <data name="AnalysisAccessDenied" xml:space="preserve"><value>Du har ikke lenger tilgang til dette analyseutkastet.</value></data>
+  <data name="AnalysisOperationFailed" xml:space="preserve"><value>Operasjonen mislyktes. Utkastet er bevart så lenge det ikke er utløpt. Prøv igjen.</value></data>
 </root>

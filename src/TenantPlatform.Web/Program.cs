@@ -111,6 +111,11 @@ builder.Services.AddOptions<AgreementDocumentStorageOptions>()
     .ValidateOnStart();
 builder.Services.AddSingleton<IAgreementDocumentStorage, LocalAgreementDocumentStorage>();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddOptions<AgreementAnalysisOptions>().Bind(builder.Configuration.GetSection("AgreementAnalysis"));
+builder.Services.AddHttpClient<IContractAnalysisClient, OpenAiContractAnalysisClient>(client => client.Timeout = TimeSpan.FromMinutes(5));
+builder.Services.AddScoped<IAgreementAnalysisService>(sp => sp.GetRequiredService<AgreementService>());
+builder.Services.AddScoped<AgreementAnalysisCleanup>();
+builder.Services.AddHostedService<AgreementAnalysisCleanupWorker>();
 builder.Services.AddScoped<AgreementService>();
 builder.Services.AddScoped<IAgreementService>(sp => sp.GetRequiredService<AgreementService>());
 builder.Services.AddScoped<IAgreementFollowupService>(sp => sp.GetRequiredService<AgreementService>());

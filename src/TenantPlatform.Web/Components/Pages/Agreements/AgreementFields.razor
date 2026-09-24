@@ -1,0 +1,50 @@
+        <div class="col-md-8"><label for="title" class="form-label">@L["Name"]</label><InputText id="title" class="form-control" @bind-Value="Model.Title" maxlength="200" required /></div>
+        <div class="col-md-4"><label for="status" class="form-label">@L["Status"]</label><InputSelect id="status" class="form-select" @bind-Value="Model.Status">
+            @foreach (var value in Enum.GetValues<AgreementStatus>()) { <option value="@value">@L[$"AgreementStatus{value}"]</option> }
+        </InputSelect></div>
+        <div class="col-md-4"><label for="type" class="form-label">@L["AgreementType"]</label><InputSelect id="type" class="form-select" @bind-Value="Model.Type" @bind-Value:after="TypeChanged">
+            @foreach (var value in Enum.GetValues<AgreementType>()) { <option value="@value">@L[$"AgreementType{value}"]</option> }
+        </InputSelect></div>
+        @if (!HideCounterparty)
+        {
+        <div class="col-md-4"><label for="counterparty" class="form-label">@L["AgreementCounterparty"]</label><InputSelect id="counterparty" class="form-select" @bind-Value="Model.CounterpartyOrganizationId">
+            <option value="@Guid.Empty">@L["AgreementSelect"]</option>
+            @foreach (var item in Options.Counterparties) { <option value="@item.Id">@item.Name</option> }
+        </InputSelect></div>
+        }
+        <div class="col-md-4"><label for="owner" class="form-label">@L["AgreementOwner"]</label><InputSelect id="owner" class="form-select" @bind-Value="Model.OwnerUserId" disabled="@(!CanManage)">
+            <option value="@Guid.Empty">@L["AgreementSelect"]</option>
+            @foreach (var item in Options.Members) { <option value="@item.Id">@item.Name</option> }
+        </InputSelect></div>
+        <div class="col-md-6"><label for="finance-direction" class="form-label">@L["FinanceDirection"]</label><InputSelect id="finance-direction" class="form-select" @bind-Value="Model.Direction">
+            <option value="">@L["FinanceUnclassified"]</option>
+            @foreach (var value in Enum.GetValues<AgreementDirection>()) { <option value="@value">@L[$"FinanceDirection{value}"]</option> }
+        </InputSelect></div>
+        <div class="col-md-6"><label for="finance-currency" class="form-label">@L["FinanceCurrency"]</label><InputSelect id="finance-currency" class="form-select" @bind-Value="Model.Currency">
+            <option value="">@L["AgreementSelect"]</option>
+            @foreach (var value in AgreementPeriodCalculator.Currencies) { <option value="@value">@value</option> }
+        </InputSelect><div class="form-text">@L["FinanceSetupHelp"]</div></div>
+        <div class="col-md-6"><label for="agreement-index" class="form-label">@L["ProcessingIndex"]</label><InputSelect id="agreement-index" class="form-select" @bind-Value="Model.IndexId"><option value="">@L["AgreementNone"]</option>@foreach (var i in Options.Indices) { <option value="@i.Id">@i.Name</option> }</InputSelect><div class="form-text">@L["AutoIndexSwitchHelp"]</div></div>
+        @if (Model is AgreementDetailsDto { IndexSetupNeedsReview: true }) { <div class="col-12 alert alert-warning">@L["SimpleIndexReview"]<div><InputCheckbox id="resolve-index" @bind-Value="Model.ResolveIndexSetup" /><label for="resolve-index">@L["SimpleIndexResolve"]</label></div></div> }
+        <AgreementNoticeEditor Model="Model" OriginalForm="OriginalForm" Existing="Existing" />
+        <div class="col-md-6"><label for="building" class="form-label">@L["Building"]</label><InputSelect id="building" class="form-select" @bind-Value="Model.BuildingId" @bind-Value:after="BuildingChanged">
+            <option value="">@L["AgreementNone"]</option>
+            @foreach (var item in Options.Buildings) { <option value="@item.Id">@item.Name</option> }
+        </InputSelect></div>
+        <div class="col-md-6"><label for="unit" class="form-label">@L["Unit"]</label><InputSelect id="unit" class="form-select" @bind-Value="Model.UnitId" disabled="@(!Model.BuildingId.HasValue)">
+            <option value="">@L["AgreementNone"]</option>
+            @foreach (var item in Options.Units.Where(x => x.BuildingId == Model.BuildingId)) { <option value="@item.Id">@item.Name</option> }
+        </InputSelect></div>
+        <div class="col-12"><label for="description" class="form-label">@L["Description"]</label><InputTextArea id="description" class="form-control" @bind-Value="Model.Description" maxlength="4000" rows="3" /></div>
+        <div class="col-12"><label for="terms" class="form-label">@L["AgreementTerms"]</label><InputTextArea id="terms" class="form-control" @bind-Value="Model.Terms" maxlength="10000" rows="5" /></div>
+
+@code {
+    [Parameter, EditorRequired] public SaveAgreementRequest Model { get; set; } = default!;
+    [Parameter, EditorRequired] public AgreementOptionsDto Options { get; set; } = default!;
+    [Parameter] public bool CanManage { get; set; } = true;
+    [Parameter] public bool Existing { get; set; }
+    [Parameter] public bool HideCounterparty { get; set; }
+    [Parameter] public AgreementForm OriginalForm { get; set; }
+    private void TypeChanged() { if (!Existing && Model.Direction is null && Model.Type == AgreementType.Supplier) Model.Direction = AgreementDirection.Cost; }
+    private void BuildingChanged() => Model.UnitId = null;
+}

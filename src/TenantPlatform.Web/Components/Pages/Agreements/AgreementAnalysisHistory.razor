@@ -1,0 +1,55 @@
+@using System.Text.Json
+@inject IAgreementAnalysisService AnalysisService
+@inject ICurrentUserContextService UserContext
+
+@if (error) { <div class="alert alert-danger">@L["AnalysisOperationFailed"]</div> }
+@if (analyses.Count > 0)
+{
+    <h2>@L["AnalysisFindings"]</h2>
+    <p>@L["AnalysisHistoryHelp"]</p>
+    @foreach (var analysis in analyses)
+    {
+        var original = JsonSerializer.Deserialize<ContractAnalysisResult>(analysis.OriginalResultJson!, ContractAnalysisJson.Options)!;
+        <details class="card mb-3" open="@(analysis == analyses[0])"><summary class="card-header">@analysis.ApprovedUtc?.ToString("g") UTC · @analysis.Model · @analysis.SchemaVersion</summary>
+        <div class="card-body">
+            <p>@L["AnalysisApprovedBy"]: @analysis.ApprovedByUserId</p>
+            <p><strong>@L["AgreementCounterparty"]:</strong> @analysis.ApprovedCounterpartyName · @analysis.ApprovedOrganizationNumber · @analysis.ApprovedAddress</p>
+            <p>@L["AnalysisOriginalCounterparty"]: @original.Counterparty.Name · @original.Counterparty.OrganizationNumber · @original.Counterparty.Address</p>
+            @foreach (var warning in original.Warnings) { <div class="alert alert-warning">@warning</div> }
+            @foreach (var finding in analysis.Findings.OrderBy(x => x.Position))
+            {
+                <div class="border-bottom mb-3 pb-2">
+                <h3 class="fs-6">@L[$"AnalysisCategory{finding.Category}"] <span class="badge @(finding.Status == AgreementFindingStatus.Unclear ? "text-bg-warning" : finding.Status == AgreementFindingStatus.NotFound ? "text-bg-secondary" : "text-bg-success")">@L[$"AnalysisStatus{finding.Status}"]</span></h3>
+                <p style="white-space:pre-wrap">@(finding.AdjustedValue ?? finding.OriginalValue)</p><p>@L["AnalysisParties"]: @finding.Parties</p>
+                @if (finding.AdjustedValue is not null || finding.Status != finding.OriginalStatus || finding.Parties != finding.OriginalParties)
+                { <details><summary>@L["AnalysisOriginalValue"]</summary><p>@L[$"AnalysisStatus{finding.OriginalStatus}"] · @finding.OriginalValue · @finding.OriginalParties</p></details> }
+                @if (!string.IsNullOrEmpty(finding.Explanation)) { <p class="text-warning-emphasis">@finding.Explanation</p> }
+                @foreach (var source in finding.Sources)
+                {
+                    <details><summary>@L["AnalysisQuote"] · <a href="@($"/agreements/documents/{source.DocumentId}/download")" target="_blank" rel="noopener" data-enhance-nav="false">@analysis.Files.Single(x => x.AgreementDocumentId == source.DocumentId).FileName</a> · @source.Section @if (source.Page.HasValue) { <span>· @L["AnalysisPage", source.Page]</span> }</summary>
+                    <blockquote class="border-start ps-3 mt-2" style="white-space:pre-wrap">@source.Quote</blockquote></details>
+                }
+                </div>
+            }
+        </div></details>
+    }
+}
+@code {
+    [Parameter] public Guid AgreementId { get; set; }
+    [Parameter] public Guid Revision { get; set; }
+    private List<AgreementAnalysis> analyses = [];
+    private bool error;
+    private Guid loadedRevision;
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Revision == loadedRevision) return;
+        analyses = []; error = false;
+        try
+        {
+            if (UserContext.Current.CurrentAccountId is not Guid accountId) throw new UnauthorizedAccessException();
+            analyses = await AnalysisService.GetAnalysesAsync(accountId, AgreementId);
+            loadedRevision = Revision;
+        }
+        catch { error = true; }
+    }
+}
