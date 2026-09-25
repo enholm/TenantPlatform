@@ -2356,7 +2356,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="AnalysisOrganizationChanged" xml:space="preserve"><value>En organisation med samma nummer eller namn finns nu. Sök efter matchningar och välj rätt organisation innan du sparar.</value></data>
   <data name="AnalysisAccessDenied" xml:space="preserve"><value>Du har inte längre åtkomst till detta analysutkast.</value></data>
   <data name="AnalysisOperationFailed" xml:space="preserve"><value>Åtgärden misslyckades. Utkastet bevaras tills det löper ut. Försök igen.</value></data>
-  <data name="RRM" xml:space="preserve"><value>RRM</value></data>
+  <data name="RRM" xml:space="preserve"><value>Avtalshantering</value></data>
   <data name="Settings" xml:space="preserve"><value>Inställningar</value></data>
   <data name="Departments" xml:space="preserve"><value>Avdelningar</value></data>
   <data name="Locations" xml:space="preserve"><value>Platser</value></data>

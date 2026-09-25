@@ -2356,7 +2356,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AnalysisOrganizationChanged" xml:space="preserve"><value>En organisasjon med samme nummer eller navn finnes nå. Søk etter organisasjonstreff og velg riktig organisasjon før du lagrer.</value></data>
   <data name="AnalysisAccessDenied" xml:space="preserve"><value>Du har ikke lenger tilgang til dette analyseutkastet.</value></data>
   <data name="AnalysisOperationFailed" xml:space="preserve"><value>Operasjonen mislyktes. Utkastet er bevart så lenge det ikke er utløpt. Prøv igjen.</value></data>
-  <data name="RRM" xml:space="preserve"><value>RRM</value></data>
+  <data name="RRM" xml:space="preserve"><value>Avtalehåndtering</value></data>
   <data name="Settings" xml:space="preserve"><value>Innstillinger</value></data>
   <data name="Departments" xml:space="preserve"><value>Avdelinger</value></data>
   <data name="Locations" xml:space="preserve"><value>Lokasjoner</value></data>
