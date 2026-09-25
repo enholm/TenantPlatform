@@ -3,188 +3,234 @@
 
 @inject ITenantAuthorizationService AuthorizationService
 @inject ICurrentUserContextService UserContext
+@inject NavigationManager Navigation
 
 @if (UserContext.Current.IsAuthenticated)
 {
-    @if (permissions.CanSeeTenantPortal)
-    {
-        <div class="sidebar-section-title">
-            @L["Portal"]
-        </div>
-    }
-
     @if (permissions.CanSeeAgreements)
     {
-        <NavLink href="/agreements" Match="NavLinkMatch.All" class="sidebar-link">
-            <i class="bi bi-file-earmark-text"></i>
-            <span>@L["Agreements"]</span>
-        </NavLink>
-        <NavLink href="/agreements/follow-up" class="sidebar-link">
-            <i class="bi bi-calendar-check"></i>
-            <span>@L["FollowupTitle"]</span>
-        </NavLink>
-    }
-    @if (permissions.CanSeeAgreements)
-    {
-        <NavLink href="/agreements/indices" class="sidebar-link"><i class="bi bi-graph-up"></i><span>@L["ProcessingIndices"]</span></NavLink>
-        <NavLink href="/agreements/bases" class="sidebar-link"><i class="bi bi-files"></i><span>@L["ProcessingBases"]</span></NavLink>
-    }
-    @if (permissions.CanSeeMeetingRooms)
-    {
-        <NavLink href="/meeting-rooms" class="sidebar-link">
-            <i class="bi bi-calendar3"></i>
-            <span>@L["MeetingRooms"]</span>
-        </NavLink>
-    }
-    @if (permissions.CanSeeTenantPortal)
-    {
-        <NavLink href="/portal/services"
-                 class="sidebar-link">
-            <i class="bi bi-grid"></i>
-            <span>@L["AvailableServices"]</span>
-        </NavLink>
-
-        @if (permissions.CanSeeMyRequests)
-        {
-            <NavLink href="/portal/requests"
-                     class="sidebar-link">
-                <i class="bi bi-list-check"></i>
-                <span>@L["MyServiceRequests"]</span>
-            </NavLink>
-        }
-
-        @if (permissions.CanSeeAllRequests)
-        {
-            <NavLink href="/admin/requests"
-                     class="sidebar-link">
-                <i class="bi bi-inboxes"></i>
-                <span>@L["AllServiceRequests"]</span>
-            </NavLink>
-        }
+        <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "RRM")">
+            <summary class="sidebar-section-title">@L["RRM"]</summary>
+            @if (permissions.CanSeeAgreements)
+            {
+                <NavLink href="/agreements" Match="NavLinkMatch.All" class="sidebar-link">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>@L["Agreements"]</span>
+                </NavLink>
+                <NavLink href="/agreements/follow-up" class="sidebar-link">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>@L["FollowupTitle"]</span>
+                </NavLink>
+                <NavLink href="/agreements/indices" class="sidebar-link"><i class="bi bi-graph-up"></i><span>@L["ProcessingIndices"]</span></NavLink>
+                <NavLink href="/agreements/bases" class="sidebar-link"><i class="bi bi-files"></i><span>@L["ProcessingBases"]</span></NavLink>
+            }
+        </details>
     }
 
-    @if (permissions.CanSeeProviderPortal)
+    @if (CanSeeMeetingRoomsGroup)
     {
-        <div class="sidebar-section-title">
-            @L["Provider"]
-        </div>
-
-        <NavLink href="/provider/requests"
-                 class="sidebar-link">
-            <i class="bi bi-briefcase"></i>
-            <span>@L["AssignedRequests"]</span>
-        </NavLink>
+        <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "MeetingRooms")">
+            <summary class="sidebar-section-title">@L["MeetingRooms"]</summary>
+            @if (permissions.CanSeeMeetingRooms)
+            {
+                <NavLink href="/meeting-rooms" class="sidebar-link">
+                    <i class="bi bi-calendar3"></i>
+                    <span>@L["MeetingRooms"]</span>
+                </NavLink>
+            }
+            @if (permissions.CanManageMeetingRooms)
+            {
+                <NavLink href="/admin/meeting-rooms" class="sidebar-link">
+                    <i class="bi bi-door-open"></i>
+                    <span>@L["ManageMeetingRooms"]</span>
+                </NavLink>
+                <NavLink href="/admin/calendar-integrations" class="sidebar-link">
+                    <i class="bi bi-calendar2-week"></i>
+                    <span>@L["CalendarIntegrations"]</span>
+                </NavLink>
+            }
+        </details>
     }
 
-    @if (permissions.CanSeePropertyManagement)
+    @if (CanSeePropertyGroup)
     {
-        <div class="sidebar-section-title">
-            @L["Property"]
-        </div>
-
-        @if (permissions.CanSeeBuildings)
-        {
-            <NavLink href="/buildings"
-                     class="sidebar-link">
-                <i class="bi bi-buildings"></i>
-                <span>@L["Buildings"]</span>
-            </NavLink>
-        }
-
-        @if (permissions.CanSeeUnits)
-        {
-            <NavLink href="/units"
-                     class="sidebar-link">
-                <i class="bi bi-diagram-3"></i>
-                <span>@L["Units"]</span>
-            </NavLink>
-        }
-
-        @if (permissions.CanSeeOccupancies)
-        {
-            <NavLink href="/occupancies"
-                     class="sidebar-link">
-                <i class="bi bi-people"></i>
-                <span>@L["Occupancies"]</span>
-            </NavLink>
-        }
+        <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "Property")">
+            <summary class="sidebar-section-title">@L["Property"]</summary>
+            @if (permissions.CanSeeBuildings)
+            {
+                <NavLink href="/buildings"
+                         class="sidebar-link">
+                    <i class="bi bi-buildings"></i>
+                    <span>@L["Buildings"]</span>
+                </NavLink>
+            }
+            @if (permissions.CanSeeUnits)
+            {
+                <NavLink href="/units"
+                         class="sidebar-link">
+                    <i class="bi bi-diagram-3"></i>
+                    <span>@L["Units"]</span>
+                </NavLink>
+            }
+            @if (permissions.CanSeeOccupancies)
+            {
+                <NavLink href="/occupancies"
+                         class="sidebar-link">
+                    <i class="bi bi-people"></i>
+                    <span>@L["Occupancies"]</span>
+                </NavLink>
+            }
+        </details>
     }
 
-    @if (permissions.CanSeeAdministration)
+    @if (CanSeeServicesGroup)
     {
-        <div class="sidebar-section-title">
-            @L["Administration"]
-        </div>
-
-        @if (permissions.CanManageMeetingRooms)
-        {
-            <NavLink href="/admin/meeting-rooms" class="sidebar-link">
-                <i class="bi bi-door-open"></i>
-                <span>@L["ManageMeetingRooms"]</span>
-            </NavLink>
-            <NavLink href="/admin/calendar-integrations" class="sidebar-link">
-                <i class="bi bi-calendar2-week"></i>
-                <span>@L["CalendarIntegrations"]</span>
-            </NavLink>
-        }
-
-        @if (permissions.CanSeeOrganizations)
-        {
-            <NavLink href="/organizations"
-                     class="sidebar-link">
-                <i class="bi bi-building"></i>
-                <span>@L["Organizations"]</span>
-            </NavLink>
-        }
-
-        @if (permissions.CanSeeUsers &&
-             !UserContext.Current.IsPlatformAdmin)
-        {
-            <NavLink href="/users"
-                     class="sidebar-link">
-                <i class="bi bi-person-gear"></i>
-                <span>@L["Users"]</span>
-            </NavLink>
-        }
-
-        @if (permissions.CanSeeServiceDefinitions)
-        {
-            <NavLink href="/service-definitions"
-                     class="sidebar-link">
-                <i class="bi bi-briefcase"></i>
-                <span>@L["ServiceDefinitions"]</span>
-            </NavLink>
-        }
+        <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "Services")">
+            <summary class="sidebar-section-title">@L["Services"]</summary>
+            @if (permissions.CanSeeTenantPortal)
+            {
+                <NavLink href="/portal/services"
+                         class="sidebar-link">
+                    <i class="bi bi-grid"></i>
+                    <span>@L["AvailableServices"]</span>
+                </NavLink>
+            }
+            @if (permissions.CanSeeMyRequests)
+            {
+                <NavLink href="/portal/requests"
+                         class="sidebar-link">
+                    <i class="bi bi-list-check"></i>
+                    <span>@L["MyServiceRequests"]</span>
+                </NavLink>
+            }
+            @if (permissions.CanSeeAllRequests)
+            {
+                <NavLink href="/admin/requests"
+                         class="sidebar-link">
+                    <i class="bi bi-inboxes"></i>
+                    <span>@L["AllServiceRequests"]</span>
+                </NavLink>
+            }
+            @if (permissions.CanSeeAssignedRequests)
+            {
+                <NavLink href="/provider/requests"
+                         class="sidebar-link">
+                    <i class="bi bi-briefcase"></i>
+                    <span>@L["AssignedRequests"]</span>
+                </NavLink>
+            }
+            @if (permissions.CanSeeServiceDefinitions)
+            {
+                <NavLink href="/service-definitions"
+                         class="sidebar-link">
+                    <i class="bi bi-briefcase"></i>
+                    <span>@L["ServiceDefinitions"]</span>
+                </NavLink>
+            }
+        </details>
     }
 
-    @if (permissions.CanSeePlatformAdministration)
+    @if (CanSeeSettingsGroup)
     {
-        <div class="sidebar-section-title">
-            @L["Platform"]
-        </div>
+        <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "Settings")">
+            <summary class="sidebar-section-title">@L["Settings"]</summary>
+            @if (permissions.CanSeeOrganizations)
+            {
+                <NavLink href="/organizations"
+                         class="sidebar-link">
+                    <i class="bi bi-building"></i>
+                    <span>@L["Organizations"]</span>
+                </NavLink>
+            }
+            @if (CanSeeAccountUsers)
+            {
+                <NavLink href="/users"
+                         class="sidebar-link">
+                    <i class="bi bi-person-gear"></i>
+                    <span>@L["Users"]</span>
+                </NavLink>
+            }
+        </details>
+    }
 
-        @if (permissions.CanSeeAccounts)
-        {
-            <NavLink href="/accounts"
-                     class="sidebar-link">
-                <i class="bi bi-hdd-network"></i>
-                <span>@L["Accounts"]</span>
-            </NavLink>
-        }
-
-        @if (permissions.CanSeeUsers)
-        {
-            <NavLink href="/users"
-                     class="sidebar-link">
-                <i class="bi bi-people"></i>
-                <span>@L["Users"]</span>
-            </NavLink>
-        }
+    @if (CanSeePlatformGroup)
+    {
+        <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "Platform")">
+            <summary class="sidebar-section-title">@L["Platform"]</summary>
+            @if (permissions.CanSeeAccounts)
+            {
+                <NavLink href="/accounts"
+                         class="sidebar-link">
+                    <i class="bi bi-hdd-network"></i>
+                    <span>@L["Accounts"]</span>
+                </NavLink>
+            }
+            @if (permissions.CanSeeUsers)
+            {
+                <NavLink href="/users"
+                         class="sidebar-link">
+                    <i class="bi bi-person-gear"></i>
+                    <span>@L["Users"]</span>
+                </NavLink>
+            }
+        </details>
     }
 }
 
 @code {
     private NavigationPermissions permissions = new();
+    private string? initialGroup;
+
+    private bool CanSeeMeetingRoomsGroup => permissions.CanSeeMeetingRooms || permissions.CanManageMeetingRooms;
+    private bool CanSeePropertyGroup => permissions.CanSeeBuildings || permissions.CanSeeUnits || permissions.CanSeeOccupancies;
+    private bool CanSeeServicesGroup => permissions.CanSeeTenantPortal || permissions.CanSeeMyRequests ||
+        permissions.CanSeeAllRequests || permissions.CanSeeAssignedRequests || permissions.CanSeeServiceDefinitions;
+    private bool CanSeeAccountUsers => permissions.CanSeeUsers && !UserContext.Current.IsPlatformAdmin;
+    private bool CanSeeSettingsGroup => permissions.CanSeeOrganizations || CanSeeAccountUsers;
+    private bool CanSeePlatformGroup => permissions.CanSeePlatformAdministration &&
+        (permissions.CanSeeAccounts || permissions.CanSeeUsers);
+
+    private bool IsCurrentPath(string prefix)
+    {
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+        return path.Equals(prefix, StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string? GetInitialGroup()
+    {
+        if (permissions.CanSeeAgreements && IsCurrentPath("agreements"))
+            return "RRM";
+
+        if (CanSeeMeetingRoomsGroup &&
+            (IsCurrentPath("meeting-rooms") || IsCurrentPath("admin/meeting-rooms") || IsCurrentPath("admin/calendar-integrations")))
+            return "MeetingRooms";
+
+        if (CanSeePropertyGroup &&
+            (IsCurrentPath("buildings") || IsCurrentPath("units") || IsCurrentPath("occupancies")))
+            return "Property";
+
+        if (CanSeeServicesGroup &&
+            (IsCurrentPath("portal") || IsCurrentPath("provider") ||
+             IsCurrentPath("admin/requests") || IsCurrentPath("service-definitions")))
+            return "Services";
+
+        if (CanSeeSettingsGroup &&
+            (IsCurrentPath("organizations") || (CanSeeAccountUsers && IsCurrentPath("users"))))
+            return "Settings";
+
+        if (CanSeePlatformGroup &&
+            (IsCurrentPath("accounts") || (UserContext.Current.IsPlatformAdmin && IsCurrentPath("users"))))
+            return "Platform";
+
+        if (permissions.CanSeeAgreements) return "RRM";
+        if (CanSeeMeetingRoomsGroup) return "MeetingRooms";
+        if (CanSeePropertyGroup) return "Property";
+        if (CanSeeServicesGroup) return "Services";
+        if (CanSeeSettingsGroup) return "Settings";
+        if (CanSeePlatformGroup) return "Platform";
+        return null;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -196,5 +242,7 @@
         permissions =
             await AuthorizationService
                 .GetNavigationPermissionsAsync();
+
+        initialGroup = GetInitialGroup();
     }
 }

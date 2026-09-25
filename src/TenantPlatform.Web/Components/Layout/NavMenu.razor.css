@@ -1,12 +1,46 @@
-
+.sidebar-group {
+    margin-bottom: 0.35rem;
+}
 
 .sidebar-section-title {
-    padding: 1rem 0.85rem 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.85rem;
+    border-radius: 0.5rem;
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--tp-sidebar-text);
-    opacity: 0.65;
+    cursor: pointer;
+    list-style: none;
 }
 
+.sidebar-section-title::-webkit-details-marker {
+    display: none;
+}
+
+.sidebar-section-title::after {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    flex-shrink: 0;
+}
+
+.sidebar-group[open] > .sidebar-section-title::after {
+    transform: rotate(45deg);
+}
+
+.sidebar-section-title:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-section-title:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+}
