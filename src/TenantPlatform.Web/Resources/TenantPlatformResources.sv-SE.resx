@@ -2432,4 +2432,117 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="DashboardFilterHelp" xml:space="preserve"><value>Kommande betyder idag till och med dag 90 i kontots tidszon. Utgångna har slutdatum före idag.</value></data>
   <data name="DashboardDimensionStatus" xml:space="preserve"><value>Status</value></data>
   <data name="DashboardDimensionOwner" xml:space="preserve"><value>Avtalsansvarig</value></data>
+  <data name="LeasingTitle" xml:space="preserve"><value>Leasing</value></data>
+  <data name="LeasingOverview" xml:space="preserve"><value>Översikt</value></data>
+  <data name="LeasingFrameworks" xml:space="preserve"><value>Ramavtal</value></data>
+  <data name="LeasingOrders" xml:space="preserve"><value>Beställningsleasing</value></data>
+  <data name="LeasingFramework" xml:space="preserve"><value>Ramavtal</value></data>
+  <data name="LeasingAcquisition" xml:space="preserve"><value>Anskaffning</value></data>
+  <data name="LeasingAcquisitions" xml:space="preserve"><value>Anskaffningar</value></data>
+  <data name="LeasingNewFramework" xml:space="preserve"><value>Nytt ramavtal</value></data>
+  <data name="LeasingNewOrder" xml:space="preserve"><value>Ny beställningsleasing</value></data>
+  <data name="LeasingNewAcquisition" xml:space="preserve"><value>Ny anskaffning</value></data>
+  <data name="LeasingEditFramework" xml:space="preserve"><value>Redigera ramavtal</value></data>
+  <data name="LeasingEditAcquisition" xml:space="preserve"><value>Redigera anskaffning</value></data>
+  <data name="LeasingKind" xml:space="preserve"><value>Typ</value></data>
+  <data name="LeasingNumber" xml:space="preserve"><value>Avtalsnummer / referens</value></data>
+  <data name="LeasingOwner" xml:space="preserve"><value>Ansvarig</value></data>
+  <data name="LeasingPeriod" xml:space="preserve"><value>Period</value></data>
+  <data name="LeasingAmount" xml:space="preserve"><value>Belopp</value></data>
+  <data name="LeasingEmpty" xml:space="preserve"><value>Inga leasingavtal i detta urval.</value></data>
+  <data name="LeasingListAmounts" xml:space="preserve"><value>Ramavtal visar maxbelopp. Anskaffningar visar inköpsvärde inkl. moms. Perioden är anskaffningsperiod för ramavtal och leasingperiod för anskaffningar.</value></data>
+  <data name="LeasingStatusOpen" xml:space="preserve"><value>Öppen för anskaffningar</value></data>
+  <data name="LeasingStatusClosed" xml:space="preserve"><value>Stängd för nya anskaffningar</value></data>
+  <data name="LeasingStatusFinished" xml:space="preserve"><value>Avslutat</value></data>
+  <data name="LeasingStatusDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="LeasingStatusRegistered" xml:space="preserve"><value>Registrerad</value></data>
+  <data name="LeasingStatusCancelled" xml:space="preserve"><value>Annullerad</value></data>
+  <data name="LeasingMonths" xml:space="preserve"><value>Leasingperiod (hela månader)</value></data>
+  <data name="LeasingInterestKind" xml:space="preserve"><value>Räntevillkor</value></data>
+  <data name="LeasingInterestFixed" xml:space="preserve"><value>Fast årsränta</value></data>
+  <data name="LeasingInterestFloating" xml:space="preserve"><value>Rörlig årsränta</value></data>
+  <data name="LeasingInterestReference" xml:space="preserve"><value>Referensränta med marginal</value></data>
+  <data name="LeasingReferenceRate" xml:space="preserve"><value>Referensräntans namn (t.ex. NIBOR 3 månader)</value></data>
+  <data name="LeasingMargin" xml:space="preserve"><value>Marginal (procentenheter)</value></data>
+  <data name="LeasingAnnualRate" xml:space="preserve"><value>Årsränta (%)</value></data>
+  <data name="LeasingFrequency" xml:space="preserve"><value>Betalningsfrekvens</value></data>
+  <data name="LeasingFrequencyMonthly" xml:space="preserve"><value>Månadsvis</value></data>
+  <data name="LeasingFrequencyQuarterly" xml:space="preserve"><value>Kvartalsvis</value></data>
+  <data name="LeasingFrequencyHalfYearly" xml:space="preserve"><value>Halvårsvis</value></data>
+  <data name="LeasingFrequencyYearly" xml:space="preserve"><value>Årligen</value></data>
+  <data name="LeasingTermsHelp" xml:space="preserve"><value>Betalningsfrekvensen är oberoende av referensräntan. Räntor registreras manuellt; betalningsbelopp och betalningsplaner beräknas inte.</value></data>
+  <data name="LeasingNoFramework" xml:space="preserve"><value>Utan ramavtal (beställningsleasing)</value></data>
+  <data name="LeasingSupplier" xml:space="preserve"><value>Leverantör</value></data>
+  <data name="LeasingChoose" xml:space="preserve"><value>Välj…</value></data>
+  <data name="LeasingFinanceCompany" xml:space="preserve"><value>Finansbolag</value></data>
+  <data name="LeasingCurrency" xml:space="preserve"><value>Valuta</value></data>
+  <data name="LeasingAcquisitionFrom" xml:space="preserve"><value>Anskaffningar från och med</value></data>
+  <data name="LeasingAcquisitionTo" xml:space="preserve"><value>Anskaffningar till och med</value></data>
+  <data name="LeasingLimit" xml:space="preserve"><value>Maxbelopp</value></data>
+  <data name="LeasingIncludesVat" xml:space="preserve"><value>Rambeloppet inkluderar moms</value></data>
+  <data name="LeasingPurchaseDate" xml:space="preserve"><value>Inköpsdatum / leasingstart</value></data>
+  <data name="LeasingFinanced" xml:space="preserve"><value>Finansierat belopp</value></data>
+  <data name="LeasingInvoiceNumber" xml:space="preserve"><value>Fakturanummer (krävs vid registrering)</value></data>
+  <data name="LeasingInvoiceDate" xml:space="preserve"><value>Fakturadatum (krävs vid registrering)</value></data>
+  <data name="LeasingDefaultTerms" xml:space="preserve"><value>Standardvillkor för nya anskaffningar</value></data>
+  <data name="LeasingTerms" xml:space="preserve"><value>Leasingvillkor</value></data>
+  <data name="LeasingEndDate" xml:space="preserve"><value>Leasingens slutdatum</value></data>
+  <data name="LeasingDateRule" xml:space="preserve"><value>Leasingen börjar på inköpsdagen. Slutdatum lägger till hela kalendermånader. Om dagen saknas i slutmånaden används månadens sista dag.</value></data>
+  <data name="LeasingItems" xml:space="preserve"><value>Varurader</value></data>
+  <data name="LeasingLineNumber" xml:space="preserve"><value>Varurad {0}</value></data>
+  <data name="LeasingDescription" xml:space="preserve"><value>Beskrivning</value></data>
+  <data name="LeasingItemNumber" xml:space="preserve"><value>Artikelnummer (valfritt)</value></data>
+  <data name="LeasingQuantity" xml:space="preserve"><value>Antal</value></data>
+  <data name="LeasingVatRate" xml:space="preserve"><value>Momssats (%)</value></data>
+  <data name="LeasingUnitPrice" xml:space="preserve"><value>Enhetspris exkl. moms</value></data>
+  <data name="LeasingRemoveLine" xml:space="preserve"><value>Ta bort rad</value></data>
+  <data name="LeasingAddLine" xml:space="preserve"><value>Lägg till varurad</value></data>
+  <data name="LeasingLineTotals" xml:space="preserve"><value>Exkl. moms: {0} · inkl. moms: {1} {2}</value></data>
+  <data name="LeasingTotals" xml:space="preserve"><value>Inköpsvärde exkl. moms: {0} · moms: {1} · inkl. moms: {2} {3}</value></data>
+  <data name="LeasingNotes" xml:space="preserve"><value>Anteckningar</value></data>
+  <data name="LeasingChangeReason" xml:space="preserve"><value>Ändringsorsak (obligatorisk)</value></data>
+  <data name="LeasingAttachmentsAfterSave" xml:space="preserve"><value>Lägg till dokument på detaljsidan efter att du sparat.</value></data>
+  <data name="LeasingDetails" xml:space="preserve"><value>Avtalsuppgifter</value></data>
+  <data name="LeasingAcquisitionPeriod" xml:space="preserve"><value>Anskaffningsperiod</value></data>
+  <data name="LeasingVatBasis" xml:space="preserve"><value>Ramunderlag</value></data>
+  <data name="LeasingGross" xml:space="preserve"><value>Inklusive moms</value></data>
+  <data name="LeasingNet" xml:space="preserve"><value>Exklusive moms</value></data>
+  <data name="LeasingCapacity" xml:space="preserve"><value>Ramutnyttjande</value></data>
+  <data name="LeasingUsed" xml:space="preserve"><value>Utnyttjat belopp</value></data>
+  <data name="LeasingAvailable" xml:space="preserve"><value>Tillgängligt belopp</value></data>
+  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Endast registrerade, ej annullerade anskaffningar använder ramen. Utkast, räntor och avgifter gör inte det. Leasingbetalningar frigör inte ramen.</value></data>
+  <data name="LeasingPeriodHelp" xml:space="preserve"><value>Anskaffningsperioden begränsar inköpsdatum. Varje anskaffning har en egen leasingperiod som fortsätter efter anskaffningsperiodens slut.</value></data>
+  <data name="LeasingDocuments" xml:space="preserve"><value>Dokumentbilagor</value></data>
+  <data name="LeasingNoDocuments" xml:space="preserve"><value>Inga dokumentbilagor ännu.</value></data>
+  <data name="LeasingUpload" xml:space="preserve"><value>Ladda upp dokument</value></data>
+  <data name="LeasingFileLimit" xml:space="preserve"><value>Max {0} MB. PDF, Word, Excel, PNG eller JPEG.</value></data>
+  <data name="LeasingCancelAcquisition" xml:space="preserve"><value>Annullera anskaffningen</value></data>
+  <data name="LeasingCancelHelp" xml:space="preserve"><value>Annullering frigör eventuell använd ram. Anskaffningen och historiken bevaras; annullering kan inte ångras i fas 1.</value></data>
+  <data name="LeasingHistory" xml:space="preserve"><value>Ändringshistorik</value></data>
+  <data name="LeasingBefore" xml:space="preserve"><value>Före ändringen</value></data>
+  <data name="LeasingAfter" xml:space="preserve"><value>Efter ändringen</value></data>
+  <data name="LeasingActionCreated" xml:space="preserve"><value>Skapad</value></data>
+  <data name="LeasingActionUpdated" xml:space="preserve"><value>Ändrad</value></data>
+  <data name="LeasingActionCancelled" xml:space="preserve"><value>Annullerad</value></data>
+  <data name="LeasingActionDocumentAdded" xml:space="preserve"><value>Dokument tillagt</value></data>
+  <data name="LeasingFailed" xml:space="preserve"><value>Kunde inte slutföra åtgärden. Försök igen.</value></data>
+  <data name="LeasingUploadFailed" xml:space="preserve"><value>Kunde inte ladda upp dokumentet. Kontrollera filstorleken och försök igen.</value></data>
+  <data name="LeasingClosed" xml:space="preserve"><value>Ramavtalet är stängt för nya registrerade anskaffningar.</value></data>
+  <data name="LeasingInvalidFramework" xml:space="preserve"><value>Kontrollera anskaffningsperiod, status och maxbelopp. Maxbeloppet ska vara mellan 0 och 1 000 miljarder med högst två decimaler.</value></data>
+  <data name="LeasingFrameworkConflict" xml:space="preserve"><value>Ändringen strider mot registrerade anskaffningar. Valuta och finansbolag måste stämma, inköpsdatum måste ligga inom perioden och momsunderlaget kan inte ändras.</value></data>
+  <data name="LeasingLimitExceeded" xml:space="preserve"><value>Inköpsvärdet överskrider tillgänglig ram eller maxbeloppet understiger redan utnyttjat belopp.</value></data>
+  <data name="LeasingInvalidTransition" xml:space="preserve"><value>Denna statusändring är inte tillåten. Registrerade anskaffningar måste annulleras i stället för att återställas till utkast.</value></data>
+  <data name="LeasingFrameworkCurrency" xml:space="preserve"><value>Valuta och finansbolag måste stämma med ramavtalet.</value></data>
+  <data name="LeasingInvalidParty" xml:space="preserve"><value>Välj en part som tillhör detta konto.</value></data>
+  <data name="LeasingInvalidOwner" xml:space="preserve"><value>Välj en aktiv ansvarig som tillhör detta konto.</value></data>
+  <data name="LeasingInvalidPurchase" xml:space="preserve"><value>Kontrollera fakturauppgifter och finansierat belopp. Beloppet får inte vara negativt och får ha högst två decimaler.</value></data>
+  <data name="LeasingInvalidDates" xml:space="preserve"><value>Ange giltigt inköpsdatum och leasingperiod på 1–600 hela månader.</value></data>
+  <data name="LeasingInvalidLines" xml:space="preserve"><value>Kontrollera varuraderna. Beskrivning krävs, antal måste vara positivt, pris får inte vara negativt och moms måste vara 0–100 %. Använd högst fyra decimaler och 500 rader.</value></data>
+  <data name="LeasingRegistrationRequired" xml:space="preserve"><value>Registrering kräver minst en varurad med positivt inköpsvärde, positivt finansierat belopp, fakturanummer och fakturadatum.</value></data>
+  <data name="LeasingOutsidePeriod" xml:space="preserve"><value>Inköpsdatum måste ligga inom ramavtalets anskaffningsperiod, inklusive båda gränsdatumen.</value></data>
+  <data name="LeasingConcurrency" xml:space="preserve"><value>Avtalet har ändrats av en annan användare. Ladda om sidan innan du sparar.</value></data>
+  <data name="LeasingReasonRequired" xml:space="preserve"><value>Ange en orsak till ändringen (högst 2000 tecken).</value></data>
+  <data name="LeasingInvalidDetails" xml:space="preserve"><value>Namn, nummer/referens och stödd valuta krävs. Maxlängd: namn 200, nummer 100, anteckningar 10 000.</value></data>
+  <data name="LeasingInvalidTerms" xml:space="preserve"><value>Kontrollera villkoren: 1–600 hela månader, ränta 0–100 %, eller referensräntans namn och marginal mellan −100 och 100 procentenheter. Välj betalningsfrekvens separat.</value></data>
+  <data name="LeasingVatAmount" xml:space="preserve"><value>Momsbelopp</value></data>
 </root>

@@ -1,0 +1,22 @@
+<div class="row g-3">
+    <div class="col-md-3"><label for="lease-months" class="form-label">@L["LeasingMonths"]</label><InputNumber id="lease-months" class="form-control" @bind-Value="Terms.Months" @bind-Value:after="Notify" min="1" max="600" /></div>
+    <div class="col-md-3"><label for="lease-interest" class="form-label">@L["LeasingInterestKind"]</label><InputSelect id="lease-interest" class="form-select" @bind-Value="Terms.InterestKind">
+        @foreach (var value in Enum.GetValues<LeasingInterestKind>()) { <option value="@value">@L[$"LeasingInterest{value}"]</option> }
+    </InputSelect></div>
+    @if (Terms.InterestKind == LeasingInterestKind.Reference)
+    {
+        <div class="col-md-3"><label for="lease-reference-rate" class="form-label">@L["LeasingReferenceRate"]</label><InputText id="lease-reference-rate" class="form-control" @bind-Value="Terms.ReferenceRateName" maxlength="100" /></div>
+        <div class="col-md-3"><label for="lease-margin" class="form-label">@L["LeasingMargin"]</label><InputNumber id="lease-margin" class="form-control" @bind-Value="Terms.MarginPercentagePoints" min="-100" max="100" step="0.0001" /></div>
+    }
+    else
+    { <div class="col-md-3"><label for="lease-rate" class="form-label">@L["LeasingAnnualRate"]</label><InputNumber id="lease-rate" class="form-control" @bind-Value="Terms.AnnualRatePercent" min="0" max="100" step="0.0001" /></div> }
+    <div class="col-md-3"><label for="lease-frequency" class="form-label">@L["LeasingFrequency"]</label><InputSelect id="lease-frequency" class="form-select" @bind-Value="Terms.PaymentFrequency">
+        @foreach (var value in Enum.GetValues<LeasingPaymentFrequency>()) { <option value="@value">@L[$"LeasingFrequency{value}"]</option> }
+    </InputSelect></div>
+</div>
+<p class="small text-muted mt-2">@L["LeasingTermsHelp"]</p>
+@code {
+    [Parameter, EditorRequired] public LeasingTerms Terms { get; set; } = null!;
+    [Parameter] public EventCallback Changed { get; set; }
+    private Task Notify() => Changed.InvokeAsync();
+}

@@ -1,3 +1,4 @@
+using TenantPlatform.Web.Services.Leasing;
 using System.Net;
 using Microsoft.AspNetCore.HttpOverrides;
 using TenantPlatform.Web.Components;
@@ -118,6 +119,7 @@ builder.Services.AddScoped<AgreementAnalysisCleanup>();
 builder.Services.AddHostedService<AgreementAnalysisCleanupWorker>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.OrganizationElementService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.GeographicAreaService>();
+builder.Services.AddScoped<LeasingService>();
 builder.Services.AddScoped<AgreementService>();
 builder.Services.AddScoped<IAgreementService>(sp => sp.GetRequiredService<AgreementService>());
 builder.Services.AddScoped<IAgreementFollowupService>(sp => sp.GetRequiredService<AgreementService>());
@@ -558,6 +560,7 @@ app.MapPost("/preferences/language", async (
 // ----------------------------------------------------------------------
 
 app.MapAgreementEndpoints();
+app.MapLeasingEndpoints();
 app.Run();
 
 

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TenantPlatform.Core.Leasing;
 using TenantPlatform.Core.Agreements;
 using TenantPlatform.Core.Accounts;
 using TenantPlatform.Core.Identity;
@@ -14,6 +15,11 @@ namespace TenantPlatform.Infrastructure.Persistence;
 
 public class TenantPlatformDbContext : DbContext
 {
+    public DbSet<LeasingFramework> LeasingFrameworks => Set<LeasingFramework>();
+    public DbSet<LeasingAcquisition> LeasingAcquisitions => Set<LeasingAcquisition>();
+    public DbSet<LeasingItem> LeasingItems => Set<LeasingItem>();
+    public DbSet<LeasingDocument> LeasingDocuments => Set<LeasingDocument>();
+    public DbSet<LeasingHistory> LeasingHistory => Set<LeasingHistory>();
     public DbSet<AgreementAnalysis> AgreementAnalyses => Set<AgreementAnalysis>();
     public DbSet<AgreementAnalysisFile> AgreementAnalysisFiles => Set<AgreementAnalysisFile>();
     public DbSet<AgreementFinding> AgreementFindings => Set<AgreementFinding>();

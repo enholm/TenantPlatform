@@ -2396,4 +2396,117 @@ This is a reminder, not a termination or renewal.</value>
   <data name="DashboardFilterHelp" xml:space="preserve"><value>Upcoming means today through day 90 in the account time zone. Expired contracts have an end date before today.</value></data>
   <data name="DashboardDimensionStatus" xml:space="preserve"><value>Status</value></data>
   <data name="DashboardDimensionOwner" xml:space="preserve"><value>Agreement owner</value></data>
+  <data name="LeasingTitle" xml:space="preserve"><value>Leasing</value></data>
+  <data name="LeasingOverview" xml:space="preserve"><value>Overview</value></data>
+  <data name="LeasingFrameworks" xml:space="preserve"><value>Framework agreements</value></data>
+  <data name="LeasingOrders" xml:space="preserve"><value>Standalone leases</value></data>
+  <data name="LeasingFramework" xml:space="preserve"><value>Framework agreement</value></data>
+  <data name="LeasingAcquisition" xml:space="preserve"><value>Acquisition</value></data>
+  <data name="LeasingAcquisitions" xml:space="preserve"><value>Acquisitions</value></data>
+  <data name="LeasingNewFramework" xml:space="preserve"><value>New framework agreement</value></data>
+  <data name="LeasingNewOrder" xml:space="preserve"><value>New standalone lease</value></data>
+  <data name="LeasingNewAcquisition" xml:space="preserve"><value>New acquisition</value></data>
+  <data name="LeasingEditFramework" xml:space="preserve"><value>Edit framework agreement</value></data>
+  <data name="LeasingEditAcquisition" xml:space="preserve"><value>Edit acquisition</value></data>
+  <data name="LeasingKind" xml:space="preserve"><value>Type</value></data>
+  <data name="LeasingNumber" xml:space="preserve"><value>Agreement number / reference</value></data>
+  <data name="LeasingOwner" xml:space="preserve"><value>Owner</value></data>
+  <data name="LeasingPeriod" xml:space="preserve"><value>Period</value></data>
+  <data name="LeasingAmount" xml:space="preserve"><value>Amount</value></data>
+  <data name="LeasingEmpty" xml:space="preserve"><value>No leases in this selection.</value></data>
+  <data name="LeasingListAmounts" xml:space="preserve"><value>Frameworks show their limit; acquisitions show purchase value including VAT. Periods refer to the acquisition window for frameworks and lease duration for acquisitions.</value></data>
+  <data name="LeasingStatusOpen" xml:space="preserve"><value>Open for acquisitions</value></data>
+  <data name="LeasingStatusClosed" xml:space="preserve"><value>Closed to new acquisitions</value></data>
+  <data name="LeasingStatusFinished" xml:space="preserve"><value>Finished</value></data>
+  <data name="LeasingStatusDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="LeasingStatusRegistered" xml:space="preserve"><value>Registered</value></data>
+  <data name="LeasingStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="LeasingMonths" xml:space="preserve"><value>Lease duration (whole months)</value></data>
+  <data name="LeasingInterestKind" xml:space="preserve"><value>Interest terms</value></data>
+  <data name="LeasingInterestFixed" xml:space="preserve"><value>Fixed annual rate</value></data>
+  <data name="LeasingInterestFloating" xml:space="preserve"><value>Floating annual rate</value></data>
+  <data name="LeasingInterestReference" xml:space="preserve"><value>Reference rate plus margin</value></data>
+  <data name="LeasingReferenceRate" xml:space="preserve"><value>Reference rate name (e.g. NIBOR 3 months)</value></data>
+  <data name="LeasingMargin" xml:space="preserve"><value>Margin (percentage points)</value></data>
+  <data name="LeasingAnnualRate" xml:space="preserve"><value>Annual interest rate (%)</value></data>
+  <data name="LeasingFrequency" xml:space="preserve"><value>Payment frequency</value></data>
+  <data name="LeasingFrequencyMonthly" xml:space="preserve"><value>Monthly</value></data>
+  <data name="LeasingFrequencyQuarterly" xml:space="preserve"><value>Quarterly</value></data>
+  <data name="LeasingFrequencyHalfYearly" xml:space="preserve"><value>Half-yearly</value></data>
+  <data name="LeasingFrequencyYearly" xml:space="preserve"><value>Yearly</value></data>
+  <data name="LeasingTermsHelp" xml:space="preserve"><value>Payment frequency is independent of the reference rate. Rates are entered manually; instalments and payment schedules are not calculated.</value></data>
+  <data name="LeasingNoFramework" xml:space="preserve"><value>No framework (standalone lease)</value></data>
+  <data name="LeasingSupplier" xml:space="preserve"><value>Supplier</value></data>
+  <data name="LeasingChoose" xml:space="preserve"><value>Select…</value></data>
+  <data name="LeasingFinanceCompany" xml:space="preserve"><value>Finance company</value></data>
+  <data name="LeasingCurrency" xml:space="preserve"><value>Currency</value></data>
+  <data name="LeasingAcquisitionFrom" xml:space="preserve"><value>Acquisitions from (inclusive)</value></data>
+  <data name="LeasingAcquisitionTo" xml:space="preserve"><value>Acquisitions until (inclusive)</value></data>
+  <data name="LeasingLimit" xml:space="preserve"><value>Maximum amount</value></data>
+  <data name="LeasingIncludesVat" xml:space="preserve"><value>Limit includes VAT</value></data>
+  <data name="LeasingPurchaseDate" xml:space="preserve"><value>Purchase date / lease start</value></data>
+  <data name="LeasingFinanced" xml:space="preserve"><value>Financed amount</value></data>
+  <data name="LeasingInvoiceNumber" xml:space="preserve"><value>Invoice number (required on registration)</value></data>
+  <data name="LeasingInvoiceDate" xml:space="preserve"><value>Invoice date (required on registration)</value></data>
+  <data name="LeasingDefaultTerms" xml:space="preserve"><value>Default terms for new acquisitions</value></data>
+  <data name="LeasingTerms" xml:space="preserve"><value>Lease terms</value></data>
+  <data name="LeasingEndDate" xml:space="preserve"><value>Lease end date</value></data>
+  <data name="LeasingDateRule" xml:space="preserve"><value>The lease starts on the purchase date. The end date adds whole calendar months, clamping to the last day if that day does not exist in the final month.</value></data>
+  <data name="LeasingItems" xml:space="preserve"><value>Items</value></data>
+  <data name="LeasingLineNumber" xml:space="preserve"><value>Item {0}</value></data>
+  <data name="LeasingDescription" xml:space="preserve"><value>Description</value></data>
+  <data name="LeasingItemNumber" xml:space="preserve"><value>Item number (optional)</value></data>
+  <data name="LeasingQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="LeasingVatRate" xml:space="preserve"><value>VAT rate (%)</value></data>
+  <data name="LeasingUnitPrice" xml:space="preserve"><value>Unit price excluding VAT</value></data>
+  <data name="LeasingRemoveLine" xml:space="preserve"><value>Remove item</value></data>
+  <data name="LeasingAddLine" xml:space="preserve"><value>Add item</value></data>
+  <data name="LeasingLineTotals" xml:space="preserve"><value>Excl. VAT: {0} · incl. VAT: {1} {2}</value></data>
+  <data name="LeasingTotals" xml:space="preserve"><value>Purchase value excl. VAT: {0} · VAT: {1} · incl. VAT: {2} {3}</value></data>
+  <data name="LeasingNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="LeasingChangeReason" xml:space="preserve"><value>Reason for change (required)</value></data>
+  <data name="LeasingAttachmentsAfterSave" xml:space="preserve"><value>Add documents on the details page after saving.</value></data>
+  <data name="LeasingDetails" xml:space="preserve"><value>Agreement details</value></data>
+  <data name="LeasingAcquisitionPeriod" xml:space="preserve"><value>Acquisition window</value></data>
+  <data name="LeasingVatBasis" xml:space="preserve"><value>Limit basis</value></data>
+  <data name="LeasingGross" xml:space="preserve"><value>Including VAT</value></data>
+  <data name="LeasingNet" xml:space="preserve"><value>Excluding VAT</value></data>
+  <data name="LeasingCapacity" xml:space="preserve"><value>Limit utilisation</value></data>
+  <data name="LeasingUsed" xml:space="preserve"><value>Used amount</value></data>
+  <data name="LeasingAvailable" xml:space="preserve"><value>Available amount</value></data>
+  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Only registered, non-cancelled acquisitions use the limit. Drafts, interest and fees do not. Lease payments do not release the limit.</value></data>
+  <data name="LeasingPeriodHelp" xml:space="preserve"><value>The acquisition window constrains purchase dates. Each acquisition has its own lease period continuing after the acquisition window closes.</value></data>
+  <data name="LeasingDocuments" xml:space="preserve"><value>Documents</value></data>
+  <data name="LeasingNoDocuments" xml:space="preserve"><value>No documents yet.</value></data>
+  <data name="LeasingUpload" xml:space="preserve"><value>Upload document</value></data>
+  <data name="LeasingFileLimit" xml:space="preserve"><value>Maximum {0} MB. PDF, Word, Excel, PNG or JPEG.</value></data>
+  <data name="LeasingCancelAcquisition" xml:space="preserve"><value>Cancel acquisition</value></data>
+  <data name="LeasingCancelHelp" xml:space="preserve"><value>Cancellation releases any used limit. The acquisition and history are retained; cancellation cannot be reversed in phase 1.</value></data>
+  <data name="LeasingHistory" xml:space="preserve"><value>Change history</value></data>
+  <data name="LeasingBefore" xml:space="preserve"><value>Before change</value></data>
+  <data name="LeasingAfter" xml:space="preserve"><value>After change</value></data>
+  <data name="LeasingActionCreated" xml:space="preserve"><value>Created</value></data>
+  <data name="LeasingActionUpdated" xml:space="preserve"><value>Updated</value></data>
+  <data name="LeasingActionCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="LeasingActionDocumentAdded" xml:space="preserve"><value>Document added</value></data>
+  <data name="LeasingFailed" xml:space="preserve"><value>Could not complete the operation. Please retry.</value></data>
+  <data name="LeasingUploadFailed" xml:space="preserve"><value>Could not upload the document. Check the file size and retry.</value></data>
+  <data name="LeasingClosed" xml:space="preserve"><value>The framework is closed to new registered acquisitions.</value></data>
+  <data name="LeasingInvalidFramework" xml:space="preserve"><value>Check acquisition dates, status and limit. The limit must be between 0 and 1 trillion with at most two decimals.</value></data>
+  <data name="LeasingFrameworkConflict" xml:space="preserve"><value>The change conflicts with registered acquisitions. Currency and finance company must match, dates must remain in the window, and the VAT basis cannot change.</value></data>
+  <data name="LeasingLimitExceeded" xml:space="preserve"><value>The purchase exceeds the available limit, or the limit is below the amount already used.</value></data>
+  <data name="LeasingInvalidTransition" xml:space="preserve"><value>This status change is not allowed. Registered acquisitions must be cancelled rather than reverted to drafts.</value></data>
+  <data name="LeasingFrameworkCurrency" xml:space="preserve"><value>Currency and finance company must match the framework.</value></data>
+  <data name="LeasingInvalidParty" xml:space="preserve"><value>Select a party belonging to this account.</value></data>
+  <data name="LeasingInvalidOwner" xml:space="preserve"><value>Select an active owner belonging to this account.</value></data>
+  <data name="LeasingInvalidPurchase" xml:space="preserve"><value>Check invoice details and financed amount. The amount cannot be negative and permits at most two decimals.</value></data>
+  <data name="LeasingInvalidDates" xml:space="preserve"><value>Enter a valid purchase date and a lease period of 1–600 whole months.</value></data>
+  <data name="LeasingInvalidLines" xml:space="preserve"><value>Check items: description is required, quantity must be positive, price non-negative and VAT 0–100%. Use at most four decimals and 500 items.</value></data>
+  <data name="LeasingRegistrationRequired" xml:space="preserve"><value>Registration requires at least one item with positive purchase value, positive financed amount, invoice number and invoice date.</value></data>
+  <data name="LeasingOutsidePeriod" xml:space="preserve"><value>Purchase date must be within the framework acquisition window, including both boundary dates.</value></data>
+  <data name="LeasingConcurrency" xml:space="preserve"><value>Another user changed this agreement. Reload the page before saving.</value></data>
+  <data name="LeasingReasonRequired" xml:space="preserve"><value>Enter a reason for the change (maximum 2000 characters).</value></data>
+  <data name="LeasingInvalidDetails" xml:space="preserve"><value>Name, number/reference and supported currency are required. Maximum lengths: name 200, number 100, notes 10,000.</value></data>
+  <data name="LeasingInvalidTerms" xml:space="preserve"><value>Check terms: 1–600 whole months, interest 0–100%, or reference rate name and margin between −100 and 100 percentage points. Select payment frequency separately.</value></data>
+  <data name="LeasingVatAmount" xml:space="preserve"><value>VAT amount</value></data>
 </root>

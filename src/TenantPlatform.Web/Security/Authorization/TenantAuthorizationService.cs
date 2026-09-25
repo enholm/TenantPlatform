@@ -10,6 +10,17 @@ public class TenantAuthorizationService
 {
     private readonly IDbContextFactory<TenantPlatformDbContext> _dbContextFactory;
     private readonly ICurrentUserContextService _currentUserService;
+    public async Task<bool> CanUseLeasingAsync(CancellationToken cancellationToken = default)
+    {
+        var current = _currentUserService.Current;
+        if (!current.IsAuthenticated || current.CurrentAccountId is not Guid account) return false;
+        await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        if (!await db.UserAccounts.AnyAsync(x => x.AccountId == account && x.UserId == current.UserId && x.User.IsActive, cancellationToken)) return false;
+        return await CanCreateAgreementAsync(cancellationToken) ||
+            await db.LeasingFrameworks.AnyAsync(x => x.AccountId == account && x.OwnerUserId == current.UserId, cancellationToken) ||
+            await db.LeasingAcquisitions.AnyAsync(x => x.AccountId == account && x.OwnerUserId == current.UserId, cancellationToken);
+    }
+
     public Task<bool> CanCreateAgreementAsync(CancellationToken cancellationToken = default) =>
         HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin);
 
@@ -837,6 +848,7 @@ public class TenantAuthorizationService
         return new NavigationPermissions
         {
             CanSeeMeetingRooms = await CanUseMeetingRoomsAsync(cancellationToken),
+            CanSeeLeasing = await CanUseLeasingAsync(cancellationToken),
             CanSeeAgreements = await CanUseAgreementsAsync(cancellationToken),
             CanManageMeetingRooms = isAccountAdmin,
             CanSeeTenantPortal =

@@ -1,0 +1,136 @@
+@page "/leasing/frameworks/{Id:guid}"
+@page "/leasing/acquisitions/{Id:guid}"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+
+<PageTitle>@(data?.Framework?.Name ?? data?.Acquisition?.Name ?? L["LeasingTitle"])</PageTitle>
+@if (busy && data is null) { <p role="status">@L["Loading"]</p> }
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error] <button class="btn btn-outline-secondary btn-sm" disabled="@busy" @onclick="Load">@L["DashboardRetry"]</button></div> }
+@if (data is not null)
+{
+    var f = data.Framework; var a = data.Acquisition;
+    var currency = f?.Currency ?? a!.Currency;
+    <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h1>@(f?.Name ?? a!.Name)</h1><span class="badge text-bg-secondary">@L[$"LeasingStatus{(f is null ? a!.Status.ToString() : f.Status.ToString())}"]</span></div>
+        @if (data.CanEdit) { <a class="btn btn-primary align-self-center" href="@($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{Id}/edit")">@L["Edit"]</a> }
+    </div>
+    <div class="row g-3 mb-3"><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h5">@L["LeasingDetails"]</h2><dl class="row">
+        <dt class="col-sm-5">@L["LeasingNumber"]</dt><dd class="col-sm-7">@(f?.Number ?? a!.Reference)</dd>
+        <dt class="col-sm-5">@L["LeasingFinanceCompany"]</dt><dd class="col-sm-7">@data.FinanceName</dd>
+        <dt class="col-sm-5">@L["LeasingOwner"]</dt><dd class="col-sm-7">@data.OwnerName</dd>
+        <dt class="col-sm-5">@L["LeasingCurrency"]</dt><dd class="col-sm-7">@currency</dd>
+        @if (f is not null)
+        {
+            <dt class="col-sm-5">@L["LeasingAcquisitionPeriod"]</dt><dd class="col-sm-7">@Date(f.AcquisitionFrom)–@Date(f.AcquisitionTo)</dd>
+            <dt class="col-sm-5">@L["LeasingVatBasis"]</dt><dd class="col-sm-7">@L[f.IncludesVat ? "LeasingGross" : "LeasingNet"]</dd>
+        }
+        else
+        {
+            <dt class="col-sm-5">@L["LeasingSupplier"]</dt><dd class="col-sm-7">@data.SupplierName</dd>
+            <dt class="col-sm-5">@L["LeasingFramework"]</dt><dd class="col-sm-7">@(data.FrameworkName ?? L["LeasingNoFramework"])</dd>
+            <dt class="col-sm-5">@L["LeasingPurchaseDate"]</dt><dd class="col-sm-7">@Date(a!.PurchaseDate)</dd>
+            <dt class="col-sm-5">@L["LeasingEndDate"]</dt><dd class="col-sm-7">@Date(a.EndDate)</dd>
+            <dt class="col-sm-5">@L["LeasingFinanced"]</dt><dd class="col-sm-7">@a.FinancedAmount.ToString("N2") @currency</dd>
+            <dt class="col-sm-5">@L["LeasingInvoiceNumber"]</dt><dd class="col-sm-7">@(a.InvoiceNumber ?? L["DashboardUnspecified"])</dd>
+            <dt class="col-sm-5">@L["LeasingInvoiceDate"]</dt><dd class="col-sm-7">@(a.InvoiceDate?.ToString("dd.MM.yyyy") ?? L["DashboardUnspecified"])</dd>
+        }
+    </dl></div></section></div>
+    <div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h5">@L[f is null ? "LeasingTerms" : "LeasingDefaultTerms"]</h2><LeasingTermsView Terms="@(f?.Terms ?? a!.Terms)" /><p class="text-muted small mt-3">@L["LeasingDateRule"]</p></div></section></div></div>
+    @if (f is not null)
+    {
+        <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingCapacity"]</h2><div class="row g-3">
+            <div class="col-sm-4"><div>@L["LeasingLimit"]</div><strong class="fs-4">@f.Limit.ToString("N2") @currency</strong></div>
+            <div class="col-sm-4"><div>@L["LeasingUsed"]</div><strong class="fs-4">@data.Used.ToString("N2") @currency</strong></div>
+            <div class="col-sm-4"><div>@L["LeasingAvailable"]</div><strong class="fs-4">@((f.Limit - data.Used).ToString("N2")) @currency</strong></div>
+        </div><p class="small text-muted mt-3 mb-0">@L["LeasingCapacityHelp"]</p></div></section>
+        <section class="card mb-3"><div class="card-body"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><h2 class="h5">@L["LeasingAcquisitions"]</h2>
+            @if (f.Status == LeasingFrameworkStatus.Open && data.CanEdit) { <a class="btn btn-outline-primary" href="@($"/leasing/acquisitions/create?framework={f.Id}")">@L["LeasingNewAcquisition"]</a> }
+        </div><p class="small text-muted">@L["LeasingPeriodHelp"]</p>
+        @if (data.Acquisitions.Count == 0) { <p>@L["LeasingEmpty"]</p> }
+        else
+        {
+            <div class="table-responsive"><table class="table"><thead><tr><th>@L["Name"]</th><th>@L["Status"]</th><th>@L["LeasingPurchaseDate"]</th><th>@L["LeasingEndDate"]</th><th class="text-end">@L[f.IncludesVat ? "LeasingGross" : "LeasingNet"]</th></tr></thead><tbody>
+            @foreach (var child in data.Acquisitions) { <tr><td><a href="@($"/leasing/acquisitions/{child.Id}")">@child.Name</a></td><td>@L[$"LeasingStatus{child.Status}"]</td><td>@Date(child.PurchaseDate)</td><td>@Date(child.EndDate)</td><td class="text-end">@((f.IncludesVat ? child.GrossTotal : child.NetTotal).ToString("N2")) @currency</td></tr> }
+            </tbody></table></div>
+        }
+        </div></section>
+    }
+    else
+    {
+        <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingItems"]</h2><div class="table-responsive"><table class="table"><thead><tr>
+            <th>@L["LeasingDescription"]</th><th>@L["LeasingItemNumber"]</th><th>@L["LeasingQuantity"]</th><th>@L["LeasingUnitPrice"]</th><th>@L["LeasingVatRate"]</th><th>@L["LeasingNet"]</th><th>@L["LeasingGross"]</th>
+        </tr></thead><tbody>@foreach (var item in a!.Items.OrderBy(x => x.Position))
+        {
+            var total = LeasingCalculator.Line(item);
+            <tr><td>@item.Description</td><td>@item.ItemNumber</td><td>@item.Quantity.ToString("0.####")</td><td>@item.UnitPrice.ToString("0.####")</td><td>@item.VatPercent.ToString("0.####") %</td><td>@total.Net.ToString("N2")</td><td>@total.Gross.ToString("N2")</td></tr>
+        }</tbody></table></div>
+        <p class="fw-semibold">@L["LeasingTotals", a.NetTotal.ToString("N2"), a.VatTotal.ToString("N2"), a.GrossTotal.ToString("N2"), currency]</p>
+        </div></section>
+    }
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingNotes"]</h2><p style="white-space: pre-wrap">@(f?.Notes ?? a?.Notes)</p></div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingDocuments"]</h2>
+        @if (data.Documents.Count == 0) { <p class="text-muted">@L["LeasingNoDocuments"]</p> }
+        else { <ul>@foreach (var doc in data.Documents) { <li><a href="@($"/leasing/documents/{doc.Id}/download")">@doc.FileName</a> <span class="small text-muted">@doc.UploadedUtc.ToString("dd.MM.yyyy")</span></li> }</ul> }
+        @if (data.CanEdit) { <label class="form-label" for="leasing-upload">@L["LeasingUpload"]</label><InputFile id="leasing-upload" class="form-control" OnChange="Upload" disabled="@busy" /><p class="small text-muted mt-2">@L["LeasingFileLimit", Service.MaxFileSizeBytes / 1024 / 1024]</p> }
+    </div></section>
+    @if (a is not null && data.CanEdit)
+    {
+        <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingCancelAcquisition"]</h2><p>@L["LeasingCancelHelp"]</p>
+            <label for="leasing-cancel-reason" class="form-label">@L["LeasingChangeReason"]</label><textarea id="leasing-cancel-reason" class="form-control mb-2" @bind="cancelReason" maxlength="2000" disabled="@busy"></textarea>
+            <button class="btn btn-outline-danger" disabled="@(busy || string.IsNullOrWhiteSpace(cancelReason))" @onclick="CancelAcquisition">@L["LeasingCancelAcquisition"]</button>
+        </div></section>
+    }
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingHistory"]</h2>
+        @foreach (var entry in data.History)
+        {
+            <details class="border-bottom py-2"><summary>@entry.RecordedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'") · @entry.Actor · @L[$"LeasingAction{entry.Action}"]</summary><p class="mt-2">@entry.Reason</p>
+                <div class="row"><div class="col-md-6"><h3 class="h6">@L["LeasingBefore"]</h3><LeasingHistorySnapshot Json="@entry.BeforeJson" Framework="framework" ReferenceNames="data.ReferenceNames" /></div><div class="col-md-6"><h3 class="h6">@L["LeasingAfter"]</h3><LeasingHistorySnapshot Json="@entry.AfterJson" Framework="framework" ReferenceNames="data.ReferenceNames" /></div></div>
+            </details>
+        }
+    </div></section>
+    <a href="/leasing">@L["LeasingOverview"]</a>
+}
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private Guid account; private bool framework, busy = true; private string? error; private string cancelReason = ""; private LeasingDetails? data;
+    protected override async Task OnParametersSetAsync()
+    {
+        framework = Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("leasing/frameworks/"); data = null;
+        if (User.Current.CurrentAccountId is not Guid selected) { Navigation.NavigateTo("/access-denied"); return; }
+        account = selected; await Load();
+    }
+    private async Task Load()
+    {
+        busy = true; error = null;
+        try { data = await Service.GetAsync(account, Id, framework); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (Exception) { error = "LeasingFailed"; }
+        finally { busy = false; }
+    }
+    private async Task CancelAcquisition()
+    {
+        if (busy || data?.Acquisition is null) return; busy = true; error = null;
+        try { await Service.CancelAsync(account, Id, data.Acquisition.Revision, cancelReason); cancelReason = ""; await Load(); }
+        catch (LeasingValidationException ex) { error = ex.Message; }
+        catch (Exception) { error = "LeasingFailed"; }
+        finally { busy = false; }
+    }
+    private async Task Upload(InputFileChangeEventArgs args)
+    {
+        if (busy || data is null) return; busy = true; error = null;
+        try
+        {
+            await using var stream = args.File.OpenReadStream(Service.MaxFileSizeBytes);
+            await Service.UploadAsync(account, Id, framework, data.Framework?.Revision ?? data.Acquisition!.Revision, args.File.Name, stream);
+            await Load();
+        }
+        catch (TenantPlatform.Infrastructure.Agreements.AgreementFileException ex) { error = ex.Message; }
+        catch (LeasingValidationException ex) { error = ex.Message; }
+        catch (IOException) { error = "LeasingUploadFailed"; }
+        catch (Exception) { error = "LeasingFailed"; }
+        finally { busy = false; }
+    }
+    private static string Date(DateOnly value) => value.ToString("dd.MM.yyyy");
+}

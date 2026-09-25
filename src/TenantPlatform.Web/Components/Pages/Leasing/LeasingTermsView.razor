@@ -1,0 +1,12 @@
+<dl class="row mb-0">
+    <dt class="col-sm-4">@L["LeasingMonths"]</dt><dd class="col-sm-8">@Terms.Months</dd>
+    <dt class="col-sm-4">@L["LeasingInterestKind"]</dt><dd class="col-sm-8">@L[$"LeasingInterest{Terms.InterestKind}"]</dd>
+    @if (Terms.InterestKind == LeasingInterestKind.Reference)
+    {
+        <dt class="col-sm-4">@L["LeasingReferenceRate"]</dt><dd class="col-sm-8">@Terms.ReferenceRateName</dd>
+        <dt class="col-sm-4">@L["LeasingMargin"]</dt><dd class="col-sm-8">@Terms.MarginPercentagePoints?.ToString("0.####")</dd>
+    }
+    else { <dt class="col-sm-4">@L["LeasingAnnualRate"]</dt><dd class="col-sm-8">@Terms.AnnualRatePercent?.ToString("0.####") %</dd> }
+    <dt class="col-sm-4">@L["LeasingFrequency"]</dt><dd class="col-sm-8">@L[$"LeasingFrequency{Terms.PaymentFrequency}"]</dd>
+</dl>
+@code { [Parameter, EditorRequired] public LeasingTerms Terms { get; set; } = null!; }

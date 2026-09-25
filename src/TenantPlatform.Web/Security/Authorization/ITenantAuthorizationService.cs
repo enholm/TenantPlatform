@@ -4,6 +4,8 @@ namespace TenantPlatform.Web.Security.Authorization;
 
 public interface ITenantAuthorizationService
 {
+    Task<bool> CanUseLeasingAsync(CancellationToken cancellationToken = default);
+
     Task<bool> CanManageAccountStructureAsync(CancellationToken cancellationToken = default);
     Task<bool> CanCreateAgreementAsync(CancellationToken cancellationToken = default);
     Task<bool> CanUseAgreementsAsync(CancellationToken cancellationToken = default);

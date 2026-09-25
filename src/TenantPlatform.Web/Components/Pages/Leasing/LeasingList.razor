@@ -1,0 +1,81 @@
+@page "/leasing"
+@page "/leasing/frameworks"
+@page "/leasing/orders"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject ITenantAuthorizationService Authorization
+@inject NavigationManager Navigation
+
+<PageTitle>@Title</PageTitle>
+<div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+    <h1>@Title</h1>
+    @if (options?.CanCreate == true)
+    {
+        <div class="d-flex gap-2 align-items-center"><a class="btn btn-outline-primary" href="/leasing/frameworks/create">@L["LeasingNewFramework"]</a>
+        <a class="btn btn-primary" href="/leasing/acquisitions/create">@L["LeasingNewOrder"]</a></div>
+    }
+</div>
+@if (allowed)
+{
+    <div class="card mb-3"><div class="card-body"><fieldset disabled="@busy"><div class="row g-3">
+        <div class="col-md-4"><label for="leasing-search" class="form-label">@L["Search"]</label><input id="leasing-search" class="form-control" @bind="search" maxlength="200" /></div>
+        <div class="col-md-2"><label for="leasing-kind" class="form-label">@L["LeasingKind"]</label><select id="leasing-kind" class="form-select" @bind="kind">
+            <option value="all">@L["AgreementAll"]</option><option value="frameworks">@L["LeasingFrameworks"]</option><option value="acquisitions">@L["LeasingAcquisitions"]</option><option value="orders">@L["LeasingOrders"]</option>
+        </select></div>
+        <div class="col-md-2"><label for="leasing-status" class="form-label">@L["Status"]</label><select id="leasing-status" class="form-select" @bind="status">
+            <option value="">@L["AgreementAll"]</option>
+            @foreach (var value in Enum.GetNames<LeasingFrameworkStatus>().Concat(Enum.GetNames<LeasingAcquisitionStatus>())) { <option value="@value">@L[$"LeasingStatus{value}"]</option> }
+        </select></div>
+        <div class="col-md-3"><label for="leasing-owner" class="form-label">@L["LeasingOwner"]</label><select id="leasing-owner" class="form-select" @bind="owner"><option value="">@L["AgreementAll"]</option>
+            @foreach (var value in options?.Owners ?? []) { <option value="@value.Id">@value.Name</option> }
+        </select></div>
+        <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary" @onclick="Search">@L["Search"]</button></div>
+    </div></fieldset></div></div>
+}
+@if (busy) { <p role="status">@L["Loading"]</p> }
+else if (error) { <div class="alert alert-danger" role="alert">@L["LeasingFailed"] <button class="btn btn-outline-primary btn-sm" @onclick="Load">@L["DashboardRetry"]</button></div> }
+else if (data is not null)
+{
+    @if (data.Items.Count == 0) { <p class="text-muted">@L["LeasingEmpty"]</p> }
+    else
+    {
+        <div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr>
+            <th>@L["Name"]</th><th>@L["LeasingNumber"]</th><th>@L["LeasingKind"]</th><th>@L["Status"]</th><th>@L["LeasingOwner"]</th><th>@L["LeasingPeriod"]</th><th class="text-end">@L["LeasingAmount"]</th>
+        </tr></thead><tbody>@foreach (var row in data.Items)
+        {
+            <tr><td><a href="@($"/leasing/{(row.Framework ? "frameworks" : "acquisitions")}/{row.Id}")">@row.Name</a></td><td>@row.Number</td><td>@L[row.Framework ? "LeasingFramework" : "LeasingAcquisition"]</td>
+                <td>@L[$"LeasingStatus{row.Status}"]</td><td>@row.Owner</td><td>@row.Start.ToString("dd.MM.yyyy")–@row.End.ToString("dd.MM.yyyy")</td><td class="text-end text-nowrap">@row.Amount.ToString("N2") @row.Currency</td></tr>
+        }</tbody></table></div></div>
+        <p class="small text-muted mt-2">@L["LeasingListAmounts"]</p>
+        <div class="d-flex justify-content-between align-items-center"><button class="btn btn-outline-secondary" disabled="@(data.Page == 1)" @onclick="Previous">@L["AgreementPrevious"]</button>
+            <span>@L["AgreementPageSummary", data.Page, Math.Max(1, (data.Count + data.PageSize - 1) / data.PageSize), data.Count]</span>
+            <button class="btn btn-outline-secondary" disabled="@(data.Page * data.PageSize >= data.Count)" @onclick="Next">@L["AgreementNext"]</button></div>
+    }
+}
+@code {
+    private Guid account; private bool busy = true, allowed, error;
+    private string? search, status; private string kind = "all"; private Guid? owner; private int page = 1;
+    private LeasingOptions? options; private LeasingPage? data;
+    private string Title => L[Navigation.Uri.Split('?')[0].EndsWith("/frameworks") ? "LeasingFrameworks" : Navigation.Uri.Split('?')[0].EndsWith("/orders") ? "LeasingOrders" : "LeasingOverview"];
+    protected override async Task OnParametersSetAsync()
+    {
+        if (User.Current.CurrentAccountId is not Guid id || !await Authorization.CanUseLeasingAsync()) { Navigation.NavigateTo("/access-denied"); return; }
+        if (account != id) options = null;
+        account = id; allowed = true;
+        kind = Navigation.Uri.Split('?')[0].EndsWith("/frameworks") ? "frameworks" : Navigation.Uri.Split('?')[0].EndsWith("/orders") ? "orders" : "all";
+        page = 1; await Load();
+    }
+    private async Task Load()
+    {
+        busy = true; error = false;
+        try { options ??= await Service.OptionsAsync(account); data = await Service.ListAsync(account, search, kind, status, owner, page); page = data.Page; }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (Exception) { error = true; }
+        finally { busy = false; }
+    }
+    private Task Search() { page = 1; return Load(); }
+    private Task Previous() { page--; return Load(); }
+    private Task Next() { page++; return Load(); }
+}

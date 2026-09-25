@@ -1,0 +1,160 @@
+@page "/leasing/frameworks/create"
+@page "/leasing/frameworks/{Id:guid}/edit"
+@page "/leasing/acquisitions/create"
+@page "/leasing/acquisitions/{Id:guid}/edit"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+
+<PageTitle>@Title</PageTitle><h1>@Title</h1>
+@if (busy && !ready) { <p role="status">@L["Loading"]</p> }
+@if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (ready && options is not null)
+{
+    <EditForm Model="@this" OnValidSubmit="Save" FormName="leasing-editor">
+        <ValidationSummary />
+        <fieldset disabled="@busy">
+        <div class="card mb-3"><div class="card-body"><div class="row g-3">
+            <div class="col-md-6"><label for="lease-name" class="form-label">@L["Name"]</label><InputText id="lease-name" class="form-control" @bind-Value="Name" maxlength="200" /></div>
+            <div class="col-md-6"><label for="lease-number" class="form-label">@L["LeasingNumber"]</label><InputText id="lease-number" class="form-control" @bind-Value="Number" maxlength="100" /></div>
+            @if (!framework)
+            {
+                <div class="col-md-6"><label for="lease-framework" class="form-label">@L["LeasingFramework"]</label><InputSelect id="lease-framework" class="form-select" @bind-Value="a.FrameworkId" @bind-Value:after="FrameworkChanged">
+                    <option value="">@L["LeasingNoFramework"]</option>
+                    @foreach (var option in options.Frameworks) { <option value="@option.Id">@option.Name</option> }
+                </InputSelect></div>
+                <div class="col-md-6"><label for="lease-supplier" class="form-label">@L["LeasingSupplier"]</label><InputSelect id="lease-supplier" class="form-select" @bind-Value="a.SupplierOrganizationId">
+                    <option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach (var option in options.Parties) { <option value="@option.Id">@option.Name</option> }
+                </InputSelect></div>
+            }
+            <div class="col-md-6"><label for="lease-finance" class="form-label">@L["LeasingFinanceCompany"]</label><InputSelect id="lease-finance" class="form-select" @bind-Value="FinanceId" disabled="@(!framework && a.FrameworkId.HasValue)">
+                <option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach (var option in options.Parties) { <option value="@option.Id">@option.Name</option> }
+            </InputSelect></div>
+            <div class="col-md-6"><label for="lease-owner" class="form-label">@L["LeasingOwner"]</label><InputSelect id="lease-owner" class="form-select" @bind-Value="OwnerId" disabled="@(!options.CanCreate && Id.HasValue)">
+                <option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach (var option in options.Owners) { <option value="@option.Id">@option.Name</option> }
+            </InputSelect></div>
+            <div class="col-md-3"><label for="lease-currency" class="form-label">@L["LeasingCurrency"]</label><InputSelect id="lease-currency" class="form-select" @bind-Value="Currency" disabled="@(!framework && a.FrameworkId.HasValue)">
+                @foreach (var currencyCode in TenantPlatform.Web.Services.Agreements.AgreementPeriodCalculator.Currencies) { <option value="@currencyCode">@currencyCode</option> }
+            </InputSelect></div>
+            @if (framework)
+            {
+                <div class="col-md-3"><label for="lease-status" class="form-label">@L["Status"]</label><InputSelect id="lease-status" class="form-select" @bind-Value="f.Status">@foreach (var value in Enum.GetValues<LeasingFrameworkStatus>()) { <option value="@value">@L[$"LeasingStatus{value}"]</option> }</InputSelect></div>
+                <div class="col-md-3"><label for="lease-from" class="form-label">@L["LeasingAcquisitionFrom"]</label><InputDate id="lease-from" class="form-control" @bind-Value="f.AcquisitionFrom" /></div>
+                <div class="col-md-3"><label for="lease-to" class="form-label">@L["LeasingAcquisitionTo"]</label><InputDate id="lease-to" class="form-control" @bind-Value="f.AcquisitionTo" /></div>
+                <div class="col-md-4"><label for="lease-limit" class="form-label">@L["LeasingLimit"]</label><InputNumber id="lease-limit" class="form-control" @bind-Value="f.Limit" min="0" step="0.01" /></div>
+                <div class="col-md-4 d-flex align-items-end"><div class="form-check"><InputCheckbox id="lease-vat-basis" class="form-check-input" @bind-Value="f.IncludesVat" /><label for="lease-vat-basis" class="form-check-label">@L["LeasingIncludesVat"]</label></div></div>
+            }
+            else
+            {
+                <div class="col-md-3"><label for="lease-status" class="form-label">@L["Status"]</label><InputSelect id="lease-status" class="form-select" @bind-Value="a.Status">
+                    @if (!wasRegistered) { <option value="@LeasingAcquisitionStatus.Draft">@L["LeasingStatusDraft"]</option> }
+                    <option value="@LeasingAcquisitionStatus.Registered">@L["LeasingStatusRegistered"]</option>
+                </InputSelect></div>
+                <div class="col-md-3"><label for="lease-purchase" class="form-label">@L["LeasingPurchaseDate"]</label><InputDate id="lease-purchase" class="form-control" @bind-Value="a.PurchaseDate" /></div>
+                <div class="col-md-3"><label for="lease-financed" class="form-label">@L["LeasingFinanced"]</label><InputNumber id="lease-financed" class="form-control" @bind-Value="a.FinancedAmount" min="0" step="0.01" /></div>
+                <div class="col-md-6"><label for="lease-invoice-number" class="form-label">@L["LeasingInvoiceNumber"]</label><InputText id="lease-invoice-number" class="form-control" @bind-Value="a.InvoiceNumber" maxlength="100" /></div>
+                <div class="col-md-6"><label for="lease-invoice-date" class="form-label">@L["LeasingInvoiceDate"]</label><InputDate id="lease-invoice-date" class="form-control" @bind-Value="a.InvoiceDate" /></div>
+            }
+        </div></div></div>
+        <div class="card mb-3"><div class="card-body"><h2 class="h5">@L[framework ? "LeasingDefaultTerms" : "LeasingTerms"]</h2>
+            <LeasingTermsEditor Terms="@(framework ? f.Terms : a.Terms)" Changed="StateHasChanged" />
+            @if (!framework) { <p>@L["LeasingEndDate"]: @EndDateText()</p> }
+            <p class="small text-muted">@L["LeasingDateRule"]</p>
+        </div></div>
+        @if (!framework)
+        {
+            <div class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingItems"]</h2>
+                @foreach (var item in a.Items)
+                {
+                    var index = a.Items.IndexOf(item);
+                    <fieldset class="border rounded p-3 mb-3" @key="item"><legend class="float-none w-auto fs-6">@L["LeasingLineNumber", index + 1]</legend><div class="row g-3">
+                        <div class="col-md-5"><label for="@($"item-description-{index}")" class="form-label">@L["LeasingDescription"]</label><InputText id="@($"item-description-{index}")" class="form-control" @bind-Value="item.Description" maxlength="500" /></div>
+                        <div class="col-md-3"><label for="@($"item-number-{index}")" class="form-label">@L["LeasingItemNumber"]</label><InputText id="@($"item-number-{index}")" class="form-control" @bind-Value="item.ItemNumber" maxlength="100" /></div>
+                        <div class="col-md-2"><label for="@($"item-quantity-{index}")" class="form-label">@L["LeasingQuantity"]</label><InputNumber id="@($"item-quantity-{index}")" class="form-control" @bind-Value="item.Quantity" min="0.0001" step="0.0001" /></div>
+                        <div class="col-md-2"><label for="@($"item-vat-{index}")" class="form-label">@L["LeasingVatRate"]</label><InputNumber id="@($"item-vat-{index}")" class="form-control" @bind-Value="item.VatPercent" min="0" max="100" step="0.0001" /></div>
+                        <div class="col-md-4"><label for="@($"item-price-{index}")" class="form-label">@L["LeasingUnitPrice"]</label><InputNumber id="@($"item-price-{index}")" class="form-control" @bind-Value="item.UnitPrice" min="0" step="0.0001" /></div>
+                        <div class="col-md-6 align-self-end"><span class="small">@LineText(item)</span></div>
+                        <div class="col-md-2 align-self-end"><button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => a.Items.Remove(item)">@L["LeasingRemoveLine"]</button></div>
+                    </div></fieldset>
+                }
+                <button type="button" class="btn btn-outline-primary" @onclick="() => a.Items.Add(new LeasingItem())">@L["LeasingAddLine"]</button>
+                <p class="mt-3 mb-0 fw-semibold">@TotalText()</p>
+            </div></div>
+        }
+        <div class="card mb-3"><div class="card-body">
+            <label for="lease-notes" class="form-label">@L["LeasingNotes"]</label><InputTextArea id="lease-notes" class="form-control mb-3" @bind-Value="Notes" maxlength="10000" rows="3" />
+            @if (Id.HasValue) { <label for="lease-reason" class="form-label">@L["LeasingChangeReason"]</label><InputTextArea id="lease-reason" class="form-control" @bind-Value="reason" maxlength="2000" /> }
+            <p class="small text-muted mt-2">@L["LeasingAttachmentsAfterSave"]</p>
+        </div></div>
+        <button type="submit" class="btn btn-primary">@L["Save"]</button> <a class="btn btn-outline-secondary" href="/leasing">@L["Cancel"]</a>
+        </fieldset>
+    </EditForm>
+}
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    [SupplyParameterFromQuery(Name = "framework")] public Guid? FrameworkId { get; set; }
+    private bool framework, ready, busy = true, wasRegistered; private Guid account; private string? error; private string reason = "";
+    private LeasingFramework f = new(); private LeasingAcquisition a = new(); private LeasingOptions? options;
+    private string Title => L[framework ? (Id.HasValue ? "LeasingEditFramework" : "LeasingNewFramework") : (Id.HasValue ? "LeasingEditAcquisition" : "LeasingNewAcquisition")];
+    private string Name { get => framework ? f.Name : a.Name; set { if (framework) f.Name = value; else a.Name = value; } }
+    private string Number { get => framework ? f.Number : a.Reference; set { if (framework) f.Number = value; else a.Reference = value; } }
+    private Guid FinanceId { get => framework ? f.FinanceOrganizationId : a.FinanceOrganizationId; set { if (framework) f.FinanceOrganizationId = value; else a.FinanceOrganizationId = value; } }
+    private Guid OwnerId { get => framework ? f.OwnerUserId : a.OwnerUserId; set { if (framework) f.OwnerUserId = value; else a.OwnerUserId = value; } }
+    private string Currency { get => framework ? f.Currency : a.Currency; set { if (framework) f.Currency = value; else a.Currency = value; } }
+    private string? Notes { get => framework ? f.Notes : a.Notes; set { if (framework) f.Notes = value; else a.Notes = value; } }
+    protected override async Task OnParametersSetAsync()
+    {
+        framework = Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("leasing/frameworks/"); ready = false; busy = true; error = null; wasRegistered = false; reason = "";
+        if (User.Current.CurrentAccountId is not Guid selected) { Navigation.NavigateTo("/access-denied"); return; } account = selected;
+        try
+        {
+            options = await Service.OptionsAsync(account);
+            if (Id.HasValue)
+            {
+                var details = await Service.GetAsync(account, Id.Value, framework);
+                if (!details.CanEdit) throw new UnauthorizedAccessException();
+                if (framework) f = details.Framework!;
+                else
+                {
+                    a = details.Acquisition!; a.Items = a.Items.OrderBy(x => x.Position).ToList(); wasRegistered = a.Status == LeasingAcquisitionStatus.Registered;
+                    if (a.FrameworkId.HasValue && options.Frameworks.All(x => x.Id != a.FrameworkId)) options.Frameworks.Add(new(a.FrameworkId.Value, details.FrameworkName ?? ""));
+                }
+            }
+            else if (framework)
+            {
+                if (!options.CanCreate) throw new UnauthorizedAccessException();
+                var defaults = await Service.NewAcquisitionAsync(account, null);
+                f = new() { OwnerUserId = User.Current.UserId, AcquisitionFrom = defaults.PurchaseDate, AcquisitionTo = defaults.PurchaseDate.AddYears(1).AddDays(-1) };
+            }
+            else a = await Service.NewAcquisitionAsync(account, FrameworkId);
+            ready = true;
+        }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (LeasingValidationException ex) { error = ex.Message; }
+        catch (Exception) { error = "LeasingFailed"; }
+        finally { busy = false; }
+    }
+    private async Task FrameworkChanged()
+    {
+        if (!a.FrameworkId.HasValue) return;
+        busy = true; error = null;
+        try { var defaults = await Service.NewAcquisitionAsync(account, a.FrameworkId); a.FinanceOrganizationId = defaults.FinanceOrganizationId; a.Currency = defaults.Currency; a.Terms = defaults.Terms; }
+        catch (LeasingValidationException ex) { error = ex.Message; }
+        catch (Exception) { error = "LeasingFailed"; }
+        finally { busy = false; }
+    }
+    private async Task Save()
+    {
+        if (busy) return; busy = true; error = null;
+        try { var id = framework ? await Service.SaveFrameworkAsync(account, Id, f, reason) : await Service.SaveAcquisitionAsync(account, Id, a, reason); Navigation.NavigateTo($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{id}"); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (LeasingValidationException ex) { error = ex.Message; }
+        catch (Exception) { error = "LeasingFailed"; }
+        finally { busy = false; }
+    }
+    private string EndDateText() { try { return LeasingCalculator.EndDate(a.PurchaseDate, a.Terms.Months).ToString("dd.MM.yyyy"); } catch (ArgumentOutOfRangeException) { return L["LeasingInvalidDates"]; } }
+    private string LineText(LeasingItem item) { try { var t = LeasingCalculator.Line(item); return L["LeasingLineTotals", t.Net.ToString("N2"), t.Gross.ToString("N2"), Currency]; } catch (Exception ex) when (ex is ArgumentOutOfRangeException or OverflowException) { return L["LeasingInvalidLines"]; } }
+    private string TotalText() { try { var t = LeasingCalculator.Total(a.Items); return L["LeasingTotals", t.Net.ToString("N2"), t.Vat.ToString("N2"), t.Gross.ToString("N2"), Currency]; } catch (Exception ex) when (ex is ArgumentOutOfRangeException or OverflowException) { return L["LeasingInvalidLines"]; } }
+}

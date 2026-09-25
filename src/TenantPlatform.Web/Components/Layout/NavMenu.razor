@@ -27,6 +27,16 @@
         </details>
     }
 
+    @if (permissions.CanSeeLeasing)
+    {
+        <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "Leasing")">
+            <summary class="sidebar-section-title">@L["LeasingTitle"]</summary>
+            <NavLink href="/leasing" Match="NavLinkMatch.All" class="sidebar-link"><i class="bi bi-list-ul"></i><span>@L["LeasingOverview"]</span></NavLink>
+            <NavLink href="/leasing/frameworks" class="sidebar-link"><i class="bi bi-folder2-open"></i><span>@L["LeasingFrameworks"]</span></NavLink>
+            <NavLink href="/leasing/orders" class="sidebar-link"><i class="bi bi-receipt"></i><span>@L["LeasingOrders"]</span></NavLink>
+        </details>
+    }
+
     @if (CanSeeMeetingRoomsGroup)
     {
         <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "MeetingRooms")">
@@ -208,6 +218,7 @@
 
     private string? GetInitialGroup()
     {
+        if (permissions.CanSeeLeasing && IsCurrentPath("leasing")) return "Leasing";
         if (permissions.CanSeeAgreements && IsCurrentPath("agreements"))
             return "RRM";
 
@@ -235,6 +246,7 @@
             return "Platform";
 
         if (permissions.CanSeeAgreements) return "RRM";
+        if (permissions.CanSeeLeasing) return "Leasing";
         if (CanSeeMeetingRoomsGroup) return "MeetingRooms";
         if (CanSeePropertyGroup) return "Property";
         if (CanSeeServicesGroup) return "Services";

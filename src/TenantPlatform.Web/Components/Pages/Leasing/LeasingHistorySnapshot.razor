@@ -1,0 +1,50 @@
+@using System.Text.Json
+@{
+    var snapshot = JsonSerializer.Deserialize<JsonElement>(Json);
+}
+<dl class="small">
+    @foreach (var field in Fields)
+    {
+        if (!snapshot.TryGetProperty(field.Property, out var value) || value.ValueKind is JsonValueKind.Null) continue;
+        <dt>@L[field.Label]</dt><dd>@Format(field.Property, value)</dd>
+    }
+</dl>
+@if (snapshot.TryGetProperty("Terms", out var terms))
+{ <LeasingTermsView Terms="@(terms.Deserialize<LeasingTerms>()!)" /> }
+@if (snapshot.TryGetProperty("Items", out var items) && items.GetArrayLength() > 0)
+{
+    <h4 class="h6">@L["LeasingItems"]</h4>
+    <ul class="small">
+        @foreach (var value in items.EnumerateArray())
+        {
+            var item = value.Deserialize<LeasingItem>()!;
+            <li>@item.Description (@item.ItemNumber) · @L["LeasingQuantity"]: @item.Quantity.ToString("0.####") · @L["LeasingUnitPrice"]: @item.UnitPrice.ToString("0.####") · @L["LeasingVatRate"]: @item.VatPercent.ToString("0.####")</li>
+        }
+    </ul>
+}
+@code {
+    [Parameter] public string Json { get; set; } = "{}";
+    [Parameter] public bool Framework { get; set; }
+    [Parameter] public Dictionary<Guid, string> ReferenceNames { get; set; } = [];
+    private static readonly (string Property, string Label)[] Fields =
+    [
+        ("Name", "Name"), ("Number", "LeasingNumber"), ("Reference", "LeasingNumber"),
+        ("FrameworkId", "LeasingFramework"), ("FinanceOrganizationId", "LeasingFinanceCompany"),
+        ("SupplierOrganizationId", "LeasingSupplier"), ("OwnerUserId", "LeasingOwner"),
+        ("AcquisitionFrom", "LeasingAcquisitionFrom"), ("AcquisitionTo", "LeasingAcquisitionTo"),
+        ("Limit", "LeasingLimit"), ("IncludesVat", "LeasingVatBasis"), ("Currency", "LeasingCurrency"),
+        ("PurchaseDate", "LeasingPurchaseDate"), ("EndDate", "LeasingEndDate"), ("NetTotal", "LeasingNet"),
+        ("VatTotal", "LeasingVatAmount"), ("GrossTotal", "LeasingGross"), ("FinancedAmount", "LeasingFinanced"),
+        ("InvoiceNumber", "LeasingInvoiceNumber"), ("InvoiceDate", "LeasingInvoiceDate"), ("Status", "Status"),
+        ("Notes", "LeasingNotes"), ("FileName", "LeasingDocuments")
+    ];
+    private string Format(string property, JsonElement value)
+    {
+        if (property.EndsWith("Id")) return ReferenceNames.GetValueOrDefault(value.GetGuid(), L["DashboardUnspecified"]);
+        if (property == "Status") return L[$"LeasingStatus{(Framework ? ((LeasingFrameworkStatus)value.GetInt32()).ToString() : ((LeasingAcquisitionStatus)value.GetInt32()).ToString())}"];
+        if (property == "IncludesVat") return L[value.GetBoolean() ? "LeasingGross" : "LeasingNet"];
+        if (property is "AcquisitionFrom" or "AcquisitionTo" or "PurchaseDate" or "EndDate" or "InvoiceDate") return DateOnly.Parse(value.GetString()!, CultureInfo.InvariantCulture).ToString("dd.MM.yyyy");
+        if (value.ValueKind == JsonValueKind.Number) return value.GetDecimal().ToString("N2");
+        return value.ToString();
+    }
+}

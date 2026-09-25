@@ -2432,4 +2432,117 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="DashboardFilterHelp" xml:space="preserve"><value>Kommende betyr i dag til og med dag 90 i kontoens tidssone. Utløpte har utløpsdato før i dag.</value></data>
   <data name="DashboardDimensionStatus" xml:space="preserve"><value>Status</value></data>
   <data name="DashboardDimensionOwner" xml:space="preserve"><value>Avtaleansvarlig</value></data>
+  <data name="LeasingTitle" xml:space="preserve"><value>Leasing</value></data>
+  <data name="LeasingOverview" xml:space="preserve"><value>Oversikt</value></data>
+  <data name="LeasingFrameworks" xml:space="preserve"><value>Rammeavtaler</value></data>
+  <data name="LeasingOrders" xml:space="preserve"><value>Bestillingsleasing</value></data>
+  <data name="LeasingFramework" xml:space="preserve"><value>Rammeavtale</value></data>
+  <data name="LeasingAcquisition" xml:space="preserve"><value>Anskaffelse</value></data>
+  <data name="LeasingAcquisitions" xml:space="preserve"><value>Anskaffelser</value></data>
+  <data name="LeasingNewFramework" xml:space="preserve"><value>Ny rammeavtale</value></data>
+  <data name="LeasingNewOrder" xml:space="preserve"><value>Ny bestillingsleasing</value></data>
+  <data name="LeasingNewAcquisition" xml:space="preserve"><value>Ny anskaffelse</value></data>
+  <data name="LeasingEditFramework" xml:space="preserve"><value>Rediger rammeavtale</value></data>
+  <data name="LeasingEditAcquisition" xml:space="preserve"><value>Rediger anskaffelse</value></data>
+  <data name="LeasingKind" xml:space="preserve"><value>Type</value></data>
+  <data name="LeasingNumber" xml:space="preserve"><value>Avtalenummer / referanse</value></data>
+  <data name="LeasingOwner" xml:space="preserve"><value>Ansvarlig</value></data>
+  <data name="LeasingPeriod" xml:space="preserve"><value>Periode</value></data>
+  <data name="LeasingAmount" xml:space="preserve"><value>Beløp</value></data>
+  <data name="LeasingEmpty" xml:space="preserve"><value>Ingen leasingavtaler i dette utvalget.</value></data>
+  <data name="LeasingListAmounts" xml:space="preserve"><value>Rammeavtaler viser maksbeløp. Anskaffelser viser kjøpsverdi inkl. mva. Perioden er anskaffelsesperioden for rammeavtaler og leasingperioden for anskaffelser.</value></data>
+  <data name="LeasingStatusOpen" xml:space="preserve"><value>Åpen for anskaffelser</value></data>
+  <data name="LeasingStatusClosed" xml:space="preserve"><value>Stengt for nye anskaffelser</value></data>
+  <data name="LeasingStatusFinished" xml:space="preserve"><value>Avsluttet</value></data>
+  <data name="LeasingStatusDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="LeasingStatusRegistered" xml:space="preserve"><value>Registrert</value></data>
+  <data name="LeasingStatusCancelled" xml:space="preserve"><value>Kansellert</value></data>
+  <data name="LeasingMonths" xml:space="preserve"><value>Leasingperiode (hele måneder)</value></data>
+  <data name="LeasingInterestKind" xml:space="preserve"><value>Rentevilkår</value></data>
+  <data name="LeasingInterestFixed" xml:space="preserve"><value>Fast årlig rente</value></data>
+  <data name="LeasingInterestFloating" xml:space="preserve"><value>Flytende årlig rente</value></data>
+  <data name="LeasingInterestReference" xml:space="preserve"><value>Referanserente med margin</value></data>
+  <data name="LeasingReferenceRate" xml:space="preserve"><value>Referanserentens navn (f.eks. NIBOR 3 måneder)</value></data>
+  <data name="LeasingMargin" xml:space="preserve"><value>Margin (prosentpoeng)</value></data>
+  <data name="LeasingAnnualRate" xml:space="preserve"><value>Årlig rente (%)</value></data>
+  <data name="LeasingFrequency" xml:space="preserve"><value>Betalingshyppighet</value></data>
+  <data name="LeasingFrequencyMonthly" xml:space="preserve"><value>Månedlig</value></data>
+  <data name="LeasingFrequencyQuarterly" xml:space="preserve"><value>Kvartalsvis</value></data>
+  <data name="LeasingFrequencyHalfYearly" xml:space="preserve"><value>Halvårlig</value></data>
+  <data name="LeasingFrequencyYearly" xml:space="preserve"><value>Årlig</value></data>
+  <data name="LeasingTermsHelp" xml:space="preserve"><value>Betalingshyppigheten er uavhengig av referanserenten. Rentesatser registreres manuelt; terminbeløp og betalingsplaner beregnes ikke.</value></data>
+  <data name="LeasingNoFramework" xml:space="preserve"><value>Uten rammeavtale (bestillingsleasing)</value></data>
+  <data name="LeasingSupplier" xml:space="preserve"><value>Leverandør</value></data>
+  <data name="LeasingChoose" xml:space="preserve"><value>Velg…</value></data>
+  <data name="LeasingFinanceCompany" xml:space="preserve"><value>Finansieringsselskap</value></data>
+  <data name="LeasingCurrency" xml:space="preserve"><value>Valuta</value></data>
+  <data name="LeasingAcquisitionFrom" xml:space="preserve"><value>Anskaffelser fra og med</value></data>
+  <data name="LeasingAcquisitionTo" xml:space="preserve"><value>Anskaffelser til og med</value></data>
+  <data name="LeasingLimit" xml:space="preserve"><value>Maksbeløp</value></data>
+  <data name="LeasingIncludesVat" xml:space="preserve"><value>Rammebeløpet inkluderer mva</value></data>
+  <data name="LeasingPurchaseDate" xml:space="preserve"><value>Kjøpsdato / leasingstart</value></data>
+  <data name="LeasingFinanced" xml:space="preserve"><value>Finansiert beløp</value></data>
+  <data name="LeasingInvoiceNumber" xml:space="preserve"><value>Fakturanummer (påkrevd ved registrering)</value></data>
+  <data name="LeasingInvoiceDate" xml:space="preserve"><value>Fakturadato (påkrevd ved registrering)</value></data>
+  <data name="LeasingDefaultTerms" xml:space="preserve"><value>Standardvilkår for nye anskaffelser</value></data>
+  <data name="LeasingTerms" xml:space="preserve"><value>Leasingvilkår</value></data>
+  <data name="LeasingEndDate" xml:space="preserve"><value>Leasingens sluttdato</value></data>
+  <data name="LeasingDateRule" xml:space="preserve"><value>Leasingstart er kjøpsdatoen. Sluttdato er kjøpsdato pluss hele kalendermåneder. Hvis dagen ikke finnes i sluttmåneden, brukes siste dag i måneden.</value></data>
+  <data name="LeasingItems" xml:space="preserve"><value>Varelinjer</value></data>
+  <data name="LeasingLineNumber" xml:space="preserve"><value>Varelinje {0}</value></data>
+  <data name="LeasingDescription" xml:space="preserve"><value>Beskrivelse</value></data>
+  <data name="LeasingItemNumber" xml:space="preserve"><value>Varenummer (valgfritt)</value></data>
+  <data name="LeasingQuantity" xml:space="preserve"><value>Antall</value></data>
+  <data name="LeasingVatRate" xml:space="preserve"><value>Mva-sats (%)</value></data>
+  <data name="LeasingUnitPrice" xml:space="preserve"><value>Enhetspris ekskl. mva</value></data>
+  <data name="LeasingRemoveLine" xml:space="preserve"><value>Fjern linje</value></data>
+  <data name="LeasingAddLine" xml:space="preserve"><value>Legg til varelinje</value></data>
+  <data name="LeasingLineTotals" xml:space="preserve"><value>Ekskl. mva: {0} · inkl. mva: {1} {2}</value></data>
+  <data name="LeasingTotals" xml:space="preserve"><value>Kjøpsverdi ekskl. mva: {0} · mva: {1} · inkl. mva: {2} {3}</value></data>
+  <data name="LeasingNotes" xml:space="preserve"><value>Notater</value></data>
+  <data name="LeasingChangeReason" xml:space="preserve"><value>Begrunnelse for endringen (påkrevd)</value></data>
+  <data name="LeasingAttachmentsAfterSave" xml:space="preserve"><value>Dokumentvedlegg legges til på detaljsiden etter lagring.</value></data>
+  <data name="LeasingDetails" xml:space="preserve"><value>Avtaleopplysninger</value></data>
+  <data name="LeasingAcquisitionPeriod" xml:space="preserve"><value>Anskaffelsesperiode</value></data>
+  <data name="LeasingVatBasis" xml:space="preserve"><value>Rammegrunnlag</value></data>
+  <data name="LeasingGross" xml:space="preserve"><value>Inklusive mva</value></data>
+  <data name="LeasingNet" xml:space="preserve"><value>Eksklusive mva</value></data>
+  <data name="LeasingCapacity" xml:space="preserve"><value>Rammeutnyttelse</value></data>
+  <data name="LeasingUsed" xml:space="preserve"><value>Benyttet beløp</value></data>
+  <data name="LeasingAvailable" xml:space="preserve"><value>Tilgjengelig beløp</value></data>
+  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Kun registrerte, ikke-kansellerte anskaffelser bruker ramme. Utkast, renter og leasinggebyrer bruker ikke ramme. Leasingbetalinger frigjør ikke ramme.</value></data>
+  <data name="LeasingPeriodHelp" xml:space="preserve"><value>Anskaffelsesperioden begrenser kjøpsdatoen. Hver anskaffelse har egen leasingperiode som fortsetter etter at anskaffelsesperioden er over.</value></data>
+  <data name="LeasingDocuments" xml:space="preserve"><value>Dokumentvedlegg</value></data>
+  <data name="LeasingNoDocuments" xml:space="preserve"><value>Ingen dokumentvedlegg ennå.</value></data>
+  <data name="LeasingUpload" xml:space="preserve"><value>Last opp dokument</value></data>
+  <data name="LeasingFileLimit" xml:space="preserve"><value>Maks {0} MB. PDF, Word, Excel, PNG eller JPEG.</value></data>
+  <data name="LeasingCancelAcquisition" xml:space="preserve"><value>Kanseller anskaffelsen</value></data>
+  <data name="LeasingCancelHelp" xml:space="preserve"><value>Kansellering frigjør eventuell benyttet ramme. Anskaffelsen og historikken beholdes, og kanselleringen kan ikke oppheves i fase 1.</value></data>
+  <data name="LeasingHistory" xml:space="preserve"><value>Endringshistorikk</value></data>
+  <data name="LeasingBefore" xml:space="preserve"><value>Før endringen</value></data>
+  <data name="LeasingAfter" xml:space="preserve"><value>Etter endringen</value></data>
+  <data name="LeasingActionCreated" xml:space="preserve"><value>Opprettet</value></data>
+  <data name="LeasingActionUpdated" xml:space="preserve"><value>Endret</value></data>
+  <data name="LeasingActionCancelled" xml:space="preserve"><value>Kansellert</value></data>
+  <data name="LeasingActionDocumentAdded" xml:space="preserve"><value>Dokument lagt til</value></data>
+  <data name="LeasingFailed" xml:space="preserve"><value>Kunne ikke fullføre handlingen. Prøv igjen.</value></data>
+  <data name="LeasingUploadFailed" xml:space="preserve"><value>Kunne ikke laste opp dokumentet. Kontroller filstørrelsen og prøv igjen.</value></data>
+  <data name="LeasingClosed" xml:space="preserve"><value>Rammeavtalen er stengt for nye registrerte anskaffelser.</value></data>
+  <data name="LeasingInvalidFramework" xml:space="preserve"><value>Kontroller anskaffelsesperioden, status og maksbeløp. Maksbeløpet må være mellom 0 og 1 000 milliarder, med høyst to desimaler.</value></data>
+  <data name="LeasingFrameworkConflict" xml:space="preserve"><value>Endringen er i konflikt med registrerte anskaffelser. Valuta og finansieringsselskap må fortsatt samsvare, kjøpsdatoene må være innenfor perioden, og mva-grunnlaget kan ikke endres.</value></data>
+  <data name="LeasingLimitExceeded" xml:space="preserve"><value>Kjøpsverdien overskrider tilgjengelig ramme, eller maksbeløpet er lavere enn allerede benyttet beløp.</value></data>
+  <data name="LeasingInvalidTransition" xml:space="preserve"><value>Denne statusendringen er ikke tillatt. Registrerte anskaffelser må kanselleres fremfor å settes tilbake til utkast.</value></data>
+  <data name="LeasingFrameworkCurrency" xml:space="preserve"><value>Valuta og finansieringsselskap må samsvare med rammeavtalen.</value></data>
+  <data name="LeasingInvalidParty" xml:space="preserve"><value>Velg en part som tilhører denne kontoen.</value></data>
+  <data name="LeasingInvalidOwner" xml:space="preserve"><value>Velg en aktiv ansvarlig som tilhører denne kontoen.</value></data>
+  <data name="LeasingInvalidPurchase" xml:space="preserve"><value>Kontroller fakturaopplysninger og finansiert beløp. Beløpet kan ikke være negativt og kan ha høyst to desimaler.</value></data>
+  <data name="LeasingInvalidDates" xml:space="preserve"><value>Angi gyldig kjøpsdato og leasingperiode på 1–600 hele måneder.</value></data>
+  <data name="LeasingInvalidLines" xml:space="preserve"><value>Kontroller varelinjene. Beskrivelse er påkrevd, antall må være positivt, pris kan ikke være negativ, og mva må være 0–100 %. Bruk høyst fire desimaler og maksimalt 500 linjer.</value></data>
+  <data name="LeasingRegistrationRequired" xml:space="preserve"><value>Registrering krever minst én varelinje med positiv kjøpsverdi, positivt finansiert beløp, fakturanummer og fakturadato.</value></data>
+  <data name="LeasingOutsidePeriod" xml:space="preserve"><value>Kjøpsdatoen må ligge innenfor rammeavtalens anskaffelsesperiode, inkludert fra- og til-dato.</value></data>
+  <data name="LeasingConcurrency" xml:space="preserve"><value>Avtalen er endret av en annen bruker. Last inn siden på nytt før du lagrer.</value></data>
+  <data name="LeasingReasonRequired" xml:space="preserve"><value>Oppgi en begrunnelse for endringen (maks 2000 tegn).</value></data>
+  <data name="LeasingInvalidDetails" xml:space="preserve"><value>Navn, nummer/referanse og støttet valuta er påkrevd. Navn kan ha maks 200 tegn, nummer 100 og notater 10 000.</value></data>
+  <data name="LeasingInvalidTerms" xml:space="preserve"><value>Kontroller vilkårene: 1–600 hele måneder, rente 0–100 %, eller navn på referanserente og margin mellom −100 og 100 prosentpoeng. Velg betalingshyppighet separat.</value></data>
+  <data name="LeasingVatAmount" xml:space="preserve"><value>Mva-beløp</value></data>
 </root>
