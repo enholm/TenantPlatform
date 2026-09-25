@@ -4,12 +4,17 @@ using TenantPlatform.Core.Accounts;
 
 namespace TenantPlatform.Infrastructure.Persistence.Configurations;
 
-public sealed class DepartmentConfiguration : IEntityTypeConfiguration<Department>
+public sealed class OrganizationElementConfiguration : IEntityTypeConfiguration<OrganizationElement>
 {
-    public void Configure(EntityTypeBuilder<Department> builder)
+    public void Configure(EntityTypeBuilder<OrganizationElement> builder)
     {
-        builder.ToTable("departments");
+        builder.ToTable("organization_elements");
         builder.HasKey(x => x.Id);
+        builder.HasAlternateKey(x => new { x.AccountId, x.Id });
+        builder.HasOne<OrganizationElement>().WithMany()
+            .HasForeignKey(x => new { x.AccountId, x.ParentId })
+            .HasPrincipalKey(x => new { x.AccountId, x.Id })
+            .OnDelete(DeleteBehavior.Restrict);
         builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(2000);
         builder.HasIndex(x => new { x.AccountId, x.Name });

@@ -2372,4 +2372,20 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="AccountRegisterInvalidInput" xml:space="preserve"><value>Namn måste ha 1–200 tecken och beskrivning får ha högst 2000 tecken.</value></data>
   <data name="AccountRegisterNotFound" xml:space="preserve"><value>Posten finns inte i valt konto. Uppdatera sidan.</value></data>
   <data name="AccountRegisterSaveFailed" xml:space="preserve"><value>Åtgärden kunde inte slutföras. Försök igen.</value></data>
+  <data name="OrganizationElements" xml:space="preserve"><value>Organisationsstruktur</value></data>
+  <data name="GeographicAreas" xml:space="preserve"><value>Geografi</value></data>
+  <data name="OrganizationElementsDescription" xml:space="preserve"><value>Hantera organisationselement och underliggande element för valt konto.</value></data>
+  <data name="GeographicAreasDescription" xml:space="preserve"><value>Hantera geografiska områden och underområden för valt konto.</value></data>
+  <data name="CreateOrganizationElement" xml:space="preserve"><value>Skapa organisationselement</value></data>
+  <data name="EditOrganizationElement" xml:space="preserve"><value>Redigera organisationselement</value></data>
+  <data name="NoOrganizationElements" xml:space="preserve"><value>Inga organisationselement är registrerade.</value></data>
+  <data name="CreateGeographicArea" xml:space="preserve"><value>Skapa geografiskt område</value></data>
+  <data name="EditGeographicArea" xml:space="preserve"><value>Redigera geografiskt område</value></data>
+  <data name="NoGeographicAreas" xml:space="preserve"><value>Inga geografiska områden är registrerade.</value></data>
+  <data name="AccountHierarchyParent" xml:space="preserve"><value>Överordnat element</value></data>
+  <data name="AccountHierarchyRoot" xml:space="preserve"><value>Inget – översta nivån</value></data>
+  <data name="AccountHierarchyAddChild" xml:space="preserve"><value>Lägg till underelement</value></data>
+  <data name="AccountHierarchyCycle" xml:space="preserve"><value>Ett element kan inte placeras under sig självt eller sina underelement.</value></data>
+  <data name="AccountHierarchyInvalidParent" xml:space="preserve"><value>Det överordnade elementet finns inte i valt konto. Uppdatera listan.</value></data>
+  <data name="AccountHierarchyHasChildren" xml:space="preserve"><value>Flytta eller ta bort underelementen innan du tar bort detta element.</value></data>
 </root>

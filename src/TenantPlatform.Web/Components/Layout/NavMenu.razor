@@ -136,11 +136,11 @@
             <summary class="sidebar-section-title">@L["Settings"]</summary>
             @if (permissions.CanManageAccountStructure)
             {
-                <NavLink href="/settings/departments" class="sidebar-link">
-                    <i class="bi bi-diagram-3"></i><span>@L["Departments"]</span>
+                <NavLink href="/settings/organization-structure" class="sidebar-link">
+                    <i class="bi bi-diagram-3"></i><span>@L["OrganizationElements"]</span>
                 </NavLink>
-                <NavLink href="/settings/locations" class="sidebar-link">
-                    <i class="bi bi-geo-alt"></i><span>@L["Locations"]</span>
+                <NavLink href="/settings/geography" class="sidebar-link">
+                    <i class="bi bi-geo-alt"></i><span>@L["GeographicAreas"]</span>
                 </NavLink>
             }
             @if (permissions.CanSeeOrganizations)
@@ -226,6 +226,7 @@
 
         if (CanSeeSettingsGroup &&
             (IsCurrentPath("settings/departments") || IsCurrentPath("settings/locations") ||
+             IsCurrentPath("settings/organization-structure") || IsCurrentPath("settings/geography") ||
              IsCurrentPath("organizations") || (CanSeeAccountUsers && IsCurrentPath("users"))))
             return "Settings";
 

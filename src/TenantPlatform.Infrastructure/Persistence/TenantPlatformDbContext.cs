@@ -46,8 +46,8 @@ public class TenantPlatformDbContext : DbContext
     {
     }
 
-    public DbSet<Department> Departments => Set<Department>();
-    public DbSet<Location> Locations => Set<Location>();
+    public DbSet<OrganizationElement> OrganizationElements => Set<OrganizationElement>();
+    public DbSet<GeographicArea> GeographicAreas => Set<GeographicArea>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Building> Buildings => Set<Building>();

@@ -1,17 +1,18 @@
-@page "/settings/locations"
+@page "/settings/departments"
+@page "/settings/organization-structure"
 @attribute [Authorize]
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Core.Accounts
 @using TenantPlatform.Web.Services.AccountSettings
 @using TenantPlatform.Web.Security.Authorization
-@inject LocationService Service
+@inject OrganizationElementService Service
 @inject ITenantAuthorizationService Authorization
 @inject NavigationManager Navigation
-@inject ILogger<Locations> Logger
+@inject ILogger<OrganizationElements> Logger
 
-<PageTitle>@L["Locations"]</PageTitle>
-<h1>@L["Locations"]</h1>
+<PageTitle>@L["OrganizationElements"]</PageTitle>
+<h1>@L["OrganizationElements"]</h1>
 @if (error is not null)
 {
     <div class="alert alert-danger" role="alert">@L[error]</div>
@@ -22,17 +23,27 @@
 }
 else if (allowed)
 {
-    <p class="text-body-secondary">@L["LocationsDescription"]</p>
-    <button class="btn btn-primary mb-3" disabled="@busy" @onclick="NewItem">@L["CreateLocation"]</button>
+    <p class="text-body-secondary">@L["OrganizationElementsDescription"]</p>
+    <button class="btn btn-primary mb-3" disabled="@busy" @onclick="NewItem">@L["CreateOrganizationElement"]</button>
     @if (model is not null)
     {
         <div class="card mb-4"><div class="card-body">
-            <h2 class="h5">@L[editingId.HasValue ? "EditLocation" : "CreateLocation"]</h2>
+            <h2 class="h5">@L[editingId.HasValue ? "EditOrganizationElement" : "CreateOrganizationElement"]</h2>
             <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
                 <fieldset disabled="@busy">
                     <div class="mb-3">
                         <label for="register-name" class="form-label">@L["Name"]</label>
                         <input id="register-name" class="form-control" required maxlength="200" @bind="model.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-parent" class="form-label">@L["AccountHierarchyParent"]</label>
+                        <select id="register-parent" class="form-select" @bind="model.ParentId">
+                            <option value="">@L["AccountHierarchyRoot"]</option>
+                            @foreach (var row in Hierarchy.Where(x => !x.Ancestors.Contains(editingId ?? Guid.Empty) && x.Id != editingId))
+                            {
+                                <option value="@row.Id">@row.Path</option>
+                            }
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="register-description" class="form-label">@L["Description"]</label>
@@ -58,7 +69,7 @@ else if (allowed)
     }
     @if (items.Count == 0)
     {
-        <p>@L["NoLocations"]</p>
+        <p>@L["NoOrganizationElements"]</p>
     }
     else
     {
@@ -66,12 +77,14 @@ else if (allowed)
             <table class="table table-hover align-middle mb-0">
                 <thead><tr><th>@L["Name"]</th><th>@L["Description"]</th><th>@L["Status"]</th><th></th></tr></thead>
                 <tbody>
-                    @foreach (var item in items)
+                    @foreach (var row in Hierarchy)
                     {
+                        var item = items.Single(x => x.Id == row.Id);
                         <tr @key="item.Id">
-                            <td>@item.Name</td><td>@item.Description</td>
+                            <td><span style="padding-inline-start: @(row.Depth * 20)px">@if (row.Depth > 0) { <span aria-hidden="true">↳ </span> }@item.Name</span></td><td>@item.Description</td>
                             <td>@L[item.IsActive ? "Active" : "Inactive"]</td>
                             <td class="text-end">
+                                <button class="btn btn-outline-primary btn-sm" disabled="@busy" @onclick="() => NewChild(item.Id)">@L["AccountHierarchyAddChild"]</button>
                                 <button class="btn btn-outline-secondary btn-sm" disabled="@busy" @onclick="() => Edit(item)">@L["Edit"]</button>
                                 <button class="btn btn-outline-danger btn-sm" disabled="@busy" @onclick="() => ConfirmDelete(item)">@L["Delete"]</button>
                             </td>
@@ -84,10 +97,12 @@ else if (allowed)
 }
 
 @code {
-    private List<Location> items = [];
+    private List<OrganizationElement> items = [];
+    private IReadOnlyList<AccountHierarchyRow> Hierarchy => AccountRegisterHierarchy.Build(
+        items.Select(x => (x.Id, x.ParentId, x.Name)));
     private AccountRegisterInput? model;
     private Guid? editingId;
-    private Location? deleting;
+    private OrganizationElement? deleting;
     private bool loading = true;
     private bool allowed;
     private bool busy;
@@ -107,13 +122,14 @@ else if (allowed)
 
     private void Cancel() { model = null; editingId = null; deleting = null; error = null; }
     private void NewItem() { Cancel(); model = new(); }
-    private void Edit(Location item)
+    private void NewChild(Guid parentId) { NewItem(); model!.ParentId = parentId; }
+    private void Edit(OrganizationElement item)
     {
         Cancel();
         editingId = item.Id;
-        model = new() { Name = item.Name, Description = item.Description, IsActive = item.IsActive };
+        model = new() { ParentId = item.ParentId, Name = item.Name, Description = item.Description, IsActive = item.IsActive };
     }
-    private void ConfirmDelete(Location item) { Cancel(); deleting = item; }
+    private void ConfirmDelete(OrganizationElement item) { Cancel(); deleting = item; }
 
     private Task SaveAsync() => RunAsync(async () =>
     {
@@ -138,6 +154,7 @@ else if (allowed)
         error = null;
         try { await action(); }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (AccountHierarchyException ex) { error = ex.Message; }
         catch (ArgumentException) { error = "AccountRegisterInvalidInput"; }
         catch (InvalidOperationException ex) when (ex.Message == "AccountRegisterNotFound")
         { error = "AccountRegisterNotFound"; }
