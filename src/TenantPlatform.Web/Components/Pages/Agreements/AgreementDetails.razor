@@ -35,6 +35,8 @@ else if (details is not null)
         <dt class="col-sm-4">@L["AgreementAutoRenew"]</dt><dd class="col-sm-8">@L[details.AutoRenew ? "Yes" : "No"]</dd>
         <dt class="col-sm-4">@L["AgreementRenewalMonths"]</dt><dd class="col-sm-8">@details.RenewalMonths</dd>
         }
+        <dt class="col-sm-4">@L["AgreementOrganizationElement"]</dt><dd class="col-sm-8">@(details.OrganizationElementName ?? L["AgreementNone"].Value)</dd>
+        <dt class="col-sm-4">@L["AgreementGeographicArea"]</dt><dd class="col-sm-8">@(details.GeographicAreaName ?? L["AgreementNone"].Value)</dd>
         <dt class="col-sm-4">@L["Building"]</dt><dd class="col-sm-8">@details.BuildingName</dd>
         <dt class="col-sm-4">@L["Unit"]</dt><dd class="col-sm-8">@details.UnitName</dd>
         <dt class="col-sm-4">@L["Description"]</dt><dd class="col-sm-8" style="white-space: pre-wrap">@details.Description</dd>

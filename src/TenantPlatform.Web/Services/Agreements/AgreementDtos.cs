@@ -27,6 +27,8 @@ public class SaveAgreementRequest
     public bool AutoRenew { get; set; }
     public int? RenewalMonths { get; set; }
     public string? Terms { get; set; }
+    public Guid? OrganizationElementId { get; set; }
+    public Guid? GeographicAreaId { get; set; }
     public Guid? BuildingId { get; set; }
     public Guid? UnitId { get; set; }
     public Guid Revision { get; set; }
@@ -44,6 +46,8 @@ public class AgreementDetailsDto : SaveAgreementRequest
     public Guid Id { get; init; }
     public string CounterpartyName { get; init; } = string.Empty;
     public string OwnerName { get; init; } = string.Empty;
+    public string? OrganizationElementName { get; init; }
+    public string? GeographicAreaName { get; init; }
     public string? BuildingName { get; init; }
     public string? UnitName { get; init; }
     public DateTimeOffset CreatedUtc { get; init; }
@@ -58,7 +62,7 @@ public class AgreementDetailsDto : SaveAgreementRequest
 
 public record AgreementListItemDto(Guid Id, string Title, string CounterpartyName, AgreementType Type,
     AgreementStatus Status, Guid OwnerUserId, string OwnerName, DateOnly? EndDate, DateOnly? NoticeDeadline, bool IsArchived = false);
-public record AgreementOptionDto(Guid Id, string Name, Guid? BuildingId = null);
+public record AgreementOptionDto(Guid Id, string Name, Guid? BuildingId = null, bool IsActive = true);
 public record AgreementPageDto(List<AgreementListItemDto> Items, int TotalCount, int Page, int PageSize, List<AgreementOptionDto> Owners);
 public class AgreementFilter
 {
@@ -70,6 +74,8 @@ public class AgreementFilter
 }
 public class AgreementOptionsDto
 {
+    public List<AgreementOptionDto> OrganizationElements { get; init; } = [];
+    public List<AgreementOptionDto> GeographicAreas { get; init; } = [];
     public List<AgreementOptionDto> Indices { get; init; } = [];
     public List<AgreementOptionDto> Counterparties { get; init; } = [];
     public List<AgreementOptionDto> Members { get; init; } = [];

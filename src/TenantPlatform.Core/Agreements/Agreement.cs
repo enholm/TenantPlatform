@@ -37,6 +37,8 @@ public class Agreement
     public bool AutoRenew { get; set; }
     public int? RenewalMonths { get; set; }
     public string? Terms { get; set; }
+    public Guid? OrganizationElementId { get; set; }
+    public Guid? GeographicAreaId { get; set; }
     public Guid? BuildingId { get; set; }
     public Guid? UnitId { get; set; }
     public DateTimeOffset CreatedUtc { get; set; }

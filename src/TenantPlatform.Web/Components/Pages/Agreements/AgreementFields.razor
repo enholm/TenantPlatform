@@ -16,6 +16,20 @@
             <option value="@Guid.Empty">@L["AgreementSelect"]</option>
             @foreach (var item in Options.Members) { <option value="@item.Id">@item.Name</option> }
         </InputSelect></div>
+        <div class="col-md-6"><label for="agreement-organization-element" class="form-label">@L["AgreementOrganizationElement"]</label>
+            <InputSelect id="agreement-organization-element" class="form-select" @bind-Value="Model.OrganizationElementId">
+                <option value="">@L["AgreementNone"]</option>
+                @foreach (var item in Options.OrganizationElements)
+                { <option value="@item.Id">@item.Name@(!item.IsActive ? $" ({L["Inactive"]})" : "")</option> }
+            </InputSelect>
+        </div>
+        <div class="col-md-6"><label for="agreement-geographic-area" class="form-label">@L["AgreementGeographicArea"]</label>
+            <InputSelect id="agreement-geographic-area" class="form-select" @bind-Value="Model.GeographicAreaId">
+                <option value="">@L["AgreementNone"]</option>
+                @foreach (var item in Options.GeographicAreas)
+                { <option value="@item.Id">@item.Name@(!item.IsActive ? $" ({L["Inactive"]})" : "")</option> }
+            </InputSelect>
+        </div>
         <div class="col-md-6"><label for="finance-direction" class="form-label">@L["FinanceDirection"]</label><InputSelect id="finance-direction" class="form-select" @bind-Value="Model.Direction">
             <option value="">@L["FinanceUnclassified"]</option>
             @foreach (var value in Enum.GetValues<AgreementDirection>()) { <option value="@value">@L[$"FinanceDirection{value}"]</option> }

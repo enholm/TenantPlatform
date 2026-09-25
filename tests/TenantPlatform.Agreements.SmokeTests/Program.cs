@@ -14,6 +14,7 @@ using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
 using TenantPlatform.Web.Services.Agreements;
+using TenantPlatform.Web.Services.AccountSettings;
 
 var connection = Environment.GetEnvironmentVariable("AGREEMENT_TEST_CONNECTION")
     ?? throw new InvalidOperationException("Set AGREEMENT_TEST_CONNECTION to a disposable PostgreSQL database.");
@@ -182,6 +183,75 @@ await using (var db = factory.CreateDbContext())
     db.AgreementAccess.Add(new AgreementAccess { Id = Guid.NewGuid(), AccountId = b, AgreementId = idA, UserId = foreignId, Level = AgreementAccessLevel.Read });
     await Expect<DbUpdateException>(() => db.SaveChangesAsync(), "database rejects cross-account agreement grant");
 }
+// Optional organizational and geographic links on agreements.
+var elementRoot = Guid.NewGuid(); var elementChild = Guid.NewGuid(); var areaRoot = Guid.NewGuid(); var areaChild = Guid.NewGuid();
+var foreignElement = Guid.NewGuid(); var foreignArea = Guid.NewGuid();
+await using (var db = factory.CreateDbContext())
+{
+    db.OrganizationElements.AddRange(
+        new OrganizationElement { Id = elementRoot, AccountId = a, Name = "Operations" },
+        new OrganizationElement { Id = elementChild, AccountId = a, ParentId = elementRoot, Name = "IT" },
+        new OrganizationElement { Id = foreignElement, AccountId = b, Name = "Foreign" });
+    db.GeographicAreas.AddRange(
+        new GeographicArea { Id = areaRoot, AccountId = a, Name = "Norway" },
+        new GeographicArea { Id = areaChild, AccountId = a, ParentId = areaRoot, Name = "Bergen" },
+        new GeographicArea { Id = foreignArea, AccountId = b, Name = "Foreign" });
+    await db.SaveChangesAsync();
+}
+var choices = await admin.GetOptionsAsync(a);
+Assert(choices.OrganizationElements.Single(x => x.Id == elementChild).Name == "Operations / IT", "organization dropdown shows full path");
+Assert(choices.GeographicAreas.Single(x => x.Id == areaChild).Name == "Norway / Bergen", "geography dropdown shows full path");
+Assert(!choices.OrganizationElements.Any(x => x.Id == foreignElement) && !choices.GeographicAreas.Any(x => x.Id == foreignArea), "dropdowns exclude other accounts");
+Assert((await admin.GetAsync(a, idA)).OrganizationElementId == null && (await admin.GetAsync(a, idA)).GeographicAreaId == null, "existing agreements have optional empty links");
+var structureRequest = Request(); structureRequest.OrganizationElementId = elementChild; structureRequest.GeographicAreaId = areaChild;
+var structureId = await admin.CreateAsync(a, structureRequest);
+var structureDetails = await owner.GetAsync(a, structureId);
+Assert(structureDetails.OrganizationElementId == elementChild && structureDetails.GeographicAreaId == areaChild &&
+    structureDetails.OrganizationElementName == "Operations / IT" && structureDetails.GeographicAreaName == "Norway / Bergen", "create and detail round-trip both hierarchy links");
+await Invalid(r => r.OrganizationElementId = foreignElement, "foreign organizational element rejected");
+await Invalid(r => r.GeographicAreaId = foreignArea, "foreign geographic area rejected");
+await Invalid(r => r.OrganizationElementId = Guid.NewGuid(), "missing organizational element rejected");
+await Invalid(r => r.GeographicAreaId = Guid.NewGuid(), "missing geographic area rejected");
+await Expect<UnauthorizedAccessException>(() => stranger.GetOptionsAsync(a, structureId), "ungranted user cannot read hierarchy choices");
+var ownerChoices = await owner.GetOptionsAsync(a, structureId);
+Assert(ownerChoices.OrganizationElements.Count == 2 && ownerChoices.GeographicAreas.Count == 2, "agreement owner can select structure without settings administration");
+var adminContext = new TestUserContext(adminId, a);
+var adminAuthorization = new TenantAuthorizationService(factory, adminContext);
+var elementService = new OrganizationElementService(factory, adminContext, adminAuthorization);
+var areaService = new GeographicAreaService(factory, adminContext, adminAuthorization);
+await Expect<AccountHierarchyException>(() => elementService.DeleteAsync(elementChild), "referenced organization element cannot be deleted");
+await Expect<AccountHierarchyException>(() => areaService.DeleteAsync(areaChild), "referenced geographic area cannot be deleted");
+await elementService.SaveAsync(elementChild, new() { Name = "IT", ParentId = elementRoot, IsActive = false });
+await areaService.SaveAsync(areaChild, new() { Name = "Bergen", ParentId = areaRoot, IsActive = false });
+choices = await admin.GetOptionsAsync(a);
+Assert(!choices.OrganizationElements.Any(x => x.Id == elementChild) && !choices.GeographicAreas.Any(x => x.Id == areaChild), "new agreements exclude inactive choices");
+var existingChoices = await owner.GetOptionsAsync(a, structureId);
+Assert(!existingChoices.OrganizationElements.Single(x => x.Id == elementChild).IsActive && !existingChoices.GeographicAreas.Single(x => x.Id == areaChild).IsActive, "current inactive links remain visible for editing");
+structureDetails.Title = "Retain inactive links";
+await owner.UpdateAsync(a, structureId, structureDetails);
+Assert((await owner.GetAsync(a, structureId)).OrganizationElementId == elementChild, "unchanged inactive link remains valid");
+await Invalid(r => r.OrganizationElementId = elementChild, "new inactive organizational link rejected");
+await Invalid(r => r.GeographicAreaId = areaChild, "new inactive geographic link rejected");
+structureDetails = await owner.GetAsync(a, structureId);
+structureDetails.OrganizationElementId = elementRoot; structureDetails.GeographicAreaId = null;
+await owner.UpdateAsync(a, structureId, structureDetails);
+structureDetails = await owner.GetAsync(a, structureId);
+Assert(structureDetails.OrganizationElementId == elementRoot && structureDetails.GeographicAreaId == null, "edit can select root and clear geographic link");
+structureDetails.OrganizationElementId = foreignElement;
+await Expect<AgreementValidationException>(() => owner.UpdateAsync(a, structureId, structureDetails), "cross-account edit link rejected");
+structureDetails.OrganizationElementId = null;
+await owner.UpdateAsync(a, structureId, structureDetails);
+Assert((await owner.GetAsync(a, structureId)).OrganizationElementId == null, "organizational link can be cleared");
+await elementService.DeleteAsync(elementChild); await areaService.DeleteAsync(areaChild);
+Assert(!(await elementService.GetAllAsync()).Any(x => x.Id == elementChild) && !(await areaService.GetAllAsync()).Any(x => x.Id == areaChild), "unlinked elements can be deleted");
+foreach (var geographic in new[] { false, true })
+{
+    await using var db = factory.CreateDbContext();
+    var target = await db.Agreements.SingleAsync(x => x.AccountId == a && x.Id == structureId);
+    if (geographic) target.GeographicAreaId = foreignArea; else target.OrganizationElementId = foreignElement;
+    await Expect<DbUpdateException>(() => db.SaveChangesAsync(), geographic ? "database rejects foreign geographic link" : "database rejects foreign organizational link");
+}
+
 Console.WriteLine("All agreement smoke tests passed.");
 Console.WriteLine($"File fixtures: {root}");
 

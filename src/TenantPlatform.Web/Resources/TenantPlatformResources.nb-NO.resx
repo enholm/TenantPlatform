@@ -2388,4 +2388,9 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AccountHierarchyCycle" xml:space="preserve"><value>Et element kan ikke plasseres under seg selv eller sine underelementer.</value></data>
   <data name="AccountHierarchyInvalidParent" xml:space="preserve"><value>Det overordnede elementet finnes ikke i valgt konto. Oppdater listen.</value></data>
   <data name="AccountHierarchyHasChildren" xml:space="preserve"><value>Flytt eller slett underelementene før du sletter dette elementet.</value></data>
+  <data name="AgreementOrganizationElement" xml:space="preserve"><value>Organisasjonselement</value></data>
+  <data name="AgreementGeographicArea" xml:space="preserve"><value>Geografisk område</value></data>
+  <data name="AgreementInvalidOrganizationElement" xml:space="preserve"><value>Velg et aktivt organisasjonselement i valgt konto.</value></data>
+  <data name="AgreementInvalidGeographicArea" xml:space="preserve"><value>Velg et aktivt geografisk område i valgt konto.</value></data>
+  <data name="AccountHierarchyUsedByAgreement" xml:space="preserve"><value>Elementet brukes av en avtale og kan ikke slettes. Du kan deaktivere det.</value></data>
 </root>

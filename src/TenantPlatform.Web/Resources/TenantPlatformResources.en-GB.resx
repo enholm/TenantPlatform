@@ -2352,4 +2352,9 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AccountHierarchyCycle" xml:space="preserve"><value>An element cannot be placed under itself or its descendants.</value></data>
   <data name="AccountHierarchyInvalidParent" xml:space="preserve"><value>The parent element does not exist in the selected account. Refresh the list.</value></data>
   <data name="AccountHierarchyHasChildren" xml:space="preserve"><value>Move or delete the children before deleting this element.</value></data>
+  <data name="AgreementOrganizationElement" xml:space="preserve"><value>Organizational element</value></data>
+  <data name="AgreementGeographicArea" xml:space="preserve"><value>Geographic area</value></data>
+  <data name="AgreementInvalidOrganizationElement" xml:space="preserve"><value>Select an active organizational element in the selected account.</value></data>
+  <data name="AgreementInvalidGeographicArea" xml:space="preserve"><value>Select an active geographic area in the selected account.</value></data>
+  <data name="AccountHierarchyUsedByAgreement" xml:space="preserve"><value>The element is used by an agreement and cannot be deleted. You can deactivate it.</value></data>
 </root>

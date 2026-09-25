@@ -71,8 +71,12 @@ public sealed class OrganizationElementService(
             ?? throw new InvalidOperationException("AccountRegisterNotFound");
         if (await db.OrganizationElements.AnyAsync(x => x.AccountId == accountId && x.ParentId == id, cancellationToken))
             throw new AccountHierarchyException("AccountHierarchyHasChildren");
+        if (await db.Agreements.AnyAsync(x => x.AccountId == accountId && x.OrganizationElementId == id, cancellationToken))
+            throw new AccountHierarchyException("AccountHierarchyUsedByAgreement");
         db.OrganizationElements.Remove(entity);
-        await db.SaveChangesAsync(cancellationToken);
+        try { await db.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: "23503" })
+        { throw new AccountHierarchyException("AccountHierarchyUsedByAgreement"); }
         await transaction.CommitAsync(cancellationToken);
     }
 
