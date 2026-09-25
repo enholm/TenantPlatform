@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TenantPlatform.Core.Accounts;
+using TenantPlatform.Core.Agreements;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Core.Networking;
 using TenantPlatform.Core.Occupancies;
@@ -59,7 +60,228 @@ public static class DemoDataInitializer
             await SeedUserRolesAsync(dbContext, cancellationToken);
             await SeedLoginAccountsAsync(dbContext, passwordService, cancellationToken);
 
+            await SeedMagidaAsync(dbContext, passwordService, cancellationToken);
+
             await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedMagidaAsync(
+        TenantPlatformDbContext dbContext,
+        PasswordService passwordService,
+        CancellationToken cancellationToken)
+    {
+        var accountId = SeedIds.MagidaAccount;
+        var userId = SeedIds.MagidaAdministrator;
+        var recordedUtc = DateTimeOffset.UtcNow;
+
+        if (!await dbContext.Accounts.AnyAsync(x => x.Id == accountId, cancellationToken))
+            dbContext.Accounts.Add(new Account
+            {
+                Id = accountId, Name = "Magida", DefaultLanguage = SupportedLanguages.NbNo, IsActive = true
+            });
+
+        if (!await dbContext.Users.AnyAsync(x => x.Id == userId, cancellationToken))
+            dbContext.Users.Add(new User
+            {
+                Id = userId, Email = "morten@magida.org", FirstName = "Morten", LastName = "Enholm",
+                PreferredLanguage = SupportedLanguages.NbNo, IsActive = true, IsPlatformAdmin = false
+            });
+
+        if (!await dbContext.LoginAccounts.AnyAsync(x => x.Id == SeedIds.MagidaLoginAccount, cancellationToken))
+        {
+            var login = new LoginAccount
+            {
+                Id = SeedIds.MagidaLoginAccount, UserId = userId, Email = "morten@magida.org",
+                LastAccountId = accountId, IsEnabled = true, CreatedUtc = recordedUtc
+            };
+            login.PasswordHash = passwordService.HashPassword(login, "JallaBalla24");
+            dbContext.LoginAccounts.Add(login);
+        }
+
+        if (!await dbContext.UserAccounts.AnyAsync(
+                x => x.AccountId == accountId && x.Id == SeedIds.MagidaUserAccount, cancellationToken))
+            dbContext.UserAccounts.Add(new UserAccount
+            {
+                Id = SeedIds.MagidaUserAccount, AccountId = accountId, UserId = userId
+            });
+
+        if (!await dbContext.UserAccountRoles.AnyAsync(
+                x => x.UserAccountId == SeedIds.MagidaUserAccount && x.Role == UserRole.AccountAdmin,
+                cancellationToken))
+            dbContext.UserAccountRoles.Add(new UserAccountRole
+            {
+                Id = SeedIds.MagidaAccountAdminRole, UserAccountId = SeedIds.MagidaUserAccount,
+                Role = UserRole.AccountAdmin
+            });
+
+        var elements = new List<OrganizationElement>();
+        string[] divisions = ["Eiendom", "Teknologi", "Drift", "Innkjøp", "Forretningsutvikling"];
+        for (var division = 1; division <= 5; division++)
+        {
+            elements.Add(new OrganizationElement
+            {
+                Id = SeedIds.MagidaDivision(division), AccountId = accountId,
+                Name = $"Divisjon {division} – {divisions[division - 1]}"
+            });
+            for (var department = 1; department <= 5; department++)
+                elements.Add(new OrganizationElement
+                {
+                    Id = SeedIds.MagidaDepartment((division - 1) * 5 + department), AccountId = accountId,
+                    ParentId = SeedIds.MagidaDivision(division), Name = $"Avdeling {division}.{department}"
+                });
+        }
+        await AddMissingMagidaEntitiesAsync(dbContext, elements, x => x.Id, cancellationToken);
+
+        var continents = new (string Name, string Code, decimal Value2027, (string Country, string Capital)[] Countries)[]
+        {
+            ("Asia", "ASIA", 104.2m, [("Japan", "Tokyo"), ("Kina", "Beijing"), ("India", "New Delhi"), ("Thailand", "Bangkok")]),
+            ("Europa", "EUROPA", 102.5m, [("Norge", "Oslo"), ("Sverige", "Stockholm"), ("Tyskland", "Berlin"), ("Frankrike", "Paris")]),
+            ("Afrika", "AFRIKA", 106.1m, [("Kenya", "Nairobi"), ("Egypt", "Kairo"), ("Ghana", "Accra"), ("Marokko", "Rabat")]),
+            ("Amerika", "AMERIKA", 103.4m, [("USA", "Washington, D.C."), ("Canada", "Ottawa"), ("Brasil", "Brasília"), ("Argentina", "Buenos Aires")])
+        };
+        var areas = new List<GeographicArea>();
+        var counterparties = new List<Organization>();
+        var indices = new List<AgreementIndex>();
+        var indexValues = new List<AgreementIndexValue>();
+        for (var c = 0; c < continents.Length; c++)
+        {
+            var continent = continents[c];
+            var continentId = SeedIds.MagidaContinent(c + 1);
+            var indexId = SeedIds.MagidaIndex(c + 1);
+            areas.Add(new GeographicArea { Id = continentId, AccountId = accountId, Name = continent.Name });
+            indices.Add(new AgreementIndex
+            {
+                Id = indexId, AccountId = accountId, Code = $"MAGIDA-{continent.Code}",
+                Name = $"Magida {continent.Name} årsindeks", Resolution = AgreementIndexResolution.Year,
+                Description = "Syntetisk demoindeks med basis 100 i 2026.", Source = "Magida demodata",
+                RecordedUtc = recordedUtc, ActorUserId = userId
+            });
+            for (var year = 2026; year <= 2027; year++)
+            {
+                var valueId = SeedIds.MagidaIndexValue(c * 2 + year - 2026 + 1);
+                indexValues.Add(new AgreementIndexValue
+                {
+                    Id = valueId, AccountId = accountId, IndexId = indexId, PeriodKey = valueId,
+                    Period = new DateOnly(year, 1, 1), Revision = 1,
+                    Value = year == 2026 ? 100m : continent.Value2027,
+                    RecordedUtc = recordedUtc, ActorUserId = userId, Reason = "Syntetisk demoverdi"
+                });
+            }
+            for (var country = 0; country < continent.Countries.Length; country++)
+            {
+                var number = c * 4 + country + 1;
+                var location = continent.Countries[country];
+                areas.Add(new GeographicArea
+                {
+                    Id = SeedIds.MagidaCountry(number), AccountId = accountId,
+                    ParentId = continentId, Name = location.Country
+                });
+                areas.Add(new GeographicArea
+                {
+                    Id = SeedIds.MagidaCapital(number), AccountId = accountId,
+                    ParentId = SeedIds.MagidaCountry(number), Name = location.Capital
+                });
+                counterparties.Add(new Organization
+                {
+                    Id = SeedIds.MagidaCounterparty(number), AccountId = accountId,
+                    Name = $"Demo Partner {location.Capital}", Type = OrganizationType.ServiceProvider, IsActive = true
+                });
+            }
+        }
+        await AddMissingMagidaEntitiesAsync(dbContext, areas, x => x.Id, cancellationToken);
+        await AddMissingMagidaEntitiesAsync(dbContext, counterparties, x => x.Id, cancellationToken);
+        await AddMissingMagidaEntitiesAsync(dbContext, indices, x => x.Id, cancellationToken);
+        await AddMissingMagidaEntitiesAsync(dbContext, indexValues, x => x.Id, cancellationToken);
+
+        var existingAgreements = (await dbContext.Agreements.AsNoTracking()
+            .Where(x => x.AccountId == accountId).Select(x => x.Id).ToListAsync(cancellationToken)).ToHashSet();
+        string[] typeNames = ["Leieavtale", "Programvarelisens", "Drift og vedlikehold", "Leverandøravtale", "Samarbeidsavtale"];
+        string[] primaryLines = ["Leie av lokaler", "Brukerlisenser", "Driftstjenester", "Vareleveranser", "Rådgivning"];
+        string[] secondaryLines = ["Felleskostnader", "Brukerstøtte", "Forebyggende vedlikehold", "Transport", "Prosjektoppfølging"];
+        int[] durations = [12, 18, 24, 36, 48, 60];
+        AgreementFrequency[] frequencies = [AgreementFrequency.Monthly, AgreementFrequency.Quarterly,
+            AgreementFrequency.HalfYearly, AgreementFrequency.Yearly];
+
+        for (var i = 0; i < 300; i++)
+        {
+            var agreementId = SeedIds.MagidaAgreement(i + 1);
+            // Preserve edited agreements and their append-only financial history on subsequent startups.
+            if (existingAgreements.Contains(agreementId)) continue;
+
+            var department = i / 12 + 1;
+            var c = i % 4;
+            var country = (i / 4) % 4;
+            var locationNumber = c * 4 + country + 1;
+            var type = (i % 12 + department - 1) % 5;
+            var start = new DateOnly(2026, i % 6 + 1, 1);
+            var duration = durations[(i / 3) % durations.Length];
+            var form = (AgreementForm)(i % 3 + 1);
+            var end = form == AgreementForm.FixedTerm ? start.AddMonths(duration).AddDays(-1) : (DateOnly?)null;
+            var renewal = form == AgreementForm.Renewing ? start.AddMonths(duration) : (DateOnly?)null;
+            var indexId = SeedIds.MagidaIndex(c + 1);
+            dbContext.Agreements.Add(new Agreement
+            {
+                Id = agreementId, AccountId = accountId,
+                Title = $"MAG-{i + 1:000} {typeNames[type]} – {continents[c].Countries[country].Capital}",
+                Description = $"Demonstrasjonsavtale for Magida, avdeling {(department - 1) / 5 + 1}.{(department - 1) % 5 + 1}.",
+                Type = (AgreementType)(type + 1), Direction = (i / 4) % 2 == 0 ? AgreementDirection.Income : AgreementDirection.Cost,
+                Currency = "NOK", IndexId = indexId, CounterpartyOrganizationId = SeedIds.MagidaCounterparty(locationNumber),
+                OwnerUserId = userId, Status = AgreementStatus.Active, StartDate = start, EndDate = end,
+                Form = form, CurrentPeriodStartDate = start, RenewalDate = renewal,
+                AutoRenew = form == AgreementForm.Renewing, RenewalMonths = form == AgreementForm.Renewing ? duration : null,
+                NoticeMode = form == AgreementForm.Renewing ? AgreementNoticeMode.BeforeRenewal : AgreementNoticeMode.None,
+                NoticeCount = form == AgreementForm.FixedTerm ? null : 3,
+                NoticeUnit = form == AgreementForm.FixedTerm ? null : AgreementNoticeUnit.Months,
+                NoticeDeadline = renewal?.AddMonths(-3), ReminderMode = AgreementReminderMode.Disabled,
+                OrganizationElementId = SeedIds.MagidaDepartment(department), GeographicAreaId = SeedIds.MagidaCapital(locationNumber),
+                CreatedUtc = recordedUtc, UpdatedUtc = recordedUtc, CreatedByUserId = userId, UpdatedByUserId = userId,
+                Revision = agreementId
+            });
+            dbContext.AgreementIndexSelections.Add(new AgreementIndexSelection
+            {
+                Id = SeedIds.MagidaIndexSelection(i + 1), AccountId = accountId, AgreementId = agreementId,
+                IndexId = indexId, Sequence = 1, EffectiveFrom = start, RecordedUtc = recordedUtc, ActorUserId = userId
+            });
+            for (var line = 0; line < 2; line++)
+            {
+                var number = i * 2 + line + 1;
+                var lineId = SeedIds.MagidaAgreementLine(number);
+                dbContext.AgreementLines.Add(new AgreementLine
+                {
+                    Id = lineId, AccountId = accountId, AgreementId = agreementId, ActivatedUtc = recordedUtc
+                });
+                dbContext.AgreementLineVersions.Add(new AgreementLineVersion
+                {
+                    Id = SeedIds.MagidaLineVersion(number), AccountId = accountId, AgreementId = agreementId,
+                    LineId = lineId, Sequence = 1, EffectiveFrom = start, RecordedUtc = recordedUtc, ActorUserId = userId,
+                    Name = line == 0 ? primaryLines[type] : secondaryLines[type], StartDate = start, EndDate = end,
+                    FirstPayableDate = start, Frequency = frequencies[(i / 4 + line) % frequencies.Length],
+                    Anchor = AgreementAnchor.Calendar, AnchorDate = new DateOnly(1, 1, 1),
+                    BillingTiming = line == 0 ? AgreementBillingTiming.Advance : AgreementBillingTiming.Arrears,
+                    Status = AgreementLineStatus.Active, IndexRegulated = true, Reason = "Opprettet som demodata"
+                });
+                dbContext.AgreementPriceVersions.Add(new AgreementPriceVersion
+                {
+                    Id = SeedIds.MagidaPriceVersion(number), AccountId = accountId, AgreementId = agreementId,
+                    LineId = lineId, Sequence = 1, EffectiveFrom = start, IndexBaseDate = start,
+                    Quantity = line == 0 ? 1 + i % 10 : 1,
+                    UnitPrice = line == 0 ? 5000m + i % 40 * 1250m : 750m + i % 20 * 250m,
+                    RecordedUtc = recordedUtc, ActorUserId = userId, Reason = "Opprettet som demodata"
+                });
+            }
+        }
+        // Save the account and its entire graph atomically, including both financial lines per agreement.
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task AddMissingMagidaEntitiesAsync<T>(
+        TenantPlatformDbContext dbContext, IEnumerable<T> entities, Func<T, Guid> getId,
+        CancellationToken cancellationToken) where T : class
+    {
+        var existingIds = (await dbContext.Set<T>().AsNoTracking()
+            .Where(x => EF.Property<Guid>(x, "AccountId") == SeedIds.MagidaAccount)
+            .Select(x => EF.Property<Guid>(x, "Id")).ToListAsync(cancellationToken)).ToHashSet();
+        dbContext.Set<T>().AddRange(entities.Where(x => !existingIds.Contains(getId(x))));
     }
 
     private static async Task SeedAccountAsync(

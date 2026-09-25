@@ -2,6 +2,30 @@ namespace TenantPlatform.Infrastructure.Initialization;
 
 public static class SeedIds
 {
+    // Stable IDs reserved for the Magida demo dataset. Each entity kind has its own namespace.
+    public static readonly Guid MagidaAccount = MagidaId(1, 1);
+    public static readonly Guid MagidaAdministrator = MagidaId(2, 1);
+    public static readonly Guid MagidaLoginAccount = MagidaId(3, 1);
+    public static readonly Guid MagidaUserAccount = MagidaId(4, 1);
+    public static readonly Guid MagidaAccountAdminRole = MagidaId(5, 1);
+
+    public static Guid MagidaDivision(int number) => MagidaId(6, number);
+    public static Guid MagidaDepartment(int number) => MagidaId(7, number);
+    public static Guid MagidaContinent(int number) => MagidaId(8, number);
+    public static Guid MagidaCountry(int number) => MagidaId(9, number);
+    public static Guid MagidaCapital(int number) => MagidaId(10, number);
+    public static Guid MagidaCounterparty(int number) => MagidaId(11, number);
+    public static Guid MagidaIndex(int number) => MagidaId(12, number);
+    public static Guid MagidaIndexValue(int number) => MagidaId(13, number);
+    public static Guid MagidaAgreement(int number) => MagidaId(14, number);
+    public static Guid MagidaIndexSelection(int number) => MagidaId(15, number);
+    public static Guid MagidaAgreementLine(int number) => MagidaId(16, number);
+    public static Guid MagidaLineVersion(int number) => MagidaId(17, number);
+    public static Guid MagidaPriceVersion(int number) => MagidaId(18, number);
+
+    private static Guid MagidaId(int entityKind, int number) =>
+        Guid.Parse($"b0000000-{entityKind:x4}-0000-0000-{number:x12}");
+
     // ============================================================
     // Accounts
     // ============================================================
