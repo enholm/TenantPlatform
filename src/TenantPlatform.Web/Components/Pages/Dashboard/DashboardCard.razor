@@ -1,0 +1,26 @@
+<section class="card h-100 dashboard-card" aria-label="@Title" aria-busy="@Loading.ToString().ToLowerInvariant()">
+    <div class="card-body p-4">
+        <h2 class="h5 mb-3">@Title</h2>
+        @if (Loading)
+        {
+            <p class="text-muted" role="status">@L["Loading"]</p>
+        }
+        else if (Error)
+        {
+            <div role="alert"><p>@L["DashboardLoadError"]</p>
+                <button type="button" class="btn btn-outline-primary btn-sm" @onclick="Retry">@L["DashboardRetry"]</button>
+            </div>
+        }
+        else
+        {
+            @ChildContent
+        }
+    </div>
+</section>
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool Error { get; set; }
+    [Parameter] public EventCallback Retry { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

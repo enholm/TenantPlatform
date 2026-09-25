@@ -53,6 +53,12 @@ public partial class AgreementService(
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         var (userId, admin) = await RequireMemberAsync(db, accountId, cancellationToken);
         var visible = Accessible(db, accountId, userId, admin).AsNoTracking();
+        if (filter.Attention.HasValue)
+        {
+            var today = AgreementReminderSchedule.Today(Clock.GetUtcNow(),
+                (await SettingsAsync(db, accountId, cancellationToken)).TimeZoneId);
+            visible = AgreementDashboardQueries.Attention(visible, filter.Attention.Value, today);
+        }
         var owners = await (from a in visible join u in db.Users on a.OwnerUserId equals u.Id
                             select new { u.Id, Name = u.FirstName + " " + u.LastName })
             .Distinct().OrderBy(x => x.Name)

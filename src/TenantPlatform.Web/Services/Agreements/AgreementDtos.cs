@@ -66,6 +66,7 @@ public record AgreementOptionDto(Guid Id, string Name, Guid? BuildingId = null, 
 public record AgreementPageDto(List<AgreementListItemDto> Items, int TotalCount, int Page, int PageSize, List<AgreementOptionDto> Owners);
 public class AgreementFilter
 {
+    public AgreementAttention? Attention { get; set; }
     public string? Search { get; set; }
     public AgreementStatus? Status { get; set; }
     public AgreementType? Type { get; set; }

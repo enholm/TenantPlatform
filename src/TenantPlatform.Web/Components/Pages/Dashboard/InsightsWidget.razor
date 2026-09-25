@@ -1,0 +1,102 @@
+@inject IAgreementService Service
+@inject ILogger<InsightsWidget> Logger
+<section class="card h-100 dashboard-card" aria-labelledby="dashboard-insights-title" aria-busy="@loading.ToString().ToLowerInvariant()">
+    <div class="card-body p-4">
+        <h2 id="dashboard-insights-title" class="h5 mb-3">@L["DashboardInsights"]</h2>
+        <div class="mb-3">
+            <label for="dashboard-dimension" class="form-label small">@L["DashboardDimension"]</label>
+            <select id="dashboard-dimension" class="form-select" disabled="@loading" @bind="dimension" @bind:after="DimensionChanged">
+                @foreach (var value in Enum.GetValues<AgreementInsightDimension>())
+                { <option value="@value">@L[$"DashboardDimension{value}"]</option> }
+            </select>
+        </div>
+        @if (dimension is AgreementInsightDimension.Geography or AgreementInsightDimension.Organization)
+        {
+            <div class="mb-3">
+                <label for="dashboard-structure" class="form-label small">@L[$"DashboardDimension{dimension}"]</label>
+                <select id="dashboard-structure" class="form-select" disabled="@loading" @bind="selected" @bind:after="LoadAsync">
+                    <option value="">@L["AgreementAll"]</option>
+                    @foreach (var option in options)
+                    { <option value="@option.Id">@option.Path</option> }
+                </select>
+                <p class="small text-muted mt-2">@L["DashboardHierarchyHelp"]</p>
+            </div>
+        }
+        <p class="small text-muted">@L["DashboardInsightsScope"]</p>
+        @if (loading) { <p role="status">@L["Loading"]</p> }
+        else if (error)
+        {
+            <div role="alert"><p>@L["DashboardLoadError"]</p>
+                <button type="button" class="btn btn-outline-primary btn-sm" @onclick="LoadAsync">@L["DashboardRetry"]</button>
+            </div>
+        }
+        else if (data is not null)
+        {
+            @if (data.Total == 0) { <p class="text-muted" role="status">@L["DashboardNoInsights"]</p> }
+            else
+            {
+                <p class="small" role="status">@L["DashboardTotal", data.Total]</p>
+                <figure class="mb-0">
+                    <div class="dashboard-pie mx-auto mb-4" style="background: @Gradient()" aria-hidden="true"></div>
+                    <figcaption class="visually-hidden">@L["DashboardChartCaption"]</figcaption>
+                    <table class="table table-sm dashboard-legend mb-0">
+                        <caption class="visually-hidden">@L["DashboardChartCaption"]</caption>
+                        <thead><tr><th scope="col">@L["Name"]</th><th scope="col" class="text-end">@L["DashboardCount"]</th><th scope="col" class="text-end">@L["DashboardShare"]</th></tr></thead>
+                        <tbody>
+                            @foreach (var group in data.Groups)
+                            {
+                                <tr @key="group.Key">
+                                    <th scope="row" class="fw-normal"><span class="dashboard-swatch" style="background: @Color(group.Key)" aria-hidden="true"></span>@GroupName(group)</th>
+                                    <td class="text-end">@group.Count</td>
+                                    <td class="text-end text-nowrap">@((100m * group.Count / data.Total).ToString("N1")) %</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </figure>
+            }
+        }
+    </div>
+</section>
+@code {
+    [Parameter] public Guid AccountId { get; set; }
+    private AgreementInsightDimension dimension = AgreementInsightDimension.Type;
+    private Guid? selected, loadedAccount;
+    private AgreementInsightsDto? data;
+    private IReadOnlyList<TenantPlatform.Web.Services.AccountSettings.AccountHierarchyRow> options = [];
+    private bool loading = true, error;
+    protected override async Task OnParametersSetAsync()
+    { if (loadedAccount != AccountId) { loadedAccount = AccountId; selected = null; options = []; await LoadAsync(); } }
+    private async Task DimensionChanged() { selected = null; options = []; await LoadAsync(); }
+    private async Task LoadAsync()
+    {
+        loading = true; error = false; data = null;
+        try { data = await Service.GetInsightsAsync(AccountId, dimension, selected); options = data.Options; }
+        catch (Exception ex) { error = true; Logger.LogWarning(ex, "Could not load dashboard insights for {AccountId}", AccountId); }
+        finally { loading = false; }
+    }
+    private string GroupName(AgreementInsightGroup group) => group.Direct ? L["DashboardDirect", group.Name ?? L["DashboardUnspecified"].Value] :
+        group.Status.HasValue ? L[$"AgreementStatus{group.Status}"] :
+        group.Type.HasValue ? L[$"AgreementType{group.Type}"] :
+        string.IsNullOrWhiteSpace(group.Name) ? L["DashboardUnspecified"] : group.Name;
+    private static string Color(string key)
+    {
+        // Stable across requests and sorting, unlike string.GetHashCode().
+        uint hash = 2166136261;
+        foreach (var character in key) hash = unchecked((hash ^ character) * 16777619);
+        return $"hsl({hash % 360} 55% 45%)";
+    }
+    private string Gradient()
+    {
+        if (data is null || data.Total == 0) return "none";
+        decimal cumulative = 0;
+        var stops = new List<string>();
+        foreach (var group in data.Groups)
+        {
+            var from = cumulative;
+            cumulative += 100m * group.Count / data.Total;
+            stops.Add(FormattableString.Invariant($"{Color(group.Key)} {from:F6}% {cumulative:F6}%"));
+        }
+        return $"conic-gradient({string.Join(", ", stops)})";
+    }
+}

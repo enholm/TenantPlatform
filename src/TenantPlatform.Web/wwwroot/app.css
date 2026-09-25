@@ -84,3 +84,22 @@ h1:focus {
     --tp-sidebar-shadow: 2px 0 14px rgba(0, 0, 0, 0.35);
     --tp-topbar-shadow: 0 1px 4px rgba(0, 0, 0, 0.30);
 }
+
+/* Dashboard widgets use the existing Bootstrap palette and spacing. */
+.dashboard-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.dashboard-grid > * { min-width: 0; }
+.dashboard-card { border: 1px solid var(--bs-border-color); border-radius: .5rem; }
+.dashboard-metric { background: var(--bs-tertiary-bg); color: var(--bs-body-color); }
+.dashboard-metric:hover, .dashboard-contract a:hover { background: var(--bs-secondary-bg); }
+.dashboard-card a:focus-visible, .dashboard-card select:focus-visible {
+    outline: 3px solid #258cfb; outline-offset: 3px;
+}
+.dashboard-contract { overflow-wrap: anywhere; }
+.dashboard-contract:first-child a { padding-top: 0 !important; }
+.dashboard-pie { width: min(100%, 14rem); aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--bs-border-color); }
+.dashboard-swatch { display: inline-block; width: .75rem; height: .75rem; margin-right: .5rem; border-radius: .15rem; }
+.dashboard-legend th:first-child { overflow-wrap: anywhere; }
+.dashboard-legend td { vertical-align: middle; }
+@media (min-width: 1200px) {
+    .dashboard-grid { grid-template-columns: minmax(0, .85fr) minmax(0, 1.1fr) minmax(0, 1.15fr); }
+}

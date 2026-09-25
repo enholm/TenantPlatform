@@ -1,0 +1,50 @@
+@inject IAgreementService Service
+@inject ILogger<ContractsWidget> Logger
+<DashboardCard Title="@L["DashboardContracts"]" Loading="loading" Error="error" Retry="LoadAsync">
+    @if (data is not null)
+    {
+        @if (data.Items.Count == 0)
+        { <p class="text-muted">@L["DashboardNoContracts"]</p> }
+        else
+        {
+            <ul class="list-unstyled mb-3">
+                @foreach (var item in data.Items)
+                {
+                    <li class="dashboard-contract border-bottom" @key="item.Id">
+                        <a class="d-block py-3 text-decoration-none" href="@($"/agreements/{item.Id}")">
+                            <span class="d-block fw-semibold">@(string.IsNullOrWhiteSpace(item.Title) ? L["DashboardUnnamed"].Value : item.Title)</span>
+                            <span class="d-block small text-body-secondary">@(Enum.IsDefined(item.Type) ? L[$"AgreementType{item.Type}"] : L["DashboardUnspecified"])</span>
+                            <span class="d-block small text-body-secondary">@ExpiryText(item.EndDate, data.Today)</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+        <a href="/agreements">@L["DashboardAllContracts"] <span aria-hidden="true">→</span></a>
+    }
+</DashboardCard>
+@code {
+    [Parameter] public Guid AccountId { get; set; }
+    private AgreementDashboardList? data;
+    private bool loading = true, error;
+    private Guid? loadedAccount;
+    protected override async Task OnParametersSetAsync()
+    { if (loadedAccount != AccountId) { loadedAccount = AccountId; await LoadAsync(); } }
+    private async Task LoadAsync()
+    {
+        loading = true; error = false; data = null;
+        try { data = await Service.GetDashboardContractsAsync(AccountId); }
+        catch (Exception ex) { error = true; Logger.LogWarning(ex, "Could not load dashboard contracts for {AccountId}", AccountId); }
+        finally { loading = false; }
+    }
+    private string ExpiryText(DateOnly? end, DateOnly today)
+    {
+        if (!end.HasValue) return L["DashboardNoExpiry"];
+        var days = end.Value.DayNumber - today.DayNumber;
+        if (days == 0) return L["DashboardExpiresToday"];
+        var date = end.Value.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+        var relative = L[days < 0 ? (days == -1 ? "DashboardDayAgo" : "DashboardDaysAgo") :
+            (days == 1 ? "DashboardInDay" : "DashboardInDays"), Math.Abs(days)];
+        return L[days < 0 ? "DashboardExpiredOn" : "DashboardExpiresOn", date, relative];
+    }
+}

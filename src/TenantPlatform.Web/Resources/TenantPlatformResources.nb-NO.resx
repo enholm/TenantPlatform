@@ -2393,4 +2393,43 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AgreementInvalidOrganizationElement" xml:space="preserve"><value>Velg et aktivt organisasjonselement i valgt konto.</value></data>
   <data name="AgreementInvalidGeographicArea" xml:space="preserve"><value>Velg et aktivt geografisk område i valgt konto.</value></data>
   <data name="AccountHierarchyUsedByAgreement" xml:space="preserve"><value>Elementet brukes av en avtale og kan ikke slettes. Du kan deaktivere det.</value></data>
+  <data name="DashboardTitle" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="DashboardAttention" xml:space="preserve"><value>Trenger oppmerksomhet</value></data>
+  <data name="DashboardContracts" xml:space="preserve"><value>Kontrakter</value></data>
+  <data name="DashboardInsights" xml:space="preserve"><value>Innsikt</value></data>
+  <data name="DashboardLoadError" xml:space="preserve"><value>Kunne ikke laste dette kortet. Prøv igjen.</value></data>
+  <data name="DashboardRetry" xml:space="preserve"><value>Prøv igjen</value></data>
+  <data name="DashboardWindow" xml:space="preserve"><value>Kommende: {0}–{1}, inkludert i dag og dag 90. Utløpte har utløpsdato før i dag.</value></data>
+  <data name="DashboardAttentionNotice" xml:space="preserve"><value>Kommende oppsigelsesfrist</value></data>
+  <data name="DashboardAttentionRenewal" xml:space="preserve"><value>Kommende fornyelse</value></data>
+  <data name="DashboardAttentionExpired" xml:space="preserve"><value>Utløpte kontrakter</value></data>
+  <data name="DashboardNoAttention" xml:space="preserve"><value>Ingen avtaler trenger oppmerksomhet i dette utvalget.</value></data>
+  <data name="DashboardNoContracts" xml:space="preserve"><value>Ingen utløpte avtaler eller kommende oppsigelsesfrister.</value></data>
+  <data name="DashboardUnnamed" xml:space="preserve"><value>Uten navn</value></data>
+  <data name="DashboardUnspecified" xml:space="preserve"><value>Ikke angitt</value></data>
+  <data name="DashboardAllContracts" xml:space="preserve"><value>Se alle kontrakter</value></data>
+  <data name="DashboardNoExpiry" xml:space="preserve"><value>Utløpsdato ikke angitt</value></data>
+  <data name="DashboardExpiresToday" xml:space="preserve"><value>Utløper i dag</value></data>
+  <data name="DashboardDayAgo" xml:space="preserve"><value>for {0} dag siden</value></data>
+  <data name="DashboardDaysAgo" xml:space="preserve"><value>for {0} dager siden</value></data>
+  <data name="DashboardInDay" xml:space="preserve"><value>om {0} dag</value></data>
+  <data name="DashboardInDays" xml:space="preserve"><value>om {0} dager</value></data>
+  <data name="DashboardExpiredOn" xml:space="preserve"><value>Utløpt {0} · {1}</value></data>
+  <data name="DashboardExpiresOn" xml:space="preserve"><value>Utløper {0} · {1}</value></data>
+  <data name="DashboardDimension" xml:space="preserve"><value>Fordel etter</value></data>
+  <data name="DashboardDimensionType" xml:space="preserve"><value>Avtaletype</value></data>
+  <data name="DashboardDimensionCounterparty" xml:space="preserve"><value>Avtalepartner</value></data>
+  <data name="DashboardDimensionGeography" xml:space="preserve"><value>Geografi</value></data>
+  <data name="DashboardDimensionOrganization" xml:space="preserve"><value>Organisasjonsstruktur</value></data>
+  <data name="DashboardHierarchyHelp" xml:space="preserve"><value>Valget inkluderer underliggende elementer. Alle grupperer på øverste nivå; et valgt element grupperer på nærmeste undernivå.</value></data>
+  <data name="DashboardInsightsScope" xml:space="preserve"><value>Tilgjengelige, ikke-arkiverte avtaler, uansett status.</value></data>
+  <data name="DashboardNoInsights" xml:space="preserve"><value>Ingen avtaler i dette utvalget.</value></data>
+  <data name="DashboardTotal" xml:space="preserve"><value>{0} avtaler</value></data>
+  <data name="DashboardChartCaption" xml:space="preserve"><value>Antall avtaler og prosentandel per gruppe. Tabellen viser de samme tallene som kakediagrammet.</value></data>
+  <data name="DashboardCount" xml:space="preserve"><value>Antall</value></data>
+  <data name="DashboardShare" xml:space="preserve"><value>Andel</value></data>
+  <data name="DashboardDirect" xml:space="preserve"><value>Direkte tilknyttet: {0}</value></data>
+  <data name="DashboardFilterHelp" xml:space="preserve"><value>Kommende betyr i dag til og med dag 90 i kontoens tidssone. Utløpte har utløpsdato før i dag.</value></data>
+  <data name="DashboardDimensionStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="DashboardDimensionOwner" xml:space="preserve"><value>Avtaleansvarlig</value></data>
 </root>

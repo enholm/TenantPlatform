@@ -4,6 +4,8 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@using TenantPlatform.Web.Components.Pages.Dashboard
+@using TenantPlatform.Core.Identity
 
 @using TenantPlatform.Infrastructure.Persistence
 @using TenantPlatform.Web.Security.CurrentUserContext
@@ -18,7 +20,20 @@
 <PageTitle>Dashboard</PageTitle>
 @if (canShowHome)
 {
-    @if (isLoading)
+    @if (UserContext.Current.CurrentAccountId is Guid dashboardAccountId)
+    {
+
+        <div class="dashboard-grid mb-4">
+            <AttentionWidget AccountId="dashboardAccountId" />
+            <ContractsWidget AccountId="dashboardAccountId" />
+            <InsightsWidget AccountId="dashboardAccountId" />
+        </div>
+    }
+    @if (overviewError)
+    {
+        <div class="alert alert-warning" role="alert">@L["DashboardLoadError"]</div>
+    }
+    else if (isLoading)
     {
         <p>Laster dashboard...</p>
     }
@@ -30,11 +45,6 @@
     }
     else
     {
-        <div class="mb-4">
-            <h1>Dashboard</h1>
-            <p class="text-muted">@accountName</p>
-        </div>
-
         <div class="row g-3 mb-4">
             <div class="col-md-6 col-xl-3">
                 <div class="card h-100">
@@ -100,7 +110,7 @@
                             @foreach (var request in recentRequests)
                             {
                                 <tr>
-                                    <td>@request.CreatedAt.LocalDateTime.ToString("g")</td>
+                                    <td>@request.CreatedAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm")</td>
                                     <td>@request.Status</td>
                                     <td>@request.RequesterName</td>
                                 </tr>
@@ -114,6 +124,7 @@
 }
 @code {
     private bool isLoading = true;
+    private bool overviewError;
 
     private string? accountName;
 
@@ -143,6 +154,8 @@
         return;
     }
 
+    try
+    {
     await using var dbContext =
         await DbContextFactory.CreateDbContextAsync();
 
@@ -153,25 +166,33 @@
         .Select(x => x.Name)
         .SingleOrDefaultAsync();
 
+    // Match the administrative building/request overview's account and building scopes.
+    var roles = await dbContext.UserAccountRoles.AsNoTracking()
+        .Where(x => x.UserAccount.AccountId == accountId && x.UserAccount.UserId == UserContext.Current.UserId)
+        .Select(x => new { x.Role, x.BuildingId }).ToListAsync();
+    var isAccountAdmin = roles.Any(x => x.Role == UserRole.AccountAdmin);
+    var buildingIds = roles.Where(x => x.Role == UserRole.PropertyAdmin && x.BuildingId.HasValue)
+        .Select(x => x.BuildingId!.Value).ToList();
     buildingCount = await dbContext.Buildings
-        .CountAsync(x => x.AccountId == accountId);
+        .CountAsync(x => x.AccountId == accountId && (isAccountAdmin || buildingIds.Contains(x.Id)));
 
     organizationCount = await dbContext.Organizations
         .CountAsync(x => x.AccountId == accountId);
 
     unitCount = await dbContext.Units
-        .CountAsync(x => x.AccountId == accountId);
+        .CountAsync(x => x.AccountId == accountId && (isAccountAdmin || buildingIds.Contains(x.BuildingId)));
 
     openRequestCount = await dbContext.ServiceRequests
         .CountAsync(x =>
             x.AccountId == accountId &&
+            (isAccountAdmin || buildingIds.Contains(x.BuildingId)) &&
             x.Status != Core.Services.ServiceRequestStatus.Completed &&
             x.Status != Core.Services.ServiceRequestStatus.Cancelled &&
             x.Status != Core.Services.ServiceRequestStatus.Rejected &&
             x.Status != Core.Services.ServiceRequestStatus.Failed);
 
     recentRequests = await dbContext.ServiceRequests
-        .Where(x => x.AccountId == accountId)
+        .Where(x => x.AccountId == accountId && (isAccountAdmin || buildingIds.Contains(x.BuildingId)))
         .OrderByDescending(x => x.CreatedAt)
         .Take(10)
         .Join(
@@ -187,7 +208,9 @@
             })
         .ToListAsync();
 
-    isLoading = false;
+    }
+    catch (Exception) { overviewError = true; }
+    finally { isLoading = false; }
 }
     private class RecentRequest
     {

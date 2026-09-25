@@ -1,0 +1,37 @@
+@inject IAgreementService Service
+@inject ILogger<AttentionWidget> Logger
+<DashboardCard Title="@L["DashboardAttention"]" Loading="loading" Error="error" Retry="LoadAsync">
+    @if (data is not null)
+    {
+        <p class="small text-muted">@L["DashboardWindow", Format(data.Today), Format(data.Today.AddDays(AgreementDashboardQueries.HorizonDays))]</p>
+        <div class="row g-3">
+            @foreach (var item in new[] { (AgreementAttention.Notice, data.Notice), (AgreementAttention.Renewal, data.Renewal), (AgreementAttention.Expired, data.Expired) })
+            {
+                <div class="col-12 col-sm-4 col-xl-12">
+                    <a class="dashboard-metric d-block rounded p-3 text-decoration-none" href="@($"/agreements?attention={item.Item1}")">
+                        <span class="d-block fs-2 fw-bold">@item.Item2</span>
+                        <span>@L[$"DashboardAttention{item.Item1}"]</span>
+                    </a>
+                </div>
+            }
+        </div>
+        @if (data.Notice + data.Renewal + data.Expired == 0)
+        { <p class="small text-muted mt-3 mb-0">@L["DashboardNoAttention"]</p> }
+    }
+</DashboardCard>
+@code {
+    [Parameter] public Guid AccountId { get; set; }
+    private AgreementAttentionDto? data;
+    private bool loading = true, error;
+    private Guid? loadedAccount;
+    protected override async Task OnParametersSetAsync()
+    { if (loadedAccount != AccountId) { loadedAccount = AccountId; await LoadAsync(); } }
+    private async Task LoadAsync()
+    {
+        loading = true; error = false; data = null;
+        try { data = await Service.GetAttentionAsync(AccountId); }
+        catch (Exception ex) { error = true; Logger.LogWarning(ex, "Could not load dashboard attention for {AccountId}", AccountId); }
+        finally { loading = false; }
+    }
+    private static string Format(DateOnly date) => date.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+}

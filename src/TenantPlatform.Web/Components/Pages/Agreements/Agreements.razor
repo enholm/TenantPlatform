@@ -29,6 +29,13 @@
             <option value="">@L["AgreementAll"]</option>
             @if (result is not null) { @foreach (var owner in result.Owners) { <option value="@owner.Id">@owner.Name</option> } }
         </select></div>
+        <div class="col-md-3"><label for="agreement-attention" class="form-label">@L["DashboardAttention"]</label>
+            <select id="agreement-attention" class="form-select" @bind="filter.Attention">
+                <option value="">@L["AgreementAll"]</option>
+                @foreach (var value in Enum.GetValues<AgreementAttention>()) { <option value="@value">@L[$"DashboardAttention{value}"]</option> }
+            </select>
+            @if (filter.Attention.HasValue) { <p class="small text-muted mt-2">@L["DashboardFilterHelp"]</p> }
+        </div>
         <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary" @onclick="SearchAsync">@L["Search"]</button></div>
     </div></fieldset>
     </div></div>
@@ -86,6 +93,7 @@ else if (result is not null)
 }
 
 @code {
+    [SupplyParameterFromQuery(Name = "attention")] public string? Attention { get; set; }
     private readonly AgreementFilter filter = new();
     private AgreementPageDto? result;
     private bool busy = true, allowed, canCreate, error;
@@ -95,6 +103,12 @@ else if (result is not null)
         if (UserContext.Current.CurrentAccountId is not Guid id || !await Authorization.CanUseAgreementsAsync())
         { Navigation.NavigateTo("/access-denied"); busy = false; return; }
         accountId = id; allowed = true; canCreate = await Authorization.CanCreateAgreementAsync();
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!allowed) return;
+        filter.Attention = Enum.TryParse<AgreementAttention>(Attention, true, out var value) && Enum.IsDefined(value) ? value : null;
+        filter.Page = 1;
         await LoadAsync();
     }
     private async Task LoadAsync()
