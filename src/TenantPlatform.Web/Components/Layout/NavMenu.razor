@@ -134,6 +134,15 @@
     {
         <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "Settings")">
             <summary class="sidebar-section-title">@L["Settings"]</summary>
+            @if (permissions.CanManageAccountStructure)
+            {
+                <NavLink href="/settings/departments" class="sidebar-link">
+                    <i class="bi bi-diagram-3"></i><span>@L["Departments"]</span>
+                </NavLink>
+                <NavLink href="/settings/locations" class="sidebar-link">
+                    <i class="bi bi-geo-alt"></i><span>@L["Locations"]</span>
+                </NavLink>
+            }
             @if (permissions.CanSeeOrganizations)
             {
                 <NavLink href="/organizations"
@@ -186,7 +195,7 @@
     private bool CanSeeServicesGroup => permissions.CanSeeTenantPortal || permissions.CanSeeMyRequests ||
         permissions.CanSeeAllRequests || permissions.CanSeeAssignedRequests || permissions.CanSeeServiceDefinitions;
     private bool CanSeeAccountUsers => permissions.CanSeeUsers && !UserContext.Current.IsPlatformAdmin;
-    private bool CanSeeSettingsGroup => permissions.CanSeeOrganizations || CanSeeAccountUsers;
+    private bool CanSeeSettingsGroup => permissions.CanSeeOrganizations || CanSeeAccountUsers || permissions.CanManageAccountStructure;
     private bool CanSeePlatformGroup => permissions.CanSeePlatformAdministration &&
         (permissions.CanSeeAccounts || permissions.CanSeeUsers);
 
@@ -216,7 +225,8 @@
             return "Services";
 
         if (CanSeeSettingsGroup &&
-            (IsCurrentPath("organizations") || (CanSeeAccountUsers && IsCurrentPath("users"))))
+            (IsCurrentPath("settings/departments") || IsCurrentPath("settings/locations") ||
+             IsCurrentPath("organizations") || (CanSeeAccountUsers && IsCurrentPath("users"))))
             return "Settings";
 
         if (CanSeePlatformGroup &&

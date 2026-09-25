@@ -876,6 +876,8 @@ public class TenantAuthorizationService
             CanSeeOccupancies =
                 canManageProperty,
 
+            CanManageAccountStructure = isAccountAdmin,
+
             CanSeeOrganizations =
                 canAdminister,
 
@@ -929,6 +931,9 @@ public class TenantAuthorizationService
             currentUser.IsAuthenticated &&
             currentUser.IsPlatformAdmin);
     }
+
+    public Task<bool> CanManageAccountStructureAsync(CancellationToken cancellationToken = default) =>
+        HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin);
 
     public async Task<bool> CanManageOrganizationsAsync(
         CancellationToken cancellationToken = default)

@@ -1,0 +1,151 @@
+@page "/settings/locations"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@using TenantPlatform.Core.Accounts
+@using TenantPlatform.Web.Services.AccountSettings
+@using TenantPlatform.Web.Security.Authorization
+@inject LocationService Service
+@inject ITenantAuthorizationService Authorization
+@inject NavigationManager Navigation
+@inject ILogger<Locations> Logger
+
+<PageTitle>@L["Locations"]</PageTitle>
+<h1>@L["Locations"]</h1>
+@if (error is not null)
+{
+    <div class="alert alert-danger" role="alert">@L[error]</div>
+}
+@if (loading)
+{
+    <p>@L["Loading"]</p>
+}
+else if (allowed)
+{
+    <p class="text-body-secondary">@L["LocationsDescription"]</p>
+    <button class="btn btn-primary mb-3" disabled="@busy" @onclick="NewItem">@L["CreateLocation"]</button>
+    @if (model is not null)
+    {
+        <div class="card mb-4"><div class="card-body">
+            <h2 class="h5">@L[editingId.HasValue ? "EditLocation" : "CreateLocation"]</h2>
+            <form @onsubmit="SaveAsync" @onsubmit:preventDefault>
+                <fieldset disabled="@busy">
+                    <div class="mb-3">
+                        <label for="register-name" class="form-label">@L["Name"]</label>
+                        <input id="register-name" class="form-control" required maxlength="200" @bind="model.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="register-description" class="form-label">@L["Description"]</label>
+                        <textarea id="register-description" class="form-control" maxlength="2000" @bind="model.Description"></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input id="register-active" class="form-check-input" type="checkbox" @bind="model.IsActive" />
+                        <label for="register-active" class="form-check-label">@L["IsActive"]</label>
+                    </div>
+                    <button class="btn btn-primary" type="submit">@L[busy ? "Saving" : "Save"]</button>
+                    <button class="btn btn-outline-secondary" type="button" @onclick="Cancel">@L["Cancel"]</button>
+                </fieldset>
+            </form>
+        </div></div>
+    }
+    @if (deleting is not null)
+    {
+        <div class="alert alert-warning" role="alert">
+            <p>@L["AccountRegisterConfirmDelete", deleting.Name]</p>
+            <button class="btn btn-danger" disabled="@busy" @onclick="DeleteAsync">@L["Delete"]</button>
+            <button class="btn btn-outline-secondary" disabled="@busy" @onclick="Cancel">@L["Cancel"]</button>
+        </div>
+    }
+    @if (items.Count == 0)
+    {
+        <p>@L["NoLocations"]</p>
+    }
+    else
+    {
+        <div class="card table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>@L["Name"]</th><th>@L["Description"]</th><th>@L["Status"]</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var item in items)
+                    {
+                        <tr @key="item.Id">
+                            <td>@item.Name</td><td>@item.Description</td>
+                            <td>@L[item.IsActive ? "Active" : "Inactive"]</td>
+                            <td class="text-end">
+                                <button class="btn btn-outline-secondary btn-sm" disabled="@busy" @onclick="() => Edit(item)">@L["Edit"]</button>
+                                <button class="btn btn-outline-danger btn-sm" disabled="@busy" @onclick="() => ConfirmDelete(item)">@L["Delete"]</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    private List<Location> items = [];
+    private AccountRegisterInput? model;
+    private Guid? editingId;
+    private Location? deleting;
+    private bool loading = true;
+    private bool allowed;
+    private bool busy;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        allowed = await Authorization.CanManageAccountStructureAsync();
+        if (!allowed)
+        {
+            Navigation.NavigateTo("/access-denied");
+            return;
+        }
+        await RunAsync(async () => items = await Service.GetAllAsync());
+        loading = false;
+    }
+
+    private void Cancel() { model = null; editingId = null; deleting = null; error = null; }
+    private void NewItem() { Cancel(); model = new(); }
+    private void Edit(Location item)
+    {
+        Cancel();
+        editingId = item.Id;
+        model = new() { Name = item.Name, Description = item.Description, IsActive = item.IsActive };
+    }
+    private void ConfirmDelete(Location item) { Cancel(); deleting = item; }
+
+    private Task SaveAsync() => RunAsync(async () =>
+    {
+        if (model is null) return;
+        await Service.SaveAsync(editingId, model);
+        Cancel();
+        items = await Service.GetAllAsync();
+    });
+
+    private Task DeleteAsync() => RunAsync(async () =>
+    {
+        if (deleting is null) return;
+        await Service.DeleteAsync(deleting.Id);
+        Cancel();
+        items = await Service.GetAllAsync();
+    });
+
+    private async Task RunAsync(Func<Task> action)
+    {
+        if (busy) return;
+        busy = true;
+        error = null;
+        try { await action(); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch (ArgumentException) { error = "AccountRegisterInvalidInput"; }
+        catch (InvalidOperationException ex) when (ex.Message == "AccountRegisterNotFound")
+        { error = "AccountRegisterNotFound"; }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Account register operation failed");
+            error = "AccountRegisterSaveFailed";
+        }
+        finally { busy = false; }
+    }
+}

@@ -2358,4 +2358,18 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AnalysisOperationFailed" xml:space="preserve"><value>Operasjonen mislyktes. Utkastet er bevart så lenge det ikke er utløpt. Prøv igjen.</value></data>
   <data name="RRM" xml:space="preserve"><value>RRM</value></data>
   <data name="Settings" xml:space="preserve"><value>Innstillinger</value></data>
+  <data name="Departments" xml:space="preserve"><value>Avdelinger</value></data>
+  <data name="Locations" xml:space="preserve"><value>Lokasjoner</value></data>
+  <data name="DepartmentsDescription" xml:space="preserve"><value>Vedlikehold avdelinger for valgt konto.</value></data>
+  <data name="LocationsDescription" xml:space="preserve"><value>Vedlikehold lokasjoner for valgt konto.</value></data>
+  <data name="CreateDepartment" xml:space="preserve"><value>Opprett avdeling</value></data>
+  <data name="EditDepartment" xml:space="preserve"><value>Rediger avdeling</value></data>
+  <data name="CreateLocation" xml:space="preserve"><value>Opprett lokasjon</value></data>
+  <data name="EditLocation" xml:space="preserve"><value>Rediger lokasjon</value></data>
+  <data name="NoDepartments" xml:space="preserve"><value>Ingen avdelinger er registrert.</value></data>
+  <data name="NoLocations" xml:space="preserve"><value>Ingen lokasjoner er registrert.</value></data>
+  <data name="AccountRegisterConfirmDelete" xml:space="preserve"><value>Vil du slette «{0}»?</value></data>
+  <data name="AccountRegisterInvalidInput" xml:space="preserve"><value>Navn må ha 1–200 tegn, og beskrivelse kan ha maksimalt 2000 tegn.</value></data>
+  <data name="AccountRegisterNotFound" xml:space="preserve"><value>Oppføringen finnes ikke i valgt konto. Oppdater siden.</value></data>
+  <data name="AccountRegisterSaveFailed" xml:space="preserve"><value>Handlingen kunne ikke fullføres. Prøv igjen.</value></data>
 </root>

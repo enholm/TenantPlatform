@@ -116,6 +116,8 @@ builder.Services.AddHttpClient<IContractAnalysisClient, OpenAiContractAnalysisCl
 builder.Services.AddScoped<IAgreementAnalysisService>(sp => sp.GetRequiredService<AgreementService>());
 builder.Services.AddScoped<AgreementAnalysisCleanup>();
 builder.Services.AddHostedService<AgreementAnalysisCleanupWorker>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.DepartmentService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.LocationService>();
 builder.Services.AddScoped<AgreementService>();
 builder.Services.AddScoped<IAgreementService>(sp => sp.GetRequiredService<AgreementService>());
 builder.Services.AddScoped<IAgreementFollowupService>(sp => sp.GetRequiredService<AgreementService>());

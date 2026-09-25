@@ -164,6 +164,12 @@ public class AccountService : IAccountService
                 "AccountHasData");
         }
 
+        if (await dbContext.Departments.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.Locations.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken))
+        {
+            return AccountDeleteCheckResult.NotAllowed("AccountHasData");
+        }
+
         if (await dbContext.Organizations
             .AsNoTracking()
             .AnyAsync(

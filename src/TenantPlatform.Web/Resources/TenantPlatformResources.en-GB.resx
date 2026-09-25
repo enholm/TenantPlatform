@@ -2322,4 +2322,18 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AnalysisOperationFailed" xml:space="preserve"><value>The operation failed. The draft is retained until it expires. Try again.</value></data>
   <data name="RRM" xml:space="preserve"><value>RRM</value></data>
   <data name="Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Departments" xml:space="preserve"><value>Departments</value></data>
+  <data name="Locations" xml:space="preserve"><value>Locations</value></data>
+  <data name="DepartmentsDescription" xml:space="preserve"><value>Manage departments for the selected account.</value></data>
+  <data name="LocationsDescription" xml:space="preserve"><value>Manage locations for the selected account.</value></data>
+  <data name="CreateDepartment" xml:space="preserve"><value>Create department</value></data>
+  <data name="EditDepartment" xml:space="preserve"><value>Edit department</value></data>
+  <data name="CreateLocation" xml:space="preserve"><value>Create location</value></data>
+  <data name="EditLocation" xml:space="preserve"><value>Edit location</value></data>
+  <data name="NoDepartments" xml:space="preserve"><value>No departments registered.</value></data>
+  <data name="NoLocations" xml:space="preserve"><value>No locations registered.</value></data>
+  <data name="AccountRegisterConfirmDelete" xml:space="preserve"><value>Delete “{0}”?</value></data>
+  <data name="AccountRegisterInvalidInput" xml:space="preserve"><value>Name must contain 1–200 characters and description cannot exceed 2000 characters.</value></data>
+  <data name="AccountRegisterNotFound" xml:space="preserve"><value>The entry was not found in the selected account. Refresh the page.</value></data>
+  <data name="AccountRegisterSaveFailed" xml:space="preserve"><value>The operation could not be completed. Please try again.</value></data>
 </root>
