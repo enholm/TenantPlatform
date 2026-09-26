@@ -149,6 +149,7 @@
                 <NavLink href="/settings/organization-structure" class="sidebar-link">
                     <i class="bi bi-diagram-3"></i><span>@L["OrganizationElements"]</span>
                 </NavLink>
+                <NavLink href="/settings/dimensions" class="sidebar-link"><i class="bi bi-tags"></i><span>@L["Dimensions"]</span></NavLink>
                 <NavLink href="/settings/geography" class="sidebar-link">
                     <i class="bi bi-geo-alt"></i><span>@L["GeographicAreas"]</span>
                 </NavLink>
@@ -237,7 +238,7 @@
 
         if (CanSeeSettingsGroup &&
             (IsCurrentPath("settings/departments") || IsCurrentPath("settings/locations") ||
-             IsCurrentPath("settings/organization-structure") || IsCurrentPath("settings/geography") ||
+             IsCurrentPath("settings/organization-structure") || IsCurrentPath("settings/geography") || IsCurrentPath("settings/dimensions") ||
              IsCurrentPath("organizations") || (CanSeeAccountUsers && IsCurrentPath("users"))))
             return "Settings";
 

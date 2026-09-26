@@ -76,6 +76,10 @@ public sealed class LeasingItem
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
     public decimal VatPercent { get; set; } = 25;
+    public LeasingAllocationMode AllocationMode { get; set; }
+    public List<LeasingAllocationDimension> AllocationDimensions { get; set; } = [];
+    public List<LeasingAllocationRow> AllocationRows { get; set; } = [];
+    public List<LeasingDimensionSelection> DimensionSelections { get; set; } = [];
 }
 
 public sealed class LeasingDocument

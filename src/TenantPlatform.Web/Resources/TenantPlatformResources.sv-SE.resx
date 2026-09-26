@@ -2517,7 +2517,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingUpload" xml:space="preserve"><value>Ladda upp dokument</value></data>
   <data name="LeasingFileLimit" xml:space="preserve"><value>Max {0} MB. PDF, Word, Excel, PNG eller JPEG.</value></data>
   <data name="LeasingCancelAcquisition" xml:space="preserve"><value>Annullera anskaffningen</value></data>
-  <data name="LeasingCancelHelp" xml:space="preserve"><value>Annullering frigör eventuell använd ram. Anskaffningen och historiken bevaras; annullering kan inte ångras i fas 1.</value></data>
+  <data name="LeasingCancelHelp" xml:space="preserve"><value>Du kan annullera anskaffningen. Detta frigör eventuell använd ram. Anskaffningen och historiken bevaras. Annulleringen kan inte ångras.</value></data>
   <data name="LeasingHistory" xml:space="preserve"><value>Ändringshistorik</value></data>
   <data name="LeasingBefore" xml:space="preserve"><value>Före ändringen</value></data>
   <data name="LeasingAfter" xml:space="preserve"><value>Efter ändringen</value></data>
@@ -2545,4 +2545,57 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingInvalidDetails" xml:space="preserve"><value>Namn, nummer/referens och stödd valuta krävs. Maxlängd: namn 200, nummer 100, anteckningar 10 000.</value></data>
   <data name="LeasingInvalidTerms" xml:space="preserve"><value>Kontrollera villkoren: 1–600 hela månader, ränta 0–100 %, eller referensräntans namn och marginal mellan −100 och 100 procentenheter. Välj betalningsfrekvens separat.</value></data>
   <data name="LeasingVatAmount" xml:space="preserve"><value>Momsbelopp</value></data>
+  <data name="Dimensions" xml:space="preserve"><value>Dimensioner</value></data>
+  <data name="DimensionCode" xml:space="preserve"><value>Kod</value></data>
+  <data name="DimensionActive" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="DimensionInactive" xml:space="preserve"><value>Inaktiv</value></data>
+  <data name="DimensionMultiple" xml:space="preserve"><value>Tillåt flera val (märkning)</value></data>
+  <data name="DimensionLeafOnly" xml:space="preserve"><value>Endast lövvärden kan väljas</value></data>
+  <data name="DimensionSortOrder" xml:space="preserve"><value>Sorteringsordning</value></data>
+  <data name="DimensionSearch" xml:space="preserve"><value>Sök i hierarkisökvägar</value></data>
+  <data name="DimensionNew" xml:space="preserve"><value>Ny dimension</value></data>
+  <data name="DimensionEdit" xml:space="preserve"><value>Redigera dimension</value></data>
+  <data name="DimensionNewValue" xml:space="preserve"><value>Nytt dimensionsvärde</value></data>
+  <data name="DimensionEditValue" xml:space="preserve"><value>Redigera dimensionsvärde</value></data>
+  <data name="DimensionValues" xml:space="preserve"><value>Dimensionsvärden</value></data>
+  <data name="DimensionParent" xml:space="preserve"><value>Överordnat värde</value></data>
+  <data name="DimensionRoot" xml:space="preserve"><value>Ingen – översta nivån</value></data>
+  <data name="DimensionPath" xml:space="preserve"><value>Hierarkisökväg</value></data>
+  <data name="DimensionLeasingRules" xml:space="preserve"><value>Användning i Leasing</value></data>
+  <data name="DimensionEnabledLeasing" xml:space="preserve"><value>Tillgänglig i Leasing</value></data>
+  <data name="DimensionRequired" xml:space="preserve"><value>Obligatorisk vid registrering</value></data>
+  <data name="DimensionAllowAllocation" xml:space="preserve"><value>Tillåten i kostnadsfördelning (endast enkelval)</value></data>
+  <data name="DimensionChoices" xml:space="preserve"><value>dimensionsval</value></data>
+  <data name="DimensionHistoryNotice" xml:space="preserve"><value>Registerändringar ändrar inte sparade klassificeringar. Inaktivera värden som inte längre ska väljas.</value></data>
+  <data name="DimensionMoveNotice" xml:space="preserve"><value>Flytt ändrar sökvägen för framtida val. Inaktivering hindrar även nya val av underliggande värden. Historiska kopplingar behålls.</value></data>
+  <data name="DimensionInvalidInput" xml:space="preserve"><value>Ange giltigt namn och sorteringsordning.</value></data>
+  <data name="DimensionInvalidCode" xml:space="preserve"><value>Koden måste ha 1–50 tecken: A–Z, 0–9, punkt, bindestreck eller understreck.</value></data>
+  <data name="DimensionDuplicateCode" xml:space="preserve"><value>Koden används redan.</value></data>
+  <data name="DimensionCycle" xml:space="preserve"><value>Flytten skulle skapa en cykel i hierarkin.</value></data>
+  <data name="DimensionInvalidParent" xml:space="preserve"><value>Överordnat värde måste tillhöra samma dimension och konto.</value></data>
+  <data name="DimensionCannotMoveDimension" xml:space="preserve"><value>Värden kan inte flyttas till en annan dimension.</value></data>
+  <data name="LeasingClassification" xml:space="preserve"><value>Klassificering och kostnadsfördelning</value></data>
+  <data name="LeasingCommonClassification" xml:space="preserve"><value>Gemensam klassificering för hela raden</value></data>
+  <data name="LeasingAllocationRows" xml:space="preserve"><value>fördelningsrader</value></data>
+  <data name="LeasingAllocationMode" xml:space="preserve"><value>Fördelningssätt</value></data>
+  <data name="LeasingAllocationNone" xml:space="preserve"><value>Ingen delning (100 %)</value></data>
+  <data name="LeasingAllocationPercent" xml:space="preserve"><value>Procent</value></data>
+  <data name="LeasingAllocationNetAmount" xml:space="preserve"><value>Belopp exklusive moms</value></data>
+  <data name="LeasingAllocationQuantity" xml:space="preserve"><value>Antal</value></data>
+  <data name="LeasingVaryingDimensions" xml:space="preserve"><value>Dimensioner som varierar mellan fördelningsraderna</value></data>
+  <data name="LeasingAddAllocation" xml:space="preserve"><value>Lägg till fördelningsrad</value></data>
+  <data name="LeasingAllocationBalance" xml:space="preserve"><value>Fördelat: {0} av {1}. Återstår: {2}.</value></data>
+  <data name="LeasingInvalidAllocation" xml:space="preserve"><value>Fördelningen är ofullständig. Summan måste vara 100 %, radens nettobelopp eller antal för valt fördelningssätt.</value></data>
+  <data name="LeasingMissingDimensions" xml:space="preserve"><value>Obligatoriska dimensionsval saknas</value></data>
+  <data name="LeasingInvalidClassification" xml:space="preserve"><value>Kontrollera dimensionsvalen: endast tillåtna, aktiva värden och nivåer får väljas utan motstridiga val på rad och fördelningsrad.</value></data>
+  <data name="LeasingInvalidDimensionRule" xml:space="preserve"><value>Aktivera dimensionen innan den görs obligatorisk eller tillåts i fördelning. Flerval kan inte användas i fördelning.</value></data>
+  <data name="LeasingCopyCommon" xml:space="preserve"><value>Kopiera gemensamma dimensionsval till övriga rader (behåll deras fördelningsdimensioner)</value></data>
+  <data name="DimensionConcurrency" xml:space="preserve"><value>Registret har ändrats av en annan användare. Ladda om sidan innan du sparar.</value></data>
+  <data name="LeasingAllocationInstructions" xml:space="preserve"><value>Välj vad kostnaden ska fördelas på under ”Dimensioner som varierar mellan fördelningsraderna”. Välj sedan ett värde på varje rad, till exempel Avdelning: IT 50 % och Drift 50 %. Gemensamma val gäller hela varuraden.</value></data>
+  <data name="LeasingAllocationChooseDimension" xml:space="preserve"><value>Välj minst en dimension som ska variera mellan fördelningsraderna, till exempel Avdelning. Procent eller belopp ensamt anger inte vad kostnaden fördelas på.</value></data>
+  <data name="LeasingAllocationNoDimensions" xml:space="preserve"><value>Inga dimensioner är aktiverade för kostnadsfördelning. En kontoadministratör måste öppna Inställningar → Dimensioner och aktivera ”Tillgänglig i Leasing” och ”Tillåten i kostnadsfördelning” för en aktiv dimension med enkelval.</value></data>
+  <data name="LeasingAllocationDimensionUnavailable" xml:space="preserve"><value>En vald fördelningsdimension är inte längre tillåten. Välj en aktiv dimension med enkelval som är tillgänglig i Leasing och tillåten i kostnadsfördelning.</value></data>
+  <data name="LeasingAllocationChooseRowValues" xml:space="preserve"><value>Välj ett värde för varje fördelningsdimension på alla fördelningsrader. Se markeringarna på varje varurad.</value></data>
+  <data name="LeasingAllocationRowNumber" xml:space="preserve"><value>Fördelningsrad {0}</value></data>
+  <data name="LeasingAllocationRowMissing" xml:space="preserve"><value>Välj värde för: {0}.</value></data>
 </root>

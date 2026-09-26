@@ -1,0 +1,115 @@
+@page "/settings/dimensions"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@rendermode InteractiveServer
+@using TenantPlatform.Core.Dimensions
+@using TenantPlatform.Core.Leasing
+@using TenantPlatform.Web.Services.Dimensions
+@using TenantPlatform.Web.Services.Leasing
+@using TenantPlatform.Web.Security.CurrentUserContext
+@inject DimensionService Service
+@inject LeasingService Leasing
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+<PageTitle>@L["Dimensions"]</PageTitle>
+<h1>@L["Dimensions"]</h1>
+<p class="text-muted">@L["DimensionHistoryNotice"]</p>
+@if (error != null) { <div role="alert" class="alert alert-danger">@L[error]</div> }
+@if (register == null) { <p role="status">@L["Loading"]</p> }
+else
+{
+    <fieldset disabled="@busy">
+    <div class="row g-3">
+        <div class="col-lg-4"><section class="card"><div class="card-body">
+            <h2 class="h5">@L["Dimensions"]</h2>
+            @foreach (var dimension in register.Dimensions)
+            { <button type="button" class="btn btn-link d-block text-start" @onclick="() => EditDimension(dimension)">@dimension.Name (@dimension.Code) @(!dimension.IsActive ? L["DimensionInactive"] : "")</button> }
+            <button class="btn btn-outline-primary mt-2" @onclick="NewDimension">@L["DimensionNew"]</button>
+        </div></section></div>
+        <div class="col-lg-8"><section class="card"><div class="card-body">
+            <h2 class="h5">@L[dimensionId.HasValue ? "DimensionEdit" : "DimensionNew"]</h2>
+            <EditForm @key="dimensionInput" Model="dimensionInput" OnValidSubmit="SaveDimension" FormName="dimension">
+                <label class="d-block mb-2">@L["Name"]<InputText class="form-control" @bind-Value="dimensionInput.Name" maxlength="200" /></label>
+                <label class="d-block mb-2">@L["DimensionCode"]<InputText class="form-control" @bind-Value="dimensionInput.Code" maxlength="50" /></label>
+                <label class="d-block mb-2">@L["Description"]<InputTextArea class="form-control" @bind-Value="dimensionInput.Description" maxlength="2000" /></label>
+                <label class="d-block mb-2">@L["DimensionSortOrder"]<InputNumber class="form-control" @bind-Value="dimensionInput.SortOrder" min="0" /></label>
+                <label class="d-block"><InputCheckbox @bind-Value="dimensionInput.IsActive" /> @L["DimensionActive"]</label>
+                <label class="d-block"><InputCheckbox @bind-Value="dimensionInput.AllowMultiple" /> @L["DimensionMultiple"]</label>
+                <label class="d-block mb-3"><InputCheckbox @bind-Value="dimensionInput.LeafOnly" /> @L["DimensionLeafOnly"]</label>
+                <button class="btn btn-primary" type="submit">@L["Save"]</button>
+            </EditForm>
+        </div></section></div>
+    </div>
+    @if (dimensionId.HasValue)
+    {
+        <section class="card mt-3"><div class="card-body">
+            <h2 class="h5">@L["DimensionLeasingRules"]</h2>
+            <EditForm @key="rule" Model="rule" OnValidSubmit="SaveRule" FormName="dimension-rule">
+                <label class="d-block"><InputCheckbox @bind-Value="rule.IsEnabled" /> @L["DimensionEnabledLeasing"]</label>
+                <label class="d-block"><InputCheckbox @bind-Value="rule.IsRequired" /> @L["DimensionRequired"]</label>
+                <label class="d-block mb-2"><InputCheckbox @bind-Value="rule.AllowAllocation" /> @L["DimensionAllowAllocation"]</label>
+                <button type="submit" class="btn btn-primary">@L["Save"]</button>
+            </EditForm>
+        </div></section>
+        <div class="row g-3 mt-1"><div class="col-lg-7"><section class="card"><div class="card-body">
+            <h2 class="h5">@L["DimensionValues"] · @dimensionInput.Name</h2>
+            <button type="button" class="btn btn-outline-primary mb-3" @onclick="NewValue">@L["DimensionNewValue"]</button>
+            <label class="d-block">@L["DimensionSearch"]<input type="search" class="form-control mb-2" @bind="search" @bind:event="oninput" /></label>
+            <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>@L["Name"]</th><th>@L["DimensionCode"]</th><th>@L["Status"]</th><th></th></tr></thead><tbody>
+                @foreach (var value in Paths.Where(x => x.Path.Contains(search, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    <tr @key="value.Id">
+                        <td><span title="@value.Path" style="padding-inline-start: @(value.Depth * 20)px">@if (value.Depth > 0) { <span aria-hidden="true">↳ </span> }@value.Name</span></td>
+                        <td>@value.Code</td><td>@L[value.IsActive ? "DimensionActive" : "DimensionInactive"]</td>
+                        <td class="text-end"><div class="d-flex flex-wrap justify-content-end gap-1">
+                            <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => NewChild(value.Id)">@L["AccountHierarchyAddChild"]</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => EditValue(value.Id)">@L["Edit"]</button>
+                        </div></td>
+                    </tr>
+                }
+            </tbody></table></div>
+
+        </div></section></div><div class="col-lg-5">
+        @if (valueInput is not null)
+        {
+        <section class="card"><div class="card-body">
+            <h2 class="h5">@L[valueId.HasValue ? "DimensionEditValue" : "DimensionNewValue"]</h2>
+            <EditForm @key="valueInput" Model="valueInput" OnValidSubmit="SaveValue" FormName="dimension-value">
+                <label class="d-block mb-2">@L["Name"]<InputText class="form-control" @bind-Value="valueInput.Name" maxlength="200" /></label>
+                <label class="d-block mb-2">@L["DimensionCode"]<InputText class="form-control" @bind-Value="valueInput.Code" maxlength="50" /></label>
+                <label class="d-block mb-2">@L["DimensionParent"]<InputSelect class="form-select" @bind-Value="valueInput.ParentId"><option value="">@L["DimensionRoot"]</option>@foreach (var parent in ParentOptions) { <option value="@parent.Id">@parent.Path</option> }</InputSelect></label>
+                <label class="d-block mb-2">@L["DimensionSortOrder"]<InputNumber class="form-control" @bind-Value="valueInput.SortOrder" min="0" /></label>
+                <label class="d-block mb-3"><InputCheckbox @bind-Value="valueInput.IsActive" /> @L["DimensionActive"]</label>
+                <p class="small text-muted">@L["DimensionMoveNotice"]</p>
+                <button type="submit" class="btn btn-primary">@L["Save"]</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="CancelValue">@L["Cancel"]</button>
+            </EditForm>
+        </div></section>
+        }
+        </div></div>
+        <section class="card mt-3"><div class="card-body"><h2 class="h5">@L["LeasingHistory"]</h2>
+            @foreach (var entry in register.History.Where(x => x.DimensionId == dimensionId))
+            { <details class="border-bottom py-2"><summary>@entry.RecordedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'") · @register.Actors.GetValueOrDefault(entry.ActorUserId, entry.ActorUserId.ToString())</summary><div class="row"><div class="col-md-6"><strong>@L["LeasingBefore"]</strong><DimensionHistoryView Json="@entry.BeforeJson" /></div><div class="col-md-6"><strong>@L["LeasingAfter"]</strong><DimensionHistoryView Json="@entry.AfterJson" /></div></div></details> }
+        </div></section>
+    }
+    </fieldset>
+}
+@code {
+    private DimensionRegister? register; private LeasingClassificationCatalog? catalog; private Guid? dimensionId, valueId; private Guid account;
+    private Dimension dimensionInput = new(); private DimensionValue? valueInput; private LeasingDimensionRule rule = new();
+    private bool busy; private string? error; private string search = "";
+    private List<DimensionValueOption> Paths => dimensionId.HasValue && register != null ? DimensionHierarchy.Build(register.Dimensions.Single(x => x.Id == dimensionId), register.Values) : [];
+    private IEnumerable<DimensionValueOption> ParentOptions => DimensionHierarchy.AllowedParents(Paths, valueId);
+    private static T Copy<T>(T input) => System.Text.Json.JsonSerializer.Deserialize<T>(System.Text.Json.JsonSerializer.Serialize(input))!;
+    protected override async Task OnInitializedAsync() { if (User.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; } account = id; await Run(Reload); }
+    private async Task Reload() { register = await Service.GetAsync(); catalog = await Leasing.ClassificationCatalogAsync(account); }
+    private void NewDimension() { dimensionId = null; dimensionInput = new(); CancelValue(); }
+    private void EditDimension(Dimension value) { dimensionId = value.Id; dimensionInput = Copy(value); rule = Copy(catalog!.Dimensions.Single(x => x.Dimension.Id == value.Id).Rule); search = ""; CancelValue(); }
+    private void CancelValue() { valueId = null; valueInput = null; error = null; }
+    private void NewChild(Guid parentId) { NewValue(); valueInput!.ParentId = parentId; }
+    private void NewValue() { error = null; valueId = null; valueInput = new() { DimensionId = dimensionId ?? Guid.Empty }; }
+    private void EditValue(Guid id) { error = null; valueId = id; valueInput = Copy(register!.Values.Single(x => x.Id == id)); }
+    private Task SaveDimension() => Run(async () => { var id = await Service.SaveDimensionAsync(dimensionId, dimensionInput); await Reload(); EditDimension(register!.Dimensions.Single(x => x.Id == id)); });
+    private Task SaveValue() => Run(async () => { if (valueInput is null) return; await Service.SaveValueAsync(dimensionId!.Value, valueId, valueInput); await Reload(); CancelValue(); });
+    private Task SaveRule() => Run(async () => { await Leasing.SaveDimensionRuleAsync(account, rule); await Reload(); rule = Copy(catalog!.Dimensions.Single(x => x.Dimension.Id == dimensionId).Rule); });
+    private async Task Run(Func<Task> action) { if (busy) return; busy = true; error = null; try { await action(); } catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); } catch (DimensionValidationException ex) { error = ex.Message; } catch (LeasingValidationException ex) { error = ex.Message; } catch (Exception) { error = "LeasingFailed"; } finally { busy = false; } }
+}

@@ -1,5 +1,7 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Logging.Abstractions;
 using Npgsql;
 using TenantPlatform.Core.Accounts;
@@ -7,6 +9,7 @@ using TenantPlatform.Core.Identity;
 using TenantPlatform.Core.Leasing;
 using TenantPlatform.Core.Organizations;
 using TenantPlatform.Infrastructure.Agreements;
+using TenantPlatform.Infrastructure.Auditing;
 using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
@@ -26,7 +29,7 @@ await using (var command = new NpgsqlCommand($"CREATE SCHEMA \"{schema}\"", setu
 try
 {
     cs.SearchPath = schema;
-    var factory = new Factory(new DbContextOptionsBuilder<TenantPlatformDbContext>().UseNpgsql(cs.ConnectionString).Options);
+    var factory = new Factory(new DbContextOptionsBuilder<TenantPlatformDbContext>().UseNpgsql(cs.ConnectionString).AddInterceptors(new AuditSaveChangesInterceptor(new TestAuditUserContext())).Options);
     await using (var db = factory.CreateDbContext())
     {
         Check(!db.Database.HasPendingModelChanges(), "EF model matches migration snapshot");
@@ -157,6 +160,149 @@ try
     await Deny(() => outsider.DownloadAsync(account, document.Id)); await Deny(() => admin.DownloadAsync(foreignAccount, document.Id));
     Check(storage.Stored == 1, "documents use shared storage with parent/tenant authorization");
     await LeasingComponentChecks.Run(admin, account, adminId, framework, standalone);
+    await using (var upgradeDb = factory.CreateDbContext())
+    {
+        // This schema belongs exclusively to this test. Recreate the populated phase-one schema,
+        // then run the additive phase-two migration over real registered acquisitions and items.
+        await upgradeDb.GetService<IMigrator>().MigrateAsync("20260925202419_AddLeasingPhaseOne");
+        await upgradeDb.Database.MigrateAsync();
+    }
+    Check((await Read(standalone)).Items.Single().AllocationMode == LeasingAllocationMode.None && (await Read(standalone)).NetTotal == 25,
+        "populated phase-one schema upgrades without fictional classifications or changed totals");
+    var dimensionContext = new Context(adminId, account);
+    var dimensions = new TenantPlatform.Web.Services.Dimensions.DimensionService(factory, dimensionContext, new TenantAuthorizationService(factory, dimensionContext), new Clock());
+    async Task DimensionReject(Func<Task> action, string key) { try { await action(); throw new Exception("Expected " + key); } catch (TenantPlatform.Web.Services.Dimensions.DimensionValidationException ex) when (ex.Message == key) { Check(true, key); } }
+    var department = await dimensions.SaveDimensionAsync(null, new() { Name = "Department", Code = "DEP" });
+    var location = await dimensions.SaveDimensionAsync(null, new() { Name = "Location", Code = "LOC" });
+    var tags = await dimensions.SaveDimensionAsync(null, new() { Name = "Tags", Code = "TAG", AllowMultiple = true });
+    var root = await dimensions.SaveValueAsync(department, null, new() { DimensionId = department, Name = "Company", Code = "ROOT" });
+    var it = await dimensions.SaveValueAsync(department, null, new() { DimensionId = department, ParentId = root, Name = "IT", Code = "IT" });
+    var ops = await dimensions.SaveValueAsync(department, null, new() { DimensionId = department, ParentId = root, Name = "Operations", Code = "OPS" });
+    var oslo = await dimensions.SaveValueAsync(location, null, new() { DimensionId = location, Name = "Oslo", Code = "OSL" });
+    var bergen = await dimensions.SaveValueAsync(location, null, new() { DimensionId = location, Name = "Bergen", Code = "BGO" });
+    var tagA = await dimensions.SaveValueAsync(tags, null, new() { DimensionId = tags, Name = "A", Code = "A" });
+    var tagB = await dimensions.SaveValueAsync(tags, null, new() { DimensionId = tags, Name = "B", Code = "B" });
+    var register = await dimensions.GetAsync();
+    var rootEdit = register.Values.Single(x => x.Id == root); rootEdit.ParentId = it;
+    await DimensionReject(() => dimensions.SaveValueAsync(department, root, rootEdit), "DimensionCycle");
+    rootEdit.ParentId = root; await DimensionReject(() => dimensions.SaveValueAsync(department, root, rootEdit), "DimensionCycle");
+    rootEdit.ParentId = oslo; await DimensionReject(() => dimensions.SaveValueAsync(department, root, rootEdit), "DimensionInvalidParent");
+    await DimensionReject(() => dimensions.SaveValueAsync(location, it, register.Values.Single(x => x.Id == it)), "DimensionCannotMoveDimension");
+    await DimensionReject(() => dimensions.SaveDimensionAsync(null, new() { Name = "Duplicate", Code = "dep" }), "DimensionDuplicateCode");
+    foreach (var d in new[] { department, location, tags }) await admin.SaveDimensionRuleAsync(account, new() { DimensionId = d, IsEnabled = true, IsRequired = d == department, AllowAllocation = d != tags });
+    await Reject(() => admin.SaveDimensionRuleAsync(account, new() { DimensionId = tags, IsEnabled = true, AllowAllocation = true }), "LeasingInvalidDimensionRule");
+    var legacy = await Read(standalone); legacy.Notes = "Legacy unrelated edit";
+    await owner.SaveAcquisitionAsync(account, standalone, legacy, "Notes only");
+    Check(LeasingService.MissingDimensions((await Read(standalone)).Items[0], await admin.ClassificationCatalogAsync(account)).Count == 1, "legacy registration remains editable with missing-dimension warning");
+    var required = await Purchase(null, 12.03m);
+    await Reject(() => admin.SaveAcquisitionAsync(account, null, required, ""), "LeasingMissingDimensions");
+    required.Status = LeasingAcquisitionStatus.Draft;
+    var incompleteId = await admin.SaveAcquisitionAsync(account, null, required, "");
+    required = await Read(incompleteId); required.Status = LeasingAcquisitionStatus.Registered;
+    await Reject(() => owner.SaveAcquisitionAsync(account, incompleteId, required, "Register"), "LeasingMissingDimensions");
+    LeasingClassificationInput Common(Guid value) => new() { Common = [new(department, value)] };
+    await Reject(() => owner.SaveAcquisitionAsync(account, incompleteId, required, "Bad parent", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = Common(root) }), "LeasingInvalidClassification");
+    var multi = Common(it); multi.Common.Add(new(department, ops));
+    await Reject(() => owner.SaveAcquisitionAsync(account, incompleteId, required, "Bad single choice", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = multi }), "LeasingInvalidClassification");
+    var allocation = new LeasingClassificationInput { Mode = LeasingAllocationMode.Percent, VaryingDimensions = [department, location], Common = [new(tags, tagA), new(tags, tagB)], Rows = [new() { InputValue = 60, Choices = [new(department, it), new(location, oslo)] }, new() { InputValue = 40, Choices = [new(department, ops), new(location, bergen)] }] };
+    await owner.SaveAcquisitionAsync(account, incompleteId, required, "Register split", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = allocation });
+    var split = await Read(incompleteId); var originalItemId = split.Items[0].Id;
+    var amounts = LeasingAllocationCalculator.Calculate(split.Items[0]);
+    Check(amounts.Complete && amounts.Rows.Sum(x => x.Net) == split.NetTotal && amounts.Rows.Sum(x => x.Vat) == split.VatTotal && split.Items[0].DimensionSelections.Count == 6, "combined dimensions and multi-tags have exactly two monetary rows, exact net/VAT rounding");
+    split.Items[0].UnitPrice = 13.07m; await owner.SaveAcquisitionAsync(account, incompleteId, split, "Price adjustment");
+    split = await Read(incompleteId); Check(split.Items[0].Id == originalItemId && split.Items[0].AllocationRows.Sum(x => x.InputValue) == 100 && split.NetTotal == 13.07m, "percentage inputs and original line identity survive price changes");
+    var money = LeasingClassificationInput.From(split.Items[0]); money.Mode = LeasingAllocationMode.NetAmount; money.Rows[0].InputValue = 8; money.Rows[1].InputValue = 5.07m;
+    await owner.SaveAcquisitionAsync(account, incompleteId, split, "Amount split", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = money });
+    split = await Read(incompleteId); split.Items[0].UnitPrice = 14;
+    await Reject(() => owner.SaveAcquisitionAsync(account, incompleteId, split, "Unbalanced"), "LeasingInvalidAllocation");
+    Check((await Read(incompleteId)).NetTotal == 13.07m, "invalid allocation rolls back monetary updates");
+    split = await Read(incompleteId); split.Items[0].Quantity = 1.5m;
+    var quantity = LeasingClassificationInput.From(split.Items[0]); quantity.Mode = LeasingAllocationMode.Quantity; quantity.Rows[0].InputValue = .5m; quantity.Rows[1].InputValue = 1;
+    await owner.SaveAcquisitionAsync(account, incompleteId, split, "Fractional quantities", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = quantity });
+    split = await Read(incompleteId); amounts = LeasingAllocationCalculator.Calculate(split.Items[0]);
+    Check(amounts.Rows.Sum(x => x.Quantity) == 1.5m && amounts.Rows.Sum(x => x.Net) == split.NetTotal && amounts.Rows.Sum(x => x.Vat) == split.VatTotal, "quantity allocations reconcile fractional units and rounded VAT");
+    split.Items[0].Quantity = 2; await Reject(() => owner.SaveAcquisitionAsync(account, incompleteId, split, "Quantity mismatch"), "LeasingInvalidAllocation");
+    var itEdit = (await dimensions.GetAsync()).Values.Single(x => x.Id == it); itEdit.Name = "Technology"; itEdit.Code = "TECH"; itEdit.ParentId = null;
+    await dimensions.SaveValueAsync(department, it, itEdit);
+    split = await Read(incompleteId);
+    Check(split.Items[0].DimensionSelections.Single(x => x.ValueId == it).ValuePath == "Company / IT", "rename, recode and move do not rewrite classification snapshots");
+    rootEdit = (await dimensions.GetAsync()).Values.Single(x => x.Id == root); rootEdit.IsActive = false;
+    await dimensions.SaveValueAsync(department, root, rootEdit);
+    Check(!(await admin.ClassificationCatalogAsync(account)).Dimensions.Single(x => x.Dimension.Id == department).Values.Single(x => x.Id == ops).Selectable, "inactive ancestor prevents new descendant selections");
+    split.Notes = "Retain historic choices"; await owner.SaveAcquisitionAsync(account, incompleteId, split, "Unrelated edit");
+    split = await Read(incompleteId);
+    await Reject(() => owner.SaveAcquisitionAsync(account, incompleteId, split, "Explicit inactive classification", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = LeasingClassificationInput.From(split.Items[0]) }), "LeasingInvalidClassification");
+    var history = (await owner.GetAsync(account, incompleteId, false)).History;
+    Check(history.Any(x => x.AfterJson.Contains("Company / IT") && x.Actor.Length > 0) && history.Any(x => x.BeforeJson.Contains("AllocationRows")), "classification history preserves before/after snapshots and actor");
+    await Deny(() => outsider.ClassificationCatalogAsync(account));
+    await Deny(() => owner.SaveDimensionRuleAsync(account, new() { DimensionId = department }));
+    var ownerContext = new Context(ownerId, account);
+    var ownerDimensions = new TenantPlatform.Web.Services.Dimensions.DimensionService(factory, ownerContext, new TenantAuthorizationService(factory, ownerContext), new Clock());
+    await Deny(() => ownerDimensions.GetAsync());
+    var foreignDimension = Guid.NewGuid(); var foreignValue = Guid.NewGuid();
+    await using (var db = factory.CreateDbContext()) { db.Dimensions.Add(new() { Id = foreignDimension, AccountId = foreignAccount, Name = "Foreign", Code = "FOREIGN" }); db.DimensionValues.Add(new() { Id = foreignValue, AccountId = foreignAccount, DimensionId = foreignDimension, Name = "Foreign", Code = "FOREIGN" }); await db.SaveChangesAsync(); }
+    await Deny(() => dimensions.SaveDimensionAsync(foreignDimension, new() { Name = "Forbidden", Code = "X" }));
+    await DimensionReject(() => dimensions.SaveValueAsync(department, null, new() { DimensionId = department, ParentId = foreignValue, Name = "Bad parent", Code = "BAD" }), "DimensionInvalidParent");
+    var foreignChoice = Common(it); foreignChoice.Common.Add(new(foreignDimension, foreignValue));
+    legacy = await Read(standalone);
+    await Reject(() => owner.SaveAcquisitionAsync(account, standalone, legacy, "Cross tenant", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = foreignChoice }), "LeasingInvalidClassification");
+
+    var valid = Common(it);
+    legacy = await Read(standalone);
+    await owner.SaveAcquisitionAsync(account, standalone, legacy, "Explicit new snapshot", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = valid });
+    Check((await Read(standalone)).Items[0].DimensionSelections.Single().ValuePath == "Technology", "explicit reclassification captures updated name and path");
+    split = await Read(incompleteId);
+    var forged = LeasingClassificationInput.From(split.Items[0]); forged.Rows[0].Id = Guid.NewGuid();
+    await Reject(() => owner.SaveAcquisitionAsync(account, incompleteId, split, "Forged row", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = forged }), "LeasingInvalidClassification");
+    var conflict = Common(it); conflict.Mode = LeasingAllocationMode.Percent; conflict.VaryingDimensions = [department]; conflict.Rows = [new() { InputValue = 100, Choices = [new(department, it)] }];
+    legacy = await Read(standalone);
+    await Reject(() => owner.SaveAcquisitionAsync(account, standalone, legacy, "Conflicting choices", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = conflict }), "LeasingInvalidClassification");
+    var noSplit = Common(it);
+    split = await Read(incompleteId);
+    await owner.SaveAcquisitionAsync(account, incompleteId, split, "Remove allocation", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = noSplit });
+    Check((await Read(incompleteId)).Items[0].AllocationRows.Count == 0, "allocation removal deletes dependent selections atomically");
+    var support = await dimensions.SaveValueAsync(department, null, new() { DimensionId = department, Name = "Support", Code = "SUPPORT" });
+    var twoItems = await Purchase(null, 100); twoItems.Items[0].Quantity = 2;
+    var twoItemsId = await admin.SaveAcquisitionAsync(account, null, twoItems, "", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = Common(it) });
+    twoItems = await Read(twoItemsId);
+    var originalTwoItemId = twoItems.Items.Single().Id;
+    var byQuantity = new LeasingClassificationInput { Mode = LeasingAllocationMode.Quantity, VaryingDimensions = [department],
+        Rows = [new() { InputValue = 1, Choices = [new(department, it)] }, new() { InputValue = 1, Choices = [new(department, support)] }] };
+    await owner.SaveAcquisitionAsync(account, twoItemsId, twoItems, "Two items allocated to two departments", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = byQuantity });
+    var twoItemsSaved = await Read(twoItemsId);
+    var quantityAmounts = LeasingAllocationCalculator.Calculate(twoItemsSaved.Items.Single());
+    Check(quantityAmounts.Complete && quantityAmounts.Rows.Count == 2 && quantityAmounts.Rows.All(x => x.Quantity == 1 && x.Net == 100 && x.Vat == 25), "2 units split 1 + 1 between different departments persist with production audit interceptor");
+    await using (var auditDb = factory.CreateDbContext())
+    {
+        var fullKey = $"{account},{originalTwoItemId},{department}";
+        Check(fullKey.Length == 110 && await auditDb.AuditLogs.AnyAsync(x => x.AccountId == account && x.EntityType == nameof(LeasingAllocationDimension) && x.EntityId == fullKey && x.Action == "Added"),
+            "allocation audit retains complete 110-character composite key without truncation");
+    }
+    byQuantity = LeasingClassificationInput.From(twoItemsSaved.Items.Single());
+    byQuantity.Rows.Reverse();
+    await owner.SaveAcquisitionAsync(account, twoItemsId, twoItemsSaved, "Reorder allocation", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = byQuantity });
+    Check((await Read(twoItemsId)).Items.Single().Id == originalTwoItemId, "quantity allocation updates preserve item identity with auditing enabled");
+    var half = new LeasingClassificationInput { Mode = LeasingAllocationMode.Percent, Rows = [new() { InputValue = 50 }, new() { InputValue = 50 }] };
+    var halfPurchase = await Purchase(null, 100);
+    await Reject(() => admin.SaveAcquisitionAsync(account, null, halfPurchase, "", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = half }), "LeasingAllocationChooseDimension");
+    half.VaryingDimensions = [department];
+    half.Rows[0].Choices = [new(department, it)];
+    await Reject(() => admin.SaveAcquisitionAsync(account, null, halfPurchase, "", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = half }), "LeasingAllocationChooseRowValues");
+    half.Rows[1].Choices = [new(department, support)];
+    var halfId = await admin.SaveAcquisitionAsync(account, null, halfPurchase, "", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = half });
+    var halfAmounts = LeasingAllocationCalculator.Calculate((await Read(halfId)).Items.Single());
+    Check(halfAmounts.Complete && halfAmounts.Rows.Count == 2 && halfAmounts.Rows.All(x => x.Net == 50 && x.Vat == 12.5m), "50/50 allocation saves when each row has dimension values");
+    var newSplit = new LeasingClassificationInput { Mode = LeasingAllocationMode.Percent, VaryingDimensions = [department, location],
+        Rows = [new() { InputValue = 33.3333m, Choices = [new(department, it), new(location, oslo)] }, new() { InputValue = 66.6667m, Choices = [new(department, it), new(location, bergen)] }] };
+    var newSplitId = await admin.SaveAcquisitionAsync(account, null, await Purchase(null, .03m), "", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = newSplit });
+    var newSplitSaved = await Read(newSplitId); var rounded = LeasingAllocationCalculator.Calculate(newSplitSaved.Items.Single());
+    Check(rounded.Rows.Sum(x => x.Net) == .03m && rounded.Rows.Sum(x => x.Vat) == .01m, "new acquisition, line and allocation graph commit atomically with cent-level rounding");
+    var allocatedFramePurchase = await Read(grossLease); var usedBefore = await Used(target); var financedBefore = allocatedFramePurchase.FinancedAmount; var endBefore = allocatedFramePurchase.EndDate;
+    await owner.SaveAcquisitionAsync(account, grossLease, allocatedFramePurchase, "Allocate without affecting financing", classifications: new Dictionary<int, LeasingClassificationInput> { [0] = newSplit });
+    allocatedFramePurchase = await Read(grossLease);
+    Check(await Used(target) == usedBefore && allocatedFramePurchase.FinancedAmount == financedBefore && allocatedFramePurchase.EndDate == endBefore && allocatedFramePurchase.Items.Count == 1,
+        "cost allocation preserves framework utilization, financed amount, lease dates and original line count");
+    await LeasingComponentChecks.Run(admin, account, adminId, framework, standalone, dimensions);
     Console.WriteLine("All leasing PostgreSQL smoke checks passed.");
 }
 finally
@@ -175,4 +321,11 @@ sealed class MemoryStorage : IAgreementDocumentStorage
     public Task<StoredAgreementFile> StoreAsync(Stream source, string fileName, CancellationToken ct = default) { Stored++; return Task.FromResult(new StoredAgreementFile(Guid.NewGuid().ToString("N"), fileName, "application/pdf", 3)); }
     public Task<Stream> OpenReadAsync(string key, CancellationToken ct = default) => Task.FromResult<Stream>(new MemoryStream([1, 2, 3]));
     public Task DiscardUncommittedAsync(string key) { Stored--; return Task.CompletedTask; }
+}
+
+sealed class TestAuditUserContext : IAuditUserContext
+{
+    public Guid? UserId => null;
+    public Guid? AccountId => null;
+    public string? Email => null;
 }

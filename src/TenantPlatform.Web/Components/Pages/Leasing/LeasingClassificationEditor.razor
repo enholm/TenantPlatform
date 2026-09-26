@@ -1,0 +1,64 @@
+<details class="mt-3 border-top pt-2">
+    <summary>@L["LeasingClassification"] · @Input.Common.Count @L["DimensionChoices"] · @Input.Rows.Count @L["LeasingAllocationRows"]</summary>
+    <div class="mt-3">
+        @if (Item.DimensionSelections.Count > 0) { <LeasingClassificationView Item="Item" Catalog="Catalog" /> }
+        @if (Catalog.CanManage) { <a href="/settings/dimensions">@L["Dimensions"]</a> }
+        @if (Missing.Count > 0) { <p class="alert alert-warning">@L["LeasingMissingDimensions"]: @string.Join(", ", Missing)</p> }
+        <h3 class="h6">@L["LeasingCommonClassification"]</h3>
+        <div class="row">
+        @foreach (var dimension in Catalog.Dimensions.Where(x => (x.Rule.IsEnabled && x.Dimension.IsActive || Input.Common.Any(c => c.DimensionId == x.Dimension.Id)) && !Input.VaryingDimensions.Contains(x.Dimension.Id)))
+        { <div class="col-md-6"><DimensionChoices Option="dimension" Selected="Input.Common" Changed="Changed" /></div> }
+        </div>
+        <label class="form-label">@L["LeasingAllocationMode"]
+            <select class="form-select" value="@Input.Mode" @onchange="ModeChanged">@foreach (var mode in Enum.GetValues<LeasingAllocationMode>()) { <option value="@mode">@L[$"LeasingAllocation{mode}"]</option> }</select>
+        </label>
+        @if (Input.Mode != LeasingAllocationMode.None)
+        {
+            <p class="small text-muted">@L["LeasingAllocationInstructions"]</p>
+            @if (!Catalog.Dimensions.Any(CanAllocate))
+            { <p class="alert alert-warning" role="status">@L["LeasingAllocationNoDimensions"]</p> }
+            else if (Input.VaryingDimensions.Count == 0)
+            { <p class="alert alert-warning" role="status">@L["LeasingAllocationChooseDimension"]</p> }
+            <fieldset class="mb-3"><legend class="fs-6">@L["LeasingVaryingDimensions"]</legend>
+            @foreach (var dimension in Catalog.Dimensions.Where(x => CanAllocate(x) || Input.VaryingDimensions.Contains(x.Dimension.Id)))
+            { <label class="d-block"><input type="checkbox" checked="@Input.VaryingDimensions.Contains(dimension.Dimension.Id)" @onchange="e => Vary(dimension.Dimension.Id, e.Value is true)" /> @dimension.Dimension.Name</label> }
+            </fieldset>
+            @foreach (var row in Input.Rows)
+            {
+                <div class="border rounded p-3 mb-2" @key="row">
+                    <h4 class="h6">@L["LeasingAllocationRowNumber", Input.Rows.IndexOf(row) + 1]</h4>
+                    @if (MissingRow(row) is { Count: > 0 } missing)
+                    { <p class="text-danger" role="status">@L["LeasingAllocationRowMissing", string.Join(", ", missing)]</p> }
+                    <div class="row">
+                    @foreach (var dimension in Catalog.Dimensions.Where(x => Input.VaryingDimensions.Contains(x.Dimension.Id)))
+                    { <div class="col-md-6"><DimensionChoices Option="dimension" Selected="row.Choices" Changed="Changed" /></div> }
+                    </div>
+                    <label>@L[$"LeasingAllocation{Input.Mode}"]<InputNumber class="form-control" @bind-Value="row.InputValue" @bind-Value:after="Notify" min="0" step="@(Input.Mode == LeasingAllocationMode.NetAmount ? "0.01" : "0.0001")" /></label>
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" @onclick="() => Remove(row)">@L["LeasingRemoveLine"]</button>
+                </div>
+            }
+            <button type="button" class="btn btn-outline-primary btn-sm" @onclick="Add">@L["LeasingAddAllocation"]</button>
+            @if (Result is { } result)
+            {
+                <p class="mt-2" role="status">@L["LeasingAllocationBalance", result.Assigned.ToString("N4"), result.Target.ToString("N4"), result.Remaining.ToString("N4")]</p>
+                @if (!result.Complete) { <p class="text-danger">@L["LeasingInvalidAllocation"]</p> }
+                else { <div class="table-responsive"><table class="table table-sm"><thead><tr><th>@L["LeasingLineNumber", ""]</th><th>%</th><th>@L["LeasingQuantity"]</th><th>@L["LeasingNet"]</th><th>@L["LeasingVatAmount"]</th></tr></thead><tbody>@foreach (var (value, index) in result.Rows.Select((x,i)=>(x,i))) { <tr><td>@(index+1)</td><td>@value.Percent?.ToString("N4")</td><td>@value.Quantity?.ToString("N4")</td><td>@value.Net.ToString("N2")</td><td>@value.Vat.ToString("N2")</td></tr> }</tbody></table></div> }
+            }
+        }
+    </div>
+</details>
+@code {
+    [Parameter, EditorRequired] public LeasingItem Item { get; set; } = null!;
+    [Parameter, EditorRequired] public LeasingClassificationInput Input { get; set; } = null!;
+    [Parameter, EditorRequired] public LeasingClassificationCatalog Catalog { get; set; } = null!;
+    [Parameter] public EventCallback Changed { get; set; }
+    private static bool CanAllocate(LeasingDimensionOption option) => option.Rule.IsEnabled && option.Rule.AllowAllocation && !option.Dimension.AllowMultiple && option.Dimension.IsActive;
+    private List<string> MissingRow(LeasingAllocationInput row) => Catalog.Dimensions.Where(d => Input.VaryingDimensions.Contains(d.Dimension.Id) && !row.Choices.Any(c => c.DimensionId == d.Dimension.Id)).Select(d => d.Dimension.Name).ToList();
+    private List<string> Missing => Catalog.Dimensions.Where(d => d.Rule.IsEnabled && d.Rule.IsRequired && (Input.VaryingDimensions.Contains(d.Dimension.Id) ? Input.Rows.Count == 0 || Input.Rows.Any(r => !r.Choices.Any(c => c.DimensionId == d.Dimension.Id)) : !Input.Common.Any(c => c.DimensionId == d.Dimension.Id))).Select(d => d.Dimension.Name).ToList();
+    private LeasingAllocationResult? Result { get { try { return LeasingAllocationCalculator.Calculate(Input.Preview(Item)); } catch (Exception ex) when (ex is ArgumentOutOfRangeException or OverflowException) { return null; } } }
+    private Task Notify() => Changed.InvokeAsync();
+    private async Task ModeChanged(ChangeEventArgs e) { Input.Mode = Enum.Parse<LeasingAllocationMode>(e.Value!.ToString()!); if (Input.Mode == LeasingAllocationMode.None) { Input.Rows.Clear(); Input.VaryingDimensions.Clear(); } await Notify(); }
+    private async Task Vary(Guid id, bool varying) { Input.VaryingDimensions.Remove(id); Input.Common.RemoveAll(x => x.DimensionId == id); foreach (var row in Input.Rows) row.Choices.RemoveAll(x => x.DimensionId == id); if (varying) Input.VaryingDimensions.Add(id); await Notify(); }
+    private async Task Add() { Input.Rows.Add(new()); await Notify(); }
+    private async Task Remove(LeasingAllocationInput row) { Input.Rows.Remove(row); await Notify(); }
+}

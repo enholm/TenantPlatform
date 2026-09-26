@@ -18,7 +18,7 @@
         @foreach (var value in items.EnumerateArray())
         {
             var item = value.Deserialize<LeasingItem>()!;
-            <li>@item.Description (@item.ItemNumber) · @L["LeasingQuantity"]: @item.Quantity.ToString("0.####") · @L["LeasingUnitPrice"]: @item.UnitPrice.ToString("0.####") · @L["LeasingVatRate"]: @item.VatPercent.ToString("0.####")</li>
+            <li>@item.Description (@item.ItemNumber) · @L["LeasingQuantity"]: @item.Quantity.ToString("0.####") · @L["LeasingUnitPrice"]: @item.UnitPrice.ToString("0.####") · @L["LeasingVatRate"]: @item.VatPercent.ToString("0.####")<LeasingClassificationView Item="item" /></li>
         }
     </ul>
 }

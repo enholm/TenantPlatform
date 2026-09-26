@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TenantPlatform.Core.Leasing;
+using TenantPlatform.Core.Dimensions;
 using TenantPlatform.Core.Agreements;
 using TenantPlatform.Core.Accounts;
 using TenantPlatform.Core.Identity;
@@ -15,6 +16,13 @@ namespace TenantPlatform.Infrastructure.Persistence;
 
 public class TenantPlatformDbContext : DbContext
 {
+    public DbSet<Dimension> Dimensions => Set<Dimension>();
+    public DbSet<DimensionValue> DimensionValues => Set<DimensionValue>();
+    public DbSet<DimensionHistory> DimensionHistory => Set<DimensionHistory>();
+    public DbSet<LeasingDimensionRule> LeasingDimensionRules => Set<LeasingDimensionRule>();
+    public DbSet<LeasingAllocationDimension> LeasingAllocationDimensions => Set<LeasingAllocationDimension>();
+    public DbSet<LeasingAllocationRow> LeasingAllocationRows => Set<LeasingAllocationRow>();
+    public DbSet<LeasingDimensionSelection> LeasingDimensionSelections => Set<LeasingDimensionSelection>();
     public DbSet<LeasingFramework> LeasingFrameworks => Set<LeasingFramework>();
     public DbSet<LeasingAcquisition> LeasingAcquisitions => Set<LeasingAcquisition>();
     public DbSet<LeasingItem> LeasingItems => Set<LeasingItem>();

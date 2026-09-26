@@ -1,0 +1,31 @@
+@using TenantPlatform.Web.Services.Dimensions
+<div class="mb-3">
+    <label class="form-label" for="@id">@Option.Dimension.Name @(Option.Rule.IsRequired ? "*" : "")</label>
+    <input id="@id" class="form-control form-control-sm mb-1" type="search" placeholder="@L["DimensionSearch"]" @bind="search" @bind:event="oninput" />
+    @if (!Option.Dimension.AllowMultiple)
+    {
+        <select class="form-select" aria-label="@Option.Dimension.Name" value="@Selected.FirstOrDefault(x => x.DimensionId == Option.Dimension.Id)?.ValueId" @onchange="Select">
+            <option value="">@L["LeasingChoose"]</option>
+            @foreach (var value in Values) { <option value="@value.Id" disabled="@(!value.Selectable)">@value.Path @(!value.IsActive ? L["DimensionInactive"] : "")</option> }
+        </select>
+    }
+    else
+    {
+        <div class="border rounded p-2 overflow-auto" style="max-height:12rem">
+            @foreach (var value in Values)
+            {
+                <label class="d-block"><input type="checkbox" checked="@Has(value.Id)" disabled="@(!value.Selectable && !Has(value.Id))" @onchange="e => Toggle(value.Id, e.Value is true)" /> @value.Path @(!value.IsActive ? L["DimensionInactive"] : "")</label>
+            }
+        </div>
+    }
+</div>
+@code {
+    [Parameter, EditorRequired] public LeasingDimensionOption Option { get; set; } = null!;
+    [Parameter, EditorRequired] public List<LeasingDimensionChoice> Selected { get; set; } = null!;
+    [Parameter] public EventCallback Changed { get; set; }
+    private readonly string id = "dimension-" + Guid.NewGuid(); private string search = "";
+    private bool Has(Guid value) => Selected.Any(x => x.DimensionId == Option.Dimension.Id && x.ValueId == value);
+    private IEnumerable<DimensionValueOption> Values => Option.Values.Where(x => Has(x.Id) || x.Selectable && x.Path.Contains(search, StringComparison.CurrentCultureIgnoreCase));
+    private async Task Select(ChangeEventArgs e) { Selected.RemoveAll(x => x.DimensionId == Option.Dimension.Id); if (Guid.TryParse(e.Value?.ToString(), out var value)) Selected.Add(new(Option.Dimension.Id, value)); await Changed.InvokeAsync(); }
+    private async Task Toggle(Guid value, bool selected) { Selected.RemoveAll(x => x.DimensionId == Option.Dimension.Id && x.ValueId == value); if (selected) Selected.Add(new(Option.Dimension.Id, value)); await Changed.InvokeAsync(); }
+}

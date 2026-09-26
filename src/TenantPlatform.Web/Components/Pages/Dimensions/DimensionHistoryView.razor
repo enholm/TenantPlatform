@@ -1,0 +1,14 @@
+@using System.Text.Json
+<dl class="small">
+@foreach (var field in Fields)
+{
+    var root = JsonSerializer.Deserialize<JsonElement>(Json);
+    var source = root.TryGetProperty("Value", out var value) ? value : root;
+    if (!source.TryGetProperty(field.Key, out var result) && !root.TryGetProperty(field.Key, out result)) continue;
+    <dt>@L[field.Value]</dt><dd>@(result.ValueKind == JsonValueKind.True ? L["Yes"] : result.ValueKind == JsonValueKind.False ? L["No"] : result.ToString())</dd>
+}
+</dl>
+@code {
+    [Parameter] public string Json { get; set; } = "{}";
+    private static readonly Dictionary<string,string> Fields = new() { ["Name"]="Name", ["Code"]="DimensionCode", ["Description"]="Description", ["Path"]="DimensionPath", ["IsActive"]="DimensionActive", ["AllowMultiple"]="DimensionMultiple", ["LeafOnly"]="DimensionLeafOnly", ["SortOrder"]="DimensionSortOrder", ["IsEnabled"]="DimensionEnabledLeasing", ["IsRequired"]="DimensionRequired", ["AllowAllocation"]="DimensionAllowAllocation" };
+}

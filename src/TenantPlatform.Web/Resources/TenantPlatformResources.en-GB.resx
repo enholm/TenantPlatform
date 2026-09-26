@@ -2481,7 +2481,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingUpload" xml:space="preserve"><value>Upload document</value></data>
   <data name="LeasingFileLimit" xml:space="preserve"><value>Maximum {0} MB. PDF, Word, Excel, PNG or JPEG.</value></data>
   <data name="LeasingCancelAcquisition" xml:space="preserve"><value>Cancel acquisition</value></data>
-  <data name="LeasingCancelHelp" xml:space="preserve"><value>Cancellation releases any used limit. The acquisition and history are retained; cancellation cannot be reversed in phase 1.</value></data>
+  <data name="LeasingCancelHelp" xml:space="preserve"><value>You can cancel the acquisition. This releases any used limit. The acquisition and history are retained. Cancellation cannot be undone.</value></data>
   <data name="LeasingHistory" xml:space="preserve"><value>Change history</value></data>
   <data name="LeasingBefore" xml:space="preserve"><value>Before change</value></data>
   <data name="LeasingAfter" xml:space="preserve"><value>After change</value></data>
@@ -2509,4 +2509,57 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingInvalidDetails" xml:space="preserve"><value>Name, number/reference and supported currency are required. Maximum lengths: name 200, number 100, notes 10,000.</value></data>
   <data name="LeasingInvalidTerms" xml:space="preserve"><value>Check terms: 1–600 whole months, interest 0–100%, or reference rate name and margin between −100 and 100 percentage points. Select payment frequency separately.</value></data>
   <data name="LeasingVatAmount" xml:space="preserve"><value>VAT amount</value></data>
+  <data name="Dimensions" xml:space="preserve"><value>Dimensions</value></data>
+  <data name="DimensionCode" xml:space="preserve"><value>Code</value></data>
+  <data name="DimensionActive" xml:space="preserve"><value>Active</value></data>
+  <data name="DimensionInactive" xml:space="preserve"><value>Inactive</value></data>
+  <data name="DimensionMultiple" xml:space="preserve"><value>Allow multiple values (tags)</value></data>
+  <data name="DimensionLeafOnly" xml:space="preserve"><value>Only leaf values can be selected</value></data>
+  <data name="DimensionSortOrder" xml:space="preserve"><value>Sort order</value></data>
+  <data name="DimensionSearch" xml:space="preserve"><value>Search hierarchy paths</value></data>
+  <data name="DimensionNew" xml:space="preserve"><value>New dimension</value></data>
+  <data name="DimensionEdit" xml:space="preserve"><value>Edit dimension</value></data>
+  <data name="DimensionNewValue" xml:space="preserve"><value>New dimension value</value></data>
+  <data name="DimensionEditValue" xml:space="preserve"><value>Edit dimension value</value></data>
+  <data name="DimensionValues" xml:space="preserve"><value>Dimension values</value></data>
+  <data name="DimensionParent" xml:space="preserve"><value>Parent value</value></data>
+  <data name="DimensionRoot" xml:space="preserve"><value>None – root level</value></data>
+  <data name="DimensionPath" xml:space="preserve"><value>Hierarchy path</value></data>
+  <data name="DimensionLeasingRules" xml:space="preserve"><value>Use in Leasing</value></data>
+  <data name="DimensionEnabledLeasing" xml:space="preserve"><value>Available in Leasing</value></data>
+  <data name="DimensionRequired" xml:space="preserve"><value>Required when registering</value></data>
+  <data name="DimensionAllowAllocation" xml:space="preserve"><value>Allowed in cost allocation (single selection only)</value></data>
+  <data name="DimensionChoices" xml:space="preserve"><value>dimension selections</value></data>
+  <data name="DimensionHistoryNotice" xml:space="preserve"><value>Register changes do not alter saved classifications. Deactivate values that should no longer be selected.</value></data>
+  <data name="DimensionMoveNotice" xml:space="preserve"><value>Moving changes the path for future selections. Deactivation also prevents selecting descendants. Historical references are retained.</value></data>
+  <data name="DimensionInvalidInput" xml:space="preserve"><value>Enter a valid name and sort order.</value></data>
+  <data name="DimensionInvalidCode" xml:space="preserve"><value>Code must contain 1–50 characters: A–Z, 0–9, dot, hyphen or underscore.</value></data>
+  <data name="DimensionDuplicateCode" xml:space="preserve"><value>The code is already in use.</value></data>
+  <data name="DimensionCycle" xml:space="preserve"><value>This move would create a hierarchy cycle.</value></data>
+  <data name="DimensionInvalidParent" xml:space="preserve"><value>The parent must belong to the same dimension and account.</value></data>
+  <data name="DimensionCannotMoveDimension" xml:space="preserve"><value>Values cannot move to another dimension.</value></data>
+  <data name="LeasingClassification" xml:space="preserve"><value>Classification and cost allocation</value></data>
+  <data name="LeasingCommonClassification" xml:space="preserve"><value>Common classification for the entire line</value></data>
+  <data name="LeasingAllocationRows" xml:space="preserve"><value>allocation rows</value></data>
+  <data name="LeasingAllocationMode" xml:space="preserve"><value>Allocation mode</value></data>
+  <data name="LeasingAllocationNone" xml:space="preserve"><value>No split (100%)</value></data>
+  <data name="LeasingAllocationPercent" xml:space="preserve"><value>Percentage</value></data>
+  <data name="LeasingAllocationNetAmount" xml:space="preserve"><value>Amount excluding VAT</value></data>
+  <data name="LeasingAllocationQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="LeasingVaryingDimensions" xml:space="preserve"><value>Dimensions varying between allocation rows</value></data>
+  <data name="LeasingAddAllocation" xml:space="preserve"><value>Add allocation row</value></data>
+  <data name="LeasingAllocationBalance" xml:space="preserve"><value>Allocated: {0} of {1}. Remaining: {2}.</value></data>
+  <data name="LeasingInvalidAllocation" xml:space="preserve"><value>Allocation is incomplete. The total must equal 100%, line net amount or quantity for the selected mode.</value></data>
+  <data name="LeasingMissingDimensions" xml:space="preserve"><value>Required dimension selections are missing</value></data>
+  <data name="LeasingInvalidClassification" xml:space="preserve"><value>Check dimension selections: only permitted, active values and levels are allowed, without conflicting line and allocation selections.</value></data>
+  <data name="LeasingInvalidDimensionRule" xml:space="preserve"><value>Enable the dimension before requiring it or allowing allocation. Multiple selection cannot be used in allocation.</value></data>
+  <data name="LeasingCopyCommon" xml:space="preserve"><value>Copy common selections to other lines (keep their allocation dimensions)</value></data>
+  <data name="DimensionConcurrency" xml:space="preserve"><value>The register was changed by another user. Reload the page before saving.</value></data>
+  <data name="LeasingAllocationInstructions" xml:space="preserve"><value>Choose what to allocate costs by under “Dimensions varying between allocation rows”, then select a value on each row, for example Department: IT 50% and Operations 50%. Common selections apply to the entire item.</value></data>
+  <data name="LeasingAllocationChooseDimension" xml:space="preserve"><value>Select at least one dimension to vary between allocation rows, for example Department. Percentages or amounts alone do not specify what the cost is allocated to.</value></data>
+  <data name="LeasingAllocationNoDimensions" xml:space="preserve"><value>No dimensions are enabled for cost allocation. An account administrator must open Settings → Dimensions and enable “Available in Leasing” and “Allowed in cost allocation” for an active single-selection dimension.</value></data>
+  <data name="LeasingAllocationDimensionUnavailable" xml:space="preserve"><value>A selected allocation dimension is no longer allowed. Select an active single-selection dimension enabled for Leasing and cost allocation.</value></data>
+  <data name="LeasingAllocationChooseRowValues" xml:space="preserve"><value>Select a value for every allocation dimension on every allocation row. See the messages on each item.</value></data>
+  <data name="LeasingAllocationRowNumber" xml:space="preserve"><value>Allocation row {0}</value></data>
+  <data name="LeasingAllocationRowMissing" xml:space="preserve"><value>Select a value for: {0}.</value></data>
 </root>

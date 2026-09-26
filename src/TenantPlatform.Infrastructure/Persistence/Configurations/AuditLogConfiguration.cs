@@ -20,8 +20,9 @@ public class AuditLogConfiguration
             .HasMaxLength(200)
             .IsRequired();
 
+        // Composite keys such as AccountId + ItemId + DimensionId contain 110 characters.
         builder.Property(x => x.EntityId)
-            .HasMaxLength(100)
+            .HasMaxLength(256)
             .IsRequired();
 
         builder.Property(x => x.Action)

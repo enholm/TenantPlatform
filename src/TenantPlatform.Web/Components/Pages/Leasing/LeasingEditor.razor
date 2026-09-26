@@ -7,6 +7,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+@inject ILogger<LeasingEditor> Logger
 
 <PageTitle>@Title</PageTitle><h1>@Title</h1>
 @if (busy && !ready) { <p role="status">@L["Loading"]</p> }
@@ -77,7 +78,13 @@
                         <div class="col-md-4"><label for="@($"item-price-{index}")" class="form-label">@L["LeasingUnitPrice"]</label><InputNumber id="@($"item-price-{index}")" class="form-control" @bind-Value="item.UnitPrice" min="0" step="0.0001" /></div>
                         <div class="col-md-6 align-self-end"><span class="small">@LineText(item)</span></div>
                         <div class="col-md-2 align-self-end"><button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => a.Items.Remove(item)">@L["LeasingRemoveLine"]</button></div>
-                    </div></fieldset>
+                    </div>
+                    @if (catalog is not null)
+                    {
+                        <LeasingClassificationEditor Item="item" Input="State(item)" Catalog="catalog" Changed="() => dirty.Add(item)" />
+                        <button type="button" class="btn btn-link btn-sm mt-2" @onclick="() => CopyChoices(item)">@L["LeasingCopyCommon"]</button>
+                    }
+                    </fieldset>
                 }
                 <button type="button" class="btn btn-outline-primary" @onclick="() => a.Items.Add(new LeasingItem())">@L["LeasingAddLine"]</button>
                 <p class="mt-3 mb-0 fw-semibold">@TotalText()</p>
@@ -97,6 +104,11 @@
     [SupplyParameterFromQuery(Name = "framework")] public Guid? FrameworkId { get; set; }
     private bool framework, ready, busy = true, wasRegistered; private Guid account; private string? error; private string reason = "";
     private LeasingFramework f = new(); private LeasingAcquisition a = new(); private LeasingOptions? options;
+    private LeasingClassificationCatalog? catalog;
+    private readonly Dictionary<LeasingItem, LeasingClassificationInput> classifications = new();
+    private readonly HashSet<LeasingItem> dirty = [];
+    private LeasingClassificationInput State(LeasingItem item) { if (!classifications.TryGetValue(item, out var value)) classifications[item] = value = LeasingClassificationInput.From(item); return value; }
+    private void CopyChoices(LeasingItem source) { foreach (var target in a.Items.Where(x => x != source)) { var value = State(target); value.Common = State(source).Common.Where(x => !value.VaryingDimensions.Contains(x.DimensionId)).ToList(); dirty.Add(target); } }
     private string Title => L[framework ? (Id.HasValue ? "LeasingEditFramework" : "LeasingNewFramework") : (Id.HasValue ? "LeasingEditAcquisition" : "LeasingNewAcquisition")];
     private string Name { get => framework ? f.Name : a.Name; set { if (framework) f.Name = value; else a.Name = value; } }
     private string Number { get => framework ? f.Number : a.Reference; set { if (framework) f.Number = value; else a.Reference = value; } }
@@ -129,7 +141,8 @@
                 f = new() { OwnerUserId = User.Current.UserId, AcquisitionFrom = defaults.PurchaseDate, AcquisitionTo = defaults.PurchaseDate.AddYears(1).AddDays(-1) };
             }
             else a = await Service.NewAcquisitionAsync(account, FrameworkId);
-            ready = true;
+            if (!framework) catalog = await Service.ClassificationCatalogAsync(account);
+            classifications.Clear(); dirty.Clear(); ready = true;
         }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (LeasingValidationException ex) { error = ex.Message; }
@@ -148,10 +161,10 @@
     private async Task Save()
     {
         if (busy) return; busy = true; error = null;
-        try { var id = framework ? await Service.SaveFrameworkAsync(account, Id, f, reason) : await Service.SaveAcquisitionAsync(account, Id, a, reason); Navigation.NavigateTo($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{id}"); }
+        try { var id = framework ? await Service.SaveFrameworkAsync(account, Id, f, reason) : await Service.SaveAcquisitionAsync(account, Id, a, reason, classifications: a.Items.Select((item, index) => (item, index)).Where(x => dirty.Contains(x.item)).ToDictionary(x => x.index, x => State(x.item))); Navigation.NavigateTo($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{id}"); }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (LeasingValidationException ex) { error = ex.Message; }
-        catch (Exception) { error = "LeasingFailed"; }
+        catch (Exception ex) { Logger.LogError(ex, "Could not save leasing record {RecordId} in account {AccountId}", Id, account); error = "LeasingFailed"; }
         finally { busy = false; }
     }
     private string EndDateText() { try { return LeasingCalculator.EndDate(a.PurchaseDate, a.Terms.Months).ToString("dd.MM.yyyy"); } catch (ArgumentOutOfRangeException) { return L["LeasingInvalidDates"]; } }

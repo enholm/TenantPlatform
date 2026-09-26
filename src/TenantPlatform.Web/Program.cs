@@ -120,6 +120,7 @@ builder.Services.AddHostedService<AgreementAnalysisCleanupWorker>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.OrganizationElementService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.GeographicAreaService>();
 builder.Services.AddScoped<LeasingService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Dimensions.DimensionService>();
 builder.Services.AddScoped<AgreementService>();
 builder.Services.AddScoped<IAgreementService>(sp => sp.GetRequiredService<AgreementService>());
 builder.Services.AddScoped<IAgreementFollowupService>(sp => sp.GetRequiredService<AgreementService>());

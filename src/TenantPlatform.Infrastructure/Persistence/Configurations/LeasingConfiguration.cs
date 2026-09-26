@@ -59,7 +59,7 @@ public sealed class LeasingItemConfiguration : IEntityTypeConfiguration<LeasingI
     public void Configure(EntityTypeBuilder<LeasingItem> b)
     {
         b.ToTable("leasing_items", t => t.HasCheckConstraint("CK_leasing_item_positive", "\"Quantity\" > 0 AND \"UnitPrice\" >= 0 AND \"VatPercent\" >= 0 AND \"VatPercent\" <= 100"));
-        b.HasKey(x => x.Id); b.Property(x => x.Description).HasMaxLength(500); b.Property(x => x.ItemNumber).HasMaxLength(100);
+        b.HasKey(x => x.Id); b.HasAlternateKey(x => new { x.AccountId, x.Id }); b.Property(x => x.Description).HasMaxLength(500); b.Property(x => x.ItemNumber).HasMaxLength(100);
         b.Property(x => x.Quantity).HasPrecision(18, 4); b.Property(x => x.UnitPrice).HasPrecision(18, 4); b.Property(x => x.VatPercent).HasPrecision(7, 4);
         b.HasOne<LeasingAcquisition>().WithMany(x => x.Items).HasForeignKey(x => new { x.AccountId, x.AcquisitionId })
             .HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);

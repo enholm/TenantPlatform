@@ -66,6 +66,7 @@
             var total = LeasingCalculator.Line(item);
             <tr><td>@item.Description</td><td>@item.ItemNumber</td><td>@item.Quantity.ToString("0.####")</td><td>@item.UnitPrice.ToString("0.####")</td><td>@item.VatPercent.ToString("0.####") %</td><td>@total.Net.ToString("N2")</td><td>@total.Gross.ToString("N2")</td></tr>
         }</tbody></table></div>
+        @foreach (var item in a.Items.OrderBy(x => x.Position)) { <LeasingClassificationView Item="item" Catalog="catalog" /> }
         <p class="fw-semibold">@L["LeasingTotals", a.NetTotal.ToString("N2"), a.VatTotal.ToString("N2"), a.GrossTotal.ToString("N2"), currency]</p>
         </div></section>
     }
@@ -94,6 +95,7 @@
 }
 @code {
     [Parameter] public Guid Id { get; set; }
+    private LeasingClassificationCatalog? catalog;
     private Guid account; private bool framework, busy = true; private string? error; private string cancelReason = ""; private LeasingDetails? data;
     protected override async Task OnParametersSetAsync()
     {
@@ -104,7 +106,7 @@
     private async Task Load()
     {
         busy = true; error = null;
-        try { data = await Service.GetAsync(account, Id, framework); }
+        try { data = await Service.GetAsync(account, Id, framework); if (!framework) catalog = await Service.ClassificationCatalogAsync(account); }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (Exception) { error = "LeasingFailed"; }
         finally { busy = false; }

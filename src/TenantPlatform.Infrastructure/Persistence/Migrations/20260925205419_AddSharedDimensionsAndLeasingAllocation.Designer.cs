@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TenantPlatform.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using TenantPlatform.Infrastructure.Persistence;
 namespace TenantPlatform.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(TenantPlatformDbContext))]
-    partial class TenantPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260925205419_AddSharedDimensionsAndLeasingAllocation")]
+    partial class AddSharedDimensionsAndLeasingAllocation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1644,8 +1647,8 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("EntityId")
                         .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("EntityType")
                         .IsRequired()

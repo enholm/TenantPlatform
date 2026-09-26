@@ -1,0 +1,28 @@
+<details class="my-2">
+    <summary>@L["LeasingClassification"] · @Item.Description</summary>
+    @if (Catalog != null && LeasingService.MissingDimensions(Item, Catalog) is { Count: > 0 } missing)
+    { <p class="alert alert-warning mt-2">@L["LeasingMissingDimensions"]: @string.Join(", ", missing)</p> }
+    <ul class="small mt-2">
+        @foreach (var choice in Item.DimensionSelections.Where(x => x.AllocationRowId == null))
+        { <li>@choice.DimensionName (@choice.DimensionCode): @choice.ValuePath (@choice.ValueCode) @Inactive(choice)</li> }
+    </ul>
+    <p class="small">@L[$"LeasingAllocation{Item.AllocationMode}"]</p>
+    @if (Item.AllocationMode != LeasingAllocationMode.None)
+    {
+        var result = LeasingAllocationCalculator.Calculate(Item);
+        <p>@L["LeasingAllocationBalance", result.Assigned.ToString("N4"), result.Target.ToString("N4"), result.Remaining.ToString("N4")]</p>
+        <div class="table-responsive"><table class="table table-sm"><thead><tr><th>@L["DimensionChoices"]</th><th>@L[$"LeasingAllocation{Item.AllocationMode}"]</th><th>%</th><th>@L["LeasingQuantity"]</th><th>@L["LeasingNet"]</th><th>@L["LeasingVatAmount"]</th></tr></thead><tbody>
+        @foreach (var row in Item.AllocationRows.OrderBy(x => x.Position))
+        {
+            var amount = result.Rows.SingleOrDefault(x => x.RowId == row.Id);
+            <tr><td>@foreach (var choice in Item.DimensionSelections.Where(x => x.AllocationRowId == row.Id)) { <div>@choice.DimensionName (@choice.DimensionCode): @choice.ValuePath (@choice.ValueCode) @Inactive(choice)</div> }</td><td>@row.InputValue.ToString("0.####")</td><td>@amount?.Percent?.ToString("N4")</td><td>@amount?.Quantity?.ToString("N4")</td><td>@amount?.Net.ToString("N2")</td><td>@amount?.Vat.ToString("N2")</td></tr>
+        }
+        </tbody></table></div>
+        @if (!result.Complete) { <p class="text-danger">@L["LeasingInvalidAllocation"]</p> }
+    }
+</details>
+@code {
+    [Parameter, EditorRequired] public LeasingItem Item { get; set; } = null!;
+    [Parameter] public LeasingClassificationCatalog? Catalog { get; set; }
+    private string Inactive(LeasingDimensionSelection choice) => Catalog != null && Catalog.Dimensions.SingleOrDefault(x => x.Dimension.Id == choice.DimensionId)?.Values.SingleOrDefault(x => x.Id == choice.ValueId)?.IsActive != true ? L["DimensionInactive"] : "";
+}

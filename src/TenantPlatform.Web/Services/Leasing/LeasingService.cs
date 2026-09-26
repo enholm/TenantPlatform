@@ -19,7 +19,7 @@ public sealed record LeasingDetails(LeasingFramework? Framework, LeasingAcquisit
     string OwnerName, string? SupplierName, string? FrameworkName, decimal Used, bool CanEdit,
     List<LeasingAcquisition> Acquisitions, List<LeasingDocument> Documents, List<LeasingHistoryRow> History, Dictionary<Guid, string> ReferenceNames);
 
-public sealed class LeasingService(IDbContextFactory<TenantPlatformDbContext> factory,
+public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbContext> factory,
     ICurrentUserContextService context, ITenantAuthorizationService authorization, IAgreementDocumentStorage storage,
     TimeProvider clock, ILogger<LeasingService> logger)
 {
@@ -98,7 +98,7 @@ public sealed class LeasingService(IDbContextFactory<TenantPlatformDbContext> fa
         var (user, admin) = await Member(db, account, ct);
         LeasingFramework? f = null; LeasingAcquisition? a = null;
         if (framework) f = await Frameworks(db, account, user, admin).AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
-        else a = await Acquisitions(db, account, user, admin).AsNoTracking().Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        else a = await WithClassifications(Acquisitions(db, account, user, admin).AsNoTracking()).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         var finance = f?.FinanceOrganizationId ?? a!.FinanceOrganizationId;
         var owner = f?.OwnerUserId ?? a!.OwnerUserId;
         var documents = await db.LeasingDocuments.AsNoTracking().Where(x => x.AccountId == account &&
@@ -177,12 +177,12 @@ public sealed class LeasingService(IDbContextFactory<TenantPlatformDbContext> fa
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return entity.Id;
     }
 
-    public async Task<Guid> SaveAcquisitionAsync(Guid account, Guid? id, LeasingAcquisition input, string reason, CancellationToken ct = default)
+    public async Task<Guid> SaveAcquisitionAsync(Guid account, Guid? id, LeasingAcquisition input, string reason, CancellationToken ct = default, IReadOnlyDictionary<int, LeasingClassificationInput>? classifications = null)
     {
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(db, account, ct);
-        var entity = id.HasValue ? await Acquisitions(db, account, user, admin).Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == id, ct)
+        var entity = id.HasValue ? await WithClassifications(Acquisitions(db, account, user, admin)).SingleOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new UnauthorizedAccessException() : new LeasingAcquisition { Id = Guid.NewGuid(), AccountId = account };
         CheckRevision(entity.Revision, input.Revision, id.HasValue); Reason(reason, id.HasValue);
         if (entity.Status == LeasingAcquisitionStatus.Cancelled || input.Status == LeasingAcquisitionStatus.Cancelled ||
@@ -229,6 +229,9 @@ public sealed class LeasingService(IDbContextFactory<TenantPlatformDbContext> fa
                 if (used + (framework.IncludesVat ? totals.Gross : totals.Net) > framework.Limit) throw new LeasingValidationException("LeasingLimitExceeded");
             }
         }
+        if (classifications?.Keys.Any(x => x < 0 || x >= input.Items.Count) == true) throw new LeasingValidationException("LeasingInvalidLines");
+        var registering = input.Status == LeasingAcquisitionStatus.Registered && entity.Status != LeasingAcquisitionStatus.Registered;
+        var catalog = await Catalog(db, account, admin, ct);
         var oldIds = entity.Items.Select(x => x.Id).ToHashSet();
         var incomingIds = input.Items.Where(x => x.Id != Guid.Empty).Select(x => x.Id).ToList();
         if (incomingIds.Distinct().Count() != incomingIds.Count || incomingIds.Any(x => !oldIds.Contains(x))) throw new LeasingValidationException("LeasingInvalidLines");
@@ -239,7 +242,7 @@ public sealed class LeasingService(IDbContextFactory<TenantPlatformDbContext> fa
         entity.Currency = input.Currency; entity.InvoiceNumber = input.InvoiceNumber?.Trim(); entity.InvoiceDate = input.InvoiceDate;
         entity.NetTotal = totals.Net; entity.VatTotal = totals.Vat; entity.GrossTotal = totals.Gross; entity.FinancedAmount = input.FinancedAmount;
         entity.Terms = input.Terms.Copy(); entity.Notes = input.Notes?.Trim(); entity.Status = input.Status; entity.Revision = Guid.NewGuid();
-        foreach (var removed in entity.Items.Where(x => !incomingIds.Contains(x.Id)).ToList()) { db.LeasingItems.Remove(removed); entity.Items.Remove(removed); }
+        foreach (var removed in entity.Items.Where(x => !incomingIds.Contains(x.Id)).ToList()) { RemoveClassification(db, removed); db.LeasingItems.Remove(removed); entity.Items.Remove(removed); }
         for (var position = 0; position < input.Items.Count; position++)
         {
             var incoming = input.Items[position];
@@ -247,6 +250,12 @@ public sealed class LeasingService(IDbContextFactory<TenantPlatformDbContext> fa
             item.Position = position; item.Description = incoming.Description.Trim(); item.ItemNumber = incoming.ItemNumber?.Trim();
             item.Quantity = incoming.Quantity; item.UnitPrice = incoming.UnitPrice; item.VatPercent = incoming.VatPercent;
             if (incoming.Id == Guid.Empty) { entity.Items.Add(item); if (id.HasValue) db.LeasingItems.Add(item); }
+            if (classifications != null && classifications.TryGetValue(position, out var classification))
+                ApplyClassification(db, item, classification, catalog, input.Status == LeasingAcquisitionStatus.Registered);
+            else if (registering || incoming.Id == Guid.Empty)
+                ApplyClassification(db, item, LeasingClassificationInput.From(item), catalog, input.Status == LeasingAcquisitionStatus.Registered);
+            if (input.Status == LeasingAcquisitionStatus.Registered && !LeasingAllocationCalculator.Calculate(item).Complete)
+                throw new LeasingValidationException("LeasingInvalidAllocation");
         }
         if (!id.HasValue) db.LeasingAcquisitions.Add(entity);
         History(db, account, null, entity.Id, user, id.HasValue ? "Updated" : "Created", reason, before, Snapshot(entity));
@@ -258,7 +267,7 @@ public sealed class LeasingService(IDbContextFactory<TenantPlatformDbContext> fa
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(db, account, ct);
-        var a = await Acquisitions(db, account, user, admin).Include(x => x.Items).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        var a = await WithClassifications(Acquisitions(db, account, user, admin)).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         CheckRevision(a.Revision, revision, true); Reason(reason, true);
         if (a.Status == LeasingAcquisitionStatus.Cancelled) throw new LeasingValidationException("LeasingInvalidTransition");
         var before = Snapshot(a); a.Status = LeasingAcquisitionStatus.Cancelled; a.Revision = Guid.NewGuid();
