@@ -43,7 +43,7 @@ public sealed class LeasingAcquisitionConfiguration : IEntityTypeConfiguration<L
         b.Property(x => x.Name).HasMaxLength(200); b.Property(x => x.Reference).HasMaxLength(100);
         b.Property(x => x.InvoiceNumber).HasMaxLength(100); b.Property(x => x.Currency).HasMaxLength(3);
         b.Property(x => x.Notes).HasMaxLength(10000); b.Property(x => x.Revision).IsConcurrencyToken();
-        foreach (var name in new[] { "NetTotal", "VatTotal", "GrossTotal", "FinancedAmount" }) b.Property<decimal>(name).HasPrecision(20, 2);
+        foreach (var name in new[] { "NetTotal", "VatTotal", "GrossTotal", "FinancedAmount", "CreditNetTotal", "CreditVatTotal", "ReleasedNetTotal", "ReleasedVatTotal", "ReversedNetTotal", "ReversedVatTotal" }) b.Property<decimal>(name).HasPrecision(20, 2);
         b.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<LeasingFramework>().WithMany().HasForeignKey(x => new { x.AccountId, x.FrameworkId })
             .HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
@@ -60,6 +60,7 @@ public sealed class LeasingItemConfiguration : IEntityTypeConfiguration<LeasingI
     {
         b.ToTable("leasing_items", t => t.HasCheckConstraint("CK_leasing_item_positive", "\"Quantity\" > 0 AND \"UnitPrice\" >= 0 AND \"VatPercent\" >= 0 AND \"VatPercent\" <= 100"));
         b.HasKey(x => x.Id); b.HasAlternateKey(x => new { x.AccountId, x.Id }); b.Property(x => x.Description).HasMaxLength(500); b.Property(x => x.ItemNumber).HasMaxLength(100);
+        b.Property(x => x.InvoiceNetAdjustment).HasPrecision(20,2); b.Property(x => x.InvoiceVatAdjustment).HasPrecision(20,2);
         b.Property(x => x.Quantity).HasPrecision(18, 4); b.Property(x => x.UnitPrice).HasPrecision(18, 4); b.Property(x => x.VatPercent).HasPrecision(7, 4);
         b.HasOne<LeasingAcquisition>().WithMany(x => x.Items).HasForeignKey(x => new { x.AccountId, x.AcquisitionId })
             .HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);

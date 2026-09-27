@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using TenantPlatform.Core.Auditing;
 using TenantPlatform.Core.Agreements;
+using TenantPlatform.Core.Leasing;
 
 namespace TenantPlatform.Infrastructure.Auditing;
 
@@ -124,7 +125,7 @@ public class AuditSaveChangesInterceptor
         }
 
         // Analysis content belongs only in the protected analysis tables, never the general audit log.
-        if (entry.Entity is AgreementAnalysis or AgreementFinding or AgreementFindingSource or AgreementAnalysisFile)
+        if (entry.Entity is AgreementAnalysis or AgreementFinding or AgreementFindingSource or AgreementAnalysisFile or LeasingInvoice or LeasingInvoiceInterpretation or LeasingInvoiceHistory)
             foreach (var property in entry.Properties.Where(p => p.Metadata.ClrType == typeof(string)))
                 changes.Remove(property.Metadata.Name);
 

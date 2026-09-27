@@ -163,12 +163,15 @@ try
     await using (var upgradeDb = factory.CreateDbContext())
     {
         // This schema belongs exclusively to this test. Recreate the populated phase-one schema,
-        // then run the additive phase-two migration over real registered acquisitions and items.
+        // then run the additive phase-two and phase-three migrations over real registered acquisitions and items.
         await upgradeDb.GetService<IMigrator>().MigrateAsync("20260925202419_AddLeasingPhaseOne");
         await upgradeDb.Database.MigrateAsync();
     }
     Check((await Read(standalone)).Items.Single().AllocationMode == LeasingAllocationMode.None && (await Read(standalone)).NetTotal == 25,
         "populated phase-one schema upgrades without fictional classifications or changed totals");
+    var migrated = await Read(standalone);
+    Check(migrated.CreditNetTotal == 0 && migrated.ReversedNetTotal == 0 && migrated.ReleasedNetTotal == 0 && migrated.Items.All(x => x.InvoiceNetAdjustment == 0 && x.InvoiceVatAdjustment == 0) && (await admin.GetAsync(account, framework, true)).Framework!.CreditNotesReleaseLimit == null,
+        "phase-three migration preserves financial totals and leaves credit policy explicitly undecided");
     var dimensionContext = new Context(adminId, account);
     var dimensions = new TenantPlatform.Web.Services.Dimensions.DimensionService(factory, dimensionContext, new TenantAuthorizationService(factory, dimensionContext), new Clock());
     async Task DimensionReject(Func<Task> action, string key) { try { await action(); throw new Exception("Expected " + key); } catch (TenantPlatform.Web.Services.Dimensions.DimensionValidationException ex) when (ex.Message == key) { Check(true, key); } }
@@ -303,6 +306,7 @@ try
     Check(await Used(target) == usedBefore && allocatedFramePurchase.FinancedAmount == financedBefore && allocatedFramePurchase.EndDate == endBefore && allocatedFramePurchase.Items.Count == 1,
         "cost allocation preserves framework utilization, financed amount, lease dates and original line count");
     await LeasingComponentChecks.Run(admin, account, adminId, framework, standalone, dimensions);
+    await InvoiceChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
     Console.WriteLine("All leasing PostgreSQL smoke checks passed.");
 }
 finally

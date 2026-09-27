@@ -1,0 +1,7 @@
+<p>@Data.SupplierName · @Data.SupplierNumber · @Data.Number · @Data.Date?.ToString("dd.MM.yyyy") · @Data.Currency</p>
+<p>@L["LeasingNet"]: @Data.Net?.ToString("N2") · @L["LeasingVatAmount"]: @Data.Vat?.ToString("N2") · @L["LeasingGross"]: @Data.Gross?.ToString("N2")</p>
+<div class="table-responsive"><table class="table table-sm"><thead><tr><th>@L["InvoiceSourceLine"]</th><th>@L["LeasingDescription"]</th><th>@L["LeasingQuantity"]</th><th>@L["LeasingNet"]</th><th>@L["InvoiceVatCategory"]</th><th>@L["InvoicePage"]</th></tr></thead><tbody>
+@foreach (var line in Data.Lines) { <tr><td>@line.SourceId</td><td>@line.Description</td><td>@line.Quantity (@line.Unit)</td><td>@line.Net?.ToString("N2")</td><td>@line.VatCategory · @line.VatPercent %</td><td>@line.Page @line.BoundingBox</td></tr> }
+</tbody></table></div>
+@foreach (var warning in Data.Uncertainties) { <p class="text-warning">@warning</p> }
+@code { [Parameter, EditorRequired] public InvoiceData Data { get; set; } = null!; }

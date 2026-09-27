@@ -33,6 +33,7 @@ public sealed class LeasingFramework
     public decimal Limit { get; set; }
     public string Currency { get; set; } = "NOK";
     public bool IncludesVat { get; set; }
+    public bool? CreditNotesReleaseLimit { get; set; }
     public LeasingTerms Terms { get; set; } = new();
     public string? Notes { get; set; }
     public LeasingFrameworkStatus Status { get; set; } = LeasingFrameworkStatus.Open;
@@ -57,6 +58,12 @@ public sealed class LeasingAcquisition
     public decimal NetTotal { get; set; }
     public decimal VatTotal { get; set; }
     public decimal GrossTotal { get; set; }
+    public decimal ReversedNetTotal { get; set; }
+    public decimal ReversedVatTotal { get; set; }
+    public decimal CreditNetTotal { get; set; }
+    public decimal CreditVatTotal { get; set; }
+    public decimal ReleasedNetTotal { get; set; }
+    public decimal ReleasedVatTotal { get; set; }
     public decimal FinancedAmount { get; set; }
     public LeasingTerms Terms { get; set; } = new();
     public string? Notes { get; set; }
@@ -76,6 +83,8 @@ public sealed class LeasingItem
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
     public decimal VatPercent { get; set; } = 25;
+    public decimal InvoiceNetAdjustment { get; set; }
+    public decimal InvoiceVatAdjustment { get; set; }
     public LeasingAllocationMode AllocationMode { get; set; }
     public List<LeasingAllocationDimension> AllocationDimensions { get; set; } = [];
     public List<LeasingAllocationRow> AllocationRows { get; set; } = [];

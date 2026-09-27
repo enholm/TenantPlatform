@@ -1,0 +1,30 @@
+@page "/leasing/invoices"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+<PageTitle>@L["InvoiceImport"]</PageTitle><h1>@L["InvoiceImport"]</h1>
+@if (error != null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+<section class="card mb-3"><div class="card-body">
+    <h2 class="h5">@L["InvoiceUpload"]</h2><p>@L["InvoiceUploadHelp"]</p>
+    <label for="invoice-upload">@L["InvoiceOriginal"]</label><InputFile id="invoice-upload" class="form-control" accept=".xml,.pdf,.png,.jpg,.jpeg" OnChange="Upload" disabled="@busy" />
+    <p class="small text-muted">@L["LeasingFileLimit", Service.MaxFileSizeBytes / 1024 / 1024]</p>
+</div></section>
+<button type="button" class="btn btn-outline-secondary mb-3" disabled="@busy" @onclick="Load">@L["InvoiceRefresh"]</button>
+@if (busy) { <p role="status">@L["Loading"]</p> }
+else if (items.Count == 0) { <p>@L["InvoiceEmpty"]</p> }
+else
+{
+    <div class="card table-responsive"><table class="table table-hover"><thead><tr><th>@L["InvoiceOriginal"]</th><th>@L["LeasingInvoiceDate"]</th><th>@L["InvoiceProcessing"]</th><th>@L["Status"]</th></tr></thead><tbody>
+    @foreach (var item in items) { <tr><td><a href="@($"/leasing/invoices/{item.Id}")">@item.FileName</a></td><td>@item.UploadedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'")</td><td>@L[$"InvoiceProcessing{item.Processing}"]</td><td>@L[$"InvoiceStatus{item.Status}"]</td></tr> }
+    </tbody></table></div><p class="small text-muted">@L["InvoiceListLimit"]</p>
+}
+@code {
+    [SupplyParameterFromQuery(Name = "acquisition")] public Guid? Acquisition { get; set; }
+    private Guid account; private bool busy; private string? error; private List<LeasingInvoice> items = [];
+    protected override async Task OnInitializedAsync() { if (User.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; } account = id; await Load(); }
+    private Task Load() => Run(async () => items = await Service.ListInvoicesAsync(account));
+    private Task Upload(InputFileChangeEventArgs args) => Run(async () => { await using var stream = args.File.OpenReadStream(Service.MaxFileSizeBytes); var id = await Service.UploadInvoiceAsync(account, Acquisition, args.File.Name, stream); Navigation.NavigateTo($"/leasing/invoices/{id}"); });
+    private async Task Run(Func<Task> action) { if (busy) return; busy = true; error = null; try { await action(); } catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); } catch (TenantPlatform.Infrastructure.Agreements.AgreementFileException ex) { error = ex.Message; } catch (Exception) { error = "InvoiceProcessingFailed"; } finally { busy = false; } }
+}

@@ -2598,4 +2598,129 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="LeasingAllocationChooseRowValues" xml:space="preserve"><value>Velg en verdi for hver fordelingsdimensjon på alle fordelingsradene. Se markeringene på den enkelte varelinjen.</value></data>
   <data name="LeasingAllocationRowNumber" xml:space="preserve"><value>Fordelingsrad {0}</value></data>
   <data name="LeasingAllocationRowMissing" xml:space="preserve"><value>Velg verdi for: {0}.</value></data>
+  <data name="InvoiceImport" xml:space="preserve"><value>Fakturaimport</value></data>
+  <data name="InvoiceUpload" xml:space="preserve"><value>Importer faktura</value></data>
+  <data name="InvoiceUploadHelp" xml:space="preserve"><value>Last opp EHF/UBL 2.1 (faktura 380 eller kreditnota 381), PDF, PNG eller JPEG. Opplasting endrer ikke kjøpsverdien.</value></data>
+  <data name="InvoiceOriginal" xml:space="preserve"><value>Originaldokument</value></data>
+  <data name="InvoiceRefresh" xml:space="preserve"><value>Oppdater</value></data>
+  <data name="InvoiceEmpty" xml:space="preserve"><value>Ingen importerte dokumenter.</value></data>
+  <data name="InvoiceListLimit" xml:space="preserve"><value>Viser de siste 500 dokumentene du har tilgang til.</value></data>
+  <data name="InvoiceProcessing" xml:space="preserve"><value>Behandling</value></data>
+  <data name="InvoiceProcessingUploaded" xml:space="preserve"><value>Opplastet – venter på behandling</value></data>
+  <data name="InvoiceProcessingProcessing" xml:space="preserve"><value>Under behandling</value></data>
+  <data name="InvoiceProcessingReady" xml:space="preserve"><value>Klar for kontroll</value></data>
+  <data name="InvoiceProcessingFailed" xml:space="preserve"><value>Behandlingen mislyktes. Du kan prøve igjen eller kontrollere dokumentet manuelt.</value></data>
+  <data name="InvoiceStatusReview" xml:space="preserve"><value>Til kontroll</value></data>
+  <data name="InvoiceStatusApproved" xml:space="preserve"><value>Godkjent</value></data>
+  <data name="InvoiceStatusRejected" xml:space="preserve"><value>Avvist</value></data>
+  <data name="InvoiceStatusReversed" xml:space="preserve"><value>Reversert</value></data>
+  <data name="InvoiceReview" xml:space="preserve"><value>Kontroller faktura</value></data>
+  <data name="InvoiceRetry" xml:space="preserve"><value>Tolk på nytt (behold korrigeringer)</value></data>
+  <data name="InvoiceExtracted" xml:space="preserve"><value>Data lest fra dokumentet</value></data>
+  <data name="InvoiceControlled" xml:space="preserve"><value>Kontrollerte data</value></data>
+  <data name="InvoiceUseInterpretation" xml:space="preserve"><value>Erstatt med dette tolkeresultatet</value></data>
+  <data name="InvoiceReplaceWarning" xml:space="preserve"><value>Dette erstatter dine kontrollerte data og linjekoblinger. Vil du fortsette?</value></data>
+  <data name="InvoiceKind" xml:space="preserve"><value>Dokumenttype</value></data>
+  <data name="InvoiceKindInvoice" xml:space="preserve"><value>Faktura</value></data>
+  <data name="InvoiceKindCreditNote" xml:space="preserve"><value>Kreditnota</value></data>
+  <data name="InvoiceSupplierNumber" xml:space="preserve"><value>Leverandørens organisasjonsnummer</value></data>
+  <data name="InvoiceDueDate" xml:space="preserve"><value>Forfallsdato</value></data>
+  <data name="InvoiceDeliveryDate" xml:space="preserve"><value>Leveringsdato</value></data>
+  <data name="InvoiceOrderReference" xml:space="preserve"><value>Bestillingsreferanse</value></data>
+  <data name="InvoiceOriginalReference" xml:space="preserve"><value>Opprinnelig fakturanummer</value></data>
+  <data name="InvoiceDeliveryReference" xml:space="preserve"><value>Leveringsreferanse</value></data>
+  <data name="InvoiceTarget" xml:space="preserve"><value>Anskaffelsen dokumentet gjelder</value></data>
+  <data name="InvoiceNewPurchase" xml:space="preserve"><value>Opprett ny anskaffelse ved godkjenning</value></data>
+  <data name="InvoicePurchaseDateConfirm" xml:space="preserve"><value>Jeg har kontrollert og bekrefter kjøpsdatoen. Denne datoen bestemmer leasingperioden.</value></data>
+  <data name="InvoicePreserveDates" xml:space="preserve"><value>Kjøpsdato {0} og leasingperiodens sluttdato {1} beholdes.</value></data>
+  <data name="InvoiceEditPurchase" xml:space="preserve"><value>Åpne anskaffelsen for eksplisitt korrigering av pris, antall eller vilkår</value></data>
+  <data name="InvoiceSourceLine" xml:space="preserve"><value>Leverandørens linje-ID</value></data>
+  <data name="InvoiceUnit" xml:space="preserve"><value>Enhet</value></data>
+  <data name="InvoiceBaseQuantity" xml:space="preserve"><value>Prisgrunnlag (antall)</value></data>
+  <data name="InvoiceAllowance" xml:space="preserve"><value>Linjerabatt</value></data>
+  <data name="InvoiceCharge" xml:space="preserve"><value>Linjetillegg</value></data>
+  <data name="InvoiceVatCategory" xml:space="preserve"><value>Mva-kategori</value></data>
+  <data name="InvoiceExemption" xml:space="preserve"><value>Begrunnelse for mva-fritak</value></data>
+  <data name="InvoiceSourceReference" xml:space="preserve"><value>Linjereferanse</value></data>
+  <data name="InvoiceDocumentAdjustment" xml:space="preserve"><value>Tillegg eller rabatt på dokumentnivå</value></data>
+  <data name="InvoiceNegativeAdjustment" xml:space="preserve"><value>Rabatt på dokumentnivå (negativ kjøpsverdi)</value></data>
+  <data name="InvoiceCreditSource" xml:space="preserve"><value>Opprinnelig godkjent fakturalinje</value></data>
+  <data name="InvoiceMatch" xml:space="preserve"><value>Kobling til varelinje</value></data>
+  <data name="InvoiceNewItem" xml:space="preserve"><value>Opprett ny varelinje (øker kjøpsverdien)</value></data>
+  <data name="InvoiceMatchHelp" xml:space="preserve"><value>Matching dokumenterer kjøpet. Pris, antall, dimensjoner og kjøpsverdi på den eksisterende linjen beholdes.</value></data>
+  <data name="InvoicePage" xml:space="preserve"><value>Side / posisjon</value></data>
+  <data name="InvoiceReconciliation" xml:space="preserve"><value>Avstemming</value></data>
+  <data name="InvoicePrepaid" xml:space="preserve"><value>Allerede betalt / forskudd</value></data>
+  <data name="InvoiceRounding" xml:space="preserve"><value>Eksplisitt avrunding av betalingsbeløpet</value></data>
+  <data name="InvoicePayable" xml:space="preserve"><value>Beløp til betaling</value></data>
+  <data name="InvoiceCalculated" xml:space="preserve"><value>Beregnet ekskl. mva: {0} · mva: {1} · inkl. mva: {2}</value></data>
+  <data name="InvoiceTaxGroups" xml:space="preserve"><value>Mva per kategori og sats</value></data>
+  <data name="InvoiceUseCalculated" xml:space="preserve"><value>Bruk beregnede linjesummer, mva og totaler som korrigering</value></data>
+  <data name="InvoiceRoundingHelp" xml:space="preserve"><value>Alle kjøpssummer må stemme til øret. Eksplisitt avrunding av betalingsbeløpet tillates med inntil 1 valutaenhet. Forskudd og betalingsavrunding endrer ikke kjøpsverdien.</value></data>
+  <data name="InvoiceDuplicateOverride" xml:space="preserve"><value>Begrunn hvorfor et mulig duplikat likevel er et annet dokument</value></data>
+  <data name="InvoiceContentConfirmed" xml:space="preserve"><value>Jeg har kontrollert dokumentet, korrigeringene, linjekoblingene, dimensjonene og fordelingen.</value></data>
+  <data name="InvoiceApprovalHelp" xml:space="preserve"><value>Godkjenning registrerer effekten i Leasing. Dette er ikke bokføring eller betaling i et regnskapssystem.</value></data>
+  <data name="InvoiceSaveDraft" xml:space="preserve"><value>Lagre uferdig kontroll</value></data>
+  <data name="InvoicePreview" xml:space="preserve"><value>Lagre og vis effekt før godkjenning</value></data>
+  <data name="InvoiceApprovalEffect" xml:space="preserve"><value>Effekt ved godkjenning</value></data>
+  <data name="InvoicePurchaseEffect" xml:space="preserve"><value>Kjøpsverdi inkl. mva: {0} · endring: {1} · ny kjøpsverdi: {2}</value></data>
+  <data name="InvoiceLimitEffect" xml:space="preserve"><value>Benyttet ramme: {0} · etter godkjenning: {1} · tilgjengelig: {2}</value></data>
+  <data name="InvoiceApprove" xml:space="preserve"><value>Godkjenn i Leasing</value></data>
+  <data name="InvoiceCreditTermsHelp" xml:space="preserve"><value>Finansiert beløp, renter og leasingperiode endres ikke automatisk ved kreditering. Vurder eventuelle endringer separat.</value></data>
+  <data name="InvoiceReverse" xml:space="preserve"><value>Reverser godkjenning</value></data>
+  <data name="InvoiceReject" xml:space="preserve"><value>Avvis dokument</value></data>
+  <data name="InvoiceReverseHelp" xml:space="preserve"><value>Reversering fjerner dokumentets effekt, men beholder original, koblinger og historikk. Senere dokumenter som bygger på dette dokumentet må reverseres først.</value></data>
+  <data name="InvoiceRejectHelp" xml:space="preserve"><value>Avvisning påvirker ikke anskaffelsen eller rammen.</value></data>
+  <data name="InvoiceCreditRule" xml:space="preserve"><value>Frigjør godkjente kreditnotaer anskaffelsesramme?</value></data>
+  <data name="InvoiceCreditRuleRequired" xml:space="preserve"><value>Rammeavtalens ansvarlige må velge om kreditnotaer frigjør ramme før kreditnotaen kan godkjennes.</value></data>
+  <data name="InvoiceCreditRuleLocked" xml:space="preserve"><value>Kreditnotaregelen kan ikke endres mens avtalen har godkjente kreditnotaer. Reverser berørte dokumenter først.</value></data>
+  <data name="InvoiceLinkedPurchase" xml:space="preserve"><value>Varelinjen eller anskaffelsen er knyttet til fakturaer. Reverser berørte dokumenter før denne endringen.</value></data>
+  <data name="InvoiceItemAdjustments" xml:space="preserve"><value>Dokumenterte nettojusteringer: {0} · mva-avstemming: {1}. Disse inngår eksplisitt i linjesummen.</value></data>
+  <data name="InvoiceLegacyReference" xml:space="preserve"><value>Eldre fakturareferanse (manuell registrering)</value></data>
+  <data name="InvoiceDocuments" xml:space="preserve"><value>Fakturaer og kreditnotaer</value></data>
+  <data name="InvoiceDocumented" xml:space="preserve"><value>Dokumentert antall: {0} · netto: {1} · udokumentert netto: {2}</value></data>
+  <data name="InvoiceNetPurchase" xml:space="preserve"><value>Brutto kjøpsverdi: {0} · krediteringer: {1} · reverseringer: {2} · netto kjøpsverdi: {3}</value></data>
+  <data name="InvoiceUnsupportedXml" xml:space="preserve"><value>XML-formatet støttes ikke. Støttet: UBL 2.1 Invoice 380 / CreditNote 381, inkludert EHF/Peppol BIS Billing 3.0. Kontroller dokumentet manuelt eller last opp et støttet format.</value></data>
+  <data name="InvoiceUnsupportedSign" xml:space="preserve"><value>Dokumentet har negative faktura-/kreditnotalinjer. Dette fortegnsformatet støttes ikke automatisk; kontroller og normaliser dataene manuelt.</value></data>
+  <data name="InvoiceInterpreterNotConfigured" xml:space="preserve"><value>Automatisk PDF-/bildetolking er ikke konfigurert. Kontroller originalen og fyll inn feltene manuelt. Eventuelt PDF-tekstuttrekk vises nedenfor.</value></data>
+  <data name="InvoiceInterpreterFailed" xml:space="preserve"><value>Tolketjenesten kunne ikke behandle dokumentet. Prøv igjen eller bruk manuell kontroll.</value></data>
+  <data name="InvoiceAutomaticReviewRequired" xml:space="preserve"><value>Automatisk tolking er et forslag. Kontroller alle sider, manglende felt og usikre verdier før godkjenning.</value></data>
+  <data name="InvoiceInvalidReview" xml:space="preserve"><value>Kontrollen inneholder for mange linjer eller for lange felt.</value></data>
+  <data name="InvoiceImmutable" xml:space="preserve"><value>Dokumentet kan ikke godkjennes eller endres i denne tilstanden. Oppdater visningen. Godkjente dokumenter må reverseres før korrigering.</value></data>
+  <data name="InvoiceProcessingBusy" xml:space="preserve"><value>Dokumentet står i kø eller er under behandling.</value></data>
+  <data name="InvoiceReviewRequired" xml:space="preserve"><value>Kontroller leverandør, fakturanummer, dato, valuta og bekreft dokumentkontrollen.</value></data>
+  <data name="InvoiceMatchRequired" xml:space="preserve"><value>Alle fakturalinjer må ha en gyldig kobling til en varelinje, eller være valgt som ny varelinje.</value></data>
+  <data name="InvoiceCertainDuplicate" xml:space="preserve"><value>Dokumentet er et sikkert duplikat av en godkjent faktura (samme fil eller leverandør, dokumenttype og fakturanummer). Godkjenning er blokkert.</value></data>
+  <data name="InvoicePossibleDuplicate" xml:space="preserve"><value>Et godkjent dokument har samme fakturanummer eller dato, valuta og beløp. Kontroller mulig duplikat.</value></data>
+  <data name="InvoiceDuplicateReason" xml:space="preserve"><value>Begrunn hvorfor det mulige duplikatet likevel skal godkjennes.</value></data>
+  <data name="InvoicePurchaseConflict" xml:space="preserve"><value>Anskaffelsen er kansellert eller har en annen valuta enn fakturaen.</value></data>
+  <data name="InvoiceSupplierMismatch" xml:space="preserve"><value>Fakturaens leverandørnummer stemmer ikke med anskaffelsens leverandør.</value></data>
+  <data name="InvoiceCreditMatch" xml:space="preserve"><value>Kreditnotaen må knyttes til godkjente fakturalinjer på samme anskaffelse.</value></data>
+  <data name="InvoiceOverCredit" xml:space="preserve"><value>Kreditnotaen overstiger gjenværende dokumentert antall, netto eller mva.</value></data>
+  <data name="InvoiceOverDocumented" xml:space="preserve"><value>Fakturalinjene overstiger registrert antall eller beløp. Kontroller matching eller korriger anskaffelsen eksplisitt først.</value></data>
+  <data name="InvoiceReverseDependencies" xml:space="preserve"><value>Andre godkjente dokumenter bygger på denne fakturaen eller dens nye varelinjer. Reverser disse først.</value></data>
+  <data name="InvoiceReverseChangedItem" xml:space="preserve"><value>En opprettet varelinje er senere endret. Kontroller og korriger endringen eksplisitt før reversering.</value></data>
+  <data name="InvoiceLinesRequired" xml:space="preserve"><value>Legg inn mellom 1 og 500 fakturalinjer.</value></data>
+  <data name="InvoiceInvalidLine" xml:space="preserve"><value>Kontroller beskrivelse, antall, prisgrunnlag, pris, rabatter, tillegg, mva-sats og mva-kategori på hver linje.</value></data>
+  <data name="InvoiceLineMismatch" xml:space="preserve"><value>Oppgitt linjesum stemmer ikke med antall × pris / prisgrunnlag − rabatt + tillegg.</value></data>
+  <data name="InvoiceTaxMismatch" xml:space="preserve"><value>Oppgitte mva-grupper stemmer ikke med beregnede kategorier, grunnlag og satser.</value></data>
+  <data name="InvoiceTotalMismatch" xml:space="preserve"><value>Oppgitte netto-, mva- eller bruttosummer stemmer ikke med linjene.</value></data>
+  <data name="InvoicePayableMismatch" xml:space="preserve"><value>Beløp til betaling må være brutto kjøpsverdi minus forskudd pluss eksplisitt avrunding.</value></data>
+  <data name="InvoiceActionUploaded" xml:space="preserve"><value>Opplastet</value></data>
+  <data name="InvoiceActionInterpreted" xml:space="preserve"><value>Tolket</value></data>
+  <data name="InvoiceActionProcessingFailed" xml:space="preserve"><value>Behandlingsfeil</value></data>
+  <data name="InvoiceActionReviewed" xml:space="preserve"><value>Kontrollert / korrigert</value></data>
+  <data name="InvoiceActionRetry" xml:space="preserve"><value>Ny tolking bestilt</value></data>
+  <data name="InvoiceActionRejected" xml:space="preserve"><value>Avvist</value></data>
+  <data name="InvoiceActionApproved" xml:space="preserve"><value>Godkjent</value></data>
+  <data name="InvoiceActionReversed" xml:space="preserve"><value>Reversert</value></data>
+  <data name="LeasingActionInvoiceApproved" xml:space="preserve"><value>Faktura godkjent</value></data>
+  <data name="LeasingActionInvoiceReversed" xml:space="preserve"><value>Faktura reversert</value></data>
+  <data name="InvoiceCreditNet" xml:space="preserve"><value>Krediteringer ekskl. mva</value></data>
+  <data name="InvoiceCreditVat" xml:space="preserve"><value>Kreditert mva</value></data>
+  <data name="InvoiceReversedNet" xml:space="preserve"><value>Reverseringer ekskl. mva</value></data>
+  <data name="InvoiceReversedVat" xml:space="preserve"><value>Reversert mva</value></data>
+  <data name="InvoiceReleasedNet" xml:space="preserve"><value>Frigjort ramme ekskl. mva</value></data>
+  <data name="InvoiceReleasedVat" xml:space="preserve"><value>Frigjort ramme, mva</value></data>
+  <data name="InvoiceConfirm" xml:space="preserve"><value>Bekreft</value></data>
 </root>

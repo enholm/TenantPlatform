@@ -18,7 +18,7 @@ public class LocalAgreementDocumentStorage(IOptions<AgreementDocumentStorageOpti
         if (string.IsNullOrWhiteSpace(fileName) || fileName.Length > 200)
             throw new AgreementFileException("AgreementInvalidFileName");
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        if (extension is not (".pdf" or ".docx" or ".xlsx" or ".png" or ".jpg" or ".jpeg"))
+        if (extension is not (".xml" or ".pdf" or ".docx" or ".xlsx" or ".png" or ".jpg" or ".jpeg"))
             throw new AgreementFileException("AgreementInvalidFileType");
         Directory.CreateDirectory(root);
         var key = Guid.NewGuid().ToString("N");
@@ -75,6 +75,16 @@ public class LocalAgreementDocumentStorage(IOptions<AgreementDocumentStorageOpti
 
     private static string ValidateContent(Stream file, string extension)
     {
+        if (extension == ".xml")
+        {
+            try
+            {
+                using var xml = XmlReader.Create(file, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = 20 * 1024 * 1024, CloseInput = false });
+                while (xml.Read()) { }
+                return "application/xml";
+            }
+            catch (XmlException) { throw new AgreementFileException("AgreementInvalidFileType"); }
+        }
         Span<byte> header = stackalloc byte[8];
         var count = file.Read(header);
         file.Position = 0;

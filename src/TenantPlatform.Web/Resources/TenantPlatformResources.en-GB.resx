@@ -2562,4 +2562,129 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingAllocationChooseRowValues" xml:space="preserve"><value>Select a value for every allocation dimension on every allocation row. See the messages on each item.</value></data>
   <data name="LeasingAllocationRowNumber" xml:space="preserve"><value>Allocation row {0}</value></data>
   <data name="LeasingAllocationRowMissing" xml:space="preserve"><value>Select a value for: {0}.</value></data>
+  <data name="InvoiceImport" xml:space="preserve"><value>Invoice import</value></data>
+  <data name="InvoiceUpload" xml:space="preserve"><value>Import invoice</value></data>
+  <data name="InvoiceUploadHelp" xml:space="preserve"><value>Upload EHF/UBL 2.1 (invoice 380 or credit note 381), PDF, PNG or JPEG. Upload does not change the purchase value.</value></data>
+  <data name="InvoiceOriginal" xml:space="preserve"><value>Original document</value></data>
+  <data name="InvoiceRefresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="InvoiceEmpty" xml:space="preserve"><value>No imported documents.</value></data>
+  <data name="InvoiceListLimit" xml:space="preserve"><value>Shows the latest 500 documents you can access.</value></data>
+  <data name="InvoiceProcessing" xml:space="preserve"><value>Processing</value></data>
+  <data name="InvoiceProcessingUploaded" xml:space="preserve"><value>Uploaded – queued</value></data>
+  <data name="InvoiceProcessingProcessing" xml:space="preserve"><value>Processing</value></data>
+  <data name="InvoiceProcessingReady" xml:space="preserve"><value>Ready for review</value></data>
+  <data name="InvoiceProcessingFailed" xml:space="preserve"><value>Processing failed. Retry or review the document manually.</value></data>
+  <data name="InvoiceStatusReview" xml:space="preserve"><value>For review</value></data>
+  <data name="InvoiceStatusApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="InvoiceStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="InvoiceStatusReversed" xml:space="preserve"><value>Reversed</value></data>
+  <data name="InvoiceReview" xml:space="preserve"><value>Review invoice</value></data>
+  <data name="InvoiceRetry" xml:space="preserve"><value>Interpret again (keep corrections)</value></data>
+  <data name="InvoiceExtracted" xml:space="preserve"><value>Data read from document</value></data>
+  <data name="InvoiceControlled" xml:space="preserve"><value>Reviewed data</value></data>
+  <data name="InvoiceUseInterpretation" xml:space="preserve"><value>Replace with this interpretation</value></data>
+  <data name="InvoiceReplaceWarning" xml:space="preserve"><value>This replaces your reviewed data and line links. Continue?</value></data>
+  <data name="InvoiceKind" xml:space="preserve"><value>Document type</value></data>
+  <data name="InvoiceKindInvoice" xml:space="preserve"><value>Invoice</value></data>
+  <data name="InvoiceKindCreditNote" xml:space="preserve"><value>Credit note</value></data>
+  <data name="InvoiceSupplierNumber" xml:space="preserve"><value>Supplier registration number</value></data>
+  <data name="InvoiceDueDate" xml:space="preserve"><value>Due date</value></data>
+  <data name="InvoiceDeliveryDate" xml:space="preserve"><value>Delivery date</value></data>
+  <data name="InvoiceOrderReference" xml:space="preserve"><value>Order reference</value></data>
+  <data name="InvoiceOriginalReference" xml:space="preserve"><value>Original invoice number</value></data>
+  <data name="InvoiceDeliveryReference" xml:space="preserve"><value>Delivery reference</value></data>
+  <data name="InvoiceTarget" xml:space="preserve"><value>Acquisition for this document</value></data>
+  <data name="InvoiceNewPurchase" xml:space="preserve"><value>Create acquisition on approval</value></data>
+  <data name="InvoicePurchaseDateConfirm" xml:space="preserve"><value>I have checked and confirm the purchase date. This determines the lease period.</value></data>
+  <data name="InvoicePreserveDates" xml:space="preserve"><value>Purchase date {0} and lease end date {1} are retained.</value></data>
+  <data name="InvoiceEditPurchase" xml:space="preserve"><value>Open acquisition to explicitly correct price, quantity or terms</value></data>
+  <data name="InvoiceSourceLine" xml:space="preserve"><value>Supplier line ID</value></data>
+  <data name="InvoiceUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="InvoiceBaseQuantity" xml:space="preserve"><value>Price base quantity</value></data>
+  <data name="InvoiceAllowance" xml:space="preserve"><value>Line discount</value></data>
+  <data name="InvoiceCharge" xml:space="preserve"><value>Line charge</value></data>
+  <data name="InvoiceVatCategory" xml:space="preserve"><value>VAT category</value></data>
+  <data name="InvoiceExemption" xml:space="preserve"><value>Tax exemption reason</value></data>
+  <data name="InvoiceSourceReference" xml:space="preserve"><value>Line reference</value></data>
+  <data name="InvoiceDocumentAdjustment" xml:space="preserve"><value>Document-level charge or allowance</value></data>
+  <data name="InvoiceNegativeAdjustment" xml:space="preserve"><value>Document-level allowance (negative purchase value)</value></data>
+  <data name="InvoiceCreditSource" xml:space="preserve"><value>Original approved invoice line</value></data>
+  <data name="InvoiceMatch" xml:space="preserve"><value>Item link</value></data>
+  <data name="InvoiceNewItem" xml:space="preserve"><value>Create item (increases purchase value)</value></data>
+  <data name="InvoiceMatchHelp" xml:space="preserve"><value>Matching documents the purchase. Existing price, quantity, dimensions and purchase value are retained.</value></data>
+  <data name="InvoicePage" xml:space="preserve"><value>Page / position</value></data>
+  <data name="InvoiceReconciliation" xml:space="preserve"><value>Reconciliation</value></data>
+  <data name="InvoicePrepaid" xml:space="preserve"><value>Prepaid amount</value></data>
+  <data name="InvoiceRounding" xml:space="preserve"><value>Explicit payment rounding</value></data>
+  <data name="InvoicePayable" xml:space="preserve"><value>Amount payable</value></data>
+  <data name="InvoiceCalculated" xml:space="preserve"><value>Calculated net: {0} · VAT: {1} · gross: {2}</value></data>
+  <data name="InvoiceTaxGroups" xml:space="preserve"><value>VAT by category and rate</value></data>
+  <data name="InvoiceUseCalculated" xml:space="preserve"><value>Use calculated line amounts, VAT and totals as correction</value></data>
+  <data name="InvoiceRoundingHelp" xml:space="preserve"><value>Purchase amounts must reconcile to the cent. Explicit payment rounding up to one currency unit is allowed. Prepayments and payment rounding do not change purchase value.</value></data>
+  <data name="InvoiceDuplicateOverride" xml:space="preserve"><value>Explain why the possible duplicate is a different document</value></data>
+  <data name="InvoiceContentConfirmed" xml:space="preserve"><value>I have checked the document, corrections, line links, dimensions and allocations.</value></data>
+  <data name="InvoiceApprovalHelp" xml:space="preserve"><value>Approval registers the effect in Leasing. This is not accounting or payment.</value></data>
+  <data name="InvoiceSaveDraft" xml:space="preserve"><value>Save unfinished review</value></data>
+  <data name="InvoicePreview" xml:space="preserve"><value>Save and preview effect</value></data>
+  <data name="InvoiceApprovalEffect" xml:space="preserve"><value>Effect on approval</value></data>
+  <data name="InvoicePurchaseEffect" xml:space="preserve"><value>Gross purchase value: {0} · change: {1} · new value: {2}</value></data>
+  <data name="InvoiceLimitEffect" xml:space="preserve"><value>Used limit: {0} · after approval: {1} · available: {2}</value></data>
+  <data name="InvoiceApprove" xml:space="preserve"><value>Approve in Leasing</value></data>
+  <data name="InvoiceCreditTermsHelp" xml:space="preserve"><value>Financed amount, interest and lease period do not change automatically with credits. Review these separately.</value></data>
+  <data name="InvoiceReverse" xml:space="preserve"><value>Reverse approval</value></data>
+  <data name="InvoiceReject" xml:space="preserve"><value>Reject document</value></data>
+  <data name="InvoiceReverseHelp" xml:space="preserve"><value>Reversal removes the document effect while retaining originals, links and history. Reverse dependent documents first.</value></data>
+  <data name="InvoiceRejectHelp" xml:space="preserve"><value>Rejection does not affect the acquisition or limit.</value></data>
+  <data name="InvoiceCreditRule" xml:space="preserve"><value>Do approved credit notes release the acquisition limit?</value></data>
+  <data name="InvoiceCreditRuleRequired" xml:space="preserve"><value>The framework owner must choose whether credits release the limit before approval.</value></data>
+  <data name="InvoiceCreditRuleLocked" xml:space="preserve"><value>The credit rule cannot change while approved credits exist. Reverse affected documents first.</value></data>
+  <data name="InvoiceLinkedPurchase" xml:space="preserve"><value>The item or acquisition is linked to invoices. Reverse affected documents before this change.</value></data>
+  <data name="InvoiceItemAdjustments" xml:space="preserve"><value>Documented net adjustments: {0} · VAT reconciliation: {1}. These are explicitly included in the line total.</value></data>
+  <data name="InvoiceLegacyReference" xml:space="preserve"><value>Legacy invoice reference (manual registration)</value></data>
+  <data name="InvoiceDocuments" xml:space="preserve"><value>Invoices and credit notes</value></data>
+  <data name="InvoiceDocumented" xml:space="preserve"><value>Documented quantity: {0} · net: {1} · undocumented net: {2}</value></data>
+  <data name="InvoiceNetPurchase" xml:space="preserve"><value>Gross purchase value: {0} · credits: {1} · reversals: {2} · net purchase value: {3}</value></data>
+  <data name="InvoiceUnsupportedXml" xml:space="preserve"><value>Unsupported XML. Supported: UBL 2.1 Invoice 380 / CreditNote 381, including EHF/Peppol BIS Billing 3.0. Review manually or upload a supported format.</value></data>
+  <data name="InvoiceUnsupportedSign" xml:space="preserve"><value>Negative invoice/credit-note lines are not supported automatically. Review and normalise signs manually.</value></data>
+  <data name="InvoiceInterpreterNotConfigured" xml:space="preserve"><value>Automatic PDF/image interpretation is not configured. Review the original and enter fields manually. Any extracted PDF text is shown below.</value></data>
+  <data name="InvoiceInterpreterFailed" xml:space="preserve"><value>The interpretation service could not process this document. Retry or review manually.</value></data>
+  <data name="InvoiceAutomaticReviewRequired" xml:space="preserve"><value>Automatic interpretation is a proposal. Check every page, missing field and uncertain value before approval.</value></data>
+  <data name="InvoiceInvalidReview" xml:space="preserve"><value>Too many lines or overly long fields.</value></data>
+  <data name="InvoiceImmutable" xml:space="preserve"><value>The document cannot be approved or changed in this state. Refresh. Reverse approved documents before correction.</value></data>
+  <data name="InvoiceProcessingBusy" xml:space="preserve"><value>The document is queued or processing.</value></data>
+  <data name="InvoiceReviewRequired" xml:space="preserve"><value>Check supplier, invoice number, date and currency and confirm the review.</value></data>
+  <data name="InvoiceMatchRequired" xml:space="preserve"><value>Link each invoice line to a valid item or select a new item.</value></data>
+  <data name="InvoiceCertainDuplicate" xml:space="preserve"><value>Certain duplicate of an approved invoice (same file or supplier, document type and number). Approval is blocked.</value></data>
+  <data name="InvoicePossibleDuplicate" xml:space="preserve"><value>An approved document has the same number or date, currency and totals. Check the possible duplicate.</value></data>
+  <data name="InvoiceDuplicateReason" xml:space="preserve"><value>Explain why the possible duplicate should be approved.</value></data>
+  <data name="InvoicePurchaseConflict" xml:space="preserve"><value>The acquisition is cancelled or has a different currency.</value></data>
+  <data name="InvoiceSupplierMismatch" xml:space="preserve"><value>Supplier registration number does not match the acquisition supplier.</value></data>
+  <data name="InvoiceCreditMatch" xml:space="preserve"><value>Match the credit to approved invoice lines in the same acquisition.</value></data>
+  <data name="InvoiceOverCredit" xml:space="preserve"><value>Credit exceeds the remaining documented quantity, net or VAT.</value></data>
+  <data name="InvoiceOverDocumented" xml:space="preserve"><value>Invoice lines exceed recorded quantity or amounts. Review matching or explicitly correct the acquisition first.</value></data>
+  <data name="InvoiceReverseDependencies" xml:space="preserve"><value>Other approved documents depend on this invoice or its created items. Reverse them first.</value></data>
+  <data name="InvoiceReverseChangedItem" xml:space="preserve"><value>A created item was subsequently changed. Review and explicitly correct it before reversal.</value></data>
+  <data name="InvoiceLinesRequired" xml:space="preserve"><value>Enter between 1 and 500 invoice lines.</value></data>
+  <data name="InvoiceInvalidLine" xml:space="preserve"><value>Check each line description, quantity, price base, price, discounts, charges, VAT rate and category.</value></data>
+  <data name="InvoiceLineMismatch" xml:space="preserve"><value>Stated line net does not equal quantity × price / base quantity − discount + charge.</value></data>
+  <data name="InvoiceTaxMismatch" xml:space="preserve"><value>Stated VAT groups do not match calculated categories, bases and rates.</value></data>
+  <data name="InvoiceTotalMismatch" xml:space="preserve"><value>Stated net, VAT or gross totals do not match the lines.</value></data>
+  <data name="InvoicePayableMismatch" xml:space="preserve"><value>Payable must equal gross purchase value minus prepaid plus explicit rounding.</value></data>
+  <data name="InvoiceActionUploaded" xml:space="preserve"><value>Uploaded</value></data>
+  <data name="InvoiceActionInterpreted" xml:space="preserve"><value>Interpreted</value></data>
+  <data name="InvoiceActionProcessingFailed" xml:space="preserve"><value>Processing failed</value></data>
+  <data name="InvoiceActionReviewed" xml:space="preserve"><value>Reviewed / corrected</value></data>
+  <data name="InvoiceActionRetry" xml:space="preserve"><value>Interpretation retried</value></data>
+  <data name="InvoiceActionRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="InvoiceActionApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="InvoiceActionReversed" xml:space="preserve"><value>Reversed</value></data>
+  <data name="LeasingActionInvoiceApproved" xml:space="preserve"><value>Invoice approved</value></data>
+  <data name="LeasingActionInvoiceReversed" xml:space="preserve"><value>Invoice reversed</value></data>
+  <data name="InvoiceCreditNet" xml:space="preserve"><value>Credits excluding VAT</value></data>
+  <data name="InvoiceCreditVat" xml:space="preserve"><value>Credited VAT</value></data>
+  <data name="InvoiceReversedNet" xml:space="preserve"><value>Reversals excluding VAT</value></data>
+  <data name="InvoiceReversedVat" xml:space="preserve"><value>Reversed VAT</value></data>
+  <data name="InvoiceReleasedNet" xml:space="preserve"><value>Released capacity excluding VAT</value></data>
+  <data name="InvoiceReleasedVat" xml:space="preserve"><value>Released capacity, VAT</value></data>
+  <data name="InvoiceConfirm" xml:space="preserve"><value>Confirm</value></data>
 </root>

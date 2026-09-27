@@ -1,0 +1,190 @@
+@page "/leasing/invoices/{Id:guid}"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using TenantPlatform.Web.Services.Leasing.Invoices
+@using System.Text.Json
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+<PageTitle>@L["InvoiceReview"]</PageTitle><h1>@L["InvoiceReview"]</h1>
+@if (error != null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
+@if (details == null) { <p role="status">@L["Loading"]</p> }
+else
+{
+    <p>@L[$"InvoiceProcessing{details.Invoice.Processing}"] · @L[$"InvoiceStatus{details.Invoice.Status}"]</p>
+    @if (details.Invoice.ProcessingError != null) { <p class="alert alert-warning">@L[details.Invoice.ProcessingError]</p> }
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <button type="button" class="btn btn-outline-secondary" disabled="@busy" @onclick="Load">@L["InvoiceRefresh"]</button>
+        <a class="btn btn-outline-secondary" href="@($"/leasing/invoices/{Id}/original?download=true")">@L["InvoiceOriginal"]</a>
+        @if (details.Invoice.Status == LeasingInvoiceStatus.Review && details.Invoice.Processing is LeasingInvoiceProcessing.Failed or LeasingInvoiceProcessing.Ready)
+        { <button type="button" class="btn btn-outline-secondary" disabled="@busy" @onclick="Retry">@L["InvoiceRetry"]</button> }
+        @if (details.Invoice.AcquisitionId.HasValue) { <a class="btn btn-outline-primary" href="@($"/leasing/acquisitions/{details.Invoice.AcquisitionId}")">@L["LeasingAcquisitions"]</a> }
+    </div>
+    <div class="row g-3"><div class="col-xl-5"><section class="card"><div class="card-body">
+        <h2 class="h5">@L["InvoiceOriginal"] · @details.Invoice.FileName</h2>
+        @if (details.Invoice.MediaType == "application/pdf") { <iframe title="@L["InvoiceOriginal"]" src="@($"/leasing/invoices/{Id}/original")" style="width:100%;height:75vh;border:0"></iframe> }
+        else if (details.Invoice.MediaType.StartsWith("image/")) { <img class="img-fluid" alt="@L["InvoiceOriginal"]" src="@($"/leasing/invoices/{Id}/original")" /> }
+        @foreach (var interpretation in details.Interpretations)
+        {
+            <details class="mt-3"><summary>@L["InvoiceExtracted"] · @interpretation.Version · @interpretation.CreatedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'")</summary>
+                <InvoiceDataView Data="@(JsonSerializer.Deserialize<InvoiceData>(interpretation.ResultJson)!)" />
+                @foreach (var warning in JsonSerializer.Deserialize<List<string>>(interpretation.WarningsJson) ?? []) { <p class="alert alert-warning">@L[warning]</p> }
+                @if (!string.IsNullOrEmpty(interpretation.ExtractedText)) { <pre class="small text-wrap overflow-auto" style="max-height:30rem">@interpretation.ExtractedText</pre> }
+                @if (editable) { <button type="button" class="btn btn-outline-warning btn-sm" disabled="@busy" @onclick="() => useInterpretation = interpretation.Id">@L["InvoiceUseInterpretation"]</button> }
+            </details>
+        }
+        @if (useInterpretation.HasValue) { <div class="alert alert-warning mt-3">@L["InvoiceReplaceWarning"] <button type="button" class="btn btn-warning" @onclick="UseInterpretation">@L["InvoiceConfirm"]</button><button class="btn btn-outline-secondary" @onclick="() => useInterpretation = null">@L["Cancel"]</button></div> }
+    </div></section></div><div class="col-xl-7">
+    <EditForm @key="review" EditContext="editContext" OnValidSubmit="Save" FormName="invoice-review">
+    <fieldset disabled="@(busy || !editable)">
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["InvoiceControlled"]</h2><div class="row g-3">
+        <div class="col-md-6"><label>@L["InvoiceKind"]<InputSelect class="form-select" @bind-Value="review.Data.Kind"><option value="@LeasingInvoiceKind.Invoice">@L["InvoiceKindInvoice"]</option><option value="@LeasingInvoiceKind.CreditNote">@L["InvoiceKindCreditNote"]</option></InputSelect></label></div>
+        <div class="col-md-6"><label>@L["LeasingInvoiceNumber"]<InputText class="form-control" @bind-Value="review.Data.Number" maxlength="100" /></label></div>
+        <div class="col-md-6"><label>@L["LeasingSupplier"]<InputText class="form-control" @bind-Value="review.Data.SupplierName" maxlength="200" /></label></div>
+        <div class="col-md-6"><label>@L["InvoiceSupplierNumber"]<InputText class="form-control" @bind-Value="review.Data.SupplierNumber" maxlength="200" /></label></div>
+        <div class="col-md-4"><label>@L["LeasingInvoiceDate"]<InputDate class="form-control" @bind-Value="review.Data.Date" /></label></div>
+        <div class="col-md-4"><label>@L["InvoiceDueDate"]<InputDate class="form-control" @bind-Value="review.Data.DueDate" /></label></div>
+        <div class="col-md-4"><label>@L["InvoiceDeliveryDate"]<InputDate class="form-control" @bind-Value="review.Data.DeliveryDate" /></label></div>
+        <div class="col-md-4"><label>@L["LeasingCurrency"]<InputSelect class="form-select" @bind-Value="review.Data.Currency"><option value="">@L["LeasingChoose"]</option>@foreach (var c in TenantPlatform.Web.Services.Agreements.AgreementPeriodCalculator.Currencies) { <option value="@c">@c</option> }</InputSelect></label></div>
+        <div class="col-md-4"><label>@L["InvoiceOrderReference"]<InputText class="form-control" @bind-Value="review.Data.OrderReference" /></label></div>
+        <div class="col-md-4"><label>@L["InvoiceOriginalReference"]<InputText class="form-control" @bind-Value="review.Data.OriginalInvoiceReference" /></label></div>
+        <div class="col-md-6"><label>@L["InvoiceDeliveryReference"]<InputText class="form-control" @bind-Value="review.Data.DeliveryReference" /></label></div>
+    </div></div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["InvoiceTarget"]</h2>
+        <label class="d-block">@L["LeasingAcquisitions"]<InputSelect class="form-select" @bind-Value="review.AcquisitionId" @bind-Value:after="TargetChanged"><option value="">@L["InvoiceNewPurchase"]</option>@foreach (var a in details.Acquisitions) { <option value="@a.Id">@a.Name</option> }</InputSelect></label>
+        @if (review.AcquisitionId == null && options != null)
+        {
+            <div class="row g-3 mt-1">
+                <div class="col-md-6"><label>@L["Name"]<InputText class="form-control" @bind-Value="review.NewAcquisition.Name" /></label></div>
+                <div class="col-md-6"><label>@L["LeasingNumber"]<InputText class="form-control" @bind-Value="review.NewAcquisition.Reference" /></label></div>
+                <div class="col-md-6"><label>@L["LeasingFramework"]<InputSelect class="form-select" @bind-Value="review.NewAcquisition.FrameworkId" @bind-Value:after="FrameworkChanged"><option value="">@L["LeasingNoFramework"]</option>@foreach (var f in options.Frameworks) { <option value="@f.Id">@f.Name</option> }</InputSelect></label></div>
+                <div class="col-md-6"><label>@L["LeasingSupplier"]<InputSelect class="form-select" @bind-Value="review.NewAcquisition.SupplierOrganizationId"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach (var p in options.Parties) { <option value="@p.Id">@p.Name</option> }</InputSelect></label></div>
+                <div class="col-md-6"><label>@L["LeasingFinanceCompany"]<InputSelect class="form-select" @bind-Value="review.NewAcquisition.FinanceOrganizationId" disabled="@review.NewAcquisition.FrameworkId.HasValue"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach (var p in options.Parties) { <option value="@p.Id">@p.Name</option> }</InputSelect></label></div>
+                <div class="col-md-6"><label>@L["LeasingOwner"]<InputSelect class="form-select" @bind-Value="review.NewAcquisition.OwnerUserId"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach (var p in options.Owners) { <option value="@p.Id">@p.Name</option> }</InputSelect></label></div>
+                <div class="col-md-6"><label>@L["LeasingPurchaseDate"]<InputDate class="form-control" @bind-Value="review.NewAcquisition.PurchaseDate" /></label></div>
+                <div class="col-md-6"><label>@L["LeasingFinanced"]<InputNumber class="form-control" @bind-Value="review.NewAcquisition.FinancedAmount" step="0.01" /></label></div>
+            </div>
+            <LeasingTermsEditor Terms="review.NewAcquisition.Terms" />
+            <label class="mt-3"><InputCheckbox @bind-Value="review.PurchaseDateConfirmed" /> @L["InvoicePurchaseDateConfirm"]</label>
+        }
+        else if (target != null)
+        { <p class="mt-2">@L["InvoicePreserveDates", target.PurchaseDate.ToString("dd.MM.yyyy"), target.EndDate.ToString("dd.MM.yyyy")]</p><a href="@($"/leasing/acquisitions/{target.Id}/edit")" target="_blank" rel="noopener">@L["InvoiceEditPurchase"]</a> }
+    </div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingItems"]</h2>
+    @foreach (var line in review.Data.Lines)
+    {
+        var match = Match(line); var index = review.Data.Lines.IndexOf(line);
+        <fieldset class="border rounded p-3 mb-3" @key="line.ReviewId"><legend class="float-none w-auto fs-6">@L["LeasingLineNumber", index + 1]</legend>
+        <div class="row g-2">
+            <div class="col-md-4"><label>@L["InvoiceSourceLine"]<InputText class="form-control" @bind-Value="line.SourceId" /></label></div>
+            <div class="col-md-8"><label>@L["LeasingDescription"]<InputText class="form-control" @bind-Value="line.Description" maxlength="500" /></label></div>
+            <div class="col-md-4"><label>@L["LeasingQuantity"]<InputNumber class="form-control" @bind-Value="line.Quantity" step="0.0001" /></label></div>
+            <div class="col-md-4"><label>@L["InvoiceUnit"]<InputText class="form-control" @bind-Value="line.Unit" /></label></div>
+            <div class="col-md-4"><label>@L["LeasingUnitPrice"]<InputNumber class="form-control" @bind-Value="line.Price" step="0.0001" /></label></div>
+            <div class="col-md-4"><label>@L["InvoiceBaseQuantity"]<InputNumber class="form-control" @bind-Value="line.BaseQuantity" step="0.0001" /></label></div>
+            <div class="col-md-4"><label>@L["InvoiceAllowance"]<InputNumber class="form-control" @bind-Value="line.Allowance" step="0.01" /></label></div>
+            <div class="col-md-4"><label>@L["InvoiceCharge"]<InputNumber class="form-control" @bind-Value="line.Charge" step="0.01" /></label></div>
+            <div class="col-md-4"><label>@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="line.Net" step="0.01" /></label></div>
+            <div class="col-md-4"><label>@L["LeasingVatRate"]<InputNumber class="form-control" @bind-Value="line.VatPercent" step="0.0001" /></label></div>
+            <div class="col-md-4"><label>@L["InvoiceVatCategory"]<InputText class="form-control" @bind-Value="line.VatCategory" /></label></div>
+            <div class="col-md-6"><label>@L["InvoiceExemption"]<InputText class="form-control" @bind-Value="line.TaxExemptionReason" /></label></div>
+            <div class="col-md-6"><label>@L["InvoiceSourceReference"]<InputText class="form-control" @bind-Value="line.Reference" /></label></div>
+        </div>
+        <label class="d-block mt-2"><InputCheckbox @bind-Value="line.DocumentAdjustment" /> @L["InvoiceDocumentAdjustment"]</label>
+        <label class="d-block"><InputCheckbox @bind-Value="line.IsAllowance" /> @L["InvoiceNegativeAdjustment"]</label>
+        @if (review.Data.Kind == LeasingInvoiceKind.CreditNote)
+        {
+            <label class="d-block mt-2">@L["InvoiceCreditSource"]<InputSelect class="form-select" @bind-Value="match.CreditedLineId" @bind-Value:after="() => CreditChanged(match)"><option value="">@L["LeasingChoose"]</option>
+                @foreach (var source in creditSources) { <option value="@source.Id">@SourceLabel(source)</option> }
+            </InputSelect></label>
+        }
+        else
+        {
+            <label class="d-block mt-2">@L["InvoiceMatch"]<InputSelect class="form-select" @bind-Value="match.ItemId"><option value="">@L["InvoiceNewItem"]</option>@foreach (var item in target?.Items ?? []) { <option value="@item.Id">@item.Description · @LeasingCalculator.Line(item).Net.ToString("N2")</option> }</InputSelect></label>
+            @if (match.ItemId.HasValue) { <p class="small text-muted">@L["InvoiceMatchHelp"]</p> }
+            else if (catalog != null) { <LeasingClassificationEditor Item="@PreviewItem(line)" Input="match.Classification" Catalog="catalog" Changed="InvalidatePreview" /> }
+        }
+        <p class="small">@L["InvoicePage"]: @line.Page @line.BoundingBox</p>
+        <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveLine(line)">@L["LeasingRemoveLine"]</button>
+        </fieldset>
+    }
+    <button type="button" class="btn btn-outline-primary" @onclick="() => review.Data.Lines.Add(new())">@L["LeasingAddLine"]</button>
+    </div></section>
+    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["InvoiceReconciliation"]</h2>
+        <div class="row g-2">
+            <div class="col-md-4"><label>@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="review.Data.Net" step="0.01" /></label></div>
+            <div class="col-md-4"><label>@L["LeasingVatAmount"]<InputNumber class="form-control" @bind-Value="review.Data.Vat" step="0.01" /></label></div>
+            <div class="col-md-4"><label>@L["LeasingGross"]<InputNumber class="form-control" @bind-Value="review.Data.Gross" step="0.01" /></label></div>
+            <div class="col-md-4"><label>@L["InvoicePrepaid"]<InputNumber class="form-control" @bind-Value="review.Data.Prepaid" step="0.01" /></label></div>
+            <div class="col-md-4"><label>@L["InvoiceRounding"]<InputNumber class="form-control" @bind-Value="review.Data.Rounding" step="0.01" /></label></div>
+            <div class="col-md-4"><label>@L["InvoicePayable"]<InputNumber class="form-control" @bind-Value="review.Data.Payable" step="0.01" /></label></div>
+        </div>
+        <p class="mt-2">@L["InvoiceCalculated", Amounts.Net.ToString("N2"), Amounts.Vat.ToString("N2"), Amounts.Gross.ToString("N2")]</p>
+        @foreach (var issue in Amounts.Errors) { <p class="text-danger">@L[issue]</p> }
+        <details><summary>@L["InvoiceTaxGroups"]</summary>
+            @foreach (var tax in review.Data.Taxes)
+            { <div class="row g-2 mb-2"><div class="col-3"><label>@L["InvoiceVatCategory"]<InputText class="form-control" @bind-Value="tax.Category" /></label></div><div class="col-3"><label>%<InputNumber class="form-control" @bind-Value="tax.Rate" /></label></div><div class="col-3"><label>@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="tax.Taxable" /></label></div><div class="col-3"><label>@L["LeasingVatAmount"]<InputNumber class="form-control" @bind-Value="tax.Amount" /></label></div></div> }
+        </details>
+        <button type="button" class="btn btn-outline-secondary mt-2" @onclick="Recalculate">@L["InvoiceUseCalculated"]</button><p class="small text-muted mt-2">@L["InvoiceRoundingHelp"]</p>
+    </div></section>
+    <section class="card mb-3"><div class="card-body">
+        @foreach (var warning in details.DuplicateWarnings) { <p class="alert alert-warning">@L[warning]</p> }
+        <label class="d-block">@L["InvoiceDuplicateOverride"]<InputTextArea class="form-control mb-2" @bind-Value="review.DuplicateOverrideReason" maxlength="2000" /></label>
+        <label class="d-block">@L["LeasingChangeReason"]<InputTextArea class="form-control mb-2" @bind-Value="review.ReviewReason" maxlength="2000" /></label>
+        <label class="d-block"><InputCheckbox @bind-Value="review.ContentConfirmed" /> @L["InvoiceContentConfirmed"]</label>
+        <p class="small text-muted">@L["InvoiceApprovalHelp"]</p>
+        <button type="submit" class="btn btn-primary">@L["InvoiceSaveDraft"]</button>
+        <button type="button" class="btn btn-outline-primary" @onclick="Preview">@L["InvoicePreview"]</button>
+    </div></section>
+    </fieldset></EditForm>
+    @if (preview != null && editable)
+    {
+        <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["InvoiceApprovalEffect"]</h2>
+            <p>@L["InvoicePurchaseEffect", preview.CurrentPurchase.ToString("N2"), preview.Change.ToString("N2"), preview.NewPurchase.ToString("N2")]</p>
+            @if (preview.Limit.HasValue) { <p>@L["InvoiceLimitEffect", preview.CurrentUsed.ToString("N2"), preview.NewUsed.ToString("N2"), (preview.Limit.Value - preview.NewUsed).ToString("N2")]</p> }
+            @if (review.Data.Kind == LeasingInvoiceKind.CreditNote && preview.Limit.HasValue && !preview.CreditReleasesLimit.HasValue) { <p class="alert alert-warning">@L["InvoiceCreditRuleRequired"]</p> }
+            @if (review.Data.Kind == LeasingInvoiceKind.CreditNote) { <p class="alert alert-warning">@L["InvoiceCreditTermsHelp"]</p> }
+            <button type="button" class="btn btn-success" disabled="@busy" @onclick="Approve">@L["InvoiceApprove"]</button>
+        </div></section>
+    }
+    @if (details.Invoice.Status is LeasingInvoiceStatus.Approved or LeasingInvoiceStatus.Review)
+    {
+        <section class="card mb-3"><div class="card-body"><label class="d-block">@L["LeasingChangeReason"]<textarea class="form-control" @bind="reason" maxlength="2000"></textarea></label><p>@L[details.Invoice.Status == LeasingInvoiceStatus.Approved ? "InvoiceReverseHelp" : "InvoiceRejectHelp"]</p>
+            <button type="button" class="btn btn-outline-danger" disabled="@(busy || string.IsNullOrWhiteSpace(reason))" @onclick="Disposition">@L[details.Invoice.Status == LeasingInvoiceStatus.Approved ? "InvoiceReverse" : "InvoiceReject"]</button>
+        </div></section>
+    }
+    </div></div>
+    <section class="card mt-3"><div class="card-body"><h2 class="h5">@L["LeasingHistory"]</h2>
+        @foreach (var entry in details.History)
+        { <details><summary>@entry.RecordedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'") · @entry.ActorUserId · @L[$"InvoiceAction{entry.Action}"]</summary><p>@entry.Reason</p><div class="row"><div class="col-md-6"><strong>@L["LeasingBefore"]</strong><InvoiceDataView Data="@(JsonSerializer.Deserialize<InvoiceReview>(entry.BeforeJson)?.Data ?? new())" /></div><div class="col-md-6"><strong>@L["LeasingAfter"]</strong><InvoiceDataView Data="@(JsonSerializer.Deserialize<InvoiceReview>(entry.AfterJson)?.Data ?? new())" /></div></div></details> }
+    </div></section>
+}
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private EditContext editContext = new(new InvoiceReview());
+    private void InvalidatePreview() => preview = null;
+    private Guid account; private bool busy; private string? error; private string reason = ""; private Guid? useInterpretation;
+    private InvoiceDetails? details; private InvoiceReview review = new(); private LeasingOptions? options; private LeasingClassificationCatalog? catalog;
+    private LeasingAcquisition? target; private List<LeasingInvoiceLine> creditSources = []; private List<LeasingInvoice> targetDocuments = []; private InvoiceApprovalPreview? preview;
+    private bool editable => details?.Invoice.Status == LeasingInvoiceStatus.Review;
+    private InvoiceAmounts Amounts => InvoiceCalculator.Calculate(review.Data);
+    protected override async Task OnParametersSetAsync() { if (User.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; } account = id; await Load(); }
+    private Task Load() => Run(Reload);
+    private async Task Reload() { details = await Service.GetInvoiceAsync(account, Id); review = details.Review; editContext = new(review); editContext.OnFieldChanged += (_, _) => preview = null; target = details.Acquisition; options = await Service.OptionsAsync(account); catalog = await Service.ClassificationCatalogAsync(account); targetDocuments = details.Documents; creditSources = details.DocumentedLines.Where(x => details.Documents.Any(d => d.Id == x.InvoiceId && d.Kind == LeasingInvoiceKind.Invoice)).ToList(); preview = null; if (review.NewAcquisition.OwnerUserId == Guid.Empty) review.NewAcquisition.OwnerUserId = User.Current.UserId; if (review.NewAcquisition.PurchaseDate == default && review.Data.Date.HasValue) { review.NewAcquisition.PurchaseDate = review.Data.Date.Value; review.PurchaseDateConfirmed = false; } }
+    private InvoiceLineMatch Match(InvoiceDataLine line) { var match = review.Matches.SingleOrDefault(x => x.ReviewLineId == line.ReviewId); if (match == null) { match = new() { ReviewLineId = line.ReviewId }; review.Matches.Add(match); } return match; }
+    private LeasingItem PreviewItem(InvoiceDataLine line) { try { var index = review.Data.Lines.IndexOf(line); return LeasingService.ImportedItem(line, Amounts.LineNet[index], Amounts.LineVat[index]); } catch (ArithmeticException) { return new(); } }
+    private void RemoveLine(InvoiceDataLine line) { review.Data.Lines.Remove(line); review.Matches.RemoveAll(x => x.ReviewLineId == line.ReviewId); preview = null; }
+    private Task TargetChanged() => Run(async () => { preview = null; foreach (var match in review.Matches) { match.ItemId = null; match.CreditedLineId = null; } if (review.AcquisitionId.HasValue) { await Service.SaveInvoiceReviewAsync(account, Id, details!.Invoice.Revision, review); await Reload(); } else { target = null; creditSources = []; if (review.Data.Date.HasValue) review.NewAcquisition.PurchaseDate = review.Data.Date.Value; review.NewAcquisition.Currency = review.Data.Currency; review.PurchaseDateConfirmed = false; } });
+    private Task FrameworkChanged() => Run(async () => { var d = await Service.NewAcquisitionAsync(account, review.NewAcquisition.FrameworkId); review.NewAcquisition.FinanceOrganizationId = d.FinanceOrganizationId; review.NewAcquisition.Currency = d.Currency; review.NewAcquisition.Terms = d.Terms; });
+    private void CreditChanged(InvoiceLineMatch match) { match.ItemId = creditSources.SingleOrDefault(x => x.Id == match.CreditedLineId)?.ItemId; preview = null; }
+    private string SourceLabel(LeasingInvoiceLine line) => $"{targetDocuments.Single(x => x.Id == line.InvoiceId).Number} · {line.SourceLineId} · {line.Net:N2} · {line.Quantity:0.####}";
+    private void Recalculate() { var a = Amounts; for (int i = 0; i < review.Data.Lines.Count; i++) review.Data.Lines[i].Net = a.LineNet[i]; review.Data.Net = a.Net; review.Data.Vat = a.Vat; review.Data.Gross = a.Gross; review.Data.Taxes = a.Taxes; review.Data.Payable = InvoiceCalculator.Money(a.Gross - (review.Data.Prepaid ?? 0) + (review.Data.Rounding ?? 0)); preview = null; }
+    private async Task Persist() { review.NewAcquisition.Currency = review.Data.Currency; await Service.SaveInvoiceReviewAsync(account, Id, details!.Invoice.Revision, review); await Reload(); }
+    private Task Save() => Run(Persist);
+    private Task Preview() => Run(async () => { await Persist(); preview = await Service.PreviewInvoiceAsync(account, Id, details!.Invoice.Revision); });
+    private Task Approve() => Run(async () => { await Service.ApproveInvoiceAsync(account, Id, details!.Invoice.Revision); await Reload(); });
+    private Task Retry() => Run(async () => { await Service.RetryInvoiceAsync(account, Id, details!.Invoice.Revision); await Reload(); });
+    private Task UseInterpretation() => Run(async () => { await Service.UseInterpretationAsync(account, Id, details!.Invoice.Revision, useInterpretation!.Value); useInterpretation = null; await Reload(); });
+    private Task Disposition() => Run(async () => { if (details!.Invoice.Status == LeasingInvoiceStatus.Approved) await Service.ReverseInvoiceAsync(account, Id, details.Invoice.Revision, reason); else await Service.RejectInvoiceAsync(account, Id, details.Invoice.Revision, reason); await Reload(); });
+    private async Task Run(Func<Task> action) { if (busy) return; busy = true; error = null; try { await action(); } catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); } catch (LeasingValidationException ex) { error = ex.Message; } catch (Exception) { error = "InvoiceProcessingFailed"; } finally { busy = false; } }
+}

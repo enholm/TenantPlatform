@@ -1,4 +1,4 @@
-# Leasing phases 1 and 2
+# Leasing phases 1, 2 and 3
 
 Run from the repository root:
 
@@ -6,7 +6,7 @@ Run from the repository root:
 LEASING_TEST_CONNECTION='Host=localhost;Username=...;Database=tenant_leasing_tests' dotnet run --project tests/TenantPlatform.Leasing.SmokeTests
 ```
 
-The runner refuses any database name other than `tenant_leasing_tests`. It creates an isolated schema, applies the complete migration chain, seeds test-only records, checks the real PostgreSQL locking behaviour, and removes its own schema in `finally`. It never targets the application database. All database operations use the production `AuditSaveChangesInterceptor`, including full composite-key auditing for allocations. Document storage is a test double; document metadata and access checks use PostgreSQL. Component checks render Blazor markup without a browser.
+The runner refuses any database name other than `tenant_leasing_tests`. It creates an isolated schema, applies the complete migration chain, seeds test-only records, checks the real PostgreSQL locking behaviour, and removes its own schema in `finally`. It never targets the application database. All database operations use the production `AuditSaveChangesInterceptor`, including full composite-key auditing for allocations. Phase-one document storage is a test double; phase-three import checks use real local validated storage in a disposable directory. Document metadata and access checks use PostgreSQL. Component checks render Blazor markup without a browser.
 
 Coverage: five-year anniversaries, month end/leap years, inclusive acquisition windows and backdated registration, exact/over-limit purchases, concurrent registrations, edits and stable line IDs, stale revisions, cancellation, moves across frameworks, VAT-inclusive/exclusive limits, standalone leases, copied terms, closed frameworks, negative lines, forged line IDs, tenant and owner authorization, documents, history, and rendered editor/detail components.
 
@@ -20,7 +20,7 @@ Coverage: five-year anniversaries, month end/leap years, inclusive acquisition w
 - Manual Closed/Finished status blocks new registered acquisitions. Expiration of the acquisition window alone does not prevent late registration of a purchase whose purchase date is within the window. Existing leases continue independently.
 - Framework edits cannot conflict with registered purchase dates, currency or finance company. VAT basis is locked while registered acquisitions exist. Limit reductions cannot go below used capacity.
 - Financial/history changes and file metadata are committed atomically. Uploads reuse existing validated agreement storage and file limits. There is no permanent-delete endpoint.
-- History exposes timestamp, actor, reason, action and before/after snapshots. No schedules, interest lookup, imports, reservations, credits or asset serials are included.
+- History exposes timestamp, actor, reason, action and before/after snapshots. Phase one includes no schedules, interest lookup, imports, reservations, credits or asset serials; phase three adds supplier invoices and credit notes as described below.
 
 ## Phase 2
 
@@ -31,3 +31,9 @@ The same runner verifies upgrading a populated phase-one schema, dimension uniqu
 - Common selections are copied to the other lines, preserving each target line's varying dimensions and allocation inputs. Explicit edits validate current rules. Unrelated changes preserve historical selections, including inactive ones and legacy missing requirements.
 - One ordered allocation applies to each item. Net amounts use two decimals; percentages/quantities use four. Cumulative rounding differences reconcile net, VAT and quantity exactly. Zero-net amount allocations display no derived percentage or quantity. Incomplete drafts retain inputs without fabricated calculated amounts.
 - The new migration is additive, defaults existing lines to unsplit allocation, and creates no fictional classifications. Tests use only disposable schemas; application database migrations are not applied by the test runner.
+
+## Phase 3
+
+See [implementation, format support and configuration](../../docs/leasing-invoice-import.md). `InvoiceChecks` runs against real PostgreSQL and local document storage with production auditing. It covers UBL invoice/credit parsing, safe XML and unsupported formats, line/header adjustments, VAT categories, prepayments/rounding, manual matching of 40,000 + 60,000 against a 100,000 purchase, preserved purchase date/terms/classification, excess documentation, full/partial credit, explicitly undecided/false/true release policies, policy locking, cross-format duplicates, retry without overwritten corrections, explicit replacement, rejection, stale reviews, immutable approvals, simultaneous approvals, reversal dependencies/capacity rollback, explicit persisted document discounts, and account/owner access.
+
+`InvoiceComponentChecks` renders upload, review and approved views using Blazor HtmlRenderer. HTTP mocks verify Responses API structured JSON schema, original PDF/image input and preservation of page references/missing fields. No real customer documents or live external service are used. Migration checks upgrade populated legacy data without changed totals or an assumed credit policy.

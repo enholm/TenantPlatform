@@ -41,6 +41,7 @@
             </InputSelect></div>
             @if (framework)
             {
+                <div class="col-md-6"><label class="form-label">@L["InvoiceCreditRule"]<InputSelect class="form-select" @bind-Value="f.CreditNotesReleaseLimit"><option value="">@L["LeasingChoose"]</option><option value="true">@L["Yes"]</option><option value="false">@L["No"]</option></InputSelect></label></div>
                 <div class="col-md-3"><label for="lease-status" class="form-label">@L["Status"]</label><InputSelect id="lease-status" class="form-select" @bind-Value="f.Status">@foreach (var value in Enum.GetValues<LeasingFrameworkStatus>()) { <option value="@value">@L[$"LeasingStatus{value}"]</option> }</InputSelect></div>
                 <div class="col-md-3"><label for="lease-from" class="form-label">@L["LeasingAcquisitionFrom"]</label><InputDate id="lease-from" class="form-control" @bind-Value="f.AcquisitionFrom" /></div>
                 <div class="col-md-3"><label for="lease-to" class="form-label">@L["LeasingAcquisitionTo"]</label><InputDate id="lease-to" class="form-control" @bind-Value="f.AcquisitionTo" /></div>
@@ -76,7 +77,7 @@
                         <div class="col-md-2"><label for="@($"item-quantity-{index}")" class="form-label">@L["LeasingQuantity"]</label><InputNumber id="@($"item-quantity-{index}")" class="form-control" @bind-Value="item.Quantity" min="0.0001" step="0.0001" /></div>
                         <div class="col-md-2"><label for="@($"item-vat-{index}")" class="form-label">@L["LeasingVatRate"]</label><InputNumber id="@($"item-vat-{index}")" class="form-control" @bind-Value="item.VatPercent" min="0" max="100" step="0.0001" /></div>
                         <div class="col-md-4"><label for="@($"item-price-{index}")" class="form-label">@L["LeasingUnitPrice"]</label><InputNumber id="@($"item-price-{index}")" class="form-control" @bind-Value="item.UnitPrice" min="0" step="0.0001" /></div>
-                        <div class="col-md-6 align-self-end"><span class="small">@LineText(item)</span></div>
+                        <div class="col-md-6 align-self-end"><span class="small">@LineText(item)</span>@if (item.InvoiceNetAdjustment != 0 || item.InvoiceVatAdjustment != 0) { <p class="small">@L["InvoiceItemAdjustments", item.InvoiceNetAdjustment.ToString("N2"), item.InvoiceVatAdjustment.ToString("N2")]</p> }</div>
                         <div class="col-md-2 align-self-end"><button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => a.Items.Remove(item)">@L["LeasingRemoveLine"]</button></div>
                     </div>
                     @if (catalog is not null)

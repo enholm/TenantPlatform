@@ -13,8 +13,8 @@ public static class LeasingCalculator
     {
         if (item.Quantity <= 0 || item.UnitPrice < 0 || item.VatPercent is < 0 or > 100)
             throw new ArgumentOutOfRangeException(nameof(item));
-        var net = decimal.Round(item.Quantity * item.UnitPrice, 2, MidpointRounding.AwayFromZero);
-        return new(net, decimal.Round(net * item.VatPercent / 100m, 2, MidpointRounding.AwayFromZero));
+        var net = decimal.Round(item.Quantity * item.UnitPrice, 2, MidpointRounding.AwayFromZero) + item.InvoiceNetAdjustment;
+        return new(net, decimal.Round(net * item.VatPercent / 100m, 2, MidpointRounding.AwayFromZero) + item.InvoiceVatAdjustment);
     }
     public static LeasingTotals Total(IEnumerable<LeasingItem> items)
     {
@@ -30,5 +30,5 @@ public static class LeasingCalculator
     }
     public static bool InPeriod(DateOnly purchaseDate, DateOnly from, DateOnly to) => purchaseDate >= from && purchaseDate <= to;
     public static decimal Used(IEnumerable<LeasingAcquisition> acquisitions, bool includesVat) =>
-        acquisitions.Where(x => x.Status == LeasingAcquisitionStatus.Registered).Sum(x => includesVat ? x.GrossTotal : x.NetTotal);
+        acquisitions.Where(x => x.Status == LeasingAcquisitionStatus.Registered).Sum(x => includesVat ? x.GrossTotal - x.ReleasedNetTotal - x.ReleasedVatTotal : x.NetTotal - x.ReleasedNetTotal);
 }

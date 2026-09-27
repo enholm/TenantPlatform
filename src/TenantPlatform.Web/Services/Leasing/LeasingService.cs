@@ -79,7 +79,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         var frows = frameworks.Select(x => new { x.Id, Framework = true, x.Name, Number = x.Number, Status = (int)x.Status,
             x.OwnerUserId, Start = x.AcquisitionFrom, End = x.AcquisitionTo, x.Currency, Amount = x.Limit });
         var arows = acquisitions.Select(x => new { x.Id, Framework = false, x.Name, Number = x.Reference, Status = (int)x.Status,
-            x.OwnerUserId, Start = x.PurchaseDate, End = x.EndDate, x.Currency, Amount = x.GrossTotal });
+            x.OwnerUserId, Start = x.PurchaseDate, End = x.EndDate, x.Currency, Amount = x.GrossTotal - x.CreditNetTotal - x.CreditVatTotal - x.ReversedNetTotal - x.ReversedVatTotal });
         var query = frows.Concat(arows);
         var count = await query.CountAsync(ct);
         const int size = 25;
@@ -170,6 +170,8 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         var before = id.HasValue ? Snapshot(entity) : "{}";
         entity.Name = input.Name.Trim(); entity.Number = input.Number.Trim(); entity.FinanceOrganizationId = input.FinanceOrganizationId;
         entity.OwnerUserId = input.OwnerUserId; entity.AcquisitionFrom = input.AcquisitionFrom; entity.AcquisitionTo = input.AcquisitionTo;
+        if (entity.CreditNotesReleaseLimit != input.CreditNotesReleaseLimit && await db.LeasingInvoices.AnyAsync(x => x.AccountId == account && x.Kind == LeasingInvoiceKind.CreditNote && x.Status == LeasingInvoiceStatus.Approved && db.LeasingAcquisitions.Any(a => a.AccountId == account && a.Id == x.AcquisitionId && a.FrameworkId == entity.Id), ct)) throw new LeasingValidationException("InvoiceCreditRuleLocked");
+        entity.CreditNotesReleaseLimit = input.CreditNotesReleaseLimit;
         entity.Limit = input.Limit; entity.Currency = input.Currency; entity.IncludesVat = input.IncludesVat;
         entity.Terms = input.Terms.Copy(); entity.Notes = input.Notes?.Trim(); entity.Status = input.Status; entity.Revision = Guid.NewGuid();
         if (!id.HasValue) db.LeasingFrameworks.Add(entity);
@@ -182,6 +184,12 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(db, account, ct);
+        var result = await SaveAcquisitionCore(db, account, user, admin, id, input, reason, ct, classifications);
+        await tx.CommitAsync(ct); return result;
+    }
+    private async Task<Guid> SaveAcquisitionCore(TenantPlatformDbContext db, Guid account, Guid user, bool admin, Guid? id,
+        LeasingAcquisition input, string reason, CancellationToken ct, IReadOnlyDictionary<int, LeasingClassificationInput>? classifications = null, bool invoiceApproval = false)
+    {
         var entity = id.HasValue ? await WithClassifications(Acquisitions(db, account, user, admin)).SingleOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new UnauthorizedAccessException() : new LeasingAcquisition { Id = Guid.NewGuid(), AccountId = account };
         CheckRevision(entity.Revision, input.Revision, id.HasValue); Reason(reason, id.HasValue);
@@ -212,11 +220,32 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
             x.ItemNumber?.Length > 100 || x.Quantity <= 0 || x.Quantity > 1000000000m || x.UnitPrice < 0 || x.UnitPrice > 1000000000000m ||
             x.VatPercent is < 0 or > 100 || !Precision(x.Quantity, 4) || !Precision(x.UnitPrice, 4) || !Precision(x.VatPercent, 4)))
             throw new LeasingValidationException("LeasingInvalidLines");
+        foreach (var line in input.Items)
+        {
+            var existing = entity.Items.SingleOrDefault(x => x.Id == line.Id);
+            if (!invoiceApproval || existing != null)
+            { line.InvoiceNetAdjustment = existing?.InvoiceNetAdjustment ?? 0; line.InvoiceVatAdjustment = existing?.InvoiceVatAdjustment ?? 0; }
+        }
+        if (id.HasValue && await db.LeasingInvoices.AnyAsync(x => x.AccountId == account && x.AcquisitionId == id && x.Status == LeasingInvoiceStatus.Approved, ct) &&
+            (entity.FrameworkId != input.FrameworkId || entity.SupplierOrganizationId != input.SupplierOrganizationId || entity.Currency != input.Currency)) throw new LeasingValidationException("InvoiceLinkedPurchase");
+        var retainedIds = input.Items.Select(x => x.Id).ToArray();
+        if (id.HasValue && await db.LeasingInvoiceLines.AnyAsync(x => x.AccountId == account && !retainedIds.Contains(x.ItemId) &&
+            db.LeasingItems.Any(i => i.AccountId == account && i.AcquisitionId == id && i.Id == x.ItemId), ct)) throw new LeasingValidationException("InvoiceLinkedPurchase");
+        if (id.HasValue)
+        {
+            var reversedItemIds = await db.LeasingInvoiceLines.Where(x => x.AccountId == account && x.CreatedItem &&
+                db.LeasingInvoices.Any(d => d.AccountId == account && d.Id == x.InvoiceId && d.AcquisitionId == id && d.Status == LeasingInvoiceStatus.Reversed)).Select(x => x.ItemId).ToListAsync(ct);
+            foreach (var item in input.Items.Where(x => reversedItemIds.Contains(x.Id)))
+            {
+                var original = entity.Items.Single(x => x.Id == item.Id);
+                if (item.Quantity != original.Quantity || item.UnitPrice != original.UnitPrice || item.VatPercent != original.VatPercent) throw new LeasingValidationException("InvoiceLinkedPurchase");
+            }
+        }
         var totals = LeasingCalculator.Total(input.Items);
-        if (totals.Gross > 1000000000000m) throw new LeasingValidationException("LeasingInvalidLines");
+        if (totals.Gross > 1000000000000m || totals.Net < entity.CreditNetTotal + entity.ReversedNetTotal || totals.Vat < entity.CreditVatTotal + entity.ReversedVatTotal) throw new LeasingValidationException("LeasingInvalidLines");
         if (input.Status == LeasingAcquisitionStatus.Registered)
         {
-            if (input.Items.Count == 0 || totals.Net <= 0 || input.FinancedAmount <= 0 || string.IsNullOrWhiteSpace(input.InvoiceNumber) || !input.InvoiceDate.HasValue)
+            if (input.Items.Count == 0 || totals.Net <= 0 || input.FinancedAmount <= 0 || (!invoiceApproval && (string.IsNullOrWhiteSpace(input.InvoiceNumber) || !input.InvoiceDate.HasValue) && !await db.LeasingInvoices.AnyAsync(x => x.AccountId == account && x.AcquisitionId == entity.Id && x.Status == LeasingInvoiceStatus.Approved, ct)))
                 throw new LeasingValidationException("LeasingRegistrationRequired");
             if (framework is not null)
             {
@@ -225,8 +254,8 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
                 if (!LeasingCalculator.InPeriod(input.PurchaseDate, framework.AcquisitionFrom, framework.AcquisitionTo)) throw new LeasingValidationException("LeasingOutsidePeriod");
                 var used = await db.LeasingAcquisitions.Where(x => x.AccountId == account && x.FrameworkId == framework.Id &&
                     x.Status == LeasingAcquisitionStatus.Registered && x.Id != entity.Id)
-                    .SumAsync(x => framework.IncludesVat ? x.GrossTotal : x.NetTotal, ct);
-                if (used + (framework.IncludesVat ? totals.Gross : totals.Net) > framework.Limit) throw new LeasingValidationException("LeasingLimitExceeded");
+                    .SumAsync(x => framework.IncludesVat ? x.GrossTotal - x.ReleasedNetTotal - x.ReleasedVatTotal : x.NetTotal - x.ReleasedNetTotal, ct);
+                if (used + (framework.IncludesVat ? totals.Gross - entity.ReleasedNetTotal - entity.ReleasedVatTotal : totals.Net - entity.ReleasedNetTotal) > framework.Limit) throw new LeasingValidationException("LeasingLimitExceeded");
             }
         }
         if (classifications?.Keys.Any(x => x < 0 || x >= input.Items.Count) == true) throw new LeasingValidationException("LeasingInvalidLines");
@@ -249,6 +278,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
             var item = incoming.Id == Guid.Empty ? new LeasingItem { Id = Guid.NewGuid(), AccountId = account, AcquisitionId = entity.Id } : entity.Items.Single(x => x.Id == incoming.Id);
             item.Position = position; item.Description = incoming.Description.Trim(); item.ItemNumber = incoming.ItemNumber?.Trim();
             item.Quantity = incoming.Quantity; item.UnitPrice = incoming.UnitPrice; item.VatPercent = incoming.VatPercent;
+            item.InvoiceNetAdjustment = incoming.InvoiceNetAdjustment; item.InvoiceVatAdjustment = incoming.InvoiceVatAdjustment;
             if (incoming.Id == Guid.Empty) { entity.Items.Add(item); if (id.HasValue) db.LeasingItems.Add(item); }
             if (classifications != null && classifications.TryGetValue(position, out var classification))
                 ApplyClassification(db, item, classification, catalog, input.Status == LeasingAcquisitionStatus.Registered);
@@ -259,7 +289,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         }
         if (!id.HasValue) db.LeasingAcquisitions.Add(entity);
         History(db, account, null, entity.Id, user, id.HasValue ? "Updated" : "Created", reason, before, Snapshot(entity));
-        await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return entity.Id;
+        await db.SaveChangesAsync(ct); return entity.Id;
     }
 
     public async Task CancelAsync(Guid account, Guid id, Guid revision, string reason, CancellationToken ct = default)

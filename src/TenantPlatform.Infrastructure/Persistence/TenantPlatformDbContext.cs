@@ -23,6 +23,10 @@ public class TenantPlatformDbContext : DbContext
     public DbSet<LeasingAllocationDimension> LeasingAllocationDimensions => Set<LeasingAllocationDimension>();
     public DbSet<LeasingAllocationRow> LeasingAllocationRows => Set<LeasingAllocationRow>();
     public DbSet<LeasingDimensionSelection> LeasingDimensionSelections => Set<LeasingDimensionSelection>();
+    public DbSet<LeasingInvoice> LeasingInvoices => Set<LeasingInvoice>();
+    public DbSet<LeasingInvoiceLine> LeasingInvoiceLines => Set<LeasingInvoiceLine>();
+    public DbSet<LeasingInvoiceInterpretation> LeasingInvoiceInterpretations => Set<LeasingInvoiceInterpretation>();
+    public DbSet<LeasingInvoiceHistory> LeasingInvoiceHistory => Set<LeasingInvoiceHistory>();
     public DbSet<LeasingFramework> LeasingFrameworks => Set<LeasingFramework>();
     public DbSet<LeasingAcquisition> LeasingAcquisitions => Set<LeasingAcquisition>();
     public DbSet<LeasingItem> LeasingItems => Set<LeasingItem>();

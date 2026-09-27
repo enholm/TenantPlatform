@@ -33,7 +33,7 @@ public sealed class LeasingClassificationInput
     };
     public LeasingItem Preview(LeasingItem source) => new()
     {
-        Quantity = source.Quantity, UnitPrice = source.UnitPrice, VatPercent = source.VatPercent, AllocationMode = Mode,
+        Quantity = source.Quantity, UnitPrice = source.UnitPrice, VatPercent = source.VatPercent, InvoiceNetAdjustment = source.InvoiceNetAdjustment, InvoiceVatAdjustment = source.InvoiceVatAdjustment, AllocationMode = Mode,
         AllocationRows = Rows.Select((x, i) => new LeasingAllocationRow { Id = x.Id ?? Guid.Empty, Position = i, InputValue = x.InputValue }).ToList()
     };
 }

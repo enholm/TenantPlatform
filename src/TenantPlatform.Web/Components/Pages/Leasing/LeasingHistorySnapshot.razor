@@ -18,7 +18,9 @@
         @foreach (var value in items.EnumerateArray())
         {
             var item = value.Deserialize<LeasingItem>()!;
-            <li>@item.Description (@item.ItemNumber) · @L["LeasingQuantity"]: @item.Quantity.ToString("0.####") · @L["LeasingUnitPrice"]: @item.UnitPrice.ToString("0.####") · @L["LeasingVatRate"]: @item.VatPercent.ToString("0.####")<LeasingClassificationView Item="item" /></li>
+            <li>@item.Description (@item.ItemNumber) · @L["LeasingQuantity"]: @item.Quantity.ToString("0.####") · @L["LeasingUnitPrice"]: @item.UnitPrice.ToString("0.####") · @L["LeasingVatRate"]: @item.VatPercent.ToString("0.####")
+                @if (item.InvoiceNetAdjustment != 0 || item.InvoiceVatAdjustment != 0) { <span> · @L["InvoiceItemAdjustments", item.InvoiceNetAdjustment.ToString("N2"), item.InvoiceVatAdjustment.ToString("N2")]</span> }
+                <LeasingClassificationView Item="item" /></li>
         }
     </ul>
 }
@@ -34,6 +36,10 @@
         ("AcquisitionFrom", "LeasingAcquisitionFrom"), ("AcquisitionTo", "LeasingAcquisitionTo"),
         ("Limit", "LeasingLimit"), ("IncludesVat", "LeasingVatBasis"), ("Currency", "LeasingCurrency"),
         ("PurchaseDate", "LeasingPurchaseDate"), ("EndDate", "LeasingEndDate"), ("NetTotal", "LeasingNet"),
+        ("CreditNotesReleaseLimit", "InvoiceCreditRule"),
+        ("CreditNetTotal", "InvoiceCreditNet"), ("CreditVatTotal", "InvoiceCreditVat"),
+        ("ReversedNetTotal", "InvoiceReversedNet"), ("ReversedVatTotal", "InvoiceReversedVat"),
+        ("ReleasedNetTotal", "InvoiceReleasedNet"), ("ReleasedVatTotal", "InvoiceReleasedVat"),
         ("VatTotal", "LeasingVatAmount"), ("GrossTotal", "LeasingGross"), ("FinancedAmount", "LeasingFinanced"),
         ("InvoiceNumber", "LeasingInvoiceNumber"), ("InvoiceDate", "LeasingInvoiceDate"), ("Status", "Status"),
         ("Notes", "LeasingNotes"), ("FileName", "LeasingDocuments")
@@ -42,6 +48,7 @@
     {
         if (property.EndsWith("Id")) return ReferenceNames.GetValueOrDefault(value.GetGuid(), L["DashboardUnspecified"]);
         if (property == "Status") return L[$"LeasingStatus{(Framework ? ((LeasingFrameworkStatus)value.GetInt32()).ToString() : ((LeasingAcquisitionStatus)value.GetInt32()).ToString())}"];
+        if (property == "CreditNotesReleaseLimit") return L[value.GetBoolean() ? "Yes" : "No"];
         if (property == "IncludesVat") return L[value.GetBoolean() ? "LeasingGross" : "LeasingNet"];
         if (property is "AcquisitionFrom" or "AcquisitionTo" or "PurchaseDate" or "EndDate" or "InvoiceDate") return DateOnly.Parse(value.GetString()!, CultureInfo.InvariantCulture).ToString("dd.MM.yyyy");
         if (value.ValueKind == JsonValueKind.Number) return value.GetDecimal().ToString("N2");

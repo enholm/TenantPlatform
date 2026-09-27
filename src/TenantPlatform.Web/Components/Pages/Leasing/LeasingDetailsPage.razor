@@ -33,6 +33,7 @@
             <dt class="col-sm-5">@L["LeasingPurchaseDate"]</dt><dd class="col-sm-7">@Date(a!.PurchaseDate)</dd>
             <dt class="col-sm-5">@L["LeasingEndDate"]</dt><dd class="col-sm-7">@Date(a.EndDate)</dd>
             <dt class="col-sm-5">@L["LeasingFinanced"]</dt><dd class="col-sm-7">@a.FinancedAmount.ToString("N2") @currency</dd>
+            <dt class="col-sm-12 text-muted">@L["InvoiceLegacyReference"]</dt>
             <dt class="col-sm-5">@L["LeasingInvoiceNumber"]</dt><dd class="col-sm-7">@(a.InvoiceNumber ?? L["DashboardUnspecified"])</dd>
             <dt class="col-sm-5">@L["LeasingInvoiceDate"]</dt><dd class="col-sm-7">@(a.InvoiceDate?.ToString("dd.MM.yyyy") ?? L["DashboardUnspecified"])</dd>
         }
@@ -44,7 +45,7 @@
             <div class="col-sm-4"><div>@L["LeasingLimit"]</div><strong class="fs-4">@f.Limit.ToString("N2") @currency</strong></div>
             <div class="col-sm-4"><div>@L["LeasingUsed"]</div><strong class="fs-4">@data.Used.ToString("N2") @currency</strong></div>
             <div class="col-sm-4"><div>@L["LeasingAvailable"]</div><strong class="fs-4">@((f.Limit - data.Used).ToString("N2")) @currency</strong></div>
-        </div><p class="small text-muted mt-3 mb-0">@L["LeasingCapacityHelp"]</p></div></section>
+        </div><p class="small text-muted mt-3">@L["InvoiceCreditRule"] @L[f.CreditNotesReleaseLimit.HasValue ? (f.CreditNotesReleaseLimit.Value ? "Yes" : "No") : "DashboardUnspecified"]</p><p class="small text-muted mt-3 mb-0">@L["LeasingCapacityHelp"]</p></div></section>
         <section class="card mb-3"><div class="card-body"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><h2 class="h5">@L["LeasingAcquisitions"]</h2>
             @if (f.Status == LeasingFrameworkStatus.Open && data.CanEdit) { <a class="btn btn-outline-primary" href="@($"/leasing/acquisitions/create?framework={f.Id}")">@L["LeasingNewAcquisition"]</a> }
         </div><p class="small text-muted">@L["LeasingPeriodHelp"]</p>
@@ -59,6 +60,21 @@
     }
     else
     {
+        <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["InvoiceDocuments"]</h2>
+            @if (data.CanEdit) { <a class="btn btn-outline-primary mb-3" href="@($"/leasing/invoices?acquisition={a!.Id}")">@L["InvoiceUpload"]</a> }
+            <p>@L["InvoiceNetPurchase", a!.GrossTotal.ToString("N2"), (a.CreditNetTotal + a.CreditVatTotal).ToString("N2"), (a.ReversedNetTotal + a.ReversedVatTotal).ToString("N2"), (a.GrossTotal - a.CreditNetTotal - a.CreditVatTotal - a.ReversedNetTotal - a.ReversedVatTotal).ToString("N2")] @a.Currency</p>
+            <ul>@foreach (var document in invoiceDocuments) { <li><a href="@($"/leasing/invoices/{document.Id}")">@(string.IsNullOrEmpty(document.Number) ? document.FileName : document.Number)</a> · @L[$"InvoiceStatus{document.Status}"]</li> }</ul>
+            @foreach (var item in a.Items.OrderBy(x => x.Position))
+            {
+                var lines = invoiceLines.Where(x => x.ItemId == item.Id && invoiceDocuments.Single(d => d.Id == x.InvoiceId).Status == LeasingInvoiceStatus.Approved).ToList();
+                var reversed = invoiceLines.Where(x => x.ItemId == item.Id && x.CreatedItem && invoiceDocuments.Single(d => d.Id == x.InvoiceId).Status == LeasingInvoiceStatus.Reversed).Sum(x => x.Net);
+                var quantity = lines.Sum(x => x.Quantity * (invoiceDocuments.Single(d => d.Id == x.InvoiceId).Kind == LeasingInvoiceKind.CreditNote ? -1 : 1));
+                var net = lines.Sum(x => x.Net * (invoiceDocuments.Single(d => d.Id == x.InvoiceId).Kind == LeasingInvoiceKind.CreditNote ? -1 : 1));
+                var credits = lines.Where(x => invoiceDocuments.Single(d => d.Id == x.InvoiceId).Kind == LeasingInvoiceKind.CreditNote).Sum(x => x.Net);
+                <p><strong>@item.Description</strong> · @L["InvoiceDocumented", quantity.ToString("0.####"), net.ToString("N2"), (LeasingCalculator.Line(item).Net - reversed - credits - net).ToString("N2")]</p>
+                @if (item.InvoiceNetAdjustment != 0 || item.InvoiceVatAdjustment != 0) { <p class="small">@L["InvoiceItemAdjustments", item.InvoiceNetAdjustment.ToString("N2"), item.InvoiceVatAdjustment.ToString("N2")]</p> }
+            }
+        </div></section>
         <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingItems"]</h2><div class="table-responsive"><table class="table"><thead><tr>
             <th>@L["LeasingDescription"]</th><th>@L["LeasingItemNumber"]</th><th>@L["LeasingQuantity"]</th><th>@L["LeasingUnitPrice"]</th><th>@L["LeasingVatRate"]</th><th>@L["LeasingNet"]</th><th>@L["LeasingGross"]</th>
         </tr></thead><tbody>@foreach (var item in a!.Items.OrderBy(x => x.Position))
@@ -95,6 +111,7 @@
 }
 @code {
     [Parameter] public Guid Id { get; set; }
+    private List<LeasingInvoice> invoiceDocuments = []; private List<LeasingInvoiceLine> invoiceLines = [];
     private LeasingClassificationCatalog? catalog;
     private Guid account; private bool framework, busy = true; private string? error; private string cancelReason = ""; private LeasingDetails? data;
     protected override async Task OnParametersSetAsync()
@@ -106,7 +123,7 @@
     private async Task Load()
     {
         busy = true; error = null;
-        try { data = await Service.GetAsync(account, Id, framework); if (!framework) catalog = await Service.ClassificationCatalogAsync(account); }
+        try { data = await Service.GetAsync(account, Id, framework); if (!framework) { catalog = await Service.ClassificationCatalogAsync(account); (invoiceDocuments, invoiceLines) = await Service.PurchaseInvoicesAsync(account, Id); } }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (Exception) { error = "LeasingFailed"; }
         finally { busy = false; }
