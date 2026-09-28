@@ -2965,4 +2965,233 @@ This is a reminder, not a termination or renewal.</value>
 <data name="InvoiceIsAllowance" xml:space="preserve"><value>Allowance entry</value></data>
 <data name="Select" xml:space="preserve"><value>Select</value></data>
 <data name="PaymentOriginalFinancingHelp" xml:space="preserve"><value>Finance company, financed amount and interest terms below show original acquisition information. See dated current terms in the financing view.</value></data>
+<data name="LifeLifecycle" xml:space="preserve"><value>Lifecycle management</value></data>
+<data name="LifeEquipment" xml:space="preserve"><value>Equipment</value></data>
+<data name="LifeFollowup" xml:space="preserve"><value>Follow-up</value></data>
+<data name="LifeReports" xml:space="preserve"><value>Reports</value></data>
+<data name="LifeFinancialSeparation" xml:space="preserve"><value>Lifecycle status is separate from financial registration. Events do not change purchase value, financing, capacity or reservations.</value></data>
+<data name="LifeOriginalEnd" xml:space="preserve"><value>Original end date</value></data>
+<data name="LifeAgreedEnd" xml:space="preserve"><value>Agreed end date</value></data>
+<data name="LifeClosedDate" xml:space="preserve"><value>Actual closure date</value></data>
+<data name="LifeNoticeDate" xml:space="preserve"><value>Notice deadline</value></data>
+<data name="LifeTerms" xml:space="preserve"><value>Deadlines and extension terms</value></data>
+<data name="LifeDeadlineRule" xml:space="preserve"><value>Calendar months are subtracted from the agreed end date preserving month end. Other days clamp to month end. Days are calendar days. No holiday adjustment. Unknown terms require clarification.</value></data>
+<data name="LifeNoticeBasis" xml:space="preserve"><value>Deadline basis</value></data>
+<data name="LifeExplicitNotice" xml:space="preserve"><value>Explicit notice date</value></data>
+<data name="LifeNoticeCount" xml:space="preserve"><value>Days/calendar months</value></data>
+<data name="LifeAutomaticExtension" xml:space="preserve"><value>Agreed automatic extension</value></data>
+<data name="LifeExtensionMonths" xml:space="preserve"><value>Extension period in months</value></data>
+<data name="LifeReturnDue" xml:space="preserve"><value>Agreed return deadline</value></data>
+<data name="LifeDocument" xml:space="preserve"><value>Documentation (attach to acquisition)</value></data>
+<data name="LifeClosureChecklist" xml:space="preserve"><value>Closure checklist</value></data>
+<data name="LifeNoBankSettlement" xml:space="preserve"><value>Document review does not confirm bank payment or financial settlement. Final invoices and credits remain possible after closure.</value></data>
+<data name="LifeDocumentControl" xml:space="preserve"><value>Document review complete</value></data>
+<data name="LifeCompleteDocuments" xml:space="preserve"><value>Confirm document review</value></data>
+<data name="LifeReopenDocuments" xml:space="preserve"><value>Reopen document review</value></data>
+<data name="LifeConfirmPlan" xml:space="preserve"><value>Confirm reviewed payment plan</value></data>
+<data name="LifeNewEvent" xml:space="preserve"><value>Submit event for approval</value></data>
+<data name="LifeEventType" xml:space="preserve"><value>Event type</value></data>
+<data name="LifeEventDate" xml:space="preserve"><value>Event/effective date</value></data>
+<data name="LifeCounterparty" xml:space="preserve"><value>Counterparty</value></data>
+<data name="LifePreviousEnd" xml:space="preserve"><value>Previous end date</value></data>
+<data name="LifeNewEnd" xml:space="preserve"><value>New agreed end date</value></data>
+<data name="LifePaymentsChanged" xml:space="preserve"><value>Payment obligations changed – a new active plan is required</value></data>
+<data name="LifeContinuedTerms" xml:space="preserve"><value>New or continued terms / document reference</value></data>
+<data name="LifeItem" xml:space="preserve"><value>Purchase line</value></data>
+<data name="LifeBuyoutAmount" xml:space="preserve"><value>Actual agreed buyout amount</value></data>
+<data name="LifeReplacement" xml:space="preserve"><value>New registered equipment unit</value></data>
+<data name="LifeConfirmUnresolvedLabel" xml:space="preserve"><value>I have reviewed open matters and documented their follow-up after closure.</value></data>
+<data name="LifeSubmit" xml:space="preserve"><value>Submit for approval</value></data>
+<data name="LifeEventHistory" xml:space="preserve"><value>Events and approvals</value></data>
+<data name="LifeApprove" xml:space="preserve"><value>Approve event</value></data>
+<data name="LifeReject" xml:space="preserve"><value>Reject proposal</value></data>
+<data name="LifeReverse" xml:space="preserve"><value>Reverse latest event with reason</value></data>
+<data name="LifeEquipmentHelp" xml:space="preserve"><value>Unit tracking is optional. Open the acquisition lifecycle view to register units. Current location does not change historical financial dimensions.</value></data>
+<data name="LifeInternalId" xml:space="preserve"><value>Internal equipment ID</value></data>
+<data name="LifeSerial" xml:space="preserve"><value>Serial number</value></data>
+<data name="LifeLocation" xml:space="preserve"><value>Current building/location</value></data>
+<data name="LifeDisableUnits" xml:space="preserve"><value>Disable unit tracking</value></data>
+<data name="LifeEnableUnits" xml:space="preserve"><value>Mark as countable equipment</value></data>
+<data name="LifeNewEquipment" xml:space="preserve"><value>New unit / bulk registration</value></data>
+<data name="LifeRegisteredDate" xml:space="preserve"><value>Registration date</value></data>
+<data name="LifeBulkSerialHelp" xml:space="preserve"><value>Bulk entry: one line per unit with serial number;internal ID. Leave empty for count-based registration without serials.</value></data>
+<data name="LifeBulkCount" xml:space="preserve"><value>Number of new units without list</value></data>
+<data name="LifeConfirmSerial" xml:space="preserve"><value>Possible serial duplicates have been reviewed. Serial numbers need not be unique across manufacturers.</value></data>
+<data name="LifeCountableChange" xml:space="preserve"><value>Changed physical-unit registration setting</value></data>
+<data name="LifeNotifications" xml:space="preserve"><value>My leasing notifications</value></data>
+<data name="LifeDaysBefore" xml:space="preserve"><value>days before deadline</value></data>
+<data name="LifeMarkRead" xml:space="preserve"><value>Mark read</value></data>
+<data name="LifeFollowupType" xml:space="preserve"><value>Follow-up type</value></data>
+<data name="LifeDueThrough" xml:space="preserve"><value>Due through</value></data>
+<data name="LifeOpenObject" xml:space="preserve"><value>Open linked object</value></data>
+<data name="LifeNotificationSettings" xml:space="preserve"><value>Notification settings</value></data>
+<data name="LifeActivationRule" xml:space="preserve"><value>Notifications appear in the application at 09:00 in the selected time zone. Activation skips all earlier notification times. Historical backlog remains in the work list. No email is sent.</value></data>
+<data name="LifeEnableNotifications" xml:space="preserve"><value>Enable notifications from now</value></data>
+<data name="LifeNotificationDays" xml:space="preserve"><value>Days before deadline, comma separated</value></data>
+<data name="LifeTimeZone" xml:space="preserve"><value>Time zone</value></data>
+<data name="LifeExtraRecipients" xml:space="preserve"><value>Additional recipients. Access is rechecked for each object before delivery.</value></data>
+<data name="LifeDeliveryHistory" xml:space="preserve"><value>Recent delivery status and errors</value></data>
+<data name="LifeReport" xml:space="preserve"><value>Report</value></data>
+<data name="LifeDateField" xml:space="preserve"><value>Period filter applies to date</value></data>
+<data name="LifeAcquisitionsOnly" xml:space="preserve"><value>Acquisitions only</value></data>
+<data name="LifeGenerated" xml:space="preserve"><value>Generated</value></data>
+<data name="LifeFilters" xml:space="preserve"><value>Active filters</value></data>
+<data name="LifeIncompleteRows" xml:space="preserve"><value>Rows with incomplete basis</value></data>
+<data name="LifeReportLimitations" xml:space="preserve"><value>Reports show recorded data and current capacity, not historical balances. Dimension names are retained classification names. Credits without documented allocation are unallocated; dimension filters exclude them. Planned amounts are not paid amounts, accounting expense or debt. Currencies are totalled separately.</value></data>
+<data name="LifeDashboard" xml:space="preserve"><value>Operational dashboard</value></data>
+<data name="LifeDashboardHelp" xml:space="preserve"><value>Selected period covers expiry, notice/return deadlines and planned due dates. Capacity and invoice review show current recorded data. Open figures for the underlying report and filter.</value></data>
+<data name="LifeActive" xml:space="preserve"><value>Active leases</value></data>
+<data name="LifeExpiring" xml:space="preserve"><value>Expiring leases</value></data>
+<data name="LifePurchaseValue" xml:space="preserve"><value>Purchase value</value></data>
+<data name="LifePlannedPayments" xml:space="preserve"><value>Expected lease payments</value></data>
+<data name="LifeUnclassified" xml:space="preserve"><value>Unallocated or incomplete classification</value></data>
+<data name="LifeHistoricalDimensionNames" xml:space="preserve"><value>Retained classification names; multiple tags are not financial allocations</value></data>
+<data name="LifeUnallocatedPurchaseAdjustments" xml:space="preserve"><value>Unallocated purchase credits/reversals</value></data>
+<data name="LifeCreditDimensionMissing" xml:space="preserve"><value>Historical allocation basis for credit/reversal is unavailable</value></data>
+<data name="LifeUnallocated" xml:space="preserve"><value>Unallocated</value></data>
+<data name="LifeNoAcquisitionAllocation" xml:space="preserve"><value>Document amount is not allocated to a specific acquisition</value></data>
+<data name="LifeQuantityTracked" xml:space="preserve"><value>Line quantity / registered units</value></data>
+<data name="LifeInvalidOwner" xml:space="preserve"><value>Responsible user/recipient must be active and have access to the object.</value></data>
+<data name="LifeInvalidTerms" xml:space="preserve"><value>Check deadline basis, dates and extension period.</value></data>
+<data name="LifeUseExtension" xml:space="preserve"><value>Change the end date through a documented, approved extension.</value></data>
+<data name="LifeInvalidEvent" xml:space="preserve"><value>Check event type, date and references. Ordinary closure cannot precede agreed expiry.</value></data>
+<data name="LifeClosed" xml:space="preserve"><value>The acquisition must be financially registered and its lifecycle open for this action.</value></data>
+<data name="LifeDocumentRequired" xml:space="preserve"><value>This event requires attached documentation.</value></data>
+<data name="LifeInvalidExtension" xml:space="preserve"><value>Confirm previous end date, later new end date, effective date and continued/new terms.</value></data>
+<data name="LifeConfirmUnresolved" xml:space="preserve"><value>Review open matters and confirm follow-up before closure.</value></data>
+<data name="LifeInvalidQuantity" xml:space="preserve"><value>Quantity and selected units must match available equipment on the purchase line.</value></data>
+<data name="LifeCountableRequired" xml:space="preserve"><value>The line must be countable physical equipment with an integer quantity. Unit tracking cannot be removed while history exists.</value></data>
+<data name="LifeSelectUnits" xml:space="preserve"><value>The quantity includes registered units. Select them explicitly or reduce the quantity.</value></data>
+<data name="LifeOverQuantity" xml:space="preserve"><value>Registered or processed units exceed the purchase line quantity.</value></data>
+<data name="LifeBuyoutRequired" xml:space="preserve"><value>Enter the actual agreed buyout amount; residual value is not used automatically.</value></data>
+<data name="LifeReplacementRequired" xml:space="preserve"><value>Select one available replacement unit from a registered acquisition. New purchases must use the normal acquisition flow.</value></data>
+<data name="LifePlanRevisionRequired" xml:space="preserve"><value>Activate a documented revised payment plan and confirm plan review first.</value></data>
+<data name="LifeInvalidEquipment" xml:space="preserve"><value>Check description, date, serial number and status.</value></data>
+<data name="LifeDuplicateInternalId" xml:space="preserve"><value>Internal equipment ID already exists in this account.</value></data>
+<data name="LifeDuplicateSerial" xml:space="preserve"><value>Possible duplicate serial number. Review and confirm before saving.</value></data>
+<data name="LifeEventRequired" xml:space="preserve"><value>Use an approved lifecycle event for this status change.</value></data>
+<data name="LifeReverseLatest" xml:space="preserve"><value>Resolve later changes before reversing this event.</value></data>
+<data name="LifeFrameworkUnresolved" xml:space="preserve"><value>The framework has open leases, reservations or follow-up items and cannot be fully closed.</value></data>
+<data name="LifeInvalidReport" xml:space="preserve"><value>Check report type, date filter and search.</value></data>
+<data name="LifeNarrowReport" xml:space="preserve"><value>Report too large. Narrow filters (at most 10,000 acquisitions and 100,000 report rows). No data has been exported.</value></data>
+<data name="LifeOpenEquipment" xml:space="preserve"><value>Equipment has unresolved final status.</value></data>
+<data name="LifeOpenFollowups" xml:space="preserve"><value>Open follow-up items</value></data>
+<data name="LifePlanIncomplete" xml:space="preserve"><value>Payment plan is missing or needs review.</value></data>
+<data name="LifeRemainingTerms" xml:space="preserve"><value>Planned instalments remain. No instalments are deleted automatically.</value></data>
+<data name="LifeDocumentIssues" xml:space="preserve"><value>Invoice review or variances are unresolved.</value></data>
+<data name="LifeUnallocatedPartyInvoices" xml:space="preserve"><value>Unresolved/unallocated documents exist for the same finance company and currency. Their acquisition relationship needs review.</value></data>
+<data name="LifeNotificationObsolete" xml:space="preserve"><value>Notification is obsolete or recipient access is missing.</value></data>
+<data name="LifeNotificationHistorical" xml:space="preserve"><value>Historical time before activation or elapsed deadline – not notified.</value></data>
+<data name="LifeStatusActive" xml:space="preserve"><value>Active</value></data>
+<data name="LifeStatusClosing" xml:space="preserve"><value>Closing</value></data>
+<data name="LifeStatusExtended" xml:space="preserve"><value>Extended</value></data>
+<data name="LifeStatusClosed" xml:space="preserve"><value>Closed</value></data>
+<data name="LifeEquipmentInUse" xml:space="preserve"><value>In use</value></data>
+<data name="LifeEquipmentPlannedReturn" xml:space="preserve"><value>Return planned</value></data>
+<data name="LifeEquipmentReturned" xml:space="preserve"><value>Returned</value></data>
+<data name="LifeEquipmentReplaced" xml:space="preserve"><value>Replaced</value></data>
+<data name="LifeEquipmentBoughtOut" xml:space="preserve"><value>Bought out</value></data>
+<data name="LifeEquipmentLostOrDamaged" xml:space="preserve"><value>Lost or damaged</value></data>
+<data name="LifeNoticeUnknown" xml:space="preserve"><value>Unknown</value></data>
+<data name="LifeNoticeExplicit" xml:space="preserve"><value>Explicit date</value></data>
+<data name="LifeNoticeDays" xml:space="preserve"><value>Calendar days before expiry</value></data>
+<data name="LifeNoticeCalendarMonths" xml:space="preserve"><value>Calendar months before expiry</value></data>
+<data name="LifeKindReturn" xml:space="preserve"><value>Return</value></data>
+<data name="LifeKindReplace" xml:space="preserve"><value>Replacement</value></data>
+<data name="LifeKindBuyout" xml:space="preserve"><value>Buyout</value></data>
+<data name="LifeKindLossOrDamage" xml:space="preserve"><value>Loss or damage</value></data>
+<data name="LifeKindExtend" xml:space="preserve"><value>Extension</value></data>
+<data name="LifeKindStartClosing" xml:space="preserve"><value>Start closure</value></data>
+<data name="LifeKindClose" xml:space="preserve"><value>Ordinary closure</value></data>
+<data name="LifeKindEarlyClose" xml:space="preserve"><value>Early closure</value></data>
+<data name="LifeKindCorrect" xml:space="preserve"><value>Correction</value></data>
+<data name="LifeDecisionPending" xml:space="preserve"><value>Pending approval</value></data>
+<data name="LifeDecisionApproved" xml:space="preserve"><value>Approved</value></data>
+<data name="LifeDecisionRejected" xml:space="preserve"><value>Rejected</value></data>
+<data name="LifeDecisionReversed" xml:space="preserve"><value>Reversed</value></data>
+<data name="LifeTaskOpen" xml:space="preserve"><value>Open</value></data>
+<data name="LifeTaskInProgress" xml:space="preserve"><value>In progress</value></data>
+<data name="LifeTaskCompleted" xml:space="preserve"><value>Completed</value></data>
+<data name="LifeTaskObsolete" xml:space="preserve"><value>Obsolete</value></data>
+<data name="LifeNotificationPending" xml:space="preserve"><value>Scheduled</value></data>
+<data name="LifeNotificationDelivered" xml:space="preserve"><value>Delivered in app</value></data>
+<data name="LifeNotificationSkipped" xml:space="preserve"><value>Skipped</value></data>
+<data name="LifeNotificationFailed" xml:space="preserve"><value>Failed</value></data>
+<data name="LifeReportAgreements" xml:space="preserve"><value>Agreement overview</value></data>
+<data name="LifeReportCapacity" xml:space="preserve"><value>Framework utilisation</value></data>
+<data name="LifeReportDimensions" xml:space="preserve"><value>Acquisitions and dimensions</value></data>
+<data name="LifeReportPayments" xml:space="preserve"><value>Planned payments</value></data>
+<data name="LifeReportInvoiceControl" xml:space="preserve"><value>Invoice review</value></data>
+<data name="LifeReportEquipment" xml:space="preserve"><value>Equipment and closure</value></data>
+<data name="LifeDatePurchase" xml:space="preserve"><value>Purchase date</value></data>
+<data name="LifeDateEnd" xml:space="preserve"><value>End date</value></data>
+<data name="LifeDateDue" xml:space="preserve"><value>Planned due date</value></data>
+<data name="LifeDateInvoice" xml:space="preserve"><value>Invoice date</value></data>
+<data name="LifeDateEvent" xml:space="preserve"><value>Event date</value></data>
+<data name="LifeDateNotice" xml:space="preserve"><value>Notice deadline</value></data>
+<data name="LifeDateReturn" xml:space="preserve"><value>Return deadline</value></data>
+<data name="LifeFollowupExpiry" xml:space="preserve"><value>Lease expiry</value></data>
+<data name="LifeFollowupNotice" xml:space="preserve"><value>Notice deadline</value></data>
+<data name="LifeFollowupReturn" xml:space="preserve"><value>Return deadline</value></data>
+<data name="LifeFollowupExtensionOutcome" xml:space="preserve"><value>Unconfirmed extension</value></data>
+<data name="LifeFollowupOpenReservation" xml:space="preserve"><value>Open reservation after acquisition period</value></data>
+<data name="LifeFollowupEquipment" xml:space="preserve"><value>Equipment requiring attention</value></data>
+<data name="LifeFollowupUnknownTerms" xml:space="preserve"><value>Unresolved deadlines and terms</value></data>
+<data name="LifeFollowupMissingOwner" xml:space="preserve"><value>Missing responsible user</value></data>
+<data name="LifeFollowupPaymentPlan" xml:space="preserve"><value>Payment plan needs review</value></data>
+<data name="LifeFollowupDocuments" xml:space="preserve"><value>Final documents need review</value></data>
+<data name="LifeFollowupFrameworkEnd" xml:space="preserve"><value>Acquisition period end</value></data>
+<data name="UserRoleLeasingEquipmentManager" xml:space="preserve"><value>Leasing equipment manager</value></data>
+<data name="UserRoleLeasingLifecycleManager" xml:space="preserve"><value>Leasing lifecycle manager</value></data>
+<data name="UserRoleLeasingLifecycleApprover" xml:space="preserve"><value>Leasing lifecycle approver</value></data>
+<data name="UserRoleLeasingReportReader" xml:space="preserve"><value>Leasing report reader</value></data>
+<data name="UserRoleLeasingReportExporter" xml:space="preserve"><value>Leasing report exporter</value></data>
+<data name="LifeColumnName" xml:space="preserve"><value>Name</value></data>
+<data name="LifeColumnReference" xml:space="preserve"><value>Reference / line</value></data>
+<data name="LifeColumnFinance" xml:space="preserve"><value>Finance company</value></data>
+<data name="LifeColumnOwner" xml:space="preserve"><value>Responsible</value></data>
+<data name="LifeColumnCurrency" xml:space="preserve"><value>Currency</value></data>
+<data name="LifeColumnStatus" xml:space="preserve"><value>Status</value></data>
+<data name="LifeColumnBasis" xml:space="preserve"><value>Amount basis / event</value></data>
+<data name="LifeColumnPurchaseDate" xml:space="preserve"><value>Purchase date</value></data>
+<data name="LifeColumnEndDate" xml:space="preserve"><value>End date</value></data>
+<data name="LifeColumnNoticeDate" xml:space="preserve"><value>Notice deadline</value></data>
+<data name="LifeColumnReturnDate" xml:space="preserve"><value>Return deadline</value></data>
+<data name="LifeColumnFrom" xml:space="preserve"><value>Period from</value></data>
+<data name="LifeColumnTo" xml:space="preserve"><value>Period to</value></data>
+<data name="LifeColumnDueDate" xml:space="preserve"><value>Planned due date</value></data>
+<data name="LifeColumnInvoiceDate" xml:space="preserve"><value>Invoice date</value></data>
+<data name="LifeColumnEventDate" xml:space="preserve"><value>Event date</value></data>
+<data name="LifeColumnNet" xml:space="preserve"><value>Net</value></data>
+<data name="LifeColumnVat" xml:space="preserve"><value>VAT</value></data>
+<data name="LifeColumnGross" xml:space="preserve"><value>Gross</value></data>
+<data name="LifeColumnLimit" xml:space="preserve"><value>Limit</value></data>
+<data name="LifeColumnUsed" xml:space="preserve"><value>Used</value></data>
+<data name="LifeColumnReserved" xml:space="preserve"><value>Reserved</value></data>
+<data name="LifeColumnAvailable" xml:space="preserve"><value>Available</value></data>
+<data name="LifeColumnExpected" xml:space="preserve"><value>Expected gross</value></data>
+<data name="LifeColumnInvoiced" xml:space="preserve"><value>Net invoiced gross</value></data>
+<data name="LifeColumnDifference" xml:space="preserve"><value>Gross difference</value></data>
+<data name="LifeColumnUnallocated" xml:space="preserve"><value>Unallocated gross</value></data>
+<data name="LifeColumnVersion" xml:space="preserve"><value>Plan version</value></data>
+<data name="LifeColumnNeedsReview" xml:space="preserve"><value>Incomplete / needs review</value></data>
+<data name="LifeColumnDimensions" xml:space="preserve"><value>Historical classification</value></data>
+<data name="LifeColumnSerial" xml:space="preserve"><value>Serial number</value></data>
+<data name="LifeColumnLocation" xml:space="preserve"><value>Current location</value></data>
+<data name="LifeColumnNotes" xml:space="preserve"><value>Notes / limitations</value></data>
+<data name="LifeColumnOriginalEndDate" xml:space="preserve"><value>Original end date</value></data>
+<data name="LifeColumnClosedDate" xml:space="preserve"><value>Actual closure date</value></data>
+<data name="LifeColumnClosureKind" xml:space="preserve"><value>Closure method</value></data>
+<data name="LifeColumnQuantity" xml:space="preserve"><value>Quantity</value></data>
+<data name="LifeColumnBuyoutAmount" xml:space="preserve"><value>Documented buyout amount</value></data>
+<data name="LifeColumnUnitReference" xml:space="preserve"><value>Affected units</value></data>
+<data name="PaymentEventLifecycleTerms" xml:space="preserve"><value>Lifecycle terms revised</value></data>
+<data name="PaymentEventLifecycleProposed" xml:space="preserve"><value>Lifecycle event proposed</value></data>
+<data name="PaymentEventLifecycleDecision" xml:space="preserve"><value>Lifecycle event reviewed</value></data>
+<data name="PaymentEventLifecycleReversed" xml:space="preserve"><value>Lifecycle event reversed</value></data>
+<data name="PaymentEventLifecycleReviewed" xml:space="preserve"><value>Lifecycle review completed</value></data>
+<data name="PaymentEventLifecycleTask" xml:space="preserve"><value>Follow-up item updated</value></data>
+<data name="PaymentEventLifecycleNotifications" xml:space="preserve"><value>Notification settings changed</value></data>
+<data name="PaymentEventEquipmentSaved" xml:space="preserve"><value>Equipment registered or corrected</value></data>
+<data name="PaymentEventEquipmentCountable" xml:space="preserve"><value>Unit tracking changed</value></data>
 </root>

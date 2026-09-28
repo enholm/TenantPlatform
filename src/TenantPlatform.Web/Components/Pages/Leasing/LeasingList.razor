@@ -17,6 +17,7 @@
         <a class="btn btn-primary" href="/leasing/acquisitions/create">@L["LeasingNewOrder"]</a></div>
     }
 </div>
+@if (allowed && Navigation.Uri.Split('?')[0].TrimEnd('/').EndsWith("/leasing")){<LeasingDashboard />}
 @if (allowed)
 {
     <div class="card mb-3"><div class="card-body"><fieldset disabled="@busy"><div class="row g-3">

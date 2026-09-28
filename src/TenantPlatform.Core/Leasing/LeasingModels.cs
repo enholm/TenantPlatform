@@ -87,6 +87,7 @@ public sealed class LeasingAcquisition
 
 public sealed class LeasingItem
 {
+    public bool CountableEquipment { get; set; }
     public Guid Id { get; set; }
     public Guid AccountId { get; set; }
     public Guid AcquisitionId { get; set; }

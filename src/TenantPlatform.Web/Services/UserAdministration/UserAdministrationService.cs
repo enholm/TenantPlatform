@@ -1144,6 +1144,11 @@ public class UserAdministrationService
     {
         switch (request.Role)
         {
+            case UserRole.LeasingEquipmentManager:
+            case UserRole.LeasingLifecycleManager:
+            case UserRole.LeasingLifecycleApprover:
+            case UserRole.LeasingReportReader:
+            case UserRole.LeasingReportExporter:
             case UserRole.LeasingPlanApprover:
             case UserRole.LeasingInvoiceApprover:
             case UserRole.LeasingVarianceApprover:

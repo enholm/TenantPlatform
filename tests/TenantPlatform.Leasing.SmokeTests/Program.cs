@@ -171,6 +171,7 @@ try
         "populated phase-one schema upgrades without fictional classifications or changed totals");
     await using(var paymentMigrationDb=factory.CreateDbContext())
     {
+        Check(!await paymentMigrationDb.LeasingLifecycles.AnyAsync()&&!await paymentMigrationDb.LeasingEquipment.AnyAsync()&&!await paymentMigrationDb.LeasingLifecycleEvents.AnyAsync()&&!await paymentMigrationDb.LeasingNotifications.AnyAsync(),"phase-six migration creates no fictitious units, outcomes or historical notifications");
         var original=await Read(standalone);
         var baseline=await paymentMigrationDb.LeasingFinancingRevisions.SingleAsync(x=>x.AccountId==account&&x.AcquisitionId==standalone);
         var terms=System.Text.Json.JsonSerializer.Deserialize<LeasingFinancingSnapshot>(baseline.SnapshotJson)!;
@@ -316,6 +317,7 @@ try
     await InvoiceChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
     await OrderChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
     await PaymentChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
+    await LifecycleChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
     Console.WriteLine("All leasing PostgreSQL smoke checks passed.");
 }
 finally

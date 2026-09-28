@@ -16,12 +16,17 @@ public class TenantAuthorizationService
         if (!current.IsAuthenticated || current.CurrentAccountId is not Guid account) return false;
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         if (!await db.UserAccounts.AnyAsync(x => x.AccountId == account && x.UserId == current.UserId && x.User.IsActive, cancellationToken)) return false;
-        return await CanActivateLeasingPlansAsync(cancellationToken) || await CanApproveLeasingInvoicesAsync(cancellationToken) || await CanAcceptLeasingVariancesAsync(cancellationToken) || await CanCreateAgreementAsync(cancellationToken) || await CanApproveLeasingOrdersAsync(cancellationToken) || await CanChangeLeasingLimitAsync(cancellationToken) ||
+        return await CanMaintainLeasingEquipmentAsync(cancellationToken) || await CanManageLeasingLifecycleAsync(cancellationToken) || await CanApproveLeasingLifecycleAsync(cancellationToken) || await CanReadLeasingReportsAsync(cancellationToken) || await CanExportLeasingReportsAsync(cancellationToken) || await CanActivateLeasingPlansAsync(cancellationToken) || await CanApproveLeasingInvoicesAsync(cancellationToken) || await CanAcceptLeasingVariancesAsync(cancellationToken) || await CanCreateAgreementAsync(cancellationToken) || await CanApproveLeasingOrdersAsync(cancellationToken) || await CanChangeLeasingLimitAsync(cancellationToken) ||
             await db.LeasingOrders.AnyAsync(x => x.AccountId == account && x.OwnerUserId == current.UserId, cancellationToken) ||
             await db.LeasingFrameworks.AnyAsync(x => x.AccountId == account && x.OwnerUserId == current.UserId, cancellationToken) ||
             await db.LeasingAcquisitions.AnyAsync(x => x.AccountId == account && x.OwnerUserId == current.UserId, cancellationToken);
     }
 
+    public Task<bool> CanMaintainLeasingEquipmentAsync(CancellationToken ct=default)=>HasAnyRolesAsync(ct,UserRole.AccountAdmin,UserRole.LeasingEquipmentManager);
+    public Task<bool> CanManageLeasingLifecycleAsync(CancellationToken ct=default)=>HasAnyRolesAsync(ct,UserRole.AccountAdmin,UserRole.LeasingLifecycleManager);
+    public Task<bool> CanApproveLeasingLifecycleAsync(CancellationToken ct=default)=>HasAnyRolesAsync(ct,UserRole.AccountAdmin,UserRole.LeasingLifecycleApprover);
+    public Task<bool> CanReadLeasingReportsAsync(CancellationToken ct=default)=>HasAnyRolesAsync(ct,UserRole.AccountAdmin,UserRole.LeasingReportReader);
+    public Task<bool> CanExportLeasingReportsAsync(CancellationToken ct=default)=>HasAnyRolesAsync(ct,UserRole.AccountAdmin,UserRole.LeasingReportExporter);
     public Task<bool> CanActivateLeasingPlansAsync(CancellationToken cancellationToken = default) => HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin, UserRole.LeasingPlanApprover);
     public Task<bool> CanApproveLeasingInvoicesAsync(CancellationToken cancellationToken = default) => HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin, UserRole.LeasingInvoiceApprover);
     public Task<bool> CanAcceptLeasingVariancesAsync(CancellationToken cancellationToken = default) => HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin, UserRole.LeasingVarianceApprover);

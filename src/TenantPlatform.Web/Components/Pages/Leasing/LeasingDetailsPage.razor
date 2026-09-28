@@ -16,7 +16,7 @@
     <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h1>@(f?.Name ?? a!.Name)</h1><span class="badge text-bg-secondary">@L[$"LeasingStatus{(f is null ? a!.Status.ToString() : f.Status.ToString())}"]</span></div>
         @if (data.CanEdit) { <a class="btn btn-primary align-self-center" href="@($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{Id}/edit")">@L["Edit"]</a> }
     </div>
-    @if(a is not null){<a class="btn btn-outline-primary mb-3" href="@($"/leasing/acquisitions/{Id}/payments")">@L["PaymentDetails"]</a><p class="text-muted">@L["PaymentOriginalFinancingHelp"]</p>}
+    @if(a is not null){<a class="btn btn-outline-primary mb-3 me-2" href="@($"/leasing/acquisitions/{Id}/lifecycle")">@L["LifeLifecycle"]</a><a class="btn btn-outline-primary mb-3" href="@($"/leasing/acquisitions/{Id}/payments")">@L["PaymentDetails"]</a><p class="text-muted">@L["PaymentOriginalFinancingHelp"]</p>}
     <div class="row g-3 mb-3"><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h5">@L["LeasingDetails"]</h2><dl class="row">
         <dt class="col-sm-5">@L["LeasingNumber"]</dt><dd class="col-sm-7">@(f?.Number ?? a!.Reference)</dd>
         <dt class="col-sm-5">@L["LeasingFinanceCompany"]</dt><dd class="col-sm-7">@data.FinanceName</dd>

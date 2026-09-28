@@ -17,7 +17,7 @@ public sealed partial class LeasingService
     public async Task<List<LeasingOrder>> AcquisitionOrdersAsync(Guid account, Guid acquisition, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
-        if (!await ReadAcquisitions(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AnyAsync(x => x.Id == acquisition, ct)) throw new UnauthorizedAccessException();
+        if (!await ReadAcquisitions(db, account, user, admin||await ReportReader(ct), await authorization.CanApproveLeasingOrdersAsync(ct)).AnyAsync(x => x.Id == acquisition, ct)) throw new UnauthorizedAccessException();
         return await Orders(db, account, user, await OrderReader(admin, ct)).AsNoTracking().Include(x => x.Lines)
             .Where(x => db.LeasingOrderRealizations.Any(r => r.AccountId == account && r.OrderId == x.Id && r.AcquisitionId == acquisition)).ToListAsync(ct);
     }

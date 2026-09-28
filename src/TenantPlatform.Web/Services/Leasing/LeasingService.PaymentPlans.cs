@@ -15,7 +15,7 @@ public sealed record PaymentPlanRow(Guid AcquisitionId, string Acquisition, stri
 
 public sealed partial class LeasingService
 {
-    private async Task<bool> PaymentReader(bool admin, CancellationToken ct) => admin || await authorization.CanActivateLeasingPlansAsync(ct) || await authorization.CanApproveLeasingInvoicesAsync(ct) || await authorization.CanAcceptLeasingVariancesAsync(ct);
+    private async Task<bool> PaymentReader(bool admin, CancellationToken ct) => admin || await ReportReader(ct) || await authorization.CanActivateLeasingPlansAsync(ct) || await authorization.CanApproveLeasingInvoicesAsync(ct) || await authorization.CanAcceptLeasingVariancesAsync(ct);
     private void PaymentEvent(TenantPlatformDbContext db, Guid account, Guid? acquisition, Guid? invoice, Guid user, string action, string reason, string before, string after, Guid request) =>
         db.LeasingPaymentEvents.Add(new() { Id=request,AccountId=account,AcquisitionId=acquisition,InvoiceId=invoice,ActorUserId=user,Action=action,Reason=reason,BeforeJson=before,AfterJson=after,RecordedUtc=clock.GetUtcNow() });
     private static async Task<bool> PaymentRetry(TenantPlatformDbContext db, Guid account, Guid request, Guid user, string action, Guid? acquisition, Guid? invoice, CancellationToken ct)

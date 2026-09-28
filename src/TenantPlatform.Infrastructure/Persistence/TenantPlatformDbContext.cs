@@ -16,6 +16,13 @@ namespace TenantPlatform.Infrastructure.Persistence;
 
 public class TenantPlatformDbContext : DbContext
 {
+    public DbSet<LeasingLifecycle> LeasingLifecycles => Set<LeasingLifecycle>();
+    public DbSet<LeasingEquipment> LeasingEquipment => Set<LeasingEquipment>();
+    public DbSet<LeasingLifecycleEvent> LeasingLifecycleEvents => Set<LeasingLifecycleEvent>();
+    public DbSet<LeasingDisposition> LeasingDispositions => Set<LeasingDisposition>();
+    public DbSet<LeasingFollowup> LeasingFollowups => Set<LeasingFollowup>();
+    public DbSet<LeasingNotificationSettings> LeasingNotificationSettings => Set<LeasingNotificationSettings>();
+    public DbSet<LeasingNotification> LeasingNotifications => Set<LeasingNotification>();
     public DbSet<Dimension> Dimensions => Set<Dimension>();
     public DbSet<DimensionValue> DimensionValues => Set<DimensionValue>();
     public DbSet<DimensionHistory> DimensionHistory => Set<DimensionHistory>();

@@ -101,6 +101,7 @@ public sealed partial class LeasingService
         foreach(var part in review.Allocations)
             if(!await db.LeasingInstallments.AnyAsync(x=>x.AccountId==account&&x.Id==part.InstallmentId&&visible.Contains(x.AcquisitionId),ct))throw new UnauthorizedAccessException();
         var before=i.ReviewJson;i.ReviewJson=Snapshot(review);i.FinanceOrganizationId=review.FinanceOrganizationId==Guid.Empty?null:review.FinanceOrganizationId;i.Number=review.Data.Number;i.Currency=review.Data.Currency;i.ReviewedByUserId=user;i.ReviewedUtc=clock.GetUtcNow();i.Revision=Guid.NewGuid();
+        await InvalidateLifecycleDocumentReview(db,i,ct);
         PaymentEvent(db,account,null,id,user,"RentalReviewed",review.Reason,before,i.ReviewJson,Guid.NewGuid());await db.SaveChangesAsync(ct);await tx.CommitAsync(ct);
     }
     public async Task UseRentalInterpretationAsync(Guid account,Guid id,Guid revision,Guid interpretation,CancellationToken ct=default)
@@ -164,6 +165,7 @@ public sealed partial class LeasingService
             obligation.BillingComplete=false;obligation.VarianceAccepted=false;obligation.ControlReason=null;obligation.Revision=Guid.NewGuid();
             PaymentEvent(db,invoice.AccountId,a.Id,invoice.Id,user,"RentalMatched","","{}",Snapshot(input),Guid.NewGuid());
         }
+        await InvalidateLifecycleDocumentReview(db,invoice,ct);
     }
     public async Task CorrectRentalAllocationsAsync(Guid account,Guid id,Guid revision,List<RentalAllocationInput> inputs,string reason,Guid request,CancellationToken ct=default)
     {
@@ -177,6 +179,7 @@ public sealed partial class LeasingService
     }
     private async Task ReverseRentalAllocations(TenantPlatformDbContext db,LeasingInvoice i,List<LeasingPaymentAllocation> allocations,Guid user,CancellationToken ct)
     {
+        await InvalidateLifecycleDocumentReview(db,i,ct);
         var ids=allocations.Select(x=>x.Id).ToArray();if(await db.LeasingPaymentAllocations.AnyAsync(x=>x.AccountId==i.AccountId&&x.CreditedAllocationId.HasValue&&ids.Contains(x.CreditedAllocationId.Value)&&!x.Reversed,ct))throw new LeasingValidationException("InvoiceReverseDependencies");
         foreach(var link in allocations)
         {

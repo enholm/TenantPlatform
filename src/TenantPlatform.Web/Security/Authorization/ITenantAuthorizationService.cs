@@ -4,6 +4,12 @@ namespace TenantPlatform.Web.Security.Authorization;
 
 public interface ITenantAuthorizationService
 {
+    Task<bool> CanMaintainLeasingEquipmentAsync(CancellationToken ct=default)=>Task.FromResult(false);
+    Task<bool> CanManageLeasingLifecycleAsync(CancellationToken ct=default)=>Task.FromResult(false);
+    Task<bool> CanApproveLeasingLifecycleAsync(CancellationToken ct=default)=>Task.FromResult(false);
+    Task<bool> CanReadLeasingReportsAsync(CancellationToken ct=default)=>Task.FromResult(false);
+    Task<bool> CanExportLeasingReportsAsync(CancellationToken ct=default)=>Task.FromResult(false);
+
     Task<bool> CanApproveLeasingOrdersAsync(CancellationToken cancellationToken = default) => Task.FromResult(false);
     Task<bool> CanChangeLeasingLimitAsync(CancellationToken cancellationToken = default) => Task.FromResult(false);
     Task<bool> CanActivateLeasingPlansAsync(CancellationToken cancellationToken = default) => Task.FromResult(false);

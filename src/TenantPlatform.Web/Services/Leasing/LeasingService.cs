@@ -43,7 +43,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         var canReadOrders = await OrderReader(admin, ct) || await authorization.CanChangeLeasingLimitAsync(ct);
-        if (!canReadOrders && !await PaymentReader(admin, ct) && !await Orders(db, account, user, false).AnyAsync(ct) && !await Frameworks(db, account, user, false).AnyAsync(ct) &&
+        if (!canReadOrders && !await PaymentReader(admin, ct) && !await LifecycleReader(admin, ct) && !await Orders(db, account, user, false).AnyAsync(ct) && !await Frameworks(db, account, user, false).AnyAsync(ct) &&
             !await Acquisitions(db, account, user, false).AnyAsync(ct)) throw new UnauthorizedAccessException();
         return new(await db.Organizations.AsNoTracking().Where(x => x.AccountId == account).OrderBy(x => x.Name)
                 .Select(x => new LeasingOption(x.Id, x.Name)).ToListAsync(ct),
@@ -99,10 +99,11 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         var orderApprover = await authorization.CanApproveLeasingOrdersAsync(ct);
-        var readAdmin = admin || orderApprover || await authorization.CanChangeLeasingLimitAsync(ct);
+        var reportReader = await ReportReader(ct);
+        var readAdmin = admin || reportReader || orderApprover || await authorization.CanChangeLeasingLimitAsync(ct);
         LeasingFramework? f = null; LeasingAcquisition? a = null;
         if (framework) f = await db.LeasingFrameworks.Where(x => x.AccountId == account && (readAdmin || x.OwnerUserId == user || db.LeasingOrders.Any(o => o.AccountId == account && o.FrameworkId == x.Id && o.OwnerUserId == user))).AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
-        else a = await WithClassifications(ReadAcquisitions(db, account, user, admin, orderApprover).AsNoTracking()).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        else a = await WithClassifications(ReadAcquisitions(db, account, user, admin||reportReader, orderApprover).AsNoTracking()).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         if (a != null) a.Items = a.Items.OrderBy(x => x.Position).ToList();
         var finance = f?.FinanceOrganizationId ?? a!.FinanceOrganizationId;
         var owner = f?.OwnerUserId ?? a!.OwnerUserId;
@@ -113,7 +114,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
             where h.AccountId == account && (framework ? h.FrameworkId == id : h.AcquisitionId == id)
             orderby h.RecordedUtc descending
             select new LeasingHistoryRow(h.RecordedUtc, u.FirstName + " " + u.LastName, h.Action, h.Reason, h.BeforeJson, h.AfterJson)).ToListAsync(ct);
-        var children = framework ? await ReadAcquisitions(db, account, user, admin, orderApprover).AsNoTracking().Where(x => x.FrameworkId == id)
+        var children = framework ? await ReadAcquisitions(db, account, user, admin||reportReader, orderApprover).AsNoTracking().Where(x => x.FrameworkId == id)
             .OrderBy(x => x.PurchaseDate).ThenBy(x => x.Name).ToListAsync(ct) : [];
         var referenceNames = await db.Organizations.AsNoTracking().Where(x => x.AccountId == account).ToDictionaryAsync(x => x.Id, x => x.Name, ct);
         foreach (var member in await db.UserAccounts.AsNoTracking().Where(x => x.AccountId == account)
@@ -174,6 +175,15 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         if (id.HasValue && entity.Limit != input.Limit) throw new LeasingValidationException("LeasingLimitProposalRequired");
         if (await db.LeasingOrders.AnyAsync(x => x.AccountId == account && x.FrameworkId == entity.Id, ct) && (entity.Currency != input.Currency || entity.IncludesVat != input.IncludesVat)) throw new LeasingValidationException("LeasingFrameworkConflict");
         if (LeasingCalculator.Used(registered, input.IncludesVat) + await Reserved(db, account, entity.Id, input.IncludesVat, ct) > input.Limit) throw new LeasingValidationException("LeasingLimitExceeded");
+        if(input.Status==LeasingFrameworkStatus.Finished)
+        {
+            if(!await authorization.CanApproveLeasingLifecycleAsync(ct))throw new UnauthorizedAccessException();
+            var closedIds=await db.LeasingLifecycles.Where(l=>l.AccountId==account&&l.Status==LeasingLifecycleStatus.Closed&&l.DocumentReviewComplete&&!l.PaymentPlanReviewRequired).Select(l=>l.AcquisitionId).ToListAsync(ct);
+            var acquisitionIds=registered.Select(a=>a.Id).ToArray();
+            if(await Reserved(db,account,entity.Id,input.IncludesVat,ct)>0||registered.Any(a=>!closedIds.Contains(a.Id))||
+                await db.LeasingLifecycleEvents.AnyAsync(e=>e.AccountId==account&&acquisitionIds.Contains(e.AcquisitionId)&&e.Decision==LeasingLifecycleDecision.Pending,ct)||
+                await db.LeasingFollowups.AnyAsync(t=>t.AccountId==account&&(t.FrameworkId==entity.Id||t.AcquisitionId.HasValue&&acquisitionIds.Contains(t.AcquisitionId.Value))&&(t.Status==LeasingFollowupStatus.Open||t.Status==LeasingFollowupStatus.InProgress),ct))throw new LeasingValidationException("LifeFrameworkUnresolved");
+        }
         var before = id.HasValue ? Snapshot(entity) : "{}";
         entity.Name = input.Name.Trim(); entity.Number = input.Number.Trim(); entity.FinanceOrganizationId = input.FinanceOrganizationId;
         entity.OwnerUserId = input.OwnerUserId; entity.AcquisitionFrom = input.AcquisitionFrom; entity.AcquisitionTo = input.AcquisitionTo;
@@ -246,6 +256,16 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         }
         if (id.HasValue && await db.LeasingFinancingRevisions.AnyAsync(x => x.AccountId == account && x.AcquisitionId == entity.Id, ct) &&
             Snapshot(LeasingFinancingSnapshot.From(entity)) != Snapshot(LeasingFinancingSnapshot.From(input))) throw new LeasingValidationException("PaymentUseFinancingRevision");
+        if(id.HasValue)
+        {
+            foreach(var tracked in await db.LeasingItems.Where(x=>x.AccountId==account&&x.AcquisitionId==id&&x.CountableEquipment).ToListAsync(ct))
+            {
+                var updated=input.Items.SingleOrDefault(x=>x.Id==tracked.Id);
+                var units=await db.LeasingEquipment.CountAsync(x=>x.AccountId==account&&x.ItemId==tracked.Id,ct);
+                var processed=await db.LeasingDispositions.Where(x=>x.AccountId==account&&x.ItemId==tracked.Id&&x.EquipmentId==null&&!x.Reversed).SumAsync(x=>x.Quantity,ct);
+                if((units>0||processed>0)&&(updated==null||updated.Quantity<units+processed||updated.Quantity!=decimal.Truncate(updated.Quantity)))throw new LeasingValidationException("LifeOverQuantity");
+            }
+        }
         var retainedIds = input.Items.Select(x => x.Id).ToArray();
         if (id.HasValue && await db.LeasingInvoiceLines.AnyAsync(x => x.AccountId == account && !retainedIds.Contains(x.ItemId) &&
             db.LeasingItems.Any(i => i.AccountId == account && i.AcquisitionId == id && i.Id == x.ItemId), ct)) throw new LeasingValidationException("InvoiceLinkedPurchase");
@@ -405,7 +425,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         var doc = await db.LeasingDocuments.AsNoTracking().SingleOrDefaultAsync(x => x.AccountId == account && x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         var allowed = doc.OrderId.HasValue ? await Orders(db, account, user, await OrderReader(admin, ct)).AnyAsync(x => x.Id == doc.OrderId, ct) : doc.FrameworkId.HasValue
             ? await Frameworks(db, account, user, admin).AnyAsync(x => x.Id == doc.FrameworkId, ct)
-            : await Acquisitions(db, account, user, await PaymentReader(admin, ct)).AnyAsync(x => x.Id == doc.AcquisitionId, ct);
+            : await Acquisitions(db, account, user, await PaymentReader(admin, ct)||await LifecycleReader(admin, ct)).AnyAsync(x => x.Id == doc.AcquisitionId, ct);
         if (!allowed) throw new UnauthorizedAccessException();
         return new(await storage.OpenReadAsync(doc.StorageKey, ct), doc.FileName, doc.MediaType);
     }

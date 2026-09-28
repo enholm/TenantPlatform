@@ -24,7 +24,7 @@ public sealed partial class LeasingService
     {
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
-        if (!await OrderReader(admin, ct) && !await Orders(db, account, user, false).AnyAsync(ct) && !await Acquisitions(db, account, user, false).AnyAsync(ct) && !await Frameworks(db, account, user, false).AnyAsync(ct)) throw new UnauthorizedAccessException();
+        if (!await LifecycleReader(admin, ct) && !await OrderReader(admin, ct) && !await Orders(db, account, user, false).AnyAsync(ct) && !await Acquisitions(db, account, user, false).AnyAsync(ct) && !await Frameworks(db, account, user, false).AnyAsync(ct)) throw new UnauthorizedAccessException();
         return await Catalog(db, account, admin, ct);
     }
     public async Task SaveDimensionRuleAsync(Guid account, LeasingDimensionRule input, CancellationToken ct = default)

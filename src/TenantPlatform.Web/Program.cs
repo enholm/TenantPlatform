@@ -120,6 +120,8 @@ builder.Services.AddHostedService<AgreementAnalysisCleanupWorker>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.OrganizationElementService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.GeographicAreaService>();
 builder.Services.AddScoped<LeasingService>();
+builder.Services.AddScoped<LeasingLifecycleProcessor>();
+builder.Services.AddHostedService<LeasingLifecycleWorker>();
 builder.Services.AddOptions<TenantPlatform.Web.Services.Leasing.Invoices.LeasingInvoiceInterpretationOptions>().Bind(builder.Configuration.GetSection("LeasingInvoiceInterpretation"));
 builder.Services.AddHttpClient<TenantPlatform.Web.Services.Leasing.Invoices.IInvoiceDocumentInterpreter, TenantPlatform.Web.Services.Leasing.Invoices.InvoiceDocumentInterpreter>(client => client.Timeout = TimeSpan.FromMinutes(5));
 builder.Services.AddScoped<TenantPlatform.Web.Services.Leasing.Invoices.LeasingInvoiceProcessor>();

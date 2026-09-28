@@ -23,7 +23,7 @@ public sealed partial class LeasingService
     public async Task<(List<LeasingInvoice> Documents, List<LeasingInvoiceLine> Lines)> PurchaseInvoicesAsync(Guid account, Guid acquisition, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
-        if (!await ReadAcquisitions(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AnyAsync(x => x.Id == acquisition, ct)) throw new UnauthorizedAccessException();
+        if (!await ReadAcquisitions(db, account, user, admin||await ReportReader(ct), await authorization.CanApproveLeasingOrdersAsync(ct)).AnyAsync(x => x.Id == acquisition, ct)) throw new UnauthorizedAccessException();
         var docs = await db.LeasingInvoices.AsNoTracking().Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == account && x.AcquisitionId == acquisition).OrderByDescending(x => x.UploadedUtc).ToListAsync(ct);
         var ids = docs.Select(x => x.Id).ToArray();
         return (docs, await db.LeasingInvoiceLines.AsNoTracking().Where(x => x.AccountId == account && ids.Contains(x.InvoiceId)).ToListAsync(ct));
@@ -62,8 +62,8 @@ public sealed partial class LeasingService
     public async Task<InvoiceDetails> GetInvoiceAsync(Guid account, Guid id, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
-        var invoice = await ReadInvoices(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking().Include(x => x.Lines).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
-        var review = ReadReview(invoice); var acquisition = invoice.AcquisitionId.HasValue ? await WithClassifications(ReadAcquisitions(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking()).SingleAsync(x => x.Id == invoice.AcquisitionId, ct) : null;
+        var invoice = await ReadInvoices(db, account, user, admin||await ReportReader(ct), await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking().Include(x => x.Lines).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        var review = ReadReview(invoice); var acquisition = invoice.AcquisitionId.HasValue ? await WithClassifications(ReadAcquisitions(db, account, user, admin||await ReportReader(ct), await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking()).SingleAsync(x => x.Id == invoice.AcquisitionId, ct) : null;
         var documents = invoice.AcquisitionId.HasValue ? await db.LeasingInvoices.AsNoTracking().Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == account && x.AcquisitionId == invoice.AcquisitionId).ToListAsync(ct) : [];
         var ids = documents.Where(x => x.Status == LeasingInvoiceStatus.Approved).Select(x => x.Id).ToArray();
         var lines = await db.LeasingInvoiceLines.AsNoTracking().Where(x => x.AccountId == account && ids.Contains(x.InvoiceId)).ToListAsync(ct);
@@ -76,7 +76,7 @@ public sealed partial class LeasingService
     public async Task<AgreementDownload> DownloadInvoiceAsync(Guid account, Guid id, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
-        var invoice = await ReadInvoices(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        var invoice = await ReadInvoices(db, account, user, admin||await ReportReader(ct), await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         return new(await storage.OpenReadAsync(invoice.StorageKey, ct), invoice.FileName, invoice.MediaType);
     }
     private static InvoiceReview ReadReview(LeasingInvoice invoice) => JsonSerializer.Deserialize<InvoiceReview>(invoice.ReviewJson) ?? new();

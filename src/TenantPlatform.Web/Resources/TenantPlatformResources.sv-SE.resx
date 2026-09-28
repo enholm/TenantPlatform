@@ -3002,4 +3002,233 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
 <data name="InvoiceIsAllowance" xml:space="preserve"><value>Rabattpost</value></data>
 <data name="Select" xml:space="preserve"><value>Välj</value></data>
 <data name="PaymentOriginalFinancingHelp" xml:space="preserve"><value>Finansbolag, finansierat belopp och räntevillkor nedan visar ursprungliga anskaffningsuppgifter. Se daterade aktuella villkor i finansieringsvyn.</value></data>
+<data name="LifeLifecycle" xml:space="preserve"><value>Livscykeluppföljning</value></data>
+<data name="LifeEquipment" xml:space="preserve"><value>Utrustning</value></data>
+<data name="LifeFollowup" xml:space="preserve"><value>Uppföljning</value></data>
+<data name="LifeReports" xml:space="preserve"><value>Rapporter</value></data>
+<data name="LifeFinancialSeparation" xml:space="preserve"><value>Livscykelstatus är separat från ekonomisk registrering. Händelser ändrar inte inköpsvärde, finansierat belopp, ram eller reservationer.</value></data>
+<data name="LifeOriginalEnd" xml:space="preserve"><value>Ursprungligt slutdatum</value></data>
+<data name="LifeAgreedEnd" xml:space="preserve"><value>Avtalat slutdatum</value></data>
+<data name="LifeClosedDate" xml:space="preserve"><value>Faktiskt avslutsdatum</value></data>
+<data name="LifeNoticeDate" xml:space="preserve"><value>Uppsägningsfrist</value></data>
+<data name="LifeTerms" xml:space="preserve"><value>Frister och förlängningsvillkor</value></data>
+<data name="LifeDeadlineRule" xml:space="preserve"><value>Kalendermånader dras från avtalat slutdatum med bevarat månadsslut. Andra dagar begränsas till månadens sista dag. Dagar är kalenderdagar. Ingen helgdagsjustering. Okända villkor måste klargöras.</value></data>
+<data name="LifeNoticeBasis" xml:space="preserve"><value>Fristunderlag</value></data>
+<data name="LifeExplicitNotice" xml:space="preserve"><value>Uttryckligt uppsägningsdatum</value></data>
+<data name="LifeNoticeCount" xml:space="preserve"><value>Dagar/kalendermånader</value></data>
+<data name="LifeAutomaticExtension" xml:space="preserve"><value>Avtalad automatisk förlängning</value></data>
+<data name="LifeExtensionMonths" xml:space="preserve"><value>Förlängningsperiod i månader</value></data>
+<data name="LifeReturnDue" xml:space="preserve"><value>Avtalad returfrist</value></data>
+<data name="LifeDocument" xml:space="preserve"><value>Dokumentation (bifogas anskaffningen)</value></data>
+<data name="LifeClosureChecklist" xml:space="preserve"><value>Avslutskontroll</value></data>
+<data name="LifeNoBankSettlement" xml:space="preserve"><value>Dokumentkontroll bekräftar inte bankbetalning eller ekonomisk slutreglering. Slutfakturor och kreditnotor kan registreras efter avslut.</value></data>
+<data name="LifeDocumentControl" xml:space="preserve"><value>Dokumentkontroll klar</value></data>
+<data name="LifeCompleteDocuments" xml:space="preserve"><value>Bekräfta dokumentkontroll</value></data>
+<data name="LifeReopenDocuments" xml:space="preserve"><value>Öppna dokumentkontroll igen</value></data>
+<data name="LifeConfirmPlan" xml:space="preserve"><value>Bekräfta granskad betalningsplan</value></data>
+<data name="LifeNewEvent" xml:space="preserve"><value>Registrera händelse för godkännande</value></data>
+<data name="LifeEventType" xml:space="preserve"><value>Händelsetyp</value></data>
+<data name="LifeEventDate" xml:space="preserve"><value>Händelse-/ikraftträdandedatum</value></data>
+<data name="LifeCounterparty" xml:space="preserve"><value>Motpart</value></data>
+<data name="LifePreviousEnd" xml:space="preserve"><value>Tidigare slutdatum</value></data>
+<data name="LifeNewEnd" xml:space="preserve"><value>Nytt avtalat slutdatum</value></data>
+<data name="LifePaymentsChanged" xml:space="preserve"><value>Betalningsförpliktelserna har ändrats – ny aktiv plan krävs</value></data>
+<data name="LifeContinuedTerms" xml:space="preserve"><value>Nya eller fortsatta villkor / dokumentreferens</value></data>
+<data name="LifeItem" xml:space="preserve"><value>Varurad</value></data>
+<data name="LifeBuyoutAmount" xml:space="preserve"><value>Faktiskt avtalat utköpsbelopp</value></data>
+<data name="LifeReplacement" xml:space="preserve"><value>Ny registrerad utrustningsenhet</value></data>
+<data name="LifeConfirmUnresolvedLabel" xml:space="preserve"><value>Jag har granskat öppna frågor och dokumenterat fortsatt uppföljning efter avslut.</value></data>
+<data name="LifeSubmit" xml:space="preserve"><value>Skicka för godkännande</value></data>
+<data name="LifeEventHistory" xml:space="preserve"><value>Händelser och godkännanden</value></data>
+<data name="LifeApprove" xml:space="preserve"><value>Godkänn händelse</value></data>
+<data name="LifeReject" xml:space="preserve"><value>Avvisa förslag</value></data>
+<data name="LifeReverse" xml:space="preserve"><value>Reversera senaste händelsen med motivering</value></data>
+<data name="LifeEquipmentHelp" xml:space="preserve"><value>Enhetsregistrering är valfri. Öppna anskaffningens livscykelvy för att registrera enheter. Nuvarande placering ändrar inte historiska ekonomiska dimensioner.</value></data>
+<data name="LifeInternalId" xml:space="preserve"><value>Internt utrustnings-ID</value></data>
+<data name="LifeSerial" xml:space="preserve"><value>Serienummer</value></data>
+<data name="LifeLocation" xml:space="preserve"><value>Nuvarande byggnad/placering</value></data>
+<data name="LifeDisableUnits" xml:space="preserve"><value>Stäng av enhetsregistrering</value></data>
+<data name="LifeEnableUnits" xml:space="preserve"><value>Markera som räkningsbar utrustning</value></data>
+<data name="LifeNewEquipment" xml:space="preserve"><value>Ny enhet / massregistrering</value></data>
+<data name="LifeRegisteredDate" xml:space="preserve"><value>Registreringsdatum</value></data>
+<data name="LifeBulkSerialHelp" xml:space="preserve"><value>Massregistrering: en rad per enhet med serienummer;internt ID. Lämna tomt för antalsregistrering utan serienummer.</value></data>
+<data name="LifeBulkCount" xml:space="preserve"><value>Antal nya enheter utan lista</value></data>
+<data name="LifeConfirmSerial" xml:space="preserve"><value>Möjliga serienummerdubbletter har granskats. Serienummer behöver inte vara unika mellan tillverkare.</value></data>
+<data name="LifeCountableChange" xml:space="preserve"><value>Ändrat val för registrering av fysiska enheter</value></data>
+<data name="LifeNotifications" xml:space="preserve"><value>Mina leasingaviseringar</value></data>
+<data name="LifeDaysBefore" xml:space="preserve"><value>dagar före fristen</value></data>
+<data name="LifeMarkRead" xml:space="preserve"><value>Markera läst</value></data>
+<data name="LifeFollowupType" xml:space="preserve"><value>Uppföljningstyp</value></data>
+<data name="LifeDueThrough" xml:space="preserve"><value>Frist till och med</value></data>
+<data name="LifeOpenObject" xml:space="preserve"><value>Öppna länkat objekt</value></data>
+<data name="LifeNotificationSettings" xml:space="preserve"><value>Aviseringsinställningar</value></data>
+<data name="LifeActivationRule" xml:space="preserve"><value>Aviseringar visas i applikationen kl. 09 i vald tidszon. Aktivering hoppar över alla tidigare aviseringstidpunkter. Historisk eftersläpning finns kvar i arbetslistan. Ingen e-post skickas.</value></data>
+<data name="LifeEnableNotifications" xml:space="preserve"><value>Aktivera aviseringar från nu</value></data>
+<data name="LifeNotificationDays" xml:space="preserve"><value>Dagar före frist, kommaseparerat</value></data>
+<data name="LifeTimeZone" xml:space="preserve"><value>Tidszon</value></data>
+<data name="LifeExtraRecipients" xml:space="preserve"><value>Ytterligare mottagare. Åtkomst kontrolleras på nytt för varje objekt före leverans.</value></data>
+<data name="LifeDeliveryHistory" xml:space="preserve"><value>Senaste aviseringsstatus och fel</value></data>
+<data name="LifeReport" xml:space="preserve"><value>Rapport</value></data>
+<data name="LifeDateField" xml:space="preserve"><value>Periodfilter gäller datum</value></data>
+<data name="LifeAcquisitionsOnly" xml:space="preserve"><value>Endast leasinganskaffningar</value></data>
+<data name="LifeGenerated" xml:space="preserve"><value>Genererad</value></data>
+<data name="LifeFilters" xml:space="preserve"><value>Aktiva filter</value></data>
+<data name="LifeIncompleteRows" xml:space="preserve"><value>Rader med ofullständigt underlag</value></data>
+<data name="LifeReportLimitations" xml:space="preserve"><value>Rapporter visar registrerade data och dagens ramutnyttjande, inte historiska saldon. Dimensionsnamn är bevarade klassificeringsnamn. Krediteringar utan dokumenterad fördelning visas ofördelade; dimensionsfilter utesluter dem. Planbelopp är inte betalningar, bokförd kostnad eller skuld. Valutor summeras separat.</value></data>
+<data name="LifeDashboard" xml:space="preserve"><value>Operativ översikt</value></data>
+<data name="LifeDashboardHelp" xml:space="preserve"><value>Vald period gäller slutdatum, uppsägnings-/returfrister och planerade förfall. Ram och fakturakontroll visar dagens registrerade underlag. Öppna talen för underliggande rapport och filter.</value></data>
+<data name="LifeActive" xml:space="preserve"><value>Aktiva leasingförhållanden</value></data>
+<data name="LifeExpiring" xml:space="preserve"><value>Leasing som löper ut</value></data>
+<data name="LifePurchaseValue" xml:space="preserve"><value>Inköpsvärde</value></data>
+<data name="LifePlannedPayments" xml:space="preserve"><value>Förväntade leasingbetalningar</value></data>
+<data name="LifeUnclassified" xml:space="preserve"><value>Ofördelad eller ofullständig klassificering</value></data>
+<data name="LifeHistoricalDimensionNames" xml:space="preserve"><value>Bevarade klassificeringsnamn; flerval är märkning, inte fördelning</value></data>
+<data name="LifeUnallocatedPurchaseAdjustments" xml:space="preserve"><value>Ofördelade inköpskrediteringar/reverseringar</value></data>
+<data name="LifeCreditDimensionMissing" xml:space="preserve"><value>Historiskt fördelningsunderlag för kreditering/reversering saknas</value></data>
+<data name="LifeUnallocated" xml:space="preserve"><value>Oallokerat</value></data>
+<data name="LifeNoAcquisitionAllocation" xml:space="preserve"><value>Dokumentbeloppet är inte knutet till en viss anskaffning</value></data>
+<data name="LifeQuantityTracked" xml:space="preserve"><value>Radantal / registrerade enheter</value></data>
+<data name="LifeInvalidOwner" xml:space="preserve"><value>Ansvarig/mottagare måste vara aktiv och ha åtkomst till objektet.</value></data>
+<data name="LifeInvalidTerms" xml:space="preserve"><value>Kontrollera fristunderlag, datum och förlängningsperiod.</value></data>
+<data name="LifeUseExtension" xml:space="preserve"><value>Ändra slutdatum genom en dokumenterad, godkänd förlängning.</value></data>
+<data name="LifeInvalidEvent" xml:space="preserve"><value>Kontrollera händelsetyp, datum och referenser. Ordinarie avslut kan inte föregå avtalat slut.</value></data>
+<data name="LifeClosed" xml:space="preserve"><value>Anskaffningen måste vara ekonomiskt registrerad och livscykeln öppen för denna åtgärd.</value></data>
+<data name="LifeDocumentRequired" xml:space="preserve"><value>Händelsen kräver bifogad dokumentation.</value></data>
+<data name="LifeInvalidExtension" xml:space="preserve"><value>Bekräfta tidigare slutdatum, senare nytt slutdatum, ikraftträdandedatum och fortsatta/nya villkor.</value></data>
+<data name="LifeConfirmUnresolved" xml:space="preserve"><value>Granska öppna frågor och bekräfta uppföljning före avslut.</value></data>
+<data name="LifeInvalidQuantity" xml:space="preserve"><value>Antal och valda enheter måste stämma med tillgänglig utrustning på varuraden.</value></data>
+<data name="LifeCountableRequired" xml:space="preserve"><value>Raden måste vara räkningsbar fysisk utrustning med helt antal. Enhetsregistrering kan inte tas bort när historik finns.</value></data>
+<data name="LifeSelectUnits" xml:space="preserve"><value>Antalet omfattar registrerade enheter. Välj dem uttryckligen eller minska antalet.</value></data>
+<data name="LifeOverQuantity" xml:space="preserve"><value>Registrerade eller behandlade enheter överstiger varuradens tillgängliga antal.</value></data>
+<data name="LifeBuyoutRequired" xml:space="preserve"><value>Registrera faktiskt avtalat utköpsbelopp; restvärde används inte automatiskt.</value></data>
+<data name="LifeReplacementRequired" xml:space="preserve"><value>Välj en tillgänglig ersättningsenhet från en registrerad anskaffning. Nya inköp måste följa normalt anskaffningsflöde.</value></data>
+<data name="LifePlanRevisionRequired" xml:space="preserve"><value>Aktivera en dokumenterad reviderad betalningsplan och bekräfta plankontroll först.</value></data>
+<data name="LifeInvalidEquipment" xml:space="preserve"><value>Kontrollera beskrivning, datum, serienummer och status.</value></data>
+<data name="LifeDuplicateInternalId" xml:space="preserve"><value>Internt utrustnings-ID finns redan i kontot.</value></data>
+<data name="LifeDuplicateSerial" xml:space="preserve"><value>Möjlig dubblett av serienummer. Granska och bekräfta före sparande.</value></data>
+<data name="LifeEventRequired" xml:space="preserve"><value>Använd en godkänd livscykelhändelse för denna statusändring.</value></data>
+<data name="LifeReverseLatest" xml:space="preserve"><value>Klargör senare ändringar innan händelsen kan reverseras.</value></data>
+<data name="LifeFrameworkUnresolved" xml:space="preserve"><value>Ramavtalet har öppna leasingförhållanden, reservationer eller uppföljningspunkter och kan inte avslutas helt.</value></data>
+<data name="LifeInvalidReport" xml:space="preserve"><value>Kontrollera rapporttyp, datumfilter och sökning.</value></data>
+<data name="LifeNarrowReport" xml:space="preserve"><value>Rapporten är för stor. Begränsa filtren (högst 10 000 anskaffningar och 100 000 rapportrader). Inga data har exporterats.</value></data>
+<data name="LifeOpenEquipment" xml:space="preserve"><value>Utrustning har oklar slutstatus.</value></data>
+<data name="LifeOpenFollowups" xml:space="preserve"><value>Öppna uppföljningspunkter</value></data>
+<data name="LifePlanIncomplete" xml:space="preserve"><value>Betalningsplan saknas eller måste granskas.</value></data>
+<data name="LifeRemainingTerms" xml:space="preserve"><value>Planerade terminer återstår. Inga terminer tas bort automatiskt.</value></data>
+<data name="LifeDocumentIssues" xml:space="preserve"><value>Fakturakontroll eller avvikelser är oklara.</value></data>
+<data name="LifeUnallocatedPartyInvoices" xml:space="preserve"><value>Oklara/oallokerade dokument finns för samma finansbolag och valuta. Tillhörighet måste klargöras.</value></data>
+<data name="LifeNotificationObsolete" xml:space="preserve"><value>Aviseringen är inte längre aktuell eller mottagaren saknar åtkomst.</value></data>
+<data name="LifeNotificationHistorical" xml:space="preserve"><value>Historisk tidpunkt före aktivering eller passerad frist – ingen avisering.</value></data>
+<data name="LifeStatusActive" xml:space="preserve"><value>Aktiv</value></data>
+<data name="LifeStatusClosing" xml:space="preserve"><value>Under avslut</value></data>
+<data name="LifeStatusExtended" xml:space="preserve"><value>Förlängd</value></data>
+<data name="LifeStatusClosed" xml:space="preserve"><value>Avslutad</value></data>
+<data name="LifeEquipmentInUse" xml:space="preserve"><value>I bruk</value></data>
+<data name="LifeEquipmentPlannedReturn" xml:space="preserve"><value>Planerad retur</value></data>
+<data name="LifeEquipmentReturned" xml:space="preserve"><value>Returnerad</value></data>
+<data name="LifeEquipmentReplaced" xml:space="preserve"><value>Ersatt</value></data>
+<data name="LifeEquipmentBoughtOut" xml:space="preserve"><value>Utköpt</value></data>
+<data name="LifeEquipmentLostOrDamaged" xml:space="preserve"><value>Förlorad eller skadad</value></data>
+<data name="LifeNoticeUnknown" xml:space="preserve"><value>Oklart</value></data>
+<data name="LifeNoticeExplicit" xml:space="preserve"><value>Uttryckligt datum</value></data>
+<data name="LifeNoticeDays" xml:space="preserve"><value>Kalenderdagar före slut</value></data>
+<data name="LifeNoticeCalendarMonths" xml:space="preserve"><value>Kalendermånader före slut</value></data>
+<data name="LifeKindReturn" xml:space="preserve"><value>Retur</value></data>
+<data name="LifeKindReplace" xml:space="preserve"><value>Utbyte</value></data>
+<data name="LifeKindBuyout" xml:space="preserve"><value>Utköp</value></data>
+<data name="LifeKindLossOrDamage" xml:space="preserve"><value>Förlust eller skada</value></data>
+<data name="LifeKindExtend" xml:space="preserve"><value>Förlängning</value></data>
+<data name="LifeKindStartClosing" xml:space="preserve"><value>Starta avslut</value></data>
+<data name="LifeKindClose" xml:space="preserve"><value>Ordinarie avslut</value></data>
+<data name="LifeKindEarlyClose" xml:space="preserve"><value>Förtida avslut</value></data>
+<data name="LifeKindCorrect" xml:space="preserve"><value>Korrigering</value></data>
+<data name="LifeDecisionPending" xml:space="preserve"><value>För godkännande</value></data>
+<data name="LifeDecisionApproved" xml:space="preserve"><value>Godkänd</value></data>
+<data name="LifeDecisionRejected" xml:space="preserve"><value>Avvisad</value></data>
+<data name="LifeDecisionReversed" xml:space="preserve"><value>Reverserad</value></data>
+<data name="LifeTaskOpen" xml:space="preserve"><value>Öppen</value></data>
+<data name="LifeTaskInProgress" xml:space="preserve"><value>Pågår</value></data>
+<data name="LifeTaskCompleted" xml:space="preserve"><value>Slutförd</value></data>
+<data name="LifeTaskObsolete" xml:space="preserve"><value>Inaktuell</value></data>
+<data name="LifeNotificationPending" xml:space="preserve"><value>Planerad</value></data>
+<data name="LifeNotificationDelivered" xml:space="preserve"><value>Levererad i appen</value></data>
+<data name="LifeNotificationSkipped" xml:space="preserve"><value>Överhoppad</value></data>
+<data name="LifeNotificationFailed" xml:space="preserve"><value>Fel</value></data>
+<data name="LifeReportAgreements" xml:space="preserve"><value>Avtalsöversikt</value></data>
+<data name="LifeReportCapacity" xml:space="preserve"><value>Ramutnyttjande</value></data>
+<data name="LifeReportDimensions" xml:space="preserve"><value>Anskaffningar och dimensioner</value></data>
+<data name="LifeReportPayments" xml:space="preserve"><value>Planerade betalningar</value></data>
+<data name="LifeReportInvoiceControl" xml:space="preserve"><value>Fakturakontroll</value></data>
+<data name="LifeReportEquipment" xml:space="preserve"><value>Utrustning och avslut</value></data>
+<data name="LifeDatePurchase" xml:space="preserve"><value>Inköpsdatum</value></data>
+<data name="LifeDateEnd" xml:space="preserve"><value>Slutdatum</value></data>
+<data name="LifeDateDue" xml:space="preserve"><value>Planerat förfallodatum</value></data>
+<data name="LifeDateInvoice" xml:space="preserve"><value>Fakturadatum</value></data>
+<data name="LifeDateEvent" xml:space="preserve"><value>Händelsedatum</value></data>
+<data name="LifeDateNotice" xml:space="preserve"><value>Uppsägningsfrist</value></data>
+<data name="LifeDateReturn" xml:space="preserve"><value>Returfrist</value></data>
+<data name="LifeFollowupExpiry" xml:space="preserve"><value>Leasingutgång</value></data>
+<data name="LifeFollowupNotice" xml:space="preserve"><value>Uppsägningsfrist</value></data>
+<data name="LifeFollowupReturn" xml:space="preserve"><value>Returfrist</value></data>
+<data name="LifeFollowupExtensionOutcome" xml:space="preserve"><value>Obekräftad förlängning</value></data>
+<data name="LifeFollowupOpenReservation" xml:space="preserve"><value>Öppen reservation efter anskaffningsperioden</value></data>
+<data name="LifeFollowupEquipment" xml:space="preserve"><value>Utrustning som kräver åtgärd</value></data>
+<data name="LifeFollowupUnknownTerms" xml:space="preserve"><value>Oklara frister och villkor</value></data>
+<data name="LifeFollowupMissingOwner" xml:space="preserve"><value>Ansvarig saknas</value></data>
+<data name="LifeFollowupPaymentPlan" xml:space="preserve"><value>Betalningsplan måste granskas</value></data>
+<data name="LifeFollowupDocuments" xml:space="preserve"><value>Slutdokument måste granskas</value></data>
+<data name="LifeFollowupFrameworkEnd" xml:space="preserve"><value>Anskaffningsperiodens slut</value></data>
+<data name="UserRoleLeasingEquipmentManager" xml:space="preserve"><value>Ansvarig för leasingutrustning</value></data>
+<data name="UserRoleLeasingLifecycleManager" xml:space="preserve"><value>Ansvarig för leasinglivscykel</value></data>
+<data name="UserRoleLeasingLifecycleApprover" xml:space="preserve"><value>Godkännare av leasinglivscykel</value></data>
+<data name="UserRoleLeasingReportReader" xml:space="preserve"><value>Läsare av leasingrapporter</value></data>
+<data name="UserRoleLeasingReportExporter" xml:space="preserve"><value>Exportör av leasingrapporter</value></data>
+<data name="LifeColumnName" xml:space="preserve"><value>Namn</value></data>
+<data name="LifeColumnReference" xml:space="preserve"><value>Referens / rad</value></data>
+<data name="LifeColumnFinance" xml:space="preserve"><value>Finansbolag</value></data>
+<data name="LifeColumnOwner" xml:space="preserve"><value>Ansvarig</value></data>
+<data name="LifeColumnCurrency" xml:space="preserve"><value>Valuta</value></data>
+<data name="LifeColumnStatus" xml:space="preserve"><value>Status</value></data>
+<data name="LifeColumnBasis" xml:space="preserve"><value>Beloppsunderlag / händelse</value></data>
+<data name="LifeColumnPurchaseDate" xml:space="preserve"><value>Inköpsdatum</value></data>
+<data name="LifeColumnEndDate" xml:space="preserve"><value>Slutdatum</value></data>
+<data name="LifeColumnNoticeDate" xml:space="preserve"><value>Uppsägningsfrist</value></data>
+<data name="LifeColumnReturnDate" xml:space="preserve"><value>Returfrist</value></data>
+<data name="LifeColumnFrom" xml:space="preserve"><value>Period från</value></data>
+<data name="LifeColumnTo" xml:space="preserve"><value>Period till</value></data>
+<data name="LifeColumnDueDate" xml:space="preserve"><value>Planerat förfall</value></data>
+<data name="LifeColumnInvoiceDate" xml:space="preserve"><value>Fakturadatum</value></data>
+<data name="LifeColumnEventDate" xml:space="preserve"><value>Händelsedatum</value></data>
+<data name="LifeColumnNet" xml:space="preserve"><value>Netto</value></data>
+<data name="LifeColumnVat" xml:space="preserve"><value>Moms</value></data>
+<data name="LifeColumnGross" xml:space="preserve"><value>Brutto</value></data>
+<data name="LifeColumnLimit" xml:space="preserve"><value>Maxram</value></data>
+<data name="LifeColumnUsed" xml:space="preserve"><value>Utnyttjat</value></data>
+<data name="LifeColumnReserved" xml:space="preserve"><value>Reserverat</value></data>
+<data name="LifeColumnAvailable" xml:space="preserve"><value>Tillgängligt</value></data>
+<data name="LifeColumnExpected" xml:space="preserve"><value>Förväntat brutto</value></data>
+<data name="LifeColumnInvoiced" xml:space="preserve"><value>Netto fakturerat brutto</value></data>
+<data name="LifeColumnDifference" xml:space="preserve"><value>Bruttodifferens</value></data>
+<data name="LifeColumnUnallocated" xml:space="preserve"><value>Oallokerat brutto</value></data>
+<data name="LifeColumnVersion" xml:space="preserve"><value>Planversion</value></data>
+<data name="LifeColumnNeedsReview" xml:space="preserve"><value>Ofullständigt / måste granskas</value></data>
+<data name="LifeColumnDimensions" xml:space="preserve"><value>Historisk klassificering</value></data>
+<data name="LifeColumnSerial" xml:space="preserve"><value>Serienummer</value></data>
+<data name="LifeColumnLocation" xml:space="preserve"><value>Nuvarande placering</value></data>
+<data name="LifeColumnNotes" xml:space="preserve"><value>Anteckningar / begränsningar</value></data>
+<data name="LifeColumnOriginalEndDate" xml:space="preserve"><value>Ursprungligt slutdatum</value></data>
+<data name="LifeColumnClosedDate" xml:space="preserve"><value>Faktiskt avslutsdatum</value></data>
+<data name="LifeColumnClosureKind" xml:space="preserve"><value>Avslutssätt</value></data>
+<data name="LifeColumnQuantity" xml:space="preserve"><value>Antal</value></data>
+<data name="LifeColumnBuyoutAmount" xml:space="preserve"><value>Dokumenterat utköpsbelopp</value></data>
+<data name="LifeColumnUnitReference" xml:space="preserve"><value>Berörda enheter</value></data>
+<data name="PaymentEventLifecycleTerms" xml:space="preserve"><value>Livscykelvillkor reviderade</value></data>
+<data name="PaymentEventLifecycleProposed" xml:space="preserve"><value>Livscykelhändelse föreslagen</value></data>
+<data name="PaymentEventLifecycleDecision" xml:space="preserve"><value>Livscykelhändelse behandlad</value></data>
+<data name="PaymentEventLifecycleReversed" xml:space="preserve"><value>Livscykelhändelse reverserad</value></data>
+<data name="PaymentEventLifecycleReviewed" xml:space="preserve"><value>Livscykelkontroll utförd</value></data>
+<data name="PaymentEventLifecycleTask" xml:space="preserve"><value>Uppföljningspunkt uppdaterad</value></data>
+<data name="PaymentEventLifecycleNotifications" xml:space="preserve"><value>Aviseringsinställningar ändrade</value></data>
+<data name="PaymentEventEquipmentSaved" xml:space="preserve"><value>Utrustning registrerad eller korrigerad</value></data>
+<data name="PaymentEventEquipmentCountable" xml:space="preserve"><value>Enhetsregistrering ändrad</value></data>
 </root>
