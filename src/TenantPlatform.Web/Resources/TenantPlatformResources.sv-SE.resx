@@ -2510,7 +2510,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingCapacity" xml:space="preserve"><value>Ramutnyttjande</value></data>
   <data name="LeasingUsed" xml:space="preserve"><value>Utnyttjat belopp</value></data>
   <data name="LeasingAvailable" xml:space="preserve"><value>Tillgängligt belopp</value></data>
-  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Endast registrerade, ej annullerade anskaffningar använder ramen. Utkast, räntor och avgifter gör inte det. Leasingbetalningar frigör inte ramen.</value></data>
+  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Registrerade anskaffningar och aktiva återstående reservationer använder ramen. Utkast, räntor och leasingavgifter gör det inte. Leasingbetalningar frigör inte ramen.</value></data>
   <data name="LeasingPeriodHelp" xml:space="preserve"><value>Anskaffningsperioden begränsar inköpsdatum. Varje anskaffning har en egen leasingperiod som fortsätter efter anskaffningsperiodens slut.</value></data>
   <data name="LeasingDocuments" xml:space="preserve"><value>Dokumentbilagor</value></data>
   <data name="LeasingNoDocuments" xml:space="preserve"><value>Inga dokumentbilagor ännu.</value></data>
@@ -2538,7 +2538,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingInvalidPurchase" xml:space="preserve"><value>Kontrollera fakturauppgifter och finansierat belopp. Beloppet får inte vara negativt och får ha högst två decimaler.</value></data>
   <data name="LeasingInvalidDates" xml:space="preserve"><value>Ange giltigt inköpsdatum och leasingperiod på 1–600 hela månader.</value></data>
   <data name="LeasingInvalidLines" xml:space="preserve"><value>Kontrollera varuraderna. Beskrivning krävs, antal måste vara positivt, pris får inte vara negativt och moms måste vara 0–100 %. Använd högst fyra decimaler och 500 rader.</value></data>
-  <data name="LeasingRegistrationRequired" xml:space="preserve"><value>Registrering kräver minst en varurad med positivt inköpsvärde, positivt finansierat belopp, fakturanummer och fakturadatum.</value></data>
+  <data name="LeasingRegistrationRequired" xml:space="preserve"><value>Registrering kräver minst en varurad med positivt inköpsvärde och positivt finansierat belopp. Faktura kan dokumenteras senare.</value></data>
   <data name="LeasingOutsidePeriod" xml:space="preserve"><value>Inköpsdatum måste ligga inom ramavtalets anskaffningsperiod, inklusive båda gränsdatumen.</value></data>
   <data name="LeasingConcurrency" xml:space="preserve"><value>Avtalet har ändrats av en annan användare. Ladda om sidan innan du sparar.</value></data>
   <data name="LeasingReasonRequired" xml:space="preserve"><value>Ange en orsak till ändringen (högst 2000 tecken).</value></data>
@@ -2724,4 +2724,282 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="InvoiceReleasedNet" xml:space="preserve"><value>Frigjord ram exkl. moms</value></data>
   <data name="InvoiceReleasedVat" xml:space="preserve"><value>Frigjord ram, moms</value></data>
   <data name="InvoiceConfirm" xml:space="preserve"><value>Bekräfta</value></data>
+  <data name="PurchaseOrders" xml:space="preserve"><value>Beställningar</value></data>
+  <data name="PurchaseOrderHelp" xml:space="preserve"><value>Beställningar är planerade köp under ett ramavtal. Fristående leasing saknar ramavtal.</value></data>
+  <data name="OrderNew" xml:space="preserve"><value>Ny beställning</value></data>
+  <data name="OrderDate" xml:space="preserve"><value>Beställningsdatum</value></data>
+  <data name="OrderExpected" xml:space="preserve"><value>Förväntat köp-/leveransdatum</value></data>
+  <data name="OrderUnit" xml:space="preserve"><value>Enhet</value></data>
+  <data name="OrderMethod" xml:space="preserve"><value>Realiseringsmetod</value></data>
+  <data name="OrderMethodQuantity" xml:space="preserve"><value>Antal</value></data>
+  <data name="OrderMethodAmountShare" xml:space="preserve"><value>Beloppsandel (0–1)</value></data>
+  <data name="OrderProposalHelp" xml:space="preserve"><value>Godkända värden och reservationer gäller tills förslaget godkänns. Realiserade delar kontrolleras på nytt.</value></data>
+  <data name="OrderReserved" xml:space="preserve"><value>Reserverat belopp</value></data>
+  <data name="OrderAvailableAfter" xml:space="preserve"><value>Tillgängligt belopp efter åtgärd</value></data>
+  <data name="OrderFulfillment" xml:space="preserve"><value>Uppfyllelse</value></data>
+  <data name="OrderNotRealized" xml:space="preserve"><value>Inte realiserad</value></data>
+  <data name="OrderPartRealized" xml:space="preserve"><value>Delvis realiserad</value></data>
+  <data name="OrderFullyRealized" xml:space="preserve"><value>Helt realiserad</value></data>
+  <data name="OrderStatusDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="OrderStatusPending" xml:space="preserve"><value>För godkännande</value></data>
+  <data name="OrderStatusApproved" xml:space="preserve"><value>Godkänd</value></data>
+  <data name="OrderStatusRejected" xml:space="preserve"><value>Avvisad</value></data>
+  <data name="OrderStatusCancelled" xml:space="preserve"><value>Annullerad</value></data>
+  <data name="OrderStatusClosed" xml:space="preserve"><value>Avslutad</value></data>
+  <data name="OrderApprovedValue" xml:space="preserve"><value>Godkänt beställningsvärde</value></data>
+  <data name="OrderRealize" xml:space="preserve"><value>Skapa anskaffning</value></data>
+  <data name="OrderRealized" xml:space="preserve"><value>Realiserat antal/andel</value></data>
+  <data name="OrderRemaining" xml:space="preserve"><value>Återstående antal/andel</value></data>
+  <data name="OrderOnePurchaseHelp" xml:space="preserve"><value>En anskaffning kan realisera högst en beställning. Samlingsfakturor för flera beställningar kan inte matchas automatiskt.</value></data>
+  <data name="OrderScopeHelp" xml:space="preserve"><value>Välj beställningsrad och antal, eller uttrycklig beloppsandel mellan 0 och 1. Använd faktiskt köpdatum; förväntad leverans startar inte leasingen.</value></data>
+  <data name="OrderLine" xml:space="preserve"><value>Beställningsrad</value></data>
+  <data name="OrderScope" xml:space="preserve"><value>Antal / beloppsandel</value></data>
+  <data name="OrderConfirmVariance" xml:space="preserve"><value>Jag bekräftar prisavvikelsen för vald del. Överleverans kräver först en godkänd beställningsändring.</value></data>
+  <data name="OrderRelease" xml:space="preserve"><value>Reservation som frigörs</value></data>
+  <data name="OrderActual" xml:space="preserve"><value>Faktiskt inköpsvärde</value></data>
+  <data name="OrderVariance" xml:space="preserve"><value>Prisavvikelse exkl. moms</value></data>
+  <data name="OrderDocumented" xml:space="preserve"><value>Fakturadokumenterat belopp</value></data>
+  <data name="OrderNeedsReview" xml:space="preserve"><value>Återstående reservation måste granskas: anskaffningsperioden är slut eller ramen är stängd. Registrera köp inom perioden innan återstoden avslutas.</value></data>
+  <data name="OrderUnreserved" xml:space="preserve"><value>Utan aktiv reservation</value></data>
+  <data name="OrderProposal" xml:space="preserve"><value>Ändringsförslag</value></data>
+  <data name="OrderSubmit" xml:space="preserve"><value>Skicka för godkännande</value></data>
+  <data name="OrderApprove" xml:space="preserve"><value>Godkänn</value></data>
+  <data name="OrderReject" xml:space="preserve"><value>Avvisa</value></data>
+  <data name="OrderCancel" xml:space="preserve"><value>Annullera återstoden</value></data>
+  <data name="OrderClose" xml:space="preserve"><value>Avsluta återstoden</value></data>
+  <data name="OrderReopen" xml:space="preserve"><value>Godkänn återöppning av reservation</value></data>
+  <data name="OrderReopenHelp" xml:space="preserve"><value>Reverserade delar saknar aktiv reservation. Återöppning kräver ny ramkontroll och öppen anskaffningsperiod.</value></data>
+  <data name="OrderLink" xml:space="preserve"><value>Koppla befintlig anskaffning</value></data>
+  <data name="OrderLimitChanges" xml:space="preserve"><value>Dokumenterade ramändringar</value></data>
+  <data name="OrderNewLimit" xml:space="preserve"><value>Nytt maxbelopp</value></data>
+  <data name="OrderDocumentReference" xml:space="preserve"><value>Dokumentreferens (valfritt)</value></data>
+  <data name="OrderPropose" xml:space="preserve"><value>Spara förslag</value></data>
+  <data name="OrderProposedBy" xml:space="preserve"><value>Föreslaget av</value></data>
+  <data name="OrderApprovedBy" xml:space="preserve"><value>Godkänt av</value></data>
+  <data name="OrderNoOrder" xml:space="preserve"><value>Utan beställning</value></data>
+  <data name="LeasingOrderInvalid" xml:space="preserve"><value>Kontrollera beställning, rader, valuta och kopplingar.</value></data>
+  <data name="LeasingOrderOverDelivery" xml:space="preserve"><value>Valt antal/andel överstiger godkänd återstod eller stämmer inte med anskaffningsraden.</value></data>
+  <data name="LeasingOrderOnePurchase" xml:space="preserve"><value>Anskaffningen är redan kopplad till en annan beställning.</value></data>
+  <data name="LeasingOrderConfirmVariance" xml:space="preserve"><value>Bekräfta prisavvikelsen innan anskaffningen registreras.</value></data>
+  <data name="LeasingOrderLinkedImmutable" xml:space="preserve"><value>Realiserade rader måste korrigeras genom reversering eller kreditnota. Kopplingen kan inte tas bort genom redigering.</value></data>
+  <data name="LeasingLimitProposalRequired" xml:space="preserve"><value>Ändra maxbeloppet genom dokumenterat förslag och godkännande på ramavtalets detaljsida.</value></data>
+  <data name="LeasingOrderAlreadyDocumented" xml:space="preserve"><value>Fakturamatchning och kreditnota ska inte realisera beställningen igen. Välj beställningsrader endast för nya anskaffningsrader.</value></data>
+  <data name="LeasingActionLimitApproved" xml:space="preserve"><value>Maxbelopp godkänt</value></data>
+  <data name="UserRoleLeasingOrderApprover" xml:space="preserve"><value>Godkännare av leasingbeställningar</value></data>
+  <data name="UserRoleLeasingLimitApprover" xml:space="preserve"><value>Godkännare av leasingramar</value></data>
+  <data name="OrderActionSaved" xml:space="preserve"><value>Ändringsförslag</value></data>
+  <data name="OrderActionPending" xml:space="preserve"><value>För godkännande</value></data>
+  <data name="OrderActionApproved" xml:space="preserve"><value>Godkänd</value></data>
+  <data name="OrderActionRejected" xml:space="preserve"><value>Avvisad</value></data>
+  <data name="OrderActionCancelled" xml:space="preserve"><value>Annullerad</value></data>
+  <data name="OrderActionClosed" xml:space="preserve"><value>Avslutad</value></data>
+  <data name="OrderActionRealized" xml:space="preserve"><value>Realiserat antal/andel</value></data>
+  <data name="OrderActionReversed" xml:space="preserve"><value>Utan aktiv reservation</value></data>
+  <data name="OrderActionReopened" xml:space="preserve"><value>Godkänn återöppning av reservation</value></data>
+  <data name="OrderActionDocumentAdded" xml:space="preserve"><value>Dokumentreferens (valfritt)</value></data>
+  <data name="OrderFrameworkRequired" xml:space="preserve"><value>Välj ett ramavtal innan du sparar beställningen. Om inget finns måste ett ramavtal skapas först.</value></data>
+  <data name="PaymentPlans" xml:space="preserve"><value>Betalningsplaner</value></data>
+  <data name="RentalInvoices" xml:space="preserve"><value>Leasingfakturor</value></data>
+  <data name="PaymentDetails" xml:space="preserve"><value>Finansieringsvillkor, betalningsplan och fakturakontroll</value></data>
+  <data name="PaymentScopeHelp" xml:space="preserve"><value>Översikten visar avtalade och fakturerade belopp, inte bankbetalningar eller kvarvarande skuld.</value></data>
+  <data name="PaymentFinancing" xml:space="preserve"><value>Finansieringsvillkor</value></data>
+  <data name="PaymentAsOf" xml:space="preserve"><value>Villkor på datum</value></data>
+  <data name="PaymentUnknownEffective" xml:space="preserve"><value>Okänt ikraftträdandedatum. Uppgifterna kan inte dateras säkert.</value></data>
+  <data name="PaymentInitialUnknownDate" xml:space="preserve"><value>Ursprungliga villkor, okänt ikraftträdandedatum</value></data>
+  <data name="PaymentFinancingHistory" xml:space="preserve"><value>Villkorshistorik</value></data>
+  <data name="PaymentNewFinancing" xml:space="preserve"><value>Registrera ny villkorsrevision</value></data>
+  <data name="PaymentEffective" xml:space="preserve"><value>Gäller från och med</value></data>
+  <data name="PaymentReason" xml:space="preserve"><value>Motivering</value></data>
+  <data name="PaymentFinanceReference" xml:space="preserve"><value>Finansbolagets avtalsreferens</value></data>
+  <data name="PaymentAdvanceRent" xml:space="preserve"><value>Förskottshyra</value></data>
+  <data name="PaymentResidualValue" xml:space="preserve"><value>Avtalat restvärde</value></data>
+  <data name="PaymentEstablishmentFee" xml:space="preserve"><value>Uppläggningsavgift</value></data>
+  <data name="PaymentOtherFees" xml:space="preserve"><value>Andra avtalade avgifter</value></data>
+  <data name="PaymentFirstDue" xml:space="preserve"><value>Första förfallodag</value></data>
+  <data name="PaymentObservedRate" xml:space="preserve"><value>Observerad referensränta (%)</value></data>
+  <data name="PaymentObservationDate" xml:space="preserve"><value>Observationsdatum</value></data>
+  <data name="PaymentRateFloor" xml:space="preserve"><value>Räntegolv (%)</value></data>
+  <data name="PaymentRateCap" xml:space="preserve"><value>Räntetak (%)</value></data>
+  <data name="PaymentObligationDocument" xml:space="preserve"><value>Dokumentation av betalningsförpliktelse</value></data>
+  <data name="PaymentDocumentReference" xml:space="preserve"><value>Dokumentreferens</value></data>
+  <data name="PaymentNotes" xml:space="preserve"><value>Anteckningar</value></data>
+  <data name="PaymentTiming" xml:space="preserve"><value>Betalningstidpunkt</value></data>
+  <data name="PaymentTimingAdvance" xml:space="preserve"><value>I förskott</value></data>
+  <data name="PaymentTimingArrears" xml:space="preserve"><value>I efterskott</value></data>
+  <data name="PaymentResetFrequency" xml:space="preserve"><value>Räntejusteringsintervall</value></data>
+  <data name="PaymentRateBasis" xml:space="preserve"><value>Räntegolv/-tak gäller</value></data>
+  <data name="PaymentRateBasisReference" xml:space="preserve"><value>Referensräntan</value></data>
+  <data name="PaymentRateBasisTotalRate" xml:space="preserve"><value>Total ränta</value></data>
+  <data name="PaymentResidualObligation" xml:space="preserve"><value>Restvärdet är en dokumenterad betalningsförpliktelse</value></data>
+  <data name="PaymentNoAutomaticAmounts" xml:space="preserve"><value>Villkoren skapar inga betalningsposter. Lägg bara till restvärde när betalningsplikten är dokumenterad. Räkna inte förskottshyra eller avgifter dubbelt.</value></data>
+  <data name="PaymentReference" xml:space="preserve"><value>Terminreferens</value></data>
+  <data name="PaymentFrom" xml:space="preserve"><value>Period från</value></data>
+  <data name="PaymentTo" xml:space="preserve"><value>Period till</value></data>
+  <data name="PaymentDue" xml:space="preserve"><value>Förfallodag</value></data>
+  <data name="PaymentCapital" xml:space="preserve"><value>Kapitaldel exkl. moms</value></data>
+  <data name="PaymentInterest" xml:space="preserve"><value>Räntedel exkl. moms</value></data>
+  <data name="PaymentFee" xml:space="preserve"><value>Avgiftsdel exkl. moms</value></data>
+  <data name="PaymentReviewReason" xml:space="preserve"><value>Motivering för kontroll av perioder och villkorsunderlag</value></data>
+  <data name="PaymentType" xml:space="preserve"><value>Posttyp</value></data>
+  <data name="PaymentTypeRent" xml:space="preserve"><value>Ordinarie hyra</value></data>
+  <data name="PaymentTypeAdvanceRent" xml:space="preserve"><value>Förskottshyra</value></data>
+  <data name="PaymentTypeFee" xml:space="preserve"><value>Avgift</value></data>
+  <data name="PaymentTypeResidualObligation" xml:space="preserve"><value>Dokumenterad restvärdesförpliktelse</value></data>
+  <data name="PaymentTypeOther" xml:space="preserve"><value>Annan engångspost</value></data>
+  <data name="PaymentFinancingBasis" xml:space="preserve"><value>Villkorsrevision som beloppet bygger på</value></data>
+  <data name="PaymentComponentsComplete" xml:space="preserve"><value>Komponenterna specificerar hela nettobeloppet (moms separat)</value></data>
+  <data name="PaymentYes" xml:space="preserve"><value>Ja</value></data>
+  <data name="PaymentNo" xml:space="preserve"><value>Nej</value></data>
+  <data name="PaymentPlanDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="PaymentPlanActive" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="PaymentPlanReplaced" xml:space="preserve"><value>Ersatt</value></data>
+  <data name="PaymentPeriod" xml:space="preserve"><value>Planperiod</value></data>
+  <data name="PaymentNextDue" xml:space="preserve"><value>Nästa planerade förfallodag</value></data>
+  <data name="PaymentReview" xml:space="preserve"><value>Måste granskas</value></data>
+  <data name="PaymentNoPlan" xml:space="preserve"><value>Ingen betalningsplan</value></data>
+  <data name="PaymentFloatingHelp" xml:space="preserve"><value>Beloppen är avtalade källvärden. Vid rörlig ränta beror framtida belopp på villkoren och garanterar inte oförändrad hyra.</value></data>
+  <data name="PaymentNewPlan" xml:space="preserve"><value>Ny betalningsplan</value></data>
+  <data name="PaymentSource" xml:space="preserve"><value>Källdokument (bifoga PDF på anskaffningen)</value></data>
+  <data name="PaymentRevise" xml:space="preserve"><value>Skapa reviderat utkast</value></data>
+  <data name="PaymentInvoicedChanges" xml:space="preserve"><value>Jag har granskat ändringar av fakturerade terminer och att kopplingarna bevaras.</value></data>
+  <data name="PaymentActivate" xml:space="preserve"><value>Aktivera granskad plan</value></data>
+  <data name="PaymentDraftEditor" xml:space="preserve"><value>Registrera terminer och granska förhandsvisningen</value></data>
+  <data name="PaymentSeriesRule" xml:space="preserve"><value>Datum förankras i första perioden och förfallodagen. Periodgränser bevarar månadsslut; förfall gör det när valt. Annars begränsas ursprungsdagen till månadens sista dag. Ingen helgdagsjustering. Serien ersätter förhandsvisningen; första och sista termin kan redigeras.</value></data>
+  <data name="PaymentCount" xml:space="preserve"><value>Antal terminer</value></data>
+  <data name="PaymentMonthEnd" xml:space="preserve"><value>Förfall vid månadsslut</value></data>
+  <data name="PaymentPreviewSeries" xml:space="preserve"><value>Förhandsvisa serie</value></data>
+  <data name="PaymentAddTerm" xml:space="preserve"><value>Lägg till termin/engångspost</value></data>
+  <data name="PaymentImport" xml:space="preserve"><value>Importera CSV/XLSX</value></data>
+  <data name="PaymentSheet" xml:space="preserve"><value>Kalkylblad</value></data>
+  <data name="PaymentPreviewImport" xml:space="preserve"><value>Förhandsvisa import</value></data>
+  <data name="PaymentSaveDraft" xml:space="preserve"><value>Spara som utkast</value></data>
+  <data name="PaymentControl" xml:space="preserve"><value>Terminer och fakturakontroll</value></data>
+  <data name="PaymentTolerance" xml:space="preserve"><value>Toleransen är 0,01 i planens valuta för netto, moms respektive brutto. Delvis fakturering är inte en slutlig prisavvikelse. Belopp visas som netto / moms / brutto.</value></data>
+  <data name="PaymentExpectedTotal" xml:space="preserve"><value>Summa aktuella planerade betalningar</value></data>
+  <data name="PaymentExpected" xml:space="preserve"><value>Förväntat</value></data>
+  <data name="PaymentInvoiced" xml:space="preserve"><value>Netto fakturerat efter kreditnotor</value></data>
+  <data name="PaymentDifference" xml:space="preserve"><value>Differens</value></data>
+  <data name="PaymentInvoiceDue" xml:space="preserve"><value>Fakturans förfallodag</value></data>
+  <data name="PaymentDueDifference" xml:space="preserve"><value>Avviker från planerat förfall</value></data>
+  <data name="PaymentCompleteBilling" xml:space="preserve"><value>All fakturering mottagen</value></data>
+  <data name="PaymentAcceptVariance" xml:space="preserve"><value>Acceptera dokumenterad avvikelse</value></data>
+  <data name="PaymentReopen" xml:space="preserve"><value>Öppna fakturakontroll igen</value></data>
+  <data name="PaymentConfirmReview" xml:space="preserve"><value>Bekräfta granskat planbelopp</value></data>
+  <data name="PaymentHistory" xml:space="preserve"><value>Kontrollhistorik</value></data>
+  <data name="PaymentBillingNotInvoiced" xml:space="preserve"><value>Inte fakturerat</value></data>
+  <data name="PaymentBillingPartial" xml:space="preserve"><value>Delvis fakturerat</value></data>
+  <data name="PaymentBillingReconciled" xml:space="preserve"><value>Avstämt</value></data>
+  <data name="PaymentBillingVariance" xml:space="preserve"><value>Avvikelse</value></data>
+  <data name="PaymentBillingAccepted" xml:space="preserve"><value>Avvikelse accepterad</value></data>
+  <data name="PaymentCurrent" xml:space="preserve"><value>Aktuell plan</value></data>
+  <data name="PaymentProposed" xml:space="preserve"><value>Föreslagen/vald version</value></data>
+  <data name="PaymentAbsent" xml:space="preserve"><value>Ingen post</value></data>
+  <data name="RentalNew" xml:space="preserve"><value>Registrera leasingfaktura manuellt</value></data>
+  <data name="RentalUpload" xml:space="preserve"><value>Ladda upp leasingfaktura/kreditnota</value></data>
+  <data name="RentalAllocated" xml:space="preserve"><value>Allokerat</value></data>
+  <data name="RentalUnallocated" xml:space="preserve"><value>Oallokerad rest</value></data>
+  <data name="RentalDraft" xml:space="preserve"><value>Öppna utkast</value></data>
+  <data name="RentalApprovedTotal" xml:space="preserve"><value>Godkänt netto efter kreditnotor</value></data>
+  <data name="RentalInvoice" xml:space="preserve"><value>Leasingfaktura</value></data>
+  <data name="RentalManualHelp" xml:space="preserve"><value>Dokumentet gäller hyra, inte utrustningsköp. Manuell kontroll fungerar utan extern dokumenttolkning.</value></data>
+  <data name="RentalRetryInterpretation" xml:space="preserve"><value>Försök tolka dokumentet igen</value></data>
+  <data name="RentalUseInterpretation" xml:space="preserve"><value>Använd som kontrollunderlag</value></data>
+  <data name="RentalContentConfirmed" xml:space="preserve"><value>Jag har kontrollerat dokumenttyp, part, valuta, rader, belopp och matchning mot källan.</value></data>
+  <data name="RentalSaveReview" xml:space="preserve"><value>Spara kontroll och uppdatera matchningsförslag</value></data>
+  <data name="RentalMatching" xml:space="preserve"><value>Allokering mot terminer</value></data>
+  <data name="RentalMatchingHelp" xml:space="preserve"><value>Spara part och valuta först. Välj terminer och belopp uttryckligen. Förslag godkänns aldrig automatiskt. Netto och moms måste var för sig rymmas inom dokumentbeloppen.</value></data>
+  <data name="RentalSuggestion" xml:space="preserve"><value>Förslag – måste granskas</value></data>
+  <data name="RentalCreditAllocation" xml:space="preserve"><value>Ursprunglig allokering som krediteras</value></data>
+  <data name="RentalAddAllocation" xml:space="preserve"><value>Lägg till allokering</value></data>
+  <data name="RentalCorrectMatching" xml:space="preserve"><value>Spara spårbar korrigering</value></data>
+  <data name="RentalSaveMatching" xml:space="preserve"><value>Spara matchning för kontroll</value></data>
+  <data name="RentalApproveSaved" xml:space="preserve"><value>Godkännande gäller senast sparad kontroll och matchning. Spara ändringar före godkännande.</value></data>
+  <data name="RentalApprove" xml:space="preserve"><value>Godkänn leasingfaktura</value></data>
+  <data name="RentalReverse" xml:space="preserve"><value>Reversera dokument och allokeringar</value></data>
+  <data name="RentalReversedAllocation" xml:space="preserve"><value>Reverserad allokering</value></data>
+  <data name="RentalPeriodReference" xml:space="preserve"><value>Periodreferens</value></data>
+  <data name="RentalOriginalInvoice" xml:space="preserve"><value>Ursprunglig leasingfaktura (spara part och valuta först)</value></data>
+  <data name="RentalLineHelp" xml:space="preserve"><value>Registrera positiva källbelopp även på kreditnotor. Dokumenttypen bestämmer ekonomiskt tecken. Radbelopp, skatteunderlag och dokumenttotaler måste stämma.</value></data>
+  <data name="UserRoleLeasingPlanApprover" xml:space="preserve"><value>Godkännare av betalningsplan</value></data>
+  <data name="UserRoleLeasingInvoiceApprover" xml:space="preserve"><value>Godkännare av leasingfaktura</value></data>
+  <data name="UserRoleLeasingVarianceApprover" xml:space="preserve"><value>Godkännare av leasingavvikelse</value></data>
+  <data name="PaymentFieldFinanceReference" xml:space="preserve"><value>Finansbolagets avtalsreferens</value></data>
+  <data name="PaymentFieldAdvanceRent" xml:space="preserve"><value>Förskottshyra</value></data>
+  <data name="PaymentFieldResidualValue" xml:space="preserve"><value>Avtalat restvärde</value></data>
+  <data name="PaymentFieldResidualIsObligation" xml:space="preserve"><value>Restvärdet är en dokumenterad betalningsförpliktelse</value></data>
+  <data name="PaymentFieldResidualDocumentReference" xml:space="preserve"><value>Dokumentation av betalningsförpliktelse</value></data>
+  <data name="PaymentFieldEstablishmentFee" xml:space="preserve"><value>Uppläggningsavgift</value></data>
+  <data name="PaymentFieldOtherFees" xml:space="preserve"><value>Andra avtalade avgifter</value></data>
+  <data name="PaymentFieldPaymentTiming" xml:space="preserve"><value>Betalningstidpunkt</value></data>
+  <data name="PaymentFieldFirstDueDate" xml:space="preserve"><value>Första förfallodag</value></data>
+  <data name="PaymentFieldObservedReferenceRate" xml:space="preserve"><value>Observerad referensränta (%)</value></data>
+  <data name="PaymentFieldObservationDate" xml:space="preserve"><value>Observationsdatum</value></data>
+  <data name="PaymentFieldRateResetFrequency" xml:space="preserve"><value>Räntejusteringsintervall</value></data>
+  <data name="PaymentFieldRateFloor" xml:space="preserve"><value>Räntegolv (%)</value></data>
+  <data name="PaymentFieldRateCap" xml:space="preserve"><value>Räntetak (%)</value></data>
+  <data name="PaymentFieldRateLimitBasis" xml:space="preserve"><value>Räntegolv/-tak gäller</value></data>
+  <data name="PaymentFieldDocumentReference" xml:space="preserve"><value>Dokumentreferens</value></data>
+  <data name="PaymentFieldFinancingNotes" xml:space="preserve"><value>Anteckningar</value></data>
+  <data name="PaymentColumnReference" xml:space="preserve"><value>Terminreferens</value></data>
+  <data name="PaymentColumnPeriodFrom" xml:space="preserve"><value>Period från</value></data>
+  <data name="PaymentColumnPeriodTo" xml:space="preserve"><value>Period till</value></data>
+  <data name="PaymentColumnDueDate" xml:space="preserve"><value>Förfallodag</value></data>
+  <data name="PaymentColumnNet" xml:space="preserve"><value>Netto</value></data>
+  <data name="PaymentColumnVat" xml:space="preserve"><value>Moms</value></data>
+  <data name="PaymentColumnGross" xml:space="preserve"><value>Brutto</value></data>
+  <data name="PaymentColumnType" xml:space="preserve"><value>Posttyp</value></data>
+  <data name="PaymentColumnCurrency" xml:space="preserve"><value>Valuta</value></data>
+  <data name="PaymentInvalid" xml:space="preserve"><value>Kontrollera obligatoriska fält och belopp.</value></data>
+  <data name="PaymentInvalidTerm" xml:space="preserve"><value>Terminen har ogiltig referens, period, belopp eller summor.</value></data>
+  <data name="PaymentInvalidTerms" xml:space="preserve"><value>Kontrollera finansieringsvillkor, räntor, datum och dokumentation.</value></data>
+  <data name="PaymentUseFinancingRevision" xml:space="preserve"><value>Ändra finansieringsvillkor genom en daterad revision i betalningsplanvyn.</value></data>
+  <data name="PaymentActiveRequired" xml:space="preserve"><value>Terminen måste finnas i en aktiv betalningsplan.</value></data>
+  <data name="PaymentAllocatedRemoval" xml:space="preserve"><value>En historiskt allokerad termin kan inte tas bort. Behåll dess stabila referens i den reviderade planen.</value></data>
+  <data name="PaymentCompletionRequired" xml:space="preserve"><value>Bekräfta först att all fakturering har mottagits.</value></data>
+  <data name="PaymentComponentsMismatch" xml:space="preserve"><value>Kapital, ränta och avgifter ska summera till netto när specifikationen är fullständig. Moms visas separat.</value></data>
+  <data name="PaymentConfirmInvoicedChange" xml:space="preserve"><value>Bekräfta uttryckligen ändringar i redan fakturerade terminer.</value></data>
+  <data name="PaymentDuplicateTerm" xml:space="preserve"><value>Terminreferensen förekommer flera gånger.</value></data>
+  <data name="PaymentEffectiveDuplicate" xml:space="preserve"><value>Det finns redan villkor med detta ikraftträdandedatum.</value></data>
+  <data name="PaymentRegisteredRequired" xml:space="preserve"><value>Anskaffningen måste vara registrerad innan planen aktiveras.</value></data>
+  <data name="PaymentResidualDocumentation" xml:space="preserve"><value>En restvärdespost kräver dokumenterad betalningsförpliktelse.</value></data>
+  <data name="PaymentReviewRequired" xml:space="preserve"><value>Motivera granskningen av terminer med avvikande period eller oklart villkorsunderlag.</value></data>
+  <data name="PaymentSourceRequired" xml:space="preserve"><value>Välj importens källdokument.</value></data>
+  <data name="PaymentStableReference" xml:space="preserve"><value>Referensen till en befintlig termin kan inte ändras. Behåll kopplingen eller skapa en ny post.</value></data>
+  <data name="PaymentUnknownAmounts" xml:space="preserve"><value>Klargör netto, moms och brutto före aktivering. Okänt är inte noll.</value></data>
+  <data name="PaymentCreditSourceRequired" xml:space="preserve"><value>Välj godkänd originalfaktura och giltig originalallokering för kreditnotan.</value></data>
+  <data name="PaymentMatchPartyCurrency" xml:space="preserve"><value>Finansbolag och valuta måste stämma med terminens villkor.</value></data>
+  <data name="PaymentOverAllocation" xml:space="preserve"><value>Allokeringarna måste vara positiva och får inte överstiga dokumentets netto eller moms.</value></data>
+  <data name="PaymentImportAmount" xml:space="preserve"><value>Ogiltigt belopp. Använd decimaltal med högst två decimaler.</value></data>
+  <data name="PaymentImportCurrency" xml:space="preserve"><value>Valutan avviker från anskaffningen.</value></data>
+  <data name="PaymentImportDate" xml:space="preserve"><value>Ogiltigt datum. Använd dd.MM.åååå eller åååå-MM-dd.</value></data>
+  <data name="PaymentImportEmpty" xml:space="preserve"><value>Filen måste ha rubriker och minst en datarad.</value></data>
+  <data name="PaymentImportFormula" xml:space="preserve"><value>Formler och makron tillåts inte. Exportera en fil med enbart värden.</value></data>
+  <data name="PaymentImportInvalid" xml:space="preserve"><value>Filen kunde inte läsas som en giltig tabell.</value></data>
+  <data name="PaymentImportMapping" xml:space="preserve"><value>Välj en separat kolumn för varje obligatoriskt fält.</value></data>
+  <data name="PaymentImportPostType" xml:space="preserve"><value>Okänd posttyp. Använd hyra, förskott, avgift, restvärde eller annat.</value></data>
+  <data name="PaymentImportSize" xml:space="preserve"><value>Importen stöder upp till 600 terminer, 100 kolumner och 10 MB inom kontots filgräns.</value></data>
+  <data name="PaymentImportTotals" xml:space="preserve"><value>Netto plus moms är inte lika med brutto.</value></data>
+  <data name="PaymentImportType" xml:space="preserve"><value>Välj en CSV- eller XLSX-fil.</value></data>
+  <data name="PaymentEventFinancingRevised" xml:space="preserve"><value>Finansieringsvillkor reviderade</value></data>
+  <data name="PaymentEventPlanDraft" xml:space="preserve"><value>Planutkast sparat</value></data>
+  <data name="PaymentEventPlanActivated" xml:space="preserve"><value>Betalningsplan aktiverad</value></data>
+  <data name="PaymentEventTermReviewed" xml:space="preserve"><value>Termin granskad</value></data>
+  <data name="PaymentEventRentalCreated" xml:space="preserve"><value>Leasingfaktura skapad</value></data>
+  <data name="PaymentEventRentalReviewed" xml:space="preserve"><value>Fakturakontroll sparad</value></data>
+  <data name="PaymentEventRentalApproved" xml:space="preserve"><value>Leasingfaktura godkänd</value></data>
+  <data name="PaymentEventRentalMatched" xml:space="preserve"><value>Fakturabelopp allokerat</value></data>
+  <data name="PaymentEventRentalRematched" xml:space="preserve"><value>Matchning korrigerad</value></data>
+  <data name="PaymentEventRentalAllocationReversed" xml:space="preserve"><value>Allokering reverserad</value></data>
+  <data name="PaymentEventRentalReversed" xml:space="preserve"><value>Leasingfaktura reverserad</value></data>
+  <data name="PaymentEventRentalInterpretationRequested" xml:space="preserve"><value>Ny dokumenttolkning begärd</value></data>
+  <data name="PaymentSourceAdded" xml:space="preserve"><value>Betalningsplanens källdokument tillagt</value></data>
+<data name="PaymentResetFrequencyMonthly" xml:space="preserve"><value>Månadsvis</value></data>
+<data name="PaymentResetFrequencyQuarterly" xml:space="preserve"><value>Kvartalsvis</value></data>
+<data name="PaymentResetFrequencyHalfYearly" xml:space="preserve"><value>Halvårsvis</value></data>
+<data name="PaymentResetFrequencyYearly" xml:space="preserve"><value>Årligen</value></data>
+<data name="InvoiceAddLine" xml:space="preserve"><value>Lägg till fakturarad</value></data>
+<data name="InvoiceExemptionReason" xml:space="preserve"><value>Motivering för momsbefrielse</value></data>
+<data name="InvoiceIsAllowance" xml:space="preserve"><value>Rabattpost</value></data>
+<data name="Select" xml:space="preserve"><value>Välj</value></data>
+<data name="PaymentOriginalFinancingHelp" xml:space="preserve"><value>Finansbolag, finansierat belopp och räntevillkor nedan visar ursprungliga anskaffningsuppgifter. Se daterade aktuella villkor i finansieringsvyn.</value></data>
 </root>

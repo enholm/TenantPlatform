@@ -2474,7 +2474,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingCapacity" xml:space="preserve"><value>Limit utilisation</value></data>
   <data name="LeasingUsed" xml:space="preserve"><value>Used amount</value></data>
   <data name="LeasingAvailable" xml:space="preserve"><value>Available amount</value></data>
-  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Only registered, non-cancelled acquisitions use the limit. Drafts, interest and fees do not. Lease payments do not release the limit.</value></data>
+  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Registered acquisitions and active remaining reservations consume capacity. Drafts, interest and leasing fees do not. Leasing payments do not release capacity.</value></data>
   <data name="LeasingPeriodHelp" xml:space="preserve"><value>The acquisition window constrains purchase dates. Each acquisition has its own lease period continuing after the acquisition window closes.</value></data>
   <data name="LeasingDocuments" xml:space="preserve"><value>Documents</value></data>
   <data name="LeasingNoDocuments" xml:space="preserve"><value>No documents yet.</value></data>
@@ -2502,7 +2502,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingInvalidPurchase" xml:space="preserve"><value>Check invoice details and financed amount. The amount cannot be negative and permits at most two decimals.</value></data>
   <data name="LeasingInvalidDates" xml:space="preserve"><value>Enter a valid purchase date and a lease period of 1–600 whole months.</value></data>
   <data name="LeasingInvalidLines" xml:space="preserve"><value>Check items: description is required, quantity must be positive, price non-negative and VAT 0–100%. Use at most four decimals and 500 items.</value></data>
-  <data name="LeasingRegistrationRequired" xml:space="preserve"><value>Registration requires at least one item with positive purchase value, positive financed amount, invoice number and invoice date.</value></data>
+  <data name="LeasingRegistrationRequired" xml:space="preserve"><value>Registration requires at least one item with positive purchase value and a positive financed amount. Invoices may be documented later.</value></data>
   <data name="LeasingOutsidePeriod" xml:space="preserve"><value>Purchase date must be within the framework acquisition window, including both boundary dates.</value></data>
   <data name="LeasingConcurrency" xml:space="preserve"><value>Another user changed this agreement. Reload the page before saving.</value></data>
   <data name="LeasingReasonRequired" xml:space="preserve"><value>Enter a reason for the change (maximum 2000 characters).</value></data>
@@ -2687,4 +2687,282 @@ This is a reminder, not a termination or renewal.</value>
   <data name="InvoiceReleasedNet" xml:space="preserve"><value>Released capacity excluding VAT</value></data>
   <data name="InvoiceReleasedVat" xml:space="preserve"><value>Released capacity, VAT</value></data>
   <data name="InvoiceConfirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="PurchaseOrders" xml:space="preserve"><value>Purchase orders</value></data>
+  <data name="PurchaseOrderHelp" xml:space="preserve"><value>Purchase orders are planned purchases under a framework. Standalone leasing has no framework.</value></data>
+  <data name="OrderNew" xml:space="preserve"><value>New purchase order</value></data>
+  <data name="OrderDate" xml:space="preserve"><value>Order date</value></data>
+  <data name="OrderExpected" xml:space="preserve"><value>Expected purchase/delivery date</value></data>
+  <data name="OrderUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="OrderMethod" xml:space="preserve"><value>Realisation method</value></data>
+  <data name="OrderMethodQuantity" xml:space="preserve"><value>Quantity</value></data>
+  <data name="OrderMethodAmountShare" xml:space="preserve"><value>Amount share (0–1)</value></data>
+  <data name="OrderProposalHelp" xml:space="preserve"><value>Current approved values and reservations remain until approval. Realised portions are revalidated on approval.</value></data>
+  <data name="OrderReserved" xml:space="preserve"><value>Reserved amount</value></data>
+  <data name="OrderAvailableAfter" xml:space="preserve"><value>Available capacity after action</value></data>
+  <data name="OrderFulfillment" xml:space="preserve"><value>Fulfilment</value></data>
+  <data name="OrderNotRealized" xml:space="preserve"><value>Not realised</value></data>
+  <data name="OrderPartRealized" xml:space="preserve"><value>Partially realised</value></data>
+  <data name="OrderFullyRealized" xml:space="preserve"><value>Fully realised</value></data>
+  <data name="OrderStatusDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="OrderStatusPending" xml:space="preserve"><value>Awaiting approval</value></data>
+  <data name="OrderStatusApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="OrderStatusRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="OrderStatusCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="OrderStatusClosed" xml:space="preserve"><value>Closed</value></data>
+  <data name="OrderApprovedValue" xml:space="preserve"><value>Approved order value</value></data>
+  <data name="OrderRealize" xml:space="preserve"><value>Create acquisition</value></data>
+  <data name="OrderRealized" xml:space="preserve"><value>Realised quantity/share</value></data>
+  <data name="OrderRemaining" xml:space="preserve"><value>Remaining quantity/share</value></data>
+  <data name="OrderOnePurchaseHelp" xml:space="preserve"><value>An acquisition can realise only one purchase order. Invoices covering multiple orders cannot be matched automatically.</value></data>
+  <data name="OrderScopeHelp" xml:space="preserve"><value>Select an order line and quantity, or an explicit amount share between 0 and 1. Use the actual purchase date; expected delivery does not start leasing.</value></data>
+  <data name="OrderLine" xml:space="preserve"><value>Order line</value></data>
+  <data name="OrderScope" xml:space="preserve"><value>Quantity / amount share</value></data>
+  <data name="OrderConfirmVariance" xml:space="preserve"><value>I confirm the price variance for the selected portion. Overdelivery requires an approved order amendment first.</value></data>
+  <data name="OrderRelease" xml:space="preserve"><value>Reservation released</value></data>
+  <data name="OrderActual" xml:space="preserve"><value>Actual purchase value</value></data>
+  <data name="OrderVariance" xml:space="preserve"><value>Price variance excluding VAT</value></data>
+  <data name="OrderDocumented" xml:space="preserve"><value>Invoice-documented amount</value></data>
+  <data name="OrderNeedsReview" xml:space="preserve"><value>Review remaining reservations: the acquisition period has ended or the framework is closed. Register purchases made within the period before closing the remainder.</value></data>
+  <data name="OrderUnreserved" xml:space="preserve"><value>Without active reservation</value></data>
+  <data name="OrderProposal" xml:space="preserve"><value>Amendment proposal</value></data>
+  <data name="OrderSubmit" xml:space="preserve"><value>Submit for approval</value></data>
+  <data name="OrderApprove" xml:space="preserve"><value>Approve</value></data>
+  <data name="OrderReject" xml:space="preserve"><value>Reject</value></data>
+  <data name="OrderCancel" xml:space="preserve"><value>Cancel remainder</value></data>
+  <data name="OrderClose" xml:space="preserve"><value>Close remainder</value></data>
+  <data name="OrderReopen" xml:space="preserve"><value>Approve reservation reopening</value></data>
+  <data name="OrderReopenHelp" xml:space="preserve"><value>Reversed portions have no active reservation. Reopening requires a new capacity check and an open acquisition period.</value></data>
+  <data name="OrderLink" xml:space="preserve"><value>Link existing acquisition</value></data>
+  <data name="OrderLimitChanges" xml:space="preserve"><value>Documented limit changes</value></data>
+  <data name="OrderNewLimit" xml:space="preserve"><value>New limit</value></data>
+  <data name="OrderDocumentReference" xml:space="preserve"><value>Document reference (optional)</value></data>
+  <data name="OrderPropose" xml:space="preserve"><value>Save proposal</value></data>
+  <data name="OrderProposedBy" xml:space="preserve"><value>Proposed by</value></data>
+  <data name="OrderApprovedBy" xml:space="preserve"><value>Approved by</value></data>
+  <data name="OrderNoOrder" xml:space="preserve"><value>Without purchase order</value></data>
+  <data name="LeasingOrderInvalid" xml:space="preserve"><value>Check the order, lines, currency and links.</value></data>
+  <data name="LeasingOrderOverDelivery" xml:space="preserve"><value>Selected quantity/share exceeds the approved remainder, or quantity does not match the acquisition line.</value></data>
+  <data name="LeasingOrderOnePurchase" xml:space="preserve"><value>The acquisition is already linked to another order.</value></data>
+  <data name="LeasingOrderConfirmVariance" xml:space="preserve"><value>Confirm the price variance before registering the acquisition.</value></data>
+  <data name="LeasingOrderLinkedImmutable" xml:space="preserve"><value>Realised lines must be corrected through reversal or credit notes. The order link cannot be removed by editing.</value></data>
+  <data name="LeasingLimitProposalRequired" xml:space="preserve"><value>Change the limit through a documented proposal and approval on the framework details page.</value></data>
+  <data name="LeasingOrderAlreadyDocumented" xml:space="preserve"><value>Invoice matching and credit notes must not realise an order again. Select order lines only for new acquisition lines.</value></data>
+  <data name="LeasingActionLimitApproved" xml:space="preserve"><value>Limit approved</value></data>
+  <data name="UserRoleLeasingOrderApprover" xml:space="preserve"><value>Leasing order approver</value></data>
+  <data name="UserRoleLeasingLimitApprover" xml:space="preserve"><value>Leasing limit approver</value></data>
+  <data name="OrderActionSaved" xml:space="preserve"><value>Amendment proposal</value></data>
+  <data name="OrderActionPending" xml:space="preserve"><value>Awaiting approval</value></data>
+  <data name="OrderActionApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="OrderActionRejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="OrderActionCancelled" xml:space="preserve"><value>Cancelled</value></data>
+  <data name="OrderActionClosed" xml:space="preserve"><value>Closed</value></data>
+  <data name="OrderActionRealized" xml:space="preserve"><value>Realised quantity/share</value></data>
+  <data name="OrderActionReversed" xml:space="preserve"><value>Without active reservation</value></data>
+  <data name="OrderActionReopened" xml:space="preserve"><value>Approve reservation reopening</value></data>
+  <data name="OrderActionDocumentAdded" xml:space="preserve"><value>Document reference (optional)</value></data>
+  <data name="OrderFrameworkRequired" xml:space="preserve"><value>Select a framework before saving the purchase order. If none exist, create a framework first.</value></data>
+  <data name="PaymentPlans" xml:space="preserve"><value>Payment plans</value></data>
+  <data name="RentalInvoices" xml:space="preserve"><value>Rental invoices</value></data>
+  <data name="PaymentDetails" xml:space="preserve"><value>Financing terms, payment plan and invoice review</value></data>
+  <data name="PaymentScopeHelp" xml:space="preserve"><value>This view shows agreed and invoiced amounts, not bank payments or outstanding debt.</value></data>
+  <data name="PaymentFinancing" xml:space="preserve"><value>Financing terms</value></data>
+  <data name="PaymentAsOf" xml:space="preserve"><value>Terms as of</value></data>
+  <data name="PaymentUnknownEffective" xml:space="preserve"><value>Unknown effective date. These terms cannot be dated reliably.</value></data>
+  <data name="PaymentInitialUnknownDate" xml:space="preserve"><value>Original terms, unknown effective date</value></data>
+  <data name="PaymentFinancingHistory" xml:space="preserve"><value>Terms history</value></data>
+  <data name="PaymentNewFinancing" xml:space="preserve"><value>Record new terms revision</value></data>
+  <data name="PaymentEffective" xml:space="preserve"><value>Effective from</value></data>
+  <data name="PaymentReason" xml:space="preserve"><value>Reason</value></data>
+  <data name="PaymentFinanceReference" xml:space="preserve"><value>Finance company agreement reference</value></data>
+  <data name="PaymentAdvanceRent" xml:space="preserve"><value>Advance rental</value></data>
+  <data name="PaymentResidualValue" xml:space="preserve"><value>Agreed residual value</value></data>
+  <data name="PaymentEstablishmentFee" xml:space="preserve"><value>Establishment fee</value></data>
+  <data name="PaymentOtherFees" xml:space="preserve"><value>Other agreed fees</value></data>
+  <data name="PaymentFirstDue" xml:space="preserve"><value>First due date</value></data>
+  <data name="PaymentObservedRate" xml:space="preserve"><value>Observed reference rate (%)</value></data>
+  <data name="PaymentObservationDate" xml:space="preserve"><value>Observation date</value></data>
+  <data name="PaymentRateFloor" xml:space="preserve"><value>Rate floor (%)</value></data>
+  <data name="PaymentRateCap" xml:space="preserve"><value>Rate cap (%)</value></data>
+  <data name="PaymentObligationDocument" xml:space="preserve"><value>Payment obligation documentation</value></data>
+  <data name="PaymentDocumentReference" xml:space="preserve"><value>Document reference</value></data>
+  <data name="PaymentNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="PaymentTiming" xml:space="preserve"><value>Payment timing</value></data>
+  <data name="PaymentTimingAdvance" xml:space="preserve"><value>In advance</value></data>
+  <data name="PaymentTimingArrears" xml:space="preserve"><value>In arrears</value></data>
+  <data name="PaymentResetFrequency" xml:space="preserve"><value>Rate reset frequency</value></data>
+  <data name="PaymentRateBasis" xml:space="preserve"><value>Rate floor/cap applies to</value></data>
+  <data name="PaymentRateBasisReference" xml:space="preserve"><value>Reference rate</value></data>
+  <data name="PaymentRateBasisTotalRate" xml:space="preserve"><value>Total interest rate</value></data>
+  <data name="PaymentResidualObligation" xml:space="preserve"><value>Residual value is a documented payment obligation</value></data>
+  <data name="PaymentNoAutomaticAmounts" xml:space="preserve"><value>Terms do not create payments. Only add residual value where a payment obligation is documented. Do not double count advance rent or fees.</value></data>
+  <data name="PaymentReference" xml:space="preserve"><value>Instalment reference</value></data>
+  <data name="PaymentFrom" xml:space="preserve"><value>Period from</value></data>
+  <data name="PaymentTo" xml:space="preserve"><value>Period to</value></data>
+  <data name="PaymentDue" xml:space="preserve"><value>Due date</value></data>
+  <data name="PaymentCapital" xml:space="preserve"><value>Capital component excl. VAT</value></data>
+  <data name="PaymentInterest" xml:space="preserve"><value>Interest component excl. VAT</value></data>
+  <data name="PaymentFee" xml:space="preserve"><value>Fee component excl. VAT</value></data>
+  <data name="PaymentReviewReason" xml:space="preserve"><value>Reason for review of periods and terms basis</value></data>
+  <data name="PaymentType" xml:space="preserve"><value>Entry type</value></data>
+  <data name="PaymentTypeRent" xml:space="preserve"><value>Regular rent</value></data>
+  <data name="PaymentTypeAdvanceRent" xml:space="preserve"><value>Advance rent</value></data>
+  <data name="PaymentTypeFee" xml:space="preserve"><value>Fee</value></data>
+  <data name="PaymentTypeResidualObligation" xml:space="preserve"><value>Documented residual obligation</value></data>
+  <data name="PaymentTypeOther" xml:space="preserve"><value>Other one-off entry</value></data>
+  <data name="PaymentFinancingBasis" xml:space="preserve"><value>Terms revision underlying the amount</value></data>
+  <data name="PaymentComponentsComplete" xml:space="preserve"><value>Components fully specify net amount (VAT is separate)</value></data>
+  <data name="PaymentYes" xml:space="preserve"><value>Yes</value></data>
+  <data name="PaymentNo" xml:space="preserve"><value>No</value></data>
+  <data name="PaymentPlanDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="PaymentPlanActive" xml:space="preserve"><value>Active</value></data>
+  <data name="PaymentPlanReplaced" xml:space="preserve"><value>Replaced</value></data>
+  <data name="PaymentPeriod" xml:space="preserve"><value>Plan period</value></data>
+  <data name="PaymentNextDue" xml:space="preserve"><value>Next planned due date</value></data>
+  <data name="PaymentReview" xml:space="preserve"><value>Needs review</value></data>
+  <data name="PaymentNoPlan" xml:space="preserve"><value>No payment plan</value></data>
+  <data name="PaymentFloatingHelp" xml:space="preserve"><value>Amounts are agreed source values. Under floating interest, future amounts depend on the terms and do not guarantee unchanged rent.</value></data>
+  <data name="PaymentNewPlan" xml:space="preserve"><value>New payment plan</value></data>
+  <data name="PaymentSource" xml:space="preserve"><value>Source document (attach PDF on the acquisition)</value></data>
+  <data name="PaymentRevise" xml:space="preserve"><value>Create revised draft</value></data>
+  <data name="PaymentInvoicedChanges" xml:space="preserve"><value>I have reviewed changes to invoiced instalments and the retained allocations.</value></data>
+  <data name="PaymentActivate" xml:space="preserve"><value>Activate reviewed plan</value></data>
+  <data name="PaymentDraftEditor" xml:space="preserve"><value>Enter instalments and review preview</value></data>
+  <data name="PaymentSeriesRule" xml:space="preserve"><value>Dates are anchored to the first period and due date. Period boundaries preserve month end; due dates do so when selected. Otherwise the original day is capped at month end. No holiday adjustment. The series replaces the preview; edit first and last instalments individually.</value></data>
+  <data name="PaymentCount" xml:space="preserve"><value>Number of instalments</value></data>
+  <data name="PaymentMonthEnd" xml:space="preserve"><value>Due at month end</value></data>
+  <data name="PaymentPreviewSeries" xml:space="preserve"><value>Preview series</value></data>
+  <data name="PaymentAddTerm" xml:space="preserve"><value>Add instalment/one-off entry</value></data>
+  <data name="PaymentImport" xml:space="preserve"><value>Import CSV/XLSX</value></data>
+  <data name="PaymentSheet" xml:space="preserve"><value>Worksheet</value></data>
+  <data name="PaymentPreviewImport" xml:space="preserve"><value>Preview import</value></data>
+  <data name="PaymentSaveDraft" xml:space="preserve"><value>Save as draft</value></data>
+  <data name="PaymentControl" xml:space="preserve"><value>Instalments and invoice review</value></data>
+  <data name="PaymentTolerance" xml:space="preserve"><value>Tolerance is 0.01 in the plan currency for each of net, VAT and gross. Partial invoicing is not a final price variance. Amounts are shown as net / VAT / gross.</value></data>
+  <data name="PaymentExpectedTotal" xml:space="preserve"><value>Total current planned payments</value></data>
+  <data name="PaymentExpected" xml:space="preserve"><value>Expected</value></data>
+  <data name="PaymentInvoiced" xml:space="preserve"><value>Net invoiced after credit notes</value></data>
+  <data name="PaymentDifference" xml:space="preserve"><value>Difference</value></data>
+  <data name="PaymentInvoiceDue" xml:space="preserve"><value>Invoice due date</value></data>
+  <data name="PaymentDueDifference" xml:space="preserve"><value>Differs from planned due date</value></data>
+  <data name="PaymentCompleteBilling" xml:space="preserve"><value>All invoicing received</value></data>
+  <data name="PaymentAcceptVariance" xml:space="preserve"><value>Accept documented variance</value></data>
+  <data name="PaymentReopen" xml:space="preserve"><value>Reopen invoice review</value></data>
+  <data name="PaymentConfirmReview" xml:space="preserve"><value>Confirm reviewed plan amount</value></data>
+  <data name="PaymentHistory" xml:space="preserve"><value>Review history</value></data>
+  <data name="PaymentBillingNotInvoiced" xml:space="preserve"><value>Not invoiced</value></data>
+  <data name="PaymentBillingPartial" xml:space="preserve"><value>Partially invoiced</value></data>
+  <data name="PaymentBillingReconciled" xml:space="preserve"><value>Reconciled</value></data>
+  <data name="PaymentBillingVariance" xml:space="preserve"><value>Variance</value></data>
+  <data name="PaymentBillingAccepted" xml:space="preserve"><value>Variance accepted</value></data>
+  <data name="PaymentCurrent" xml:space="preserve"><value>Current plan</value></data>
+  <data name="PaymentProposed" xml:space="preserve"><value>Proposed/selected version</value></data>
+  <data name="PaymentAbsent" xml:space="preserve"><value>No entry</value></data>
+  <data name="RentalNew" xml:space="preserve"><value>Register rental invoice manually</value></data>
+  <data name="RentalUpload" xml:space="preserve"><value>Upload rental invoice/credit note</value></data>
+  <data name="RentalAllocated" xml:space="preserve"><value>Allocated</value></data>
+  <data name="RentalUnallocated" xml:space="preserve"><value>Unallocated remainder</value></data>
+  <data name="RentalDraft" xml:space="preserve"><value>Open draft</value></data>
+  <data name="RentalApprovedTotal" xml:space="preserve"><value>Approved net after credit notes</value></data>
+  <data name="RentalInvoice" xml:space="preserve"><value>Rental invoice</value></data>
+  <data name="RentalManualHelp" xml:space="preserve"><value>This document concerns rent, not equipment purchases. Manual review works without external document interpretation.</value></data>
+  <data name="RentalRetryInterpretation" xml:space="preserve"><value>Retry document interpretation</value></data>
+  <data name="RentalUseInterpretation" xml:space="preserve"><value>Use for review</value></data>
+  <data name="RentalContentConfirmed" xml:space="preserve"><value>I have checked document type, party, currency, lines, amounts and matching against the source.</value></data>
+  <data name="RentalSaveReview" xml:space="preserve"><value>Save review and refresh suggestions</value></data>
+  <data name="RentalMatching" xml:space="preserve"><value>Allocation to instalments</value></data>
+  <data name="RentalMatchingHelp" xml:space="preserve"><value>Save party and currency first. Explicitly select instalments and amounts. Suggestions are never approved automatically. Net and VAT must each remain within document amounts.</value></data>
+  <data name="RentalSuggestion" xml:space="preserve"><value>Suggestion – review required</value></data>
+  <data name="RentalCreditAllocation" xml:space="preserve"><value>Original allocation being credited</value></data>
+  <data name="RentalAddAllocation" xml:space="preserve"><value>Add allocation</value></data>
+  <data name="RentalCorrectMatching" xml:space="preserve"><value>Save traceable correction</value></data>
+  <data name="RentalSaveMatching" xml:space="preserve"><value>Save matching for review</value></data>
+  <data name="RentalApproveSaved" xml:space="preserve"><value>Approval applies to the last saved review and allocations. Save changes before approval.</value></data>
+  <data name="RentalApprove" xml:space="preserve"><value>Approve rental invoice</value></data>
+  <data name="RentalReverse" xml:space="preserve"><value>Reverse document and allocations</value></data>
+  <data name="RentalReversedAllocation" xml:space="preserve"><value>Reversed allocation</value></data>
+  <data name="RentalPeriodReference" xml:space="preserve"><value>Period reference</value></data>
+  <data name="RentalOriginalInvoice" xml:space="preserve"><value>Original rental invoice (save party and currency first)</value></data>
+  <data name="RentalLineHelp" xml:space="preserve"><value>Enter positive source amounts on credit notes too. Document type determines the financial sign. Line amounts, tax bases and document totals must reconcile.</value></data>
+  <data name="UserRoleLeasingPlanApprover" xml:space="preserve"><value>Payment plan approver</value></data>
+  <data name="UserRoleLeasingInvoiceApprover" xml:space="preserve"><value>Rental invoice approver</value></data>
+  <data name="UserRoleLeasingVarianceApprover" xml:space="preserve"><value>Leasing variance approver</value></data>
+  <data name="PaymentFieldFinanceReference" xml:space="preserve"><value>Finance company agreement reference</value></data>
+  <data name="PaymentFieldAdvanceRent" xml:space="preserve"><value>Advance rental</value></data>
+  <data name="PaymentFieldResidualValue" xml:space="preserve"><value>Agreed residual value</value></data>
+  <data name="PaymentFieldResidualIsObligation" xml:space="preserve"><value>Residual value is a documented payment obligation</value></data>
+  <data name="PaymentFieldResidualDocumentReference" xml:space="preserve"><value>Payment obligation documentation</value></data>
+  <data name="PaymentFieldEstablishmentFee" xml:space="preserve"><value>Establishment fee</value></data>
+  <data name="PaymentFieldOtherFees" xml:space="preserve"><value>Other agreed fees</value></data>
+  <data name="PaymentFieldPaymentTiming" xml:space="preserve"><value>Payment timing</value></data>
+  <data name="PaymentFieldFirstDueDate" xml:space="preserve"><value>First due date</value></data>
+  <data name="PaymentFieldObservedReferenceRate" xml:space="preserve"><value>Observed reference rate (%)</value></data>
+  <data name="PaymentFieldObservationDate" xml:space="preserve"><value>Observation date</value></data>
+  <data name="PaymentFieldRateResetFrequency" xml:space="preserve"><value>Rate reset frequency</value></data>
+  <data name="PaymentFieldRateFloor" xml:space="preserve"><value>Rate floor (%)</value></data>
+  <data name="PaymentFieldRateCap" xml:space="preserve"><value>Rate cap (%)</value></data>
+  <data name="PaymentFieldRateLimitBasis" xml:space="preserve"><value>Rate floor/cap applies to</value></data>
+  <data name="PaymentFieldDocumentReference" xml:space="preserve"><value>Document reference</value></data>
+  <data name="PaymentFieldFinancingNotes" xml:space="preserve"><value>Notes</value></data>
+  <data name="PaymentColumnReference" xml:space="preserve"><value>Instalment reference</value></data>
+  <data name="PaymentColumnPeriodFrom" xml:space="preserve"><value>Period from</value></data>
+  <data name="PaymentColumnPeriodTo" xml:space="preserve"><value>Period to</value></data>
+  <data name="PaymentColumnDueDate" xml:space="preserve"><value>Due date</value></data>
+  <data name="PaymentColumnNet" xml:space="preserve"><value>Net</value></data>
+  <data name="PaymentColumnVat" xml:space="preserve"><value>VAT</value></data>
+  <data name="PaymentColumnGross" xml:space="preserve"><value>Gross</value></data>
+  <data name="PaymentColumnType" xml:space="preserve"><value>Entry type</value></data>
+  <data name="PaymentColumnCurrency" xml:space="preserve"><value>Currency</value></data>
+  <data name="PaymentInvalid" xml:space="preserve"><value>Check required fields and amounts.</value></data>
+  <data name="PaymentInvalidTerm" xml:space="preserve"><value>The instalment has an invalid reference, period, amount or totals.</value></data>
+  <data name="PaymentInvalidTerms" xml:space="preserve"><value>Check financing terms, rates, dates and documentation.</value></data>
+  <data name="PaymentUseFinancingRevision" xml:space="preserve"><value>Change financing terms through a dated revision in the payment plan view.</value></data>
+  <data name="PaymentActiveRequired" xml:space="preserve"><value>The instalment must belong to an active plan.</value></data>
+  <data name="PaymentAllocatedRemoval" xml:space="preserve"><value>A historically allocated instalment cannot be removed. Retain its stable reference in the revised plan.</value></data>
+  <data name="PaymentCompletionRequired" xml:space="preserve"><value>First confirm that all invoicing has been received.</value></data>
+  <data name="PaymentComponentsMismatch" xml:space="preserve"><value>Capital, interest and fees must sum to net when the breakdown is complete. VAT is separate.</value></data>
+  <data name="PaymentConfirmInvoicedChange" xml:space="preserve"><value>Explicitly confirm changes to already invoiced instalments.</value></data>
+  <data name="PaymentDuplicateTerm" xml:space="preserve"><value>The instalment reference occurs more than once.</value></data>
+  <data name="PaymentEffectiveDuplicate" xml:space="preserve"><value>Terms already exist with this effective date.</value></data>
+  <data name="PaymentRegisteredRequired" xml:space="preserve"><value>Register the acquisition before activating the plan.</value></data>
+  <data name="PaymentResidualDocumentation" xml:space="preserve"><value>A residual value entry requires a documented payment obligation.</value></data>
+  <data name="PaymentReviewRequired" xml:space="preserve"><value>Explain the review of instalments with exceptional periods or unresolved terms basis.</value></data>
+  <data name="PaymentSourceRequired" xml:space="preserve"><value>Select the import source document.</value></data>
+  <data name="PaymentStableReference" xml:space="preserve"><value>An existing instalment reference cannot change. Retain the link or create a new entry.</value></data>
+  <data name="PaymentUnknownAmounts" xml:space="preserve"><value>Resolve net, VAT and gross before activation. Unknown is not zero.</value></data>
+  <data name="PaymentCreditSourceRequired" xml:space="preserve"><value>Select an approved original invoice and valid original allocation for the credit note.</value></data>
+  <data name="PaymentMatchPartyCurrency" xml:space="preserve"><value>Finance company and currency must match the instalment terms.</value></data>
+  <data name="PaymentOverAllocation" xml:space="preserve"><value>Allocations must be positive and must not exceed the document net or VAT.</value></data>
+  <data name="PaymentImportAmount" xml:space="preserve"><value>Invalid amount. Use decimal numbers with at most two decimal places.</value></data>
+  <data name="PaymentImportCurrency" xml:space="preserve"><value>Currency differs from the acquisition.</value></data>
+  <data name="PaymentImportDate" xml:space="preserve"><value>Invalid date. Use dd.MM.yyyy or yyyy-MM-dd.</value></data>
+  <data name="PaymentImportEmpty" xml:space="preserve"><value>The file must have headers and at least one data row.</value></data>
+  <data name="PaymentImportFormula" xml:space="preserve"><value>Formulas and macros are not allowed. Export a values-only file.</value></data>
+  <data name="PaymentImportInvalid" xml:space="preserve"><value>The file could not be read as a valid table.</value></data>
+  <data name="PaymentImportMapping" xml:space="preserve"><value>Select a distinct column for each required field.</value></data>
+  <data name="PaymentImportPostType" xml:space="preserve"><value>Unknown entry type. Use rent, advance, fee, residual or other.</value></data>
+  <data name="PaymentImportSize" xml:space="preserve"><value>Import supports up to 600 instalments, 100 columns and 10 MB within the account file limit.</value></data>
+  <data name="PaymentImportTotals" xml:space="preserve"><value>Net plus VAT does not equal gross.</value></data>
+  <data name="PaymentImportType" xml:space="preserve"><value>Select a CSV or XLSX file.</value></data>
+  <data name="PaymentEventFinancingRevised" xml:space="preserve"><value>Financing terms revised</value></data>
+  <data name="PaymentEventPlanDraft" xml:space="preserve"><value>Plan draft saved</value></data>
+  <data name="PaymentEventPlanActivated" xml:space="preserve"><value>Payment plan activated</value></data>
+  <data name="PaymentEventTermReviewed" xml:space="preserve"><value>Instalment reviewed</value></data>
+  <data name="PaymentEventRentalCreated" xml:space="preserve"><value>Rental invoice created</value></data>
+  <data name="PaymentEventRentalReviewed" xml:space="preserve"><value>Invoice review saved</value></data>
+  <data name="PaymentEventRentalApproved" xml:space="preserve"><value>Rental invoice approved</value></data>
+  <data name="PaymentEventRentalMatched" xml:space="preserve"><value>Invoice amount allocated</value></data>
+  <data name="PaymentEventRentalRematched" xml:space="preserve"><value>Matching corrected</value></data>
+  <data name="PaymentEventRentalAllocationReversed" xml:space="preserve"><value>Allocation reversed</value></data>
+  <data name="PaymentEventRentalReversed" xml:space="preserve"><value>Rental invoice reversed</value></data>
+  <data name="PaymentEventRentalInterpretationRequested" xml:space="preserve"><value>Document reinterpretation requested</value></data>
+  <data name="PaymentSourceAdded" xml:space="preserve"><value>Payment plan source document added</value></data>
+<data name="PaymentResetFrequencyMonthly" xml:space="preserve"><value>Monthly</value></data>
+<data name="PaymentResetFrequencyQuarterly" xml:space="preserve"><value>Quarterly</value></data>
+<data name="PaymentResetFrequencyHalfYearly" xml:space="preserve"><value>Half-yearly</value></data>
+<data name="PaymentResetFrequencyYearly" xml:space="preserve"><value>Yearly</value></data>
+<data name="InvoiceAddLine" xml:space="preserve"><value>Add invoice line</value></data>
+<data name="InvoiceExemptionReason" xml:space="preserve"><value>Tax exemption reason</value></data>
+<data name="InvoiceIsAllowance" xml:space="preserve"><value>Allowance entry</value></data>
+<data name="Select" xml:space="preserve"><value>Select</value></data>
+<data name="PaymentOriginalFinancingHelp" xml:space="preserve"><value>Finance company, financed amount and interest terms below show original acquisition information. See dated current terms in the financing view.</value></data>
 </root>

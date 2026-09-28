@@ -71,6 +71,12 @@ else
         { <p class="mt-2">@L["InvoicePreserveDates", target.PurchaseDate.ToString("dd.MM.yyyy"), target.EndDate.ToString("dd.MM.yyyy")]</p><a href="@($"/leasing/acquisitions/{target.Id}/edit")" target="_blank" rel="noopener">@L["InvoiceEditPurchase"]</a> }
     </div></section>
     <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingItems"]</h2>
+    @if (review.Data.Kind == LeasingInvoiceKind.Invoice)
+    {
+        <section class="card my-3"><div class="card-body"><label>@L["PurchaseOrders"]<InputSelect class="form-select" @bind-Value="orderId" @bind-Value:after="OrderChanged"><option value="">@L["OrderNoOrder"]</option>@foreach(var o in orders) { <option value="@o.Id">@o.Number</option> }</InputSelect></label><p>@L["OrderOnePurchaseHelp"]</p>
+        @if(orderDetails!=null && review.OrderDelivery!=null) { <p>@L["OrderScopeHelp"]</p><label><InputCheckbox @bind-Value="review.OrderDelivery.VarianceConfirmed" /> @L["OrderConfirmVariance"]</label> }
+        </div></section>
+    }
     @foreach (var line in review.Data.Lines)
     {
         var match = Match(line); var index = review.Data.Lines.IndexOf(line);
@@ -101,6 +107,11 @@ else
         else
         {
             <label class="d-block mt-2">@L["InvoiceMatch"]<InputSelect class="form-select" @bind-Value="match.ItemId"><option value="">@L["InvoiceNewItem"]</option>@foreach (var item in target?.Items ?? []) { <option value="@item.Id">@item.Description · @LeasingCalculator.Line(item).Net.ToString("N2")</option> }</InputSelect></label>
+            @if(orderDetails!=null && !match.ItemId.HasValue)
+            {
+                <label>@L["OrderLine"]<InputSelect class="form-select" @bind-Value="match.OrderLineId" @bind-Value:after="()=>OrderLineChanged(match,line)"><option value="">@L["OrderNoOrder"]</option>@foreach(var ol in orderDetails.Order.Lines) { <option value="@ol.Id">@ol.Description · @L[$"OrderMethod{ol.Method}"]</option> }</InputSelect></label>
+                <label>@L["OrderScope"]<InputNumber class="form-control" @bind-Value="match.OrderScope" step="0.0001" /></label>
+            }
             @if (match.ItemId.HasValue) { <p class="small text-muted">@L["InvoiceMatchHelp"]</p> }
             else if (catalog != null) { <LeasingClassificationEditor Item="@PreviewItem(line)" Input="match.Classification" Catalog="catalog" Changed="InvalidatePreview" /> }
         }
@@ -141,9 +152,10 @@ else
     {
         <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["InvoiceApprovalEffect"]</h2>
             <p>@L["InvoicePurchaseEffect", preview.CurrentPurchase.ToString("N2"), preview.Change.ToString("N2"), preview.NewPurchase.ToString("N2")]</p>
-            @if (preview.Limit.HasValue) { <p>@L["InvoiceLimitEffect", preview.CurrentUsed.ToString("N2"), preview.NewUsed.ToString("N2"), (preview.Limit.Value - preview.NewUsed).ToString("N2")]</p> }
+            @if (preview.Limit.HasValue) { <p>@L["InvoiceLimitEffect", preview.CurrentUsed.ToString("N2"), preview.NewUsed.ToString("N2"), (preview.Limit.Value - preview.NewUsed - preview.Reserved + preview.ReservationReleased).ToString("N2")]</p> }
             @if (review.Data.Kind == LeasingInvoiceKind.CreditNote && preview.Limit.HasValue && !preview.CreditReleasesLimit.HasValue) { <p class="alert alert-warning">@L["InvoiceCreditRuleRequired"]</p> }
             @if (review.Data.Kind == LeasingInvoiceKind.CreditNote) { <p class="alert alert-warning">@L["InvoiceCreditTermsHelp"]</p> }
+            <p>@L["OrderReserved"]: @preview.Reserved.ToString("N2") · @L["OrderRelease"]: @preview.ReservationReleased.ToString("N2") · @L["OrderAvailableAfter"]: @((preview.Limit-preview.NewUsed-preview.Reserved+preview.ReservationReleased)?.ToString("N2"))</p>
             <button type="button" class="btn btn-success" disabled="@busy" @onclick="Approve">@L["InvoiceApprove"]</button>
         </div></section>
     }
@@ -161,6 +173,28 @@ else
 }
 @code {
     [Parameter] public Guid Id { get; set; }
+    [SupplyParameterFromQuery(Name="order")] public Guid? FromOrder { get; set; }
+    private List<LeasingOrder> orders=[]; private Guid? orderId; private OrderDetails? orderDetails;
+    private async Task OrderChanged()
+    {
+        preview=null; orderDetails=orderId.HasValue?await Service.GetOrderAsync(account,orderId.Value):null;
+        review.OrderDelivery=orderDetails==null?null:new() { OrderId=orderDetails.Order.Id, Revision=orderDetails.Order.Revision };
+        foreach(var m in review.Matches) { m.OrderLineId=null; m.OrderScope=0; }
+        if(orderDetails!=null && !review.AcquisitionId.HasValue)
+        {
+            review.NewAcquisition=await Service.NewOrderAcquisitionAsync(account,orderDetails.Order.Id);
+            review.NewAcquisition.SupplierOrganizationId=orderDetails.Order.SupplierOrganizationId;
+            review.NewAcquisition.Name=orderDetails.Order.Number; review.NewAcquisition.Reference=orderDetails.Order.Number;
+            review.PurchaseDateConfirmed=false;
+        }
+    }
+    private void OrderLineChanged(InvoiceLineMatch match, InvoiceDataLine line)
+    {
+        preview=null; if(!match.OrderLineId.HasValue)return;
+        var ol=orderDetails!.Order.Lines.Single(x=>x.Id==match.OrderLineId); var item=PreviewItem(line);
+        match.OrderScope=ol.Method==LeasingOrderMethod.Quantity?item.Quantity:0;
+        match.Classification=LeasingService.DeliveryClassification(ol,item);
+    }
     private EditContext editContext = new(new InvoiceReview());
     private void InvalidatePreview() => preview = null;
     private Guid account; private bool busy; private string? error; private string reason = ""; private Guid? useInterpretation;
@@ -169,8 +203,8 @@ else
     private bool editable => details?.Invoice.Status == LeasingInvoiceStatus.Review;
     private InvoiceAmounts Amounts => InvoiceCalculator.Calculate(review.Data);
     protected override async Task OnParametersSetAsync() { if (User.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; } account = id; await Load(); }
-    private Task Load() => Run(Reload);
-    private async Task Reload() { details = await Service.GetInvoiceAsync(account, Id); review = details.Review; editContext = new(review); editContext.OnFieldChanged += (_, _) => preview = null; target = details.Acquisition; options = await Service.OptionsAsync(account); catalog = await Service.ClassificationCatalogAsync(account); targetDocuments = details.Documents; creditSources = details.DocumentedLines.Where(x => details.Documents.Any(d => d.Id == x.InvoiceId && d.Kind == LeasingInvoiceKind.Invoice)).ToList(); preview = null; if (review.NewAcquisition.OwnerUserId == Guid.Empty) review.NewAcquisition.OwnerUserId = User.Current.UserId; if (review.NewAcquisition.PurchaseDate == default && review.Data.Date.HasValue) { review.NewAcquisition.PurchaseDate = review.Data.Date.Value; review.PurchaseDateConfirmed = false; } }
+    private Task Load() => Run(async () => { await Reload(); if (FromOrder.HasValue && review.OrderDelivery == null && editable) { orderId=FromOrder; await OrderChanged(); } });
+    private async Task Reload() { details = await Service.GetInvoiceAsync(account, Id); review = details.Review; orders=(await Service.ListOrdersAsync(account)).Where(x=>x.Status==LeasingOrderStatus.Approved).ToList(); orderId=review.OrderDelivery?.OrderId; orderDetails=orderId.HasValue?await Service.GetOrderAsync(account,orderId.Value):null; editContext = new(review); editContext.OnFieldChanged += (_, _) => preview = null; target = details.Acquisition; options = await Service.OptionsAsync(account); catalog = await Service.ClassificationCatalogAsync(account); targetDocuments = details.Documents; creditSources = details.DocumentedLines.Where(x => details.Documents.Any(d => d.Id == x.InvoiceId && d.Kind == LeasingInvoiceKind.Invoice)).ToList(); preview = null; if (review.NewAcquisition.OwnerUserId == Guid.Empty) review.NewAcquisition.OwnerUserId = User.Current.UserId; if (review.NewAcquisition.PurchaseDate == default && review.Data.Date.HasValue) { review.NewAcquisition.PurchaseDate = review.Data.Date.Value; review.PurchaseDateConfirmed = false; } }
     private InvoiceLineMatch Match(InvoiceDataLine line) { var match = review.Matches.SingleOrDefault(x => x.ReviewLineId == line.ReviewId); if (match == null) { match = new() { ReviewLineId = line.ReviewId }; review.Matches.Add(match); } return match; }
     private LeasingItem PreviewItem(InvoiceDataLine line) { try { var index = review.Data.Lines.IndexOf(line); return LeasingService.ImportedItem(line, Amounts.LineNet[index], Amounts.LineVat[index]); } catch (ArithmeticException) { return new(); } }
     private void RemoveLine(InvoiceDataLine line) { review.Data.Lines.Remove(line); review.Matches.RemoveAll(x => x.ReviewLineId == line.ReviewId); preview = null; }

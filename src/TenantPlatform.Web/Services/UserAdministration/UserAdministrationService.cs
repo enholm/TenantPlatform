@@ -1144,6 +1144,11 @@ public class UserAdministrationService
     {
         switch (request.Role)
         {
+            case UserRole.LeasingPlanApprover:
+            case UserRole.LeasingInvoiceApprover:
+            case UserRole.LeasingVarianceApprover:
+            case UserRole.LeasingOrderApprover:
+            case UserRole.LeasingLimitApprover:
             case UserRole.AccountAdmin:
 
                 if (request.OrganizationId.HasValue ||

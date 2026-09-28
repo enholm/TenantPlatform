@@ -1,0 +1,43 @@
+@page "/leasing/rental-invoices/{Id:guid}"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+<h1>@L["RentalInvoice"] @details?.Invoice.Number</h1>
+@if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
+@if(details!=null){
+<p>@L[$"InvoiceStatus{details.Invoice.Status}"] · @L[$"InvoiceProcessing{details.Invoice.Processing}"]</p><p>@L["RentalManualHelp"]</p>
+<button class="btn btn-outline-secondary mb-2" disabled="@busy" @onclick="()=>Run(Load)">@L["DashboardRetry"]</button>
+@if(!string.IsNullOrEmpty(details.Invoice.StorageKey)){<a class="btn btn-outline-secondary m-2" href="@($"/leasing/rental-invoices/{Id}/original")" target="_blank" rel="noopener">@L["InvoiceOriginal"]</a>
+@if(details.CanEdit){<button class="btn btn-outline-secondary" disabled="@busy" @onclick="Retry">@L["RentalRetryInterpretation"]</button>}}
+@foreach(var interpretation in details.Interpretations){<details class="border p-2 my-2"><summary>@interpretation.CreatedUtc · @interpretation.Version</summary><InvoiceDataView Data="@(System.Text.Json.JsonSerializer.Deserialize<InvoiceData>(interpretation.ResultJson)!)" />
+@if(details.CanEdit){<button class="btn btn-outline-primary" disabled="@busy" @onclick="()=>Use(interpretation.Id)">@L["RentalUseInterpretation"]</button>}</details>}
+<EditForm Model="review" OnValidSubmit="Save"><fieldset disabled="@(!details.CanEdit||busy)"><RentalInvoiceFields Review="review" Parties="options!.Parties" Sources="details.CreditSources" />
+<label class="d-block mt-3"><InputCheckbox @bind-Value="review.ContentConfirmed" /> @L["RentalContentConfirmed"]</label><label class="d-block">@L["PaymentReason"]<InputTextArea class="form-control" @bind-Value="review.Reason" /></label>
+<button class="btn btn-primary my-2">@L["RentalSaveReview"]</button></fieldset></EditForm>
+<h2 class="h4 mt-4">@L["RentalMatching"]</h2><p>@L["RentalMatchingHelp"]</p>
+<p>@L["RentalUnallocated"]: @((review.Data.Net-allocations.Sum(x=>x.Net))?.ToString("N2")) / @((review.Data.Vat-allocations.Sum(x=>x.Vat))?.ToString("N2")) / @((review.Data.Gross-allocations.Sum(x=>x.Net+x.Vat))?.ToString("N2")) @review.Data.Currency</p>
+<EditForm Model="allocations" OnValidSubmit="SaveAllocations"><fieldset disabled="@(!(details.CanEdit||details.CanApprove&&details.Invoice.Status==LeasingInvoiceStatus.Approved)||busy)">
+@foreach(var a in allocations){<div class="row g-2 border p-2 mb-2" @key="a"><label class="col-md-6">@L["PaymentReference"]<InputSelect class="form-select" @bind-Value="a.InstallmentId"><option value="@Guid.Empty">@L["Select"]</option>@foreach(var o in details.Options){<option value="@o.InstallmentId">@o.Acquisition · @o.Reference · @o.From – @o.To · @o.Net / @o.Vat @o.Currency @(o.Suggested?L["RentalSuggestion"]:"")</option>}</InputSelect></label><label class="col-md-2">@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="a.Net" /></label><label class="col-md-2">@L["LeasingVatAmount"]<InputNumber class="form-control" @bind-Value="a.Vat" /></label>
+@if(review.Data.Kind==LeasingInvoiceKind.CreditNote){<label class="col-md-10">@L["RentalCreditAllocation"]<InputSelect class="form-select" @bind-Value="a.CreditedAllocationId"><option value="">@L["Select"]</option>@foreach(var c in details.CreditAllocations.Where(x=>x.InvoiceId==review.OriginalInvoiceId&&x.InstallmentId==a.InstallmentId)){<option value="@c.Id">@c.Net / @c.Vat · @c.Id</option>}</InputSelect></label>}
+<div class="col-md-2"><button type="button" class="btn btn-outline-danger" @onclick="()=>allocations.Remove(a)">@L["Remove"]</button></div></div>}
+<button type="button" class="btn btn-outline-primary" @onclick="()=>allocations.Add(new())">@L["RentalAddAllocation"]</button>
+<label class="d-block mt-2">@L["PaymentReason"]<InputText class="form-control" @bind-Value="reason" /></label><button class="btn btn-primary my-2">@L[details.Invoice.Status==LeasingInvoiceStatus.Approved?"RentalCorrectMatching":"RentalSaveMatching"]</button>
+</fieldset></EditForm>
+@if(details.CanApprove&&details.Invoice.Status==LeasingInvoiceStatus.Review){<p>@L["RentalApproveSaved"]</p><button class="btn btn-success" disabled="@busy" @onclick="Approve">@L["RentalApprove"]</button>}
+@if(details.CanApprove&&details.Invoice.Status==LeasingInvoiceStatus.Approved){<button class="btn btn-outline-danger" disabled="@busy" @onclick="Reverse">@L["RentalReverse"]</button>}
+<details class="my-3"><summary>@L["PaymentHistory"]</summary>@foreach(var h in details.History){<p>@h.RecordedUtc · @L[$"PaymentEvent{h.Action}"] · @h.ActorUserId · @h.Reason</p>}@foreach(var a in details.Allocations){<p>@a.RecordedUtc · @a.InstallmentId · @a.Net / @a.Vat · @(a.Reversed?L["RentalReversedAllocation"]:L["RentalAllocated"])</p>}</details>
+}
+@code{
+[Parameter]public Guid Id{get;set;}RentalInvoiceDetails? details;RentalInvoiceReview review=new();List<RentalAllocationInput> allocations=[];LeasingOptions? options;string? error;string reason="";bool busy;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
+protected override Task OnParametersSetAsync()=>Run(Load);
+async Task Run(Func<Task> f){if(busy)return;busy=true;error=null;try{await f();}catch(UnauthorizedAccessException){Navigation.NavigateTo("/access-denied");}catch(LeasingValidationException ex){error=ex.Message;}catch{error="LeasingFailed";}finally{busy=false;}}
+async Task Load(){details=await Service.GetRentalInvoiceAsync(account,Id);options=await Service.OptionsAsync(account);review=details.Review;allocations=details.Invoice.Status==LeasingInvoiceStatus.Review?review.Allocations:details.Allocations.Where(x=>!x.Reversed).Select(x=>new RentalAllocationInput{InstallmentId=x.InstallmentId,Net=x.Net,Vat=x.Vat,CreditedAllocationId=x.CreditedAllocationId}).ToList();}
+Task Save()=>Run(async()=>{review.Allocations=allocations;await Service.SaveRentalReviewAsync(account,Id,details!.Invoice.Revision,review);await Load();});
+Task SaveAllocations()=>details!.Invoice.Status==LeasingInvoiceStatus.Review?Save():Run(async()=>{await Service.CorrectRentalAllocationsAsync(account,Id,details.Invoice.Revision,allocations,reason,Guid.NewGuid());await Load();});
+Task Approve()=>Run(async()=>{await Service.ApproveRentalInvoiceAsync(account,Id,details!.Invoice.Revision);await Load();});
+Task Reverse()=>Run(async()=>{await Service.ReverseRentalInvoiceAsync(account,Id,details!.Invoice.Revision,reason,Guid.NewGuid());await Load();});
+Task Retry()=>Run(async()=>{await Service.RetryRentalInterpretationAsync(account,Id,details!.Invoice.Revision);await Load();});
+Task Use(Guid interpretation)=>Run(async()=>{await Service.UseRentalInterpretationAsync(account,Id,details!.Invoice.Revision,interpretation);await Load();});
+}

@@ -1,0 +1,41 @@
+<div class="row g-2">
+<div class="col-md-4"><label class="form-label">@L["LeasingFinanceCompany"]<InputSelect class="form-select" @bind-Value="Review.FinanceOrganizationId"><option value="@Guid.Empty">@L["Select"]</option>@foreach(var p in Parties){<option value="@p.Id">@p.Name</option>}</InputSelect></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceKind"]<InputSelect class="form-select" @bind-Value="Review.Data.Kind">@foreach(var k in Enum.GetValues<LeasingInvoiceKind>()){<option value="@k">@L[$"InvoiceKind{k}"]</option>}</InputSelect></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingFinanceCompany"]<InputText class="form-control" @bind-Value="Review.Data.SupplierName" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceSupplierNumber"]<InputText class="form-control" @bind-Value="Review.Data.SupplierNumber" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingInvoiceNumber"]<InputText class="form-control" @bind-Value="Review.Data.Number" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingInvoiceDate"]<InputDate class="form-control" @bind-Value="Review.Data.Date" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentInvoiceDue"]<InputDate class="form-control" @bind-Value="Review.Data.DueDate" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingCurrency"]<InputText class="form-control" @bind-Value="Review.Data.Currency" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="Review.Data.Net" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingVatAmount"]<InputNumber class="form-control" @bind-Value="Review.Data.Vat" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingGross"]<InputNumber class="form-control" @bind-Value="Review.Data.Gross" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoicePrepaid"]<InputNumber class="form-control" @bind-Value="Review.Data.Prepaid" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceRounding"]<InputNumber class="form-control" @bind-Value="Review.Data.Rounding" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoicePayable"]<InputNumber class="form-control" @bind-Value="Review.Data.Payable" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentFinanceReference"]<InputText class="form-control" @bind-Value="Review.AgreementReference" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["RentalPeriodReference"]<InputText class="form-control" @bind-Value="Review.PeriodReference" /></label></div>
+</div>
+@if(Review.Data.Kind==LeasingInvoiceKind.CreditNote){<label class="d-block">@L["RentalOriginalInvoice"]<InputSelect class="form-select" @bind-Value="Review.OriginalInvoiceId"><option value="">@L["Select"]</option>@foreach(var i in Sources){<option value="@i.Id">@i.Number · @i.Net / @i.Vat @i.Currency</option>}</InputSelect></label>}
+<p>@L["RentalLineHelp"]</p>
+@foreach(var line in Review.Data.Lines){<details class="border p-2 my-2" @key="line"><summary>@line.SourceId · @line.Description · @line.Net</summary><div class="row g-2"><div class="col-md-4"><label class="form-label">@L["InvoiceSourceLine"]<InputText class="form-control" @bind-Value="line.SourceId" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingDescription"]<InputText class="form-control" @bind-Value="line.Description" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingQuantity"]<InputNumber class="form-control" @bind-Value="line.Quantity" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingUnitPrice"]<InputNumber class="form-control" @bind-Value="line.Price" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceBaseQuantity"]<InputNumber class="form-control" @bind-Value="line.BaseQuantity" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceAllowance"]<InputNumber class="form-control" @bind-Value="line.Allowance" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceCharge"]<InputNumber class="form-control" @bind-Value="line.Charge" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="line.Net" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingVatRate"]<InputNumber class="form-control" @bind-Value="line.VatPercent" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceVatCategory"]<InputText class="form-control" @bind-Value="line.VatCategory" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceExemptionReason"]<InputText class="form-control" @bind-Value="line.TaxExemptionReason" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceDocumentAdjustment"]<InputCheckbox @bind-Value="line.DocumentAdjustment" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["InvoiceIsAllowance"]<InputCheckbox @bind-Value="line.IsAllowance" /></label></div>
+</div><button type="button" class="btn btn-outline-danger" @onclick="()=>Review.Data.Lines.Remove(line)">@L["Remove"]</button></details>}
+<button type="button" class="btn btn-outline-primary" @onclick="AddLine">@L["InvoiceAddLine"]</button>
+@foreach(var tax in Review.Data.Taxes){<div class="row g-2"><div class="col-md-4"><label class="form-label">@L["InvoiceVatCategory"]<InputText class="form-control" @bind-Value="tax.Category" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingVatRate"]<InputNumber class="form-control" @bind-Value="tax.Rate" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="tax.Taxable" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingVatAmount"]<InputNumber class="form-control" @bind-Value="tax.Amount" /></label></div>
+</div>}
+@code{void AddLine()=>Review.Data.Lines.Add(new(){SourceId=(Review.Data.Lines.Count+1).ToString(),Quantity=1,BaseQuantity=1,VatCategory="S",VatPercent=25});[Parameter,EditorRequired]public RentalInvoiceReview Review{get;set;}=null!;[Parameter]public List<LeasingOption> Parties{get;set;}=[];[Parameter]public List<LeasingInvoice> Sources{get;set;}=[];}

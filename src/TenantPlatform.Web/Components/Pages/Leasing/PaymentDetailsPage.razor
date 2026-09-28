@@ -1,0 +1,84 @@
+@page "/leasing/acquisitions/{Id:guid}/payments"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using System.Text.Json
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+<h1>@L["PaymentDetails"] – @data?.Acquisition.Name</h1>
+<p>@L["PaymentScopeHelp"]</p>
+@if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
+@if(data!=null){
+<a href="@($"/leasing/acquisitions/{Id}")">@L["LeasingAcquisition"]</a>
+<section class="card my-3"><div class="card-body"><h2 class="h4">@L["PaymentFinancing"]</h2>
+<label>@L["PaymentAsOf"] <input class="form-control" type="date" @bind="asOf" /></label>
+@{var current=LeasingService.FinancingAt(data.Financing,asOf);}
+@if(current==null){<p class="alert alert-warning">@L["PaymentUnknownEffective"]</p>}
+else{<FinancingSnapshotView Snapshot="@(JsonSerializer.Deserialize<LeasingFinancingSnapshot>(current.SnapshotJson)!)" Parties="options!.Parties" />}
+<details><summary>@L["PaymentFinancingHistory"]</summary>
+@foreach(var r in data.Financing.OrderByDescending(x=>x.EffectiveFrom)){<div class="border p-2 my-2"><strong>@(r.EffectiveFrom?.ToString("dd.MM.yyyy")??L["PaymentUnknownEffective"])</strong> · @r.RecordedUtc · @r.ActorUserId <p>@(r.Reason=="PaymentInitialUnknownDate"?L[r.Reason]:r.Reason)</p><FinancingSnapshotView Snapshot="@(JsonSerializer.Deserialize<LeasingFinancingSnapshot>(r.SnapshotJson)!)" Parties="options!.Parties" /></div>}
+</details>
+@if(data.Permissions.CanRegister){<details><summary>@L["PaymentNewFinancing"]</summary><EditForm Model="financing" OnValidSubmit="SaveFinancing"><LeasingTermsEditor Terms="financing.Terms" /><FinancingTermsEditor Terms="financing.Terms" /><div class="row g-2">
+<label class="col-md-4">@L["LeasingFinanceCompany"]<InputSelect class="form-select" @bind-Value="financing.FinanceOrganizationId">@foreach(var p in options!.Parties){<option value="@p.Id">@p.Name</option>}</InputSelect></label>
+<label class="col-md-4">@L["LeasingFinanced"]<InputNumber class="form-control" @bind-Value="financing.FinancedAmount" /></label><label class="col-md-4">@L["PaymentEffective"]<InputDate class="form-control" @bind-Value="effective" /></label></div>
+<label class="d-block">@L["PaymentReason"]<InputText class="form-control" @bind-Value="reason" /></label><button class="btn btn-primary mt-2" disabled="@busy">@L["Save"]</button></EditForm></details>}
+</div></section>
+<h2 class="h4">@L["PaymentPlans"]</h2><p>@L["PaymentFloatingHelp"]</p>
+@if(data.Permissions.CanRegister){<button class="btn btn-outline-primary" @onclick="NewPlan">@L["PaymentNewPlan"]</button>}
+@foreach(var p in data.Plans){<details class="border rounded p-3 my-2"><summary>@L[$"PaymentPlan{p.Status}"] · @p.Version · @p.Currency · @p.CreatedUtc</summary>
+<p>@p.Notes · @p.CreatedByUserId · @p.CheckedByUserId · @p.CheckedUtc</p>
+@if(p.SourceDocumentId.HasValue){<a href="@($"/leasing/documents/{p.SourceDocumentId}/download")">@L["PaymentSource"]</a>}
+<PaymentComparison Proposed="p.Terms" Current="@(active?.Terms??[])" />
+@if(data.Permissions.CanRegister){<button class="btn btn-outline-primary" @onclick="()=>EditPlan(p)">@L["PaymentRevise"]</button>}
+@if(p.Status==LeasingPlanStatus.Draft&&data.Permissions.CanActivate){<label class="d-block">@L["PaymentReason"]<input class="form-control" @bind="reason" /></label><label><input type="checkbox" @bind="confirmed" /> @L["PaymentInvoicedChanges"]</label><button class="btn btn-primary m-2" disabled="@busy" @onclick="()=>Activate(p)">@L["PaymentActivate"]</button>}
+</details>}
+@if(editing){<section class="card my-3"><div class="card-body"><h3 class="h5">@L["PaymentDraftEditor"]</h3><p>@L["PaymentSeriesRule"]</p>
+<EditForm Model="terms" OnValidSubmit="SavePlan"><div class="row g-2">
+<label class="col-md-3">@L["PaymentFrom"]<InputDate class="form-control" @bind-Value="firstFrom" /></label><label class="col-md-3">@L["PaymentTo"]<InputDate class="form-control" @bind-Value="firstTo" /></label><label class="col-md-3">@L["PaymentFirstDue"]<InputDate class="form-control" @bind-Value="firstDue" /></label><label class="col-md-3">@L["PaymentCount"]<InputNumber class="form-control" @bind-Value="count" min="1" max="600" /></label>
+<label class="col-md-3">@L["LeasingFrequency"]<InputSelect class="form-select" @bind-Value="frequency">@foreach(var f in Enum.GetValues<LeasingPaymentFrequency>()){<option value="@f">@L[$"LeasingFrequency{f}"]</option>}</InputSelect></label><label class="col-md-3">@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="seriesNet" /></label><label class="col-md-3">@L["LeasingVatAmount"]<InputNumber class="form-control" @bind-Value="seriesVat" /></label><label class="col-md-3"><InputCheckbox @bind-Value="monthEnd" /> @L["PaymentMonthEnd"]</label></div>
+<button type="button" class="btn btn-secondary my-2" @onclick="Series">@L["PaymentPreviewSeries"]</button> <button type="button" class="btn btn-outline-secondary" @onclick="AddTerm">@L["PaymentAddTerm"]</button>
+<details class="my-3"><summary>@L["PaymentImport"]</summary><InputFile OnChange="Upload" accept=".csv,.xlsx" disabled="@busy" />
+@if(grid!=null){
+@if(grid.Sheets.Count>1){<label>@L["PaymentSheet"]<select class="form-select" @bind="sheet" @bind:after="ReadSheet">@foreach(var s in grid.Sheets){<option>@s</option>}</select></label>}
+<div class="row g-2">@foreach(var prop in typeof(PaymentColumnMap).GetProperties()){<label class="col-md-4">@L[$"PaymentColumn{prop.Name}"]<select class="form-select" value="@prop.GetValue(mapping)" @onchange="e=>Map(prop,e)"><option value="-1">@L["DashboardUnspecified"]</option>@for(int i=0;i<grid.Headers.Count;i++){<option value="@i">@grid.Headers[i]</option>}</select></label>}</div>
+<button type="button" class="btn btn-secondary my-2" @onclick="PreviewImport">@L["PaymentPreviewImport"]</button>
+@if(importPreview!=null){@foreach(var err in importPreview.Errors){<p class="text-danger">@err.Row: @L[err.Key]</p>}}
+}</details>
+<label class="d-block">@L["PaymentSource"]<InputSelect class="form-select" @bind-Value="document"><option value="">@L["DashboardUnspecified"]</option>@foreach(var d in data.Documents){<option value="@d.Id">@d.FileName</option>}</InputSelect></label>
+<label class="d-block">@L["PaymentNotes"]<InputTextArea class="form-control" @bind-Value="notes" /></label>
+@foreach(var t in terms){<details class="border rounded p-2 my-2" @key="t"><summary>@t.Reference · @t.PeriodFrom – @t.PeriodTo · @t.Gross @data.Acquisition.Currency</summary><PaymentTermEditor Term="t" Revisions="data.Financing" /><button type="button" class="btn btn-outline-danger mt-2" @onclick="()=>terms.Remove(t)">@L["Remove"]</button></details>}
+<PaymentComparison Proposed="terms" Current="@(active?.Terms??[])" />
+<button class="btn btn-primary" disabled="@(busy||terms.Count==0||importPreview?.Errors.Count>0)">@L["PaymentSaveDraft"]</button></EditForm></div></section>}
+<h2 class="h4 mt-4">@L["PaymentControl"]</h2><p>@L["PaymentTolerance"]</p>
+@if(active!=null){<p>@L["PaymentExpectedTotal"]: @(active.Terms.All(x=>x.Gross.HasValue)?active.Terms.Sum(x=>x.Gross).GetValueOrDefault().ToString("N2"):L["DashboardUnspecified"]) @active.Currency</p>}
+@foreach(var t in data.Terms){<details class="border p-3 my-2"><summary>@t.Term.Reference · @t.Term.DueDate.ToString("dd.MM.yyyy") · @L[$"PaymentBilling{t.Status}"] @(t.Term.NeedsReview?L["PaymentReview"]:"")</summary>
+<p>@L["PaymentExpected"]: @t.Term.Net / @t.Term.Vat / @t.Term.Gross · @L["PaymentInvoiced"]: @t.InvoicedNet / @t.InvoicedVat / @(t.InvoicedNet+t.InvoicedVat) @data.Acquisition.Currency</p><p>@L["PaymentDifference"]: @(t.InvoicedNet-t.Term.Net) / @(t.InvoicedVat-t.Term.Vat) / @(t.InvoicedNet+t.InvoicedVat-t.Term.Gross)</p><p>@t.Installment.ControlReason · @t.Term.ReviewReason · @t.Term.FinancingRevisionId</p>
+@foreach(var link in t.Allocations){var inv=data.Invoices.Single(x=>x.Id==link.InvoiceId);<p><a href="@($"/leasing/rental-invoices/{inv.Id}")">@inv.Number</a> · @link.Net / @link.Vat · @L["PaymentInvoiceDue"]: @InvoiceDue(inv)?.ToString("dd.MM.yyyy") @(InvoiceDue(inv)!=t.Term.DueDate?L["PaymentDueDifference"]:"")</p>}
+@if(data.Permissions.CanAcceptVariance||data.Permissions.CanActivate){<label class="d-block">@L["PaymentReason"]<input class="form-control" @bind="reason" /></label>}
+@if(data.Permissions.CanAcceptVariance){<button class="btn btn-outline-primary m-1" disabled="@busy" @onclick="()=>Review(t,true,false,false)">@L["PaymentCompleteBilling"]</button><button class="btn btn-outline-warning m-1" disabled="@busy" @onclick="()=>Review(t,true,true,false)">@L["PaymentAcceptVariance"]</button><button class="btn btn-outline-secondary m-1" disabled="@busy" @onclick="()=>Review(t,false,false,false)">@L["PaymentReopen"]</button>}
+@if(data.Permissions.CanActivate&&t.Term.NeedsReview){<button class="btn btn-outline-primary" disabled="@busy" @onclick="()=>Review(t,false,false,true)">@L["PaymentConfirmReview"]</button>}
+</details>}
+<details class="my-3"><summary>@L["PaymentHistory"]</summary>@foreach(var h in data.History){<p>@h.RecordedUtc · @L[$"PaymentEvent{h.Action}"] · @h.ActorUserId · @h.Reason</p>}</details>
+}
+@code{
+[Parameter]public Guid Id{get;set;}
+PaymentDetails? data;LeasingOptions? options;LeasingPaymentPlan? active;LeasingFinancingSnapshot financing=new();List<LeasingPlanTerm> terms=[];PaymentImportGrid? grid;PaymentImportPreview? importPreview;PaymentColumnMap mapping=new();
+string? error,notes;string reason="",sheet="";bool busy,editing,confirmed,monthEnd;Guid? document;LeasingPlanSource source;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();DateOnly asOf=DateOnly.FromDateTime(DateTime.Today),effective=DateOnly.FromDateTime(DateTime.Today),firstFrom,firstTo,firstDue;int count=12;decimal? seriesNet,seriesVat;LeasingPaymentFrequency frequency=LeasingPaymentFrequency.Monthly;
+protected override Task OnParametersSetAsync()=>Run(Load);
+async Task Load(){data=await Service.GetPaymentsAsync(account,Id);options=await Service.OptionsAsync(account);active=data.Plans.SingleOrDefault(x=>x.Status==LeasingPlanStatus.Active);var current=LeasingService.FinancingAt(data.Financing,asOf);financing=current==null?LeasingFinancingSnapshot.From(data.Acquisition):JsonSerializer.Deserialize<LeasingFinancingSnapshot>(current.SnapshotJson)!;}
+async Task Run(Func<Task> action){if(busy)return;busy=true;error=null;try{await action();}catch(UnauthorizedAccessException){Navigation.NavigateTo("/access-denied");}catch(LeasingValidationException ex){error=ex.Message;}catch{error="LeasingFailed";}finally{busy=false;}}
+DateOnly? InvoiceDue(LeasingInvoice i)=>JsonSerializer.Deserialize<RentalInvoiceReview>(i.ApprovedJson??i.ReviewJson)?.Data.DueDate;
+Task SaveFinancing()=>Run(async()=>{await Service.AddFinancingRevisionAsync(account,Id,data!.Acquisition.Revision,effective,financing,reason,Guid.NewGuid());await Load();});
+void NewPlan(){editing=true;terms=[];source=LeasingPlanSource.Manual;document=null;grid=null;importPreview=null;notes="";firstFrom=data!.Acquisition.PurchaseDate;firstTo=firstFrom.AddMonths(1).AddDays(-1);firstDue=firstFrom;}
+void EditPlan(LeasingPaymentPlan p){NewPlan();terms=JsonSerializer.Deserialize<List<LeasingPlanTerm>>(JsonSerializer.Serialize(p.Terms))!;document=p.SourceDocumentId;source=p.Source;notes=p.Notes;}
+void Basis(LeasingPlanTerm t){t.FinancingRevisionId=LeasingService.FinancingAt(data!.Financing,t.PeriodFrom)?.Id;}
+void AddTerm(){var t=new LeasingPlanTerm{Reference=$"{terms.Count+1}",PeriodFrom=firstFrom,PeriodTo=firstTo,DueDate=firstDue};Basis(t);terms.Add(t);}
+void Series(){try{terms=LeasingPaymentCalculator.Series(firstFrom,firstTo,firstDue,count,frequency,monthEnd,seriesNet,seriesVat);terms.ForEach(Basis);source=LeasingPlanSource.Manual;importPreview=null;}catch{error="PaymentInvalidTerm";}}
+Task Upload(InputFileChangeEventArgs e)=>Run(async()=>{await using var stream=e.File.OpenReadStream(Math.Min(Service.MaxFileSizeBytes,10_000_000));var result=await Service.UploadPaymentPlanSourceAsync(account,Id,e.File.Name,stream);document=result.Document;grid=result.Grid;sheet=grid.Sheets.FirstOrDefault()??"";mapping=new();importPreview=null;await Load();});
+Task ReadSheet()=>Run(async()=>{grid=await Service.ReadPaymentPlanSourceAsync(account,Id,document!.Value,sheet);importPreview=null;});
+void Map(System.Reflection.PropertyInfo p,ChangeEventArgs e){p.SetValue(mapping,int.Parse(e.Value!.ToString()!));importPreview=null;}
+void PreviewImport(){try{importPreview=PaymentPlanImport.Preview(grid!,mapping,data!.Acquisition.Currency);if(importPreview.Errors.Count==0){terms=importPreview.Terms;terms.ForEach(Basis);source=LeasingPlanSource.Imported;}}catch(LeasingValidationException ex){error=ex.Message;}}
+Task SavePlan()=>Run(async()=>{await Service.SavePaymentPlanAsync(account,Id,active?.Id,terms,notes,source,document,Guid.NewGuid());editing=false;await Load();});
+Task Activate(LeasingPaymentPlan p)=>Run(async()=>{await Service.ActivatePaymentPlanAsync(account,p.Id,p.Revision,reason,confirmed,Guid.NewGuid());confirmed=false;await Load();});
+Task Review(PaymentTermView t,bool complete,bool accept,bool plan)=>Run(async()=>{await Service.ReviewPaymentTermAsync(account,t.Installment.Id,t.Installment.Revision,complete,accept,plan,reason,Guid.NewGuid());await Load();});
+}

@@ -16,10 +16,19 @@ public class TenantAuthorizationService
         if (!current.IsAuthenticated || current.CurrentAccountId is not Guid account) return false;
         await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
         if (!await db.UserAccounts.AnyAsync(x => x.AccountId == account && x.UserId == current.UserId && x.User.IsActive, cancellationToken)) return false;
-        return await CanCreateAgreementAsync(cancellationToken) ||
+        return await CanActivateLeasingPlansAsync(cancellationToken) || await CanApproveLeasingInvoicesAsync(cancellationToken) || await CanAcceptLeasingVariancesAsync(cancellationToken) || await CanCreateAgreementAsync(cancellationToken) || await CanApproveLeasingOrdersAsync(cancellationToken) || await CanChangeLeasingLimitAsync(cancellationToken) ||
+            await db.LeasingOrders.AnyAsync(x => x.AccountId == account && x.OwnerUserId == current.UserId, cancellationToken) ||
             await db.LeasingFrameworks.AnyAsync(x => x.AccountId == account && x.OwnerUserId == current.UserId, cancellationToken) ||
             await db.LeasingAcquisitions.AnyAsync(x => x.AccountId == account && x.OwnerUserId == current.UserId, cancellationToken);
     }
+
+    public Task<bool> CanActivateLeasingPlansAsync(CancellationToken cancellationToken = default) => HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin, UserRole.LeasingPlanApprover);
+    public Task<bool> CanApproveLeasingInvoicesAsync(CancellationToken cancellationToken = default) => HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin, UserRole.LeasingInvoiceApprover);
+    public Task<bool> CanAcceptLeasingVariancesAsync(CancellationToken cancellationToken = default) => HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin, UserRole.LeasingVarianceApprover);
+    public Task<bool> CanApproveLeasingOrdersAsync(CancellationToken cancellationToken = default) =>
+        HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin, UserRole.LeasingOrderApprover);
+    public Task<bool> CanChangeLeasingLimitAsync(CancellationToken cancellationToken = default) =>
+        HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin, UserRole.LeasingLimitApprover);
 
     public Task<bool> CanCreateAgreementAsync(CancellationToken cancellationToken = default) =>
         HasAnyRolesAsync(cancellationToken, UserRole.AccountAdmin);

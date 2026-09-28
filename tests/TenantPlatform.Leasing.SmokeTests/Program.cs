@@ -79,14 +79,14 @@ try
     var draft = await Purchase(framework, 500, status: LeasingAcquisitionStatus.Draft); draft.InvoiceDate = null; draft.InvoiceNumber = null;
     var draftId = await admin.SaveAcquisitionAsync(account, null, draft, ""); Check(await Used(framework) == 100, "draft with no invoice does not consume capacity");
     draft = await Read(draftId); draft.Status = LeasingAcquisitionStatus.Registered;
-    await Reject(() => admin.SaveAcquisitionAsync(account, draftId, draft, "Register"), "LeasingRegistrationRequired");
+    await Reject(() => admin.SaveAcquisitionAsync(account, draftId, draft, "Register"), "LeasingLimitExceeded");
     var edited = await Read(first); var lineId = edited.Items[0].Id; edited.Items[0].UnitPrice = 41;
     await Reject(() => admin.SaveAcquisitionAsync(account, first, edited, "Increase"), "LeasingLimitExceeded");
     edited.Items[0].UnitPrice = 30; await owner.SaveAcquisitionAsync(account, first, edited, "Correct purchase value");
     Check(await Used(framework) == 90 && (await Read(first)).Items[0].Id == lineId, "registered edit recalculates capacity and preserves item ID");
     await Reject(() => admin.SaveAcquisitionAsync(account, first, edited, "Stale save"), "LeasingConcurrency");
     var fedit = await ReadF(framework); fedit.Limit = 89;
-    await Reject(() => admin.SaveFrameworkAsync(account, framework, fedit, "Reduce"), "LeasingLimitExceeded");
+    await Reject(() => admin.SaveFrameworkAsync(account, framework, fedit, "Reduce"), "LeasingLimitProposalRequired");
     fedit = await ReadF(framework); fedit.IncludesVat = true;
     await Reject(() => admin.SaveFrameworkAsync(account, framework, fedit, "VAT basis"), "LeasingFrameworkConflict");
     fedit = await ReadF(framework); fedit.Currency = "EUR";
@@ -121,7 +121,7 @@ try
     var move = await Read(grossLease); move.FrameworkId = target;
     await Reject(() => admin.SaveAcquisitionAsync(account, grossLease, move, "Move"), "LeasingLimitExceeded");
     Check(await Used(grossFrame) == 125 && await Used(target) == 0, "failed move leaves original and target capacities unchanged");
-    var targetEdit = await ReadF(target); targetEdit.Limit = 100; await admin.SaveFrameworkAsync(account, target, targetEdit, "Increase");
+    var targetEdit = await ReadF(target); var limitRequest = Guid.NewGuid(); await admin.ProposeLimitAsync(account, target, targetEdit.Revision, 100, "Increase", null, limitRequest); await admin.ApproveLimitAsync(account, limitRequest);
     await admin.SaveAcquisitionAsync(account, grossLease, move, "Move between frameworks");
     Check(await Used(grossFrame) == 0 && await Used(target) == 100, "successful move updates both frames atomically");
     var badCurrency = await Purchase(target, 1); badCurrency.Currency = "EUR";
@@ -169,6 +169,13 @@ try
     }
     Check((await Read(standalone)).Items.Single().AllocationMode == LeasingAllocationMode.None && (await Read(standalone)).NetTotal == 25,
         "populated phase-one schema upgrades without fictional classifications or changed totals");
+    await using(var paymentMigrationDb=factory.CreateDbContext())
+    {
+        var original=await Read(standalone);
+        var baseline=await paymentMigrationDb.LeasingFinancingRevisions.SingleAsync(x=>x.AccountId==account&&x.AcquisitionId==standalone);
+        var terms=System.Text.Json.JsonSerializer.Deserialize<LeasingFinancingSnapshot>(baseline.SnapshotJson)!;
+        Check(baseline.EffectiveFrom==null&&baseline.RecordedUtc==null&&baseline.ActorUserId==null&&terms.FinancedAmount==original.FinancedAmount&&terms.Terms.Months==original.Terms.Months&&terms.Terms.AnnualRatePercent==original.Terms.AnnualRatePercent&&!await paymentMigrationDb.LeasingPaymentPlans.AnyAsync(), "phase-five migration preserves financing with unknown effective dates and creates no plans");
+    }
     var migrated = await Read(standalone);
     Check(migrated.CreditNetTotal == 0 && migrated.ReversedNetTotal == 0 && migrated.ReleasedNetTotal == 0 && migrated.Items.All(x => x.InvoiceNetAdjustment == 0 && x.InvoiceVatAdjustment == 0) && (await admin.GetAsync(account, framework, true)).Framework!.CreditNotesReleaseLimit == null,
         "phase-three migration preserves financial totals and leaves credit policy explicitly undecided");
@@ -307,6 +314,8 @@ try
         "cost allocation preserves framework utilization, financed amount, lease dates and original line count");
     await LeasingComponentChecks.Run(admin, account, adminId, framework, standalone, dimensions);
     await InvoiceChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
+    await OrderChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
+    await PaymentChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
     Console.WriteLine("All leasing PostgreSQL smoke checks passed.");
 }
 finally

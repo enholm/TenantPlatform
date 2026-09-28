@@ -1,0 +1,25 @@
+@if (Details != null)
+{
+    <section class="card my-3"><div class="card-body"><h2 class="h5">@L["OrderRealize"] · @Details.Order.Number</h2><p>@L["OrderOnePurchaseHelp"]</p>
+    <p>@L["OrderScopeHelp"]</p>
+    @for (int i = 0; i < Items.Count; i++)
+    {
+        var position = i; var part = Part(position);
+        <div class="row mb-2"><div class="col-md-4">@Items[i].Description</div>
+        <label class="col-md-5">@L["OrderLine"]<InputSelect class="form-select" @bind-Value="part.OrderLineId"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach(var line in Details.Order.Lines) { <option value="@line.Id">@line.Description · @L[$"OrderMethod{line.Method}"] · @((line.Scope-line.Fulfilled-line.Unreserved).ToString("0.####"))</option> }</InputSelect></label>
+        <label class="col-md-3">@L["OrderScope"]<InputNumber class="form-control" @bind-Value="part.Scope" step="0.0001" /></label></div>
+    }
+    <label class="d-block mt-3"><InputCheckbox @bind-Value="Delivery.VarianceConfirmed" /> @L["OrderConfirmVariance"]</label>
+    <p class="mt-2">@L["LeasingUsed"]: @Details.Capacity.Used.ToString("N2") · @L["OrderReserved"]: @Details.Capacity.Reserved.ToString("N2") · @L["LeasingAvailable"]: @Details.Capacity.Available.ToString("N2") @Details.Order.Currency</p>
+    <p>@L["OrderRelease"]: @Release.ToString("N2") · @L["OrderActual"]: @Actual.ToString("N2") · @L["OrderAvailableAfter"]: @((Details.Capacity.Available + Release - (Existing ? 0 : Actual)).ToString("N2"))</p>
+    </div></section>
+}
+@code {
+    [Parameter] public OrderDetails? Details { get; set; }
+    [Parameter, EditorRequired] public OrderDelivery Delivery { get; set; } = null!;
+    [Parameter] public List<LeasingItem> Items { get; set; } = [];
+    [Parameter] public bool Existing { get; set; }
+    private OrderDeliveryLine Part(int position) { var line=Delivery.Lines.SingleOrDefault(x=>x.ItemPosition==position); if(line==null) { line=new(){ItemPosition=position}; Delivery.Lines.Add(line); } return line; }
+    private decimal Actual { get { try { var t=LeasingCalculator.Total(Items); return Details!.Framework.IncludesVat?t.Gross:t.Net; } catch { return 0; } } }
+    private decimal Release { get { try { return LeasingService.PreviewOrderRelease(Details!.Order, Delivery, Details.Framework.IncludesVat); } catch { return 0; } } }
+}

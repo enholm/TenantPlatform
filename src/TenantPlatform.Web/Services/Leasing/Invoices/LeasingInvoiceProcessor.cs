@@ -37,7 +37,7 @@ public sealed class LeasingInvoiceProcessor(IDbContextFactory<TenantPlatformDbCo
         {
             db.LeasingInvoiceInterpretations.Add(new() { Id = Guid.NewGuid(), AccountId = entity.AccountId, InvoiceId = entity.Id, CreatedUtc = clock.GetUtcNow(),
                 Version = result.Version, ResultJson = JsonSerializer.Serialize(result.Data), ExtractedText = result.Text, WarningsJson = JsonSerializer.Serialize(result.Warnings) });
-            if (entity.ReviewedUtc == null && entity.ReviewJson == "{}") entity.ReviewJson = JsonSerializer.Serialize(new InvoiceReview { Data = result.Data, AcquisitionId = entity.AcquisitionId });
+            if (entity.ReviewedUtc == null && entity.ReviewJson == "{}") entity.ReviewJson = entity.Category == LeasingInvoiceCategory.Rental ? JsonSerializer.Serialize(new RentalInvoiceReview { Data = result.Data }) : JsonSerializer.Serialize(new InvoiceReview { Data = result.Data, AcquisitionId = entity.AcquisitionId });
         }
         db.LeasingInvoiceHistory.Add(new() { Id = Guid.NewGuid(), AccountId = entity.AccountId, InvoiceId = entity.Id, RecordedUtc = clock.GetUtcNow(),
             Action = result == null ? "ProcessingFailed" : "Interpreted", Reason = error ?? result!.Version });

@@ -22,9 +22,10 @@ else
 }
 @code {
     [SupplyParameterFromQuery(Name = "acquisition")] public Guid? Acquisition { get; set; }
+    [SupplyParameterFromQuery(Name = "order")] public Guid? Order { get; set; }
     private Guid account; private bool busy; private string? error; private List<LeasingInvoice> items = [];
     protected override async Task OnInitializedAsync() { if (User.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; } account = id; await Load(); }
     private Task Load() => Run(async () => items = await Service.ListInvoicesAsync(account));
-    private Task Upload(InputFileChangeEventArgs args) => Run(async () => { await using var stream = args.File.OpenReadStream(Service.MaxFileSizeBytes); var id = await Service.UploadInvoiceAsync(account, Acquisition, args.File.Name, stream); Navigation.NavigateTo($"/leasing/invoices/{id}"); });
+    private Task Upload(InputFileChangeEventArgs args) => Run(async () => { await using var stream = args.File.OpenReadStream(Service.MaxFileSizeBytes); var id = await Service.UploadInvoiceAsync(account, Acquisition, args.File.Name, stream); Navigation.NavigateTo($"/leasing/invoices/{id}{(Order.HasValue ? $"?order={Order}" : "")}"); });
     private async Task Run(Func<Task> action) { if (busy) return; busy = true; error = null; try { await action(); } catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); } catch (TenantPlatform.Infrastructure.Agreements.AgreementFileException ex) { error = ex.Message; } catch (Exception) { error = "InvoiceProcessingFailed"; } finally { busy = false; } }
 }

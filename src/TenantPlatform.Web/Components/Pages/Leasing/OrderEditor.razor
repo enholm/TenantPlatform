@@ -1,0 +1,65 @@
+@page "/leasing/purchase-orders/create"
+@page "/leasing/purchase-orders/{Id:guid}/edit"
+@using System.Text.Json
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+@inject ILogger<OrderEditor> Logger
+<h1>@L["PurchaseOrders"]</h1><p>@L["PurchaseOrderHelp"]</p>
+@if (error != null) { <div class="alert alert-danger">@L[error]</div> }
+@if (options != null && catalog != null)
+{
+@if (options.Frameworks.Count == 0)
+{
+    <div class="alert alert-info">@L["OrderFrameworkRequired"]
+        @if (options.CanCreate) { <a class="alert-link" href="/leasing/frameworks/create">@L["LeasingNewFramework"]</a> }
+    </div>
+}
+<EditForm Model="order" OnValidSubmit="Save" FormName="order-editor"><fieldset disabled="@busy">
+    @if (order.Status == LeasingOrderStatus.Approved) { <p class="alert alert-info">@L["OrderProposalHelp"]</p> }
+    <label class="form-label">@L["LeasingFramework"]<InputSelect class="form-select" @bind-Value="order.FrameworkId" @bind-Value:after="FrameworkChanged" disabled="@Id.HasValue"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach(var f in options.Frameworks) { <option value="@f.Id">@f.Name</option> }</InputSelect></label>
+    <div class="row g-3 mb-3">
+        <label class="col-md-4">@L["LeasingSupplier"]<InputSelect class="form-select" @bind-Value="order.SupplierOrganizationId"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach(var p in options.Parties) { <option value="@p.Id">@p.Name</option> }</InputSelect></label>
+        <label class="col-md-4">@L["LeasingOwner"]<InputSelect class="form-select" @bind-Value="order.OwnerUserId">@foreach(var p in options.Owners) { <option value="@p.Id">@p.Name</option> }</InputSelect></label>
+        <label class="col-md-4">@L["OrderDate"]<InputDate class="form-control" @bind-Value="order.OrderDate" /></label>
+        <label class="col-md-4">@L["OrderExpected"]<InputDate class="form-control" @bind-Value="order.ExpectedDate" /></label>
+    </div>
+    @foreach (var line in order.Lines)
+    {
+        <section class="card mb-3" @key="line"><div class="card-body"><div class="row g-2">
+            <label class="col-md-6">@L["LeasingDescription"]<InputText class="form-control" @bind-Value="line.Description" /></label>
+            <label class="col-md-3">@L["LeasingItemNumber"]<InputText class="form-control" @bind-Value="line.ItemNumber" /></label>
+            <label class="col-md-3">@L["OrderUnit"]<InputText class="form-control" @bind-Value="line.Unit" /></label>
+            <label class="col-md-3">@L["LeasingQuantity"]<InputNumber class="form-control" @bind-Value="line.Quantity" step="0.0001" /></label>
+            <label class="col-md-3">@L["LeasingUnitPrice"]<InputNumber class="form-control" @bind-Value="line.UnitPrice" step="0.0001" /></label>
+            <label class="col-md-3">@L["LeasingVatRate"]<InputNumber class="form-control" @bind-Value="line.VatPercent" step="0.0001" /></label>
+            <label class="col-md-3">@L["OrderMethod"]<InputSelect class="form-select" @bind-Value="line.Method">@foreach(var method in Enum.GetValues<LeasingOrderMethod>()) { <option value="@method">@L[$"OrderMethod{method}"]</option> }</InputSelect></label>
+        </div><LeasingClassificationEditor Item="@line.Item()" Input="@Classification(line)" Catalog="catalog" />
+        <button type="button" class="btn btn-outline-danger mt-2" @onclick="() => order.Lines.Remove(line)">@L["LeasingRemoveLine"]</button></div></section>
+    }
+    <button type="button" class="btn btn-outline-primary mb-3" @onclick="() => order.Lines.Add(new())">@L["LeasingAddLine"]</button>
+    <label class="d-block">@L["LeasingNotes"]<InputTextArea class="form-control" @bind-Value="order.Notes" /></label>
+    <label class="d-block my-3">@L["LeasingChangeReason"]<InputTextArea class="form-control" @bind-Value="reason" /></label>
+    <button class="btn btn-primary">@L["Save"]</button>
+</fieldset></EditForm>
+}
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    [SupplyParameterFromQuery(Name="framework")] public Guid? Framework { get; set; }
+    private Guid account, request = Guid.NewGuid(); private bool busy; private string? error; private string reason = "";
+    private LeasingOrder order = new(); private LeasingOptions? options; private LeasingClassificationCatalog? catalog;
+    private Dictionary<LeasingOrderLine, LeasingClassificationInput> classifications = new();
+    private LeasingClassificationInput Classification(LeasingOrderLine line) { if (!classifications.TryGetValue(line, out var c)) classifications[line] = c = JsonSerializer.Deserialize<LeasingClassificationInput>(line.ClassificationJson) ?? new(); return c; }
+    protected override async Task OnParametersSetAsync()
+    {
+        if (User.Current.CurrentAccountId is not Guid a) { Navigation.NavigateTo("/access-denied"); return; } account = a;
+        await Run(async () => { options = await Service.OptionsAsync(account); catalog = await Service.ClassificationCatalogAsync(account);
+            if (Id.HasValue) { var d = await Service.GetOrderAsync(account, Id.Value); order = d.Order.ProposalJson == null ? d.Order : JsonSerializer.Deserialize<LeasingOrder>(d.Order.ProposalJson)!; order.Revision = d.Order.Revision; order.Status = d.Order.Status; }
+            else { order = new() { FrameworkId = Framework ?? options.Frameworks.FirstOrDefault()?.Id ?? Guid.Empty, OwnerUserId = User.Current.UserId, OrderDate = DateOnly.FromDateTime(DateTime.Today), Lines = [new()] }; await FrameworkChanged(); } });
+    }
+    private async Task FrameworkChanged() { if (order.FrameworkId != Guid.Empty) order.Currency = (await Service.GetAsync(account, order.FrameworkId, true)).Framework!.Currency; }
+    private Task Save() => Run(async () => { foreach(var line in order.Lines) line.ClassificationJson = JsonSerializer.Serialize(Classification(line)); var id = await Service.SaveOrderAsync(account, Id, order, reason, request); Navigation.NavigateTo($"/leasing/purchase-orders/{id}"); });
+    private async Task Run(Func<Task> action) { if (busy) return; busy = true; error = null; try { await action(); } catch(LeasingValidationException e) { error=e.Message; } catch(UnauthorizedAccessException ex) { Logger.LogWarning(ex, "Order editor access denied for account {AccountId}, order {OrderId}, framework {FrameworkId}", account, Id, order.FrameworkId); Navigation.NavigateTo("/access-denied"); } catch(Exception) { error="LeasingFailed"; } finally { busy=false; } }
+}

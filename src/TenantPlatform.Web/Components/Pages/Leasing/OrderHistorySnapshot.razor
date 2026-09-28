@@ -1,0 +1,8 @@
+@using System.Text.Json
+@if (value != null)
+{
+    <p>@value.Number · @L[$"OrderStatus{value.Status}"] · @value.Currency</p>
+    <ul>@foreach(var line in value.Lines) { <li>@line.Description · @line.Quantity × @line.UnitPrice · @line.VatPercent % · @L["OrderRealized"]: @line.Fulfilled · @L["OrderUnreserved"]: @line.Unreserved</li> }</ul>
+    <p>@value.Notes</p>
+}
+@code { [Parameter] public string Json {get;set;}="{}"; private LeasingOrder? value; protected override void OnParametersSet() { try { value=JsonSerializer.Deserialize<LeasingOrder>(Json); } catch(JsonException) { value=null; } } }

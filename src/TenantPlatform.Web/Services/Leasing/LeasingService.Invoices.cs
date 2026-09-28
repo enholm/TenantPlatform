@@ -13,31 +13,44 @@ public sealed partial class LeasingService
     private static IQueryable<LeasingInvoice> Invoices(TenantPlatformDbContext db, Guid account, Guid user, bool admin)
     {
         var allowed = Acquisitions(db, account, user, false).Select(x => x.Id);
-        return db.LeasingInvoices.Where(x => x.AccountId == account && (admin || x.AcquisitionId == null && x.UploadedByUserId == user || allowed.Contains(x.AcquisitionId ?? Guid.Empty)));
+        return db.LeasingInvoices.Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == account && (admin || x.AcquisitionId == null && x.UploadedByUserId == user || allowed.Contains(x.AcquisitionId ?? Guid.Empty)));
+    }
+    private static IQueryable<LeasingInvoice> ReadInvoices(TenantPlatformDbContext db, Guid account, Guid user, bool admin, bool orderApprover)
+    {
+        var allowed = ReadAcquisitions(db, account, user, admin, orderApprover).Select(x => x.Id);
+        return db.LeasingInvoices.Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == account && (admin || x.AcquisitionId == null && x.UploadedByUserId == user || allowed.Contains(x.AcquisitionId ?? Guid.Empty)));
     }
     public async Task<(List<LeasingInvoice> Documents, List<LeasingInvoiceLine> Lines)> PurchaseInvoicesAsync(Guid account, Guid acquisition, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
-        if (!await Acquisitions(db, account, user, admin).AnyAsync(x => x.Id == acquisition, ct)) throw new UnauthorizedAccessException();
-        var docs = await db.LeasingInvoices.AsNoTracking().Where(x => x.AccountId == account && x.AcquisitionId == acquisition).OrderByDescending(x => x.UploadedUtc).ToListAsync(ct);
+        if (!await ReadAcquisitions(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AnyAsync(x => x.Id == acquisition, ct)) throw new UnauthorizedAccessException();
+        var docs = await db.LeasingInvoices.AsNoTracking().Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == account && x.AcquisitionId == acquisition).OrderByDescending(x => x.UploadedUtc).ToListAsync(ct);
         var ids = docs.Select(x => x.Id).ToArray();
         return (docs, await db.LeasingInvoiceLines.AsNoTracking().Where(x => x.AccountId == account && ids.Contains(x.InvoiceId)).ToListAsync(ct));
     }
     public async Task<List<LeasingInvoice>> ListInvoicesAsync(Guid account, CancellationToken ct = default)
     { await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct); return await Invoices(db, account, user, admin).AsNoTracking().OrderByDescending(x => x.UploadedUtc).Take(500).ToListAsync(ct); }
-    public async Task<Guid> UploadInvoiceAsync(Guid account, Guid? acquisition, string fileName, Stream content, CancellationToken ct = default)
+    public Task<Guid> UploadInvoiceAsync(Guid account, Guid? acquisition, string fileName, Stream content, CancellationToken ct = default) => UploadInvoiceCore(account, acquisition, fileName, content, LeasingInvoiceCategory.Equipment, ct);
+    private async Task<Guid> UploadInvoiceCore(Guid account, Guid? acquisition, string fileName, Stream content, LeasingInvoiceCategory category, CancellationToken ct)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
         if (acquisition.HasValue) { if (!await Acquisitions(db, account, user, admin).AnyAsync(x => x.Id == acquisition && x.Status != LeasingAcquisitionStatus.Cancelled, ct)) throw new UnauthorizedAccessException(); }
-        else if (!admin && !await Acquisitions(db, account, user, false).AnyAsync(ct) && !await Frameworks(db, account, user, false).AnyAsync(ct)) throw new UnauthorizedAccessException();
+        else if (!admin && !await Orders(db, account, user, false).AnyAsync(ct) && !await Acquisitions(db, account, user, false).AnyAsync(ct) && !await Frameworks(db, account, user, false).AnyAsync(ct)) throw new UnauthorizedAccessException();
         if (Path.GetExtension(fileName).ToLowerInvariant() is not (".xml" or ".pdf" or ".png" or ".jpg" or ".jpeg")) throw new AgreementFileException("AgreementInvalidFileType");
         var stored = await storage.StoreAsync(content, fileName, ct);
         try
         {
             await using var original = await storage.OpenReadAsync(stored.StorageKey, ct); var hash = Convert.ToHexString(await SHA256.HashDataAsync(original, ct));
-            var invoice = new LeasingInvoice { Id = Guid.NewGuid(), AccountId = account, AcquisitionId = acquisition, UploadedByUserId = user, UploadedUtc = clock.GetUtcNow(),
+            await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(db, account, ct);
+            if (category == LeasingInvoiceCategory.Rental)
+            {
+                var duplicate = await RentalInvoices(db, account, user, await PaymentReader(admin, ct)).AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.FileHash == hash && x.Status != LeasingInvoiceStatus.Reversed && x.Status != LeasingInvoiceStatus.Rejected, ct);
+                if (duplicate != null) { await storage.DiscardUncommittedAsync(stored.StorageKey); return duplicate.Id; }
+            }
+            var invoice = new LeasingInvoice { Id = Guid.NewGuid(), AccountId = account, AcquisitionId = acquisition, Category = category, UploadedByUserId = user, UploadedUtc = clock.GetUtcNow(),
                 FileName = stored.FileName, StorageKey = stored.StorageKey, MediaType = stored.MediaType, Size = stored.Size, FileHash = hash, Revision = Guid.NewGuid() };
-            db.LeasingInvoices.Add(invoice); InvoiceHistory(db, invoice, user, "Uploaded", "", "{}", "{}"); await db.SaveChangesAsync(ct); return invoice.Id;
+            db.LeasingInvoices.Add(invoice); InvoiceHistory(db, invoice, user, "Uploaded", "", "{}", "{}"); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return invoice.Id;
         }
         catch
         {
@@ -49,9 +62,9 @@ public sealed partial class LeasingService
     public async Task<InvoiceDetails> GetInvoiceAsync(Guid account, Guid id, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
-        var invoice = await Invoices(db, account, user, admin).AsNoTracking().Include(x => x.Lines).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
-        var review = ReadReview(invoice); var acquisition = invoice.AcquisitionId.HasValue ? await WithClassifications(Acquisitions(db, account, user, admin).AsNoTracking()).SingleAsync(x => x.Id == invoice.AcquisitionId, ct) : null;
-        var documents = invoice.AcquisitionId.HasValue ? await db.LeasingInvoices.AsNoTracking().Where(x => x.AccountId == account && x.AcquisitionId == invoice.AcquisitionId).ToListAsync(ct) : [];
+        var invoice = await ReadInvoices(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking().Include(x => x.Lines).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        var review = ReadReview(invoice); var acquisition = invoice.AcquisitionId.HasValue ? await WithClassifications(ReadAcquisitions(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking()).SingleAsync(x => x.Id == invoice.AcquisitionId, ct) : null;
+        var documents = invoice.AcquisitionId.HasValue ? await db.LeasingInvoices.AsNoTracking().Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == account && x.AcquisitionId == invoice.AcquisitionId).ToListAsync(ct) : [];
         var ids = documents.Where(x => x.Status == LeasingInvoiceStatus.Approved).Select(x => x.Id).ToArray();
         var lines = await db.LeasingInvoiceLines.AsNoTracking().Where(x => x.AccountId == account && ids.Contains(x.InvoiceId)).ToListAsync(ct);
         var duplicates = await DuplicateWarnings(db, invoice, review.Data, ct);
@@ -63,7 +76,7 @@ public sealed partial class LeasingService
     public async Task<AgreementDownload> DownloadInvoiceAsync(Guid account, Guid id, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
-        var invoice = await Invoices(db, account, user, admin).AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        var invoice = await ReadInvoices(db, account, user, admin, await authorization.CanApproveLeasingOrdersAsync(ct)).AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         return new(await storage.OpenReadAsync(invoice.StorageKey, ct), invoice.FileName, invoice.MediaType);
     }
     private static InvoiceReview ReadReview(LeasingInvoice invoice) => JsonSerializer.Deserialize<InvoiceReview>(invoice.ReviewJson) ?? new();
@@ -84,6 +97,11 @@ public sealed partial class LeasingService
             review.AcquisitionRevision = await Acquisitions(db, account, user, admin).Where(x => x.Id == review.AcquisitionId && x.Status != LeasingAcquisitionStatus.Cancelled).Select(x => (Guid?)x.Revision).SingleOrDefaultAsync(ct) ?? throw new UnauthorizedAccessException();
         }
         else review.AcquisitionRevision = null;
+        if (review.OrderDelivery != null)
+        {
+            var order = await Orders(db, account, user, admin).AsNoTracking().Include(x => x.Lines).SingleOrDefaultAsync(x => x.Id == review.OrderDelivery.OrderId, ct) ?? throw new UnauthorizedAccessException();
+            if (review.Matches.Any(x => x.OrderLineId.HasValue && order.Lines.All(l => l.Id != x.OrderLineId))) throw new LeasingValidationException("LeasingOrderInvalid");
+        }
         if (!review.AcquisitionId.HasValue && invoice.UploadedByUserId != user && !admin) throw new UnauthorizedAccessException();
         if (review.Data.Lines.Count > 500 || Snapshot(review).Length > 2_000_000 || review.ReviewReason.Length > 2000 || review.DuplicateOverrideReason.Length > 2000) throw new LeasingValidationException("InvoiceInvalidReview");
         var before = invoice.ReviewJson; invoice.ReviewJson = Snapshot(review); invoice.AcquisitionId = review.AcquisitionId;
@@ -121,7 +139,7 @@ public sealed partial class LeasingService
     private static async Task<List<string>> DuplicateWarnings(TenantPlatformDbContext db, LeasingInvoice invoice, InvoiceData data, CancellationToken ct)
     {
         var warnings = new List<string>(); var identity = Identity(data); var number = InvoiceNumber(data);
-        var others = db.LeasingInvoices.Where(x => x.AccountId == invoice.AccountId && x.Id != invoice.Id && x.Status == LeasingInvoiceStatus.Approved);
+        var others = db.LeasingInvoices.Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == invoice.AccountId && x.Id != invoice.Id && x.Status == LeasingInvoiceStatus.Approved);
         if (await others.AnyAsync(x => x.FileHash == invoice.FileHash || identity != "" && x.SupplierIdentity == identity && x.Kind == data.Kind && x.Number == number, ct)) warnings.Add("InvoiceCertainDuplicate");
         if (await others.AnyAsync(x => x.Kind == data.Kind && (x.Number == number && number != "" || x.InvoiceDate == data.Date && x.Currency == data.Currency && x.Net == data.Net && x.Vat == data.Vat), ct)) warnings.Add("InvoicePossibleDuplicate");
         return warnings;
@@ -134,6 +152,8 @@ public sealed partial class LeasingService
         var amounts = InvoiceCalculator.Calculate(review.Data); var f = a.FrameworkId.HasValue ? await Frameworks(db, account, user, admin).AsNoTracking().SingleOrDefaultAsync(x => x.Id == a.FrameworkId, ct) : null;
         // Framework owner access is not required to view the limit of an already accessible acquisition.
         if (a.FrameworkId.HasValue && f == null && review.AcquisitionId.HasValue) f = await db.LeasingFrameworks.AsNoTracking().SingleAsync(x => x.AccountId == account && x.Id == a.FrameworkId, ct);
+        if (a.FrameworkId.HasValue && f == null && review.OrderDelivery != null && await Orders(db, account, user, admin).AnyAsync(x => x.Id == review.OrderDelivery.OrderId && x.FrameworkId == a.FrameworkId, ct))
+            f = await db.LeasingFrameworks.AsNoTracking().SingleAsync(x => x.AccountId == account && x.Id == a.FrameworkId, ct);
         if (a.FrameworkId.HasValue && f == null) throw new UnauthorizedAccessException();
         var current = review.AcquisitionId.HasValue ? a.GrossTotal - a.CreditNetTotal - a.CreditVatTotal - a.ReversedNetTotal - a.ReversedVatTotal : 0;
         decimal changeNet = 0, changeVat = 0;
@@ -144,7 +164,15 @@ public sealed partial class LeasingService
         var used = f == null ? 0 : await db.LeasingAcquisitions.Where(x => x.AccountId == account && x.FrameworkId == f.Id && x.Status == LeasingAcquisitionStatus.Registered).SumAsync(x => f.IncludesVat ? x.GrossTotal - x.ReleasedNetTotal - x.ReleasedVatTotal : x.NetTotal - x.ReleasedNetTotal, ct);
         var delta = review.Data.Kind == LeasingInvoiceKind.CreditNote && f?.CreditNotesReleaseLimit != true ? 0 : changeNet + (f?.IncludesVat == true ? changeVat : 0);
         if (a.Status == LeasingAcquisitionStatus.Draft && review.Data.Kind == LeasingInvoiceKind.Invoice) delta += f?.IncludesVat == true ? a.GrossTotal : a.NetTotal;
-        return new(current, changeNet + changeVat, current + changeNet + changeVat, used, used + (f == null ? 0 : delta), f?.Limit, f?.CreditNotesReleaseLimit);
+        decimal reserved = f == null ? 0 : await Reserved(db, account, f.Id, f.IncludesVat, ct), released = 0;
+        if (review.OrderDelivery != null)
+        {
+            var o = await Orders(db, account, user, admin).AsNoTracking().Include(x => x.Lines).SingleOrDefaultAsync(x => x.Id == review.OrderDelivery.OrderId, ct) ?? throw new UnauthorizedAccessException();
+            CheckRevision(o.Revision, review.OrderDelivery.Revision, true);
+            var parts = review.Matches.Where(x => x.OrderLineId.HasValue && !x.ItemId.HasValue).Select(x => new OrderDeliveryLine { OrderLineId = x.OrderLineId!.Value, Scope = x.OrderScope }).ToList();
+            released = PreviewOrderRelease(o, new() { Lines = parts }, f?.IncludesVat == true);
+        }
+        return new(current, changeNet + changeVat, current + changeNet + changeVat, used, used + (f == null ? 0 : delta), f?.Limit, f?.CreditNotesReleaseLimit, reserved, released);
     }
     public async Task<Guid> ApproveInvoiceAsync(Guid account, Guid id, Guid revision, CancellationToken ct = default)
     {
@@ -155,6 +183,7 @@ public sealed partial class LeasingService
         CheckRevision(invoice.Revision, revision, true);
         if (invoice.Status != LeasingInvoiceStatus.Review || invoice.Processing is LeasingInvoiceProcessing.Uploaded or LeasingInvoiceProcessing.Processing) throw new LeasingValidationException("InvoiceImmutable");
         var review = ReadReview(invoice); var data = review.Data; var amounts = InvoiceCalculator.Calculate(data);
+        if (data.Kind == LeasingInvoiceKind.CreditNote && review.OrderDelivery != null) throw new LeasingValidationException("LeasingOrderAlreadyDocumented");
         if (!review.ContentConfirmed || !Enum.IsDefined(data.Kind) || string.IsNullOrWhiteSpace(data.SupplierName) || data.SupplierName.Length > 200 || data.SupplierNumber.Length > 200 ||
             string.IsNullOrWhiteSpace(data.Number) || data.Number.Length > 100 || data.Date is null || data.Date == DateOnly.MinValue || !AgreementPeriodCalculator.Currencies.Contains(data.Currency)) throw new LeasingValidationException("InvoiceReviewRequired");
         if (amounts.Errors.Count > 0) throw new LeasingValidationException(amounts.Errors[0]);
@@ -176,11 +205,11 @@ public sealed partial class LeasingService
         if (!string.IsNullOrWhiteSpace(party.OrganizationNumber) && Identity(data) != new string(party.OrganizationNumber.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant()) throw new LeasingValidationException("InvoiceSupplierMismatch");
         var financialBefore = review.AcquisitionId.HasValue ? Snapshot(a) : "{}";
         var input = JsonSerializer.Deserialize<LeasingAcquisition>(Snapshot(a))!; input.Status = LeasingAcquisitionStatus.Registered;
-        var originals = await db.LeasingInvoiceLines.AsNoTracking().Where(x => x.AccountId == account && db.LeasingInvoices.Any(d => d.AccountId == account && d.Id == x.InvoiceId && d.AcquisitionId == a.Id && d.Status == LeasingInvoiceStatus.Approved)).ToListAsync(ct);
-        var docs = await db.LeasingInvoices.AsNoTracking().Where(x => x.AccountId == account && x.AcquisitionId == a.Id && x.Status == LeasingInvoiceStatus.Approved).ToDictionaryAsync(x => x.Id, ct);
+        var originals = await db.LeasingInvoiceLines.AsNoTracking().Where(x => x.AccountId == account && db.LeasingInvoices.Any(d => d.Category == LeasingInvoiceCategory.Equipment && d.AccountId == account && d.Id == x.InvoiceId && d.AcquisitionId == a.Id && d.Status == LeasingInvoiceStatus.Approved)).ToListAsync(ct);
+        var docs = await db.LeasingInvoices.AsNoTracking().Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == account && x.AcquisitionId == a.Id && x.Status == LeasingInvoiceStatus.Approved).ToDictionaryAsync(x => x.Id, ct);
         var classifications = new Dictionary<int, LeasingClassificationInput>(); var targets = new List<(InvoiceDataLine Source, Guid? Target, int Position, Guid? Credit)>();
         var pending = new List<LeasingInvoiceLine>();
-        var reversedItems = await db.LeasingInvoiceLines.Where(x => x.AccountId == account && x.CreatedItem && db.LeasingInvoices.Any(d => d.AccountId == account && d.Id == x.InvoiceId && d.Status == LeasingInvoiceStatus.Reversed)).Select(x => x.ItemId).ToListAsync(ct);
+        var reversedItems = await db.LeasingInvoiceLines.Where(x => x.AccountId == account && x.CreatedItem && db.LeasingInvoices.Any(d => d.Category == LeasingInvoiceCategory.Equipment && d.AccountId == account && d.Id == x.InvoiceId && d.Status == LeasingInvoiceStatus.Reversed)).Select(x => x.ItemId).ToListAsync(ct);
         for (int i = 0; i < data.Lines.Count; i++)
         {
             var line = data.Lines[i]; var match = review.Matches.Single(x => x.ReviewLineId == line.ReviewId); var net = amounts.LineNet[i]; var vat = amounts.LineVat[i]; var qty = line.DocumentAdjustment ? 0 : line.Quantity!.Value;
@@ -213,7 +242,18 @@ public sealed partial class LeasingService
         }
         if (data.Kind == LeasingInvoiceKind.Invoice)
         {
-            var aid = await SaveAcquisitionCore(db, account, user, admin, review.AcquisitionId, input, "Invoice approval " + id, ct, classifications, invoiceApproval: true);
+            if (review.OrderDelivery != null)
+            {
+                review.OrderDelivery.Lines = [];
+                foreach (var target in targets)
+                {
+                    var match = review.Matches.Single(x => x.ReviewLineId == target.Source.ReviewId);
+                    if (!match.OrderLineId.HasValue) continue;
+                    if (target.Target.HasValue) throw new LeasingValidationException("LeasingOrderAlreadyDocumented");
+                    review.OrderDelivery.Lines.Add(new() { OrderLineId = match.OrderLineId.Value, ItemPosition = target.Position, Scope = match.OrderScope });
+                }
+            }
+            var aid = await SaveAcquisitionCore(db, account, user, admin, review.AcquisitionId, input, "Invoice approval " + id, ct, classifications, invoiceApproval: true, delivery: review.OrderDelivery);
             a = await WithClassifications(db.LeasingAcquisitions.Where(x => x.AccountId == account)).SingleAsync(x => x.Id == aid, ct);
         }
         else
@@ -247,7 +287,7 @@ public sealed partial class LeasingService
     }
     private static async Task UpdateInvoiceEffects(TenantPlatformDbContext db, LeasingAcquisition a, CancellationToken ct)
     {
-        var docs = await db.LeasingInvoices.Where(x => x.AccountId == a.AccountId && x.AcquisitionId == a.Id).Include(x => x.Lines).ToListAsync(ct);
+        var docs = await db.LeasingInvoices.Where(x => x.Category == LeasingInvoiceCategory.Equipment && x.AccountId == a.AccountId && x.AcquisitionId == a.Id).Include(x => x.Lines).ToListAsync(ct);
         var credit = docs.Where(x => x.Kind == LeasingInvoiceKind.CreditNote && x.Status == LeasingInvoiceStatus.Approved).ToList();
         var reversed = docs.Where(x => x.Kind == LeasingInvoiceKind.Invoice && x.Status == LeasingInvoiceStatus.Reversed).SelectMany(x => x.Lines).Where(x => x.CreatedItem).ToList();
         a.CreditNetTotal = credit.Sum(x => x.Net); a.CreditVatTotal = credit.Sum(x => x.Vat);
@@ -259,7 +299,7 @@ public sealed partial class LeasingService
         {
             var f = await db.LeasingFrameworks.SingleAsync(x => x.AccountId == a.AccountId && x.Id == a.FrameworkId, ct);
             var others = await db.LeasingAcquisitions.Where(x => x.AccountId == a.AccountId && x.FrameworkId == f.Id && x.Id != a.Id && x.Status == LeasingAcquisitionStatus.Registered).ToListAsync(ct);
-            if (LeasingCalculator.Used(others.Append(a), f.IncludesVat) > f.Limit) throw new LeasingValidationException("LeasingLimitExceeded");
+            if (LeasingCalculator.Used(others.Append(a), f.IncludesVat) + await Reserved(db, a.AccountId, f.Id, f.IncludesVat, ct) > f.Limit) throw new LeasingValidationException("LeasingLimitExceeded");
         }
     }
     public async Task ReverseInvoiceAsync(Guid account, Guid id, Guid revision, string reason, CancellationToken ct = default)
@@ -273,10 +313,11 @@ public sealed partial class LeasingService
         var a = await WithClassifications(Acquisitions(db, account, user, admin)).SingleAsync(x => x.Id == invoice.AcquisitionId, ct);
         var lineIds = invoice.Lines.Select(x => x.Id).ToArray(); var createdItems = invoice.Lines.Where(x => x.CreatedItem).Select(x => x.ItemId).ToArray();
         if (await db.LeasingInvoiceLines.AnyAsync(x => x.AccountId == account && x.InvoiceId != id && (lineIds.Contains(x.CreditedLineId ?? Guid.Empty) || createdItems.Contains(x.ItemId)) &&
-            db.LeasingInvoices.Any(d => d.AccountId == account && d.Id == x.InvoiceId && d.Status == LeasingInvoiceStatus.Approved), ct)) throw new LeasingValidationException("InvoiceReverseDependencies");
+            db.LeasingInvoices.Any(d => d.Category == LeasingInvoiceCategory.Equipment && d.AccountId == account && d.Id == x.InvoiceId && d.Status == LeasingInvoiceStatus.Approved), ct)) throw new LeasingValidationException("InvoiceReverseDependencies");
         foreach (var line in invoice.Lines.Where(x => x.CreatedItem))
         { var item = a.Items.Single(x => x.Id == line.ItemId); var total = LeasingCalculator.Line(item); if (total.Net != line.Net || total.Vat != line.Vat) throw new LeasingValidationException("InvoiceReverseChangedItem"); }
-        var before = Snapshot(a); invoice.Status = LeasingInvoiceStatus.Reversed; invoice.Revision = Guid.NewGuid();
+        var before = Snapshot(a); await ReverseOrderParts(db, a, user, createdItems, ct);
+        invoice.Status = LeasingInvoiceStatus.Reversed; invoice.Revision = Guid.NewGuid();
         InvoiceHistory(db, invoice, user, "Reversed", reason, invoice.ApprovedJson!, invoice.ApprovedJson!);
         await db.SaveChangesAsync(ct); await UpdateInvoiceEffects(db, a, ct);
         History(db, account, null, a.Id, user, "InvoiceReversed", reason, before, Snapshot(a));

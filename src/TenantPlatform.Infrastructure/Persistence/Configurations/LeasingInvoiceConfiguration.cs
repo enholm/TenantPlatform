@@ -18,6 +18,8 @@ public sealed class LeasingInvoiceConfiguration : IEntityTypeConfiguration<Leasi
         b.HasOne<LeasingAcquisition>().WithMany().HasForeignKey(x => new { x.AccountId, x.AcquisitionId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => new { x.AccountId, x.FileHash }); b.HasIndex(x => new { x.AccountId, x.SupplierIdentity, x.Kind, x.Number });
         b.HasIndex(x => new { x.Processing, x.ProcessingStartedUtc });
+        b.HasOne<LeasingInvoice>().WithMany().HasForeignKey(x => new { x.AccountId, x.OriginalInvoiceId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.AccountId, x.Category, x.Status });
     }
 }
 public sealed class LeasingInvoiceLineConfiguration : IEntityTypeConfiguration<LeasingInvoiceLine>

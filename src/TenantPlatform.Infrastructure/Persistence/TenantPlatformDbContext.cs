@@ -27,6 +27,17 @@ public class TenantPlatformDbContext : DbContext
     public DbSet<LeasingInvoiceLine> LeasingInvoiceLines => Set<LeasingInvoiceLine>();
     public DbSet<LeasingInvoiceInterpretation> LeasingInvoiceInterpretations => Set<LeasingInvoiceInterpretation>();
     public DbSet<LeasingInvoiceHistory> LeasingInvoiceHistory => Set<LeasingInvoiceHistory>();
+    public DbSet<LeasingFinancingRevision> LeasingFinancingRevisions => Set<LeasingFinancingRevision>();
+    public DbSet<LeasingPaymentPlan> LeasingPaymentPlans => Set<LeasingPaymentPlan>();
+    public DbSet<LeasingInstallment> LeasingInstallments => Set<LeasingInstallment>();
+    public DbSet<LeasingPlanTerm> LeasingPlanTerms => Set<LeasingPlanTerm>();
+    public DbSet<LeasingPaymentAllocation> LeasingPaymentAllocations => Set<LeasingPaymentAllocation>();
+    public DbSet<LeasingPaymentEvent> LeasingPaymentEvents => Set<LeasingPaymentEvent>();
+    public DbSet<LeasingOrder> LeasingOrders => Set<LeasingOrder>();
+    public DbSet<LeasingOrderLine> LeasingOrderLines => Set<LeasingOrderLine>();
+    public DbSet<LeasingOrderRealization> LeasingOrderRealizations => Set<LeasingOrderRealization>();
+    public DbSet<LeasingOrderEvent> LeasingOrderEvents => Set<LeasingOrderEvent>();
+    public DbSet<LeasingLimitChange> LeasingLimitChanges => Set<LeasingLimitChange>();
     public DbSet<LeasingFramework> LeasingFrameworks => Set<LeasingFramework>();
     public DbSet<LeasingAcquisition> LeasingAcquisitions => Set<LeasingAcquisition>();
     public DbSet<LeasingItem> LeasingItems => Set<LeasingItem>();

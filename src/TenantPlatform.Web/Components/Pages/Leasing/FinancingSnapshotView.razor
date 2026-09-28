@@ -1,0 +1,7 @@
+<p>@Parties.FirstOrDefault(x=>x.Id==Snapshot.FinanceOrganizationId)?.Name · @Snapshot.Terms.FinanceReference · @L["LeasingFinanced"]: @Snapshot.FinancedAmount.ToString("N2") @Snapshot.Currency</p>
+<LeasingTermsView Terms="Snapshot.Terms" />
+<dl class="row">
+@foreach(var p in typeof(LeasingTerms).GetProperties().Where(x=>new[]{"FinanceReference","AdvanceRent","ResidualValue","ResidualIsObligation","ResidualDocumentReference","EstablishmentFee","OtherFees","PaymentTiming","FirstDueDate","ObservedReferenceRate","ObservationDate","RateResetFrequency","RateFloor","RateCap","RateLimitBasis","DocumentReference","FinancingNotes"}.Contains(x.Name))){<dt class="col-sm-5">@L[$"PaymentField{p.Name}"]</dt><dd class="col-sm-7">@(Value(p.GetValue(Snapshot.Terms)))</dd>}
+</dl>
+@code{[Parameter,EditorRequired]public LeasingFinancingSnapshot Snapshot{get;set;}=null!;[Parameter]public List<LeasingOption> Parties{get;set;}=[];
+string Value(object? v)=>v switch{null=>L["DashboardUnspecified"],DateOnly d=>d.ToString("dd.MM.yyyy"),LeasingPaymentTiming t=>L[$"PaymentTiming{t}"],LeasingPaymentFrequency f=>L[$"LeasingFrequency{f}"],LeasingRateLimitBasis b=>L[$"PaymentRateBasis{b}"],bool b=>L[b?"PaymentYes":"PaymentNo"],decimal n=>n.ToString("0.####"),_=>v.ToString()??""};}

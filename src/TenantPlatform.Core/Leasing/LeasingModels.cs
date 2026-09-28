@@ -13,11 +13,24 @@ public sealed class LeasingTerms
     public string? ReferenceRateName { get; set; }
     public decimal? MarginPercentagePoints { get; set; }
     public LeasingPaymentFrequency PaymentFrequency { get; set; } = LeasingPaymentFrequency.Monthly;
-    public LeasingTerms Copy() => new()
-    {
-        Months = Months, InterestKind = InterestKind, AnnualRatePercent = AnnualRatePercent,
-        ReferenceRateName = ReferenceRateName, MarginPercentagePoints = MarginPercentagePoints, PaymentFrequency = PaymentFrequency
-    };
+    public string? FinanceReference { get; set; }
+    public decimal? AdvanceRent { get; set; }
+    public decimal? ResidualValue { get; set; }
+    public bool ResidualIsObligation { get; set; }
+    public string? ResidualDocumentReference { get; set; }
+    public decimal? EstablishmentFee { get; set; }
+    public decimal? OtherFees { get; set; }
+    public LeasingPaymentTiming? PaymentTiming { get; set; }
+    public DateOnly? FirstDueDate { get; set; }
+    public decimal? ObservedReferenceRate { get; set; }
+    public DateOnly? ObservationDate { get; set; }
+    public LeasingPaymentFrequency? RateResetFrequency { get; set; }
+    public decimal? RateFloor { get; set; }
+    public decimal? RateCap { get; set; }
+    public LeasingRateLimitBasis? RateLimitBasis { get; set; }
+    public string? DocumentReference { get; set; }
+    public string? FinancingNotes { get; set; }
+    public LeasingTerms Copy() => (LeasingTerms)MemberwiseClone();
 }
 
 public sealed class LeasingFramework
@@ -93,6 +106,7 @@ public sealed class LeasingItem
 
 public sealed class LeasingDocument
 {
+    public Guid? OrderId { get; set; }
     public Guid Id { get; set; }
     public Guid AccountId { get; set; }
     public Guid? FrameworkId { get; set; }

@@ -1,10 +1,14 @@
 namespace TenantPlatform.Core.Leasing;
 
+public enum LeasingInvoiceCategory { Equipment = 0, Rental = 1 }
 public enum LeasingInvoiceKind { Invoice = 1, CreditNote = 2 }
 public enum LeasingInvoiceStatus { Review = 1, Approved = 2, Rejected = 3, Reversed = 4 }
 public enum LeasingInvoiceProcessing { Uploaded = 1, Processing = 2, Ready = 3, Failed = 4 }
 public sealed class LeasingInvoice
 {
+    public LeasingInvoiceCategory Category { get; set; }
+    public Guid? FinanceOrganizationId { get; set; }
+    public Guid? OriginalInvoiceId { get; set; }
     public Guid Id { get; set; }
     public Guid AccountId { get; set; }
     public Guid? AcquisitionId { get; set; }

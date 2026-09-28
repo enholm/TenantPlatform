@@ -1,0 +1,18 @@
+<div class="row g-2">
+<div class="col-md-4"><label class="form-label">@L["PaymentReference"]<InputText class="form-control" @bind-Value="Term.Reference" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentFrom"]<InputDate class="form-control" @bind-Value="Term.PeriodFrom" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentTo"]<InputDate class="form-control" @bind-Value="Term.PeriodTo" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentDue"]<InputDate class="form-control" @bind-Value="Term.DueDate" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingNet"]<InputNumber class="form-control" @bind-Value="Term.Net" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingVatAmount"]<InputNumber class="form-control" @bind-Value="Term.Vat" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["LeasingGross"]<InputNumber class="form-control" @bind-Value="Term.Gross" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentCapital"]<InputNumber class="form-control" @bind-Value="Term.CapitalComponent" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentInterest"]<InputNumber class="form-control" @bind-Value="Term.InterestComponent" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentFee"]<InputNumber class="form-control" @bind-Value="Term.FeeComponent" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentObligationDocument"]<InputText class="form-control" @bind-Value="Term.ObligationDocumentReference" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentReviewReason"]<InputText class="form-control" @bind-Value="Term.ReviewReason" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentType"]<InputSelect class="form-select" @bind-Value="Term.Type">@foreach(var v in Enum.GetValues<LeasingPaymentType>()){<option value="@v">@L[$"PaymentType{v}"]</option>}</InputSelect></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentFinancingBasis"]<InputSelect class="form-select" @bind-Value="Term.FinancingRevisionId"><option value="">@L["DashboardUnspecified"]</option>@foreach(var v in Revisions){<option value="@v.Id">@(v.EffectiveFrom?.ToString("dd.MM.yyyy")??L["PaymentUnknownEffective"]) · @v.Reason</option>}</InputSelect></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentComponentsComplete"]<InputCheckbox class="form-check-input ms-2" @bind-Value="Term.ComponentsComplete" /></label></div>
+</div>
+@code{[Parameter,EditorRequired]public LeasingPlanTerm Term{get;set;}=null!;[Parameter]public List<LeasingFinancingRevision> Revisions{get;set;}=[];}

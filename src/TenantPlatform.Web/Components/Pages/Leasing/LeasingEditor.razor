@@ -16,6 +16,11 @@
 {
     <EditForm Model="@this" OnValidSubmit="Save" FormName="leasing-editor">
         <ValidationSummary />
+        @if (!framework && delivery == null && capacity?.Framework is {} frame && a.FrameworkId == frame.Id)
+        {
+            <p>@L["LeasingLimit"]: @frame.Limit.ToString("N2") · @L["LeasingUsed"]: @capacity.Used.ToString("N2") · @L["OrderReserved"]: @capacity.Reserved.ToString("N2") · @L["OrderAvailableAfter"]: @AvailableAfter().ToString("N2") @frame.Currency</p>
+        }
+        @if (order != null && delivery != null) { <OrderDeliveryEditor Details="order" Delivery="delivery" Items="a.Items" /> }
         <fieldset disabled="@busy">
         <div class="card mb-3"><div class="card-body"><div class="row g-3">
             <div class="col-md-6"><label for="lease-name" class="form-label">@L["Name"]</label><InputText id="lease-name" class="form-control" @bind-Value="Name" maxlength="200" /></div>
@@ -45,7 +50,7 @@
                 <div class="col-md-3"><label for="lease-status" class="form-label">@L["Status"]</label><InputSelect id="lease-status" class="form-select" @bind-Value="f.Status">@foreach (var value in Enum.GetValues<LeasingFrameworkStatus>()) { <option value="@value">@L[$"LeasingStatus{value}"]</option> }</InputSelect></div>
                 <div class="col-md-3"><label for="lease-from" class="form-label">@L["LeasingAcquisitionFrom"]</label><InputDate id="lease-from" class="form-control" @bind-Value="f.AcquisitionFrom" /></div>
                 <div class="col-md-3"><label for="lease-to" class="form-label">@L["LeasingAcquisitionTo"]</label><InputDate id="lease-to" class="form-control" @bind-Value="f.AcquisitionTo" /></div>
-                <div class="col-md-4"><label for="lease-limit" class="form-label">@L["LeasingLimit"]</label><InputNumber id="lease-limit" class="form-control" @bind-Value="f.Limit" min="0" step="0.01" /></div>
+                <div class="col-md-4"><label for="lease-limit" class="form-label">@L["LeasingLimit"]</label><InputNumber id="lease-limit" class="form-control" @bind-Value="f.Limit" disabled="@Id.HasValue" min="0" step="0.01" /></div>
                 <div class="col-md-4 d-flex align-items-end"><div class="form-check"><InputCheckbox id="lease-vat-basis" class="form-check-input" @bind-Value="f.IncludesVat" /><label for="lease-vat-basis" class="form-check-label">@L["LeasingIncludesVat"]</label></div></div>
             }
             else
@@ -74,11 +79,11 @@
                     <fieldset class="border rounded p-3 mb-3" @key="item"><legend class="float-none w-auto fs-6">@L["LeasingLineNumber", index + 1]</legend><div class="row g-3">
                         <div class="col-md-5"><label for="@($"item-description-{index}")" class="form-label">@L["LeasingDescription"]</label><InputText id="@($"item-description-{index}")" class="form-control" @bind-Value="item.Description" maxlength="500" /></div>
                         <div class="col-md-3"><label for="@($"item-number-{index}")" class="form-label">@L["LeasingItemNumber"]</label><InputText id="@($"item-number-{index}")" class="form-control" @bind-Value="item.ItemNumber" maxlength="100" /></div>
-                        <div class="col-md-2"><label for="@($"item-quantity-{index}")" class="form-label">@L["LeasingQuantity"]</label><InputNumber id="@($"item-quantity-{index}")" class="form-control" @bind-Value="item.Quantity" min="0.0001" step="0.0001" /></div>
+                        <div class="col-md-2"><label for="@($"item-quantity-{index}")" class="form-label">@L["LeasingQuantity"]</label><InputNumber id="@($"item-quantity-{index}")" class="form-control" @bind-Value="item.Quantity" @bind-Value:after="() => DeliveryItemChanged(item)" min="0.0001" step="0.0001" /></div>
                         <div class="col-md-2"><label for="@($"item-vat-{index}")" class="form-label">@L["LeasingVatRate"]</label><InputNumber id="@($"item-vat-{index}")" class="form-control" @bind-Value="item.VatPercent" min="0" max="100" step="0.0001" /></div>
-                        <div class="col-md-4"><label for="@($"item-price-{index}")" class="form-label">@L["LeasingUnitPrice"]</label><InputNumber id="@($"item-price-{index}")" class="form-control" @bind-Value="item.UnitPrice" min="0" step="0.0001" /></div>
+                        <div class="col-md-4"><label for="@($"item-price-{index}")" class="form-label">@L["LeasingUnitPrice"]</label><InputNumber id="@($"item-price-{index}")" class="form-control" @bind-Value="item.UnitPrice" @bind-Value:after="() => DeliveryItemChanged(item)" min="0" step="0.0001" /></div>
                         <div class="col-md-6 align-self-end"><span class="small">@LineText(item)</span>@if (item.InvoiceNetAdjustment != 0 || item.InvoiceVatAdjustment != 0) { <p class="small">@L["InvoiceItemAdjustments", item.InvoiceNetAdjustment.ToString("N2"), item.InvoiceVatAdjustment.ToString("N2")]</p> }</div>
-                        <div class="col-md-2 align-self-end"><button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => a.Items.Remove(item)">@L["LeasingRemoveLine"]</button></div>
+                        <div class="col-md-2 align-self-end"><button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveItem(item)">@L["LeasingRemoveLine"]</button></div>
                     </div>
                     @if (catalog is not null)
                     {
@@ -102,6 +107,8 @@
 }
 @code {
     [Parameter] public Guid? Id { get; set; }
+    [SupplyParameterFromQuery(Name = "order")] public Guid? OrderId { get; set; }
+    private OrderDetails? order; private OrderDelivery? delivery; private LeasingDetails? capacity; private LeasingAcquisition? savedAcquisition;
     [SupplyParameterFromQuery(Name = "framework")] public Guid? FrameworkId { get; set; }
     private bool framework, ready, busy = true, wasRegistered; private Guid account; private string? error; private string reason = "";
     private LeasingFramework f = new(); private LeasingAcquisition a = new(); private LeasingOptions? options;
@@ -131,7 +138,7 @@
                 if (framework) f = details.Framework!;
                 else
                 {
-                    a = details.Acquisition!; a.Items = a.Items.OrderBy(x => x.Position).ToList(); wasRegistered = a.Status == LeasingAcquisitionStatus.Registered;
+                    a = details.Acquisition!; savedAcquisition = System.Text.Json.JsonSerializer.Deserialize<LeasingAcquisition>(System.Text.Json.JsonSerializer.Serialize(a)); a.Items = a.Items.OrderBy(x => x.Position).ToList(); wasRegistered = a.Status == LeasingAcquisitionStatus.Registered;
                     if (a.FrameworkId.HasValue && options.Frameworks.All(x => x.Id != a.FrameworkId)) options.Frameworks.Add(new(a.FrameworkId.Value, details.FrameworkName ?? ""));
                 }
             }
@@ -141,9 +148,26 @@
                 var defaults = await Service.NewAcquisitionAsync(account, null);
                 f = new() { OwnerUserId = User.Current.UserId, AcquisitionFrom = defaults.PurchaseDate, AcquisitionTo = defaults.PurchaseDate.AddYears(1).AddDays(-1) };
             }
-            else a = await Service.NewAcquisitionAsync(account, FrameworkId);
+            else a = OrderId.HasValue ? await Service.NewOrderAcquisitionAsync(account, OrderId.Value) : await Service.NewAcquisitionAsync(account, FrameworkId);
             if (!framework) catalog = await Service.ClassificationCatalogAsync(account);
-            classifications.Clear(); dirty.Clear(); ready = true;
+            classifications.Clear(); dirty.Clear();
+            if (!framework && !Id.HasValue && OrderId.HasValue)
+            {
+                order = await Service.GetOrderAsync(account, OrderId.Value);
+                a = await Service.NewOrderAcquisitionAsync(account, order.Order.Id); a.SupplierOrganizationId = order.Order.SupplierOrganizationId;
+                a.Name = order.Order.Number; a.Reference = order.Order.Number; a.Status = LeasingAcquisitionStatus.Registered;
+                a.Items = []; delivery = new() { OrderId = order.Order.Id, Revision = order.Order.Revision };
+                foreach(var line in order.Order.Lines.Where(x => x.Scope > x.Fulfilled + x.Unreserved))
+                {
+                    var scope = line.Scope - line.Fulfilled - line.Unreserved; var item = line.Item();
+                    item.Quantity = line.Method == LeasingOrderMethod.Quantity ? scope : decimal.Round(line.Quantity * scope, 4);
+                    delivery.Lines.Add(new() { OrderLineId = line.Id, ItemPosition = a.Items.Count, Scope = scope }); a.Items.Add(item);
+                    classifications[item] = LeasingService.DeliveryClassification(line, item); dirty.Add(item);
+                }
+                a.FinancedAmount = LeasingCalculator.Total(a.Items).Gross;
+            }
+            if (!framework && a.FrameworkId.HasValue) capacity = await Service.GetAsync(account, a.FrameworkId.Value, true);
+            ready = true;
         }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (LeasingValidationException ex) { error = ex.Message; }
@@ -154,7 +178,7 @@
     {
         if (!a.FrameworkId.HasValue) return;
         busy = true; error = null;
-        try { var defaults = await Service.NewAcquisitionAsync(account, a.FrameworkId); a.FinanceOrganizationId = defaults.FinanceOrganizationId; a.Currency = defaults.Currency; a.Terms = defaults.Terms; }
+        try { var defaults = await Service.NewAcquisitionAsync(account, a.FrameworkId); a.FinanceOrganizationId = defaults.FinanceOrganizationId; a.Currency = defaults.Currency; a.Terms = defaults.Terms; capacity = await Service.GetAsync(account, a.FrameworkId.Value, true); }
         catch (LeasingValidationException ex) { error = ex.Message; }
         catch (Exception) { error = "LeasingFailed"; }
         finally { busy = false; }
@@ -162,11 +186,46 @@
     private async Task Save()
     {
         if (busy) return; busy = true; error = null;
-        try { var id = framework ? await Service.SaveFrameworkAsync(account, Id, f, reason) : await Service.SaveAcquisitionAsync(account, Id, a, reason, classifications: a.Items.Select((item, index) => (item, index)).Where(x => dirty.Contains(x.item)).ToDictionary(x => x.index, x => State(x.item))); Navigation.NavigateTo($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{id}"); }
+        try { PrepareDelivery(); var id = framework ? await Service.SaveFrameworkAsync(account, Id, f, reason) : await Service.SaveAcquisitionAsync(account, Id, a, reason, classifications: a.Items.Select((item, index) => (item, index)).Where(x => dirty.Contains(x.item)).ToDictionary(x => x.index, x => State(x.item)), delivery: delivery); Navigation.NavigateTo($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{id}"); }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (LeasingValidationException ex) { error = ex.Message; }
         catch (Exception ex) { Logger.LogError(ex, "Could not save leasing record {RecordId} in account {AccountId}", Id, account); error = "LeasingFailed"; }
         finally { busy = false; }
+    }
+    private decimal AvailableAfter()
+    {
+        if (capacity?.Framework is not {} frame) return 0;
+        try
+        {
+            var totals = LeasingCalculator.Total(a.Items);
+            var previous = savedAcquisition?.Status == LeasingAcquisitionStatus.Registered && savedAcquisition.FrameworkId == frame.Id
+                ? (frame.IncludesVat ? savedAcquisition.GrossTotal - savedAcquisition.ReleasedNetTotal - savedAcquisition.ReleasedVatTotal : savedAcquisition.NetTotal - savedAcquisition.ReleasedNetTotal) : 0;
+            var next = a.Status == LeasingAcquisitionStatus.Registered ? (frame.IncludesVat ? totals.Gross - a.ReleasedNetTotal - a.ReleasedVatTotal : totals.Net - a.ReleasedNetTotal) : 0;
+            return frame.Limit - capacity.Used - capacity.Reserved + previous - next;
+        }
+        catch (ArgumentOutOfRangeException) { return frame.Limit - capacity.Used - capacity.Reserved; }
+    }
+    private void DeliveryItemChanged(LeasingItem item)
+    {
+        if (delivery == null || order == null) return;
+        var position = a.Items.IndexOf(item); var part = delivery.Lines.SingleOrDefault(x => x.ItemPosition == position);
+        var line = order.Order.Lines.SingleOrDefault(x => x.Id == part?.OrderLineId);
+        if (part != null && line?.Method == LeasingOrderMethod.Quantity) part.Scope = item.Quantity;
+        var template = new LeasingOrderLine { ClassificationJson = System.Text.Json.JsonSerializer.Serialize(State(item)) };
+        classifications[item] = LeasingService.DeliveryClassification(template, item); dirty.Add(item);
+    }
+    private void RemoveItem(LeasingItem item)
+    {
+        var position = a.Items.IndexOf(item); a.Items.Remove(item); classifications.Remove(item); dirty.Remove(item);
+        if (delivery == null) return;
+        delivery.Lines.RemoveAll(x => x.ItemPosition == position);
+        foreach(var part in delivery.Lines.Where(x => x.ItemPosition > position)) part.ItemPosition--;
+    }
+    private OrderDelivery? PrepareDelivery()
+    {
+        if (delivery == null) return null;
+        delivery.Lines.RemoveAll(x => x.ItemPosition >= a.Items.Count || x.OrderLineId == Guid.Empty);
+        return delivery;
     }
     private string EndDateText() { try { return LeasingCalculator.EndDate(a.PurchaseDate, a.Terms.Months).ToString("dd.MM.yyyy"); } catch (ArgumentOutOfRangeException) { return L["LeasingInvalidDates"]; } }
     private string LineText(LeasingItem item) { try { var t = LeasingCalculator.Line(item); return L["LeasingLineTotals", t.Net.ToString("N2"), t.Gross.ToString("N2"), Currency]; } catch (Exception ex) when (ex is ArgumentOutOfRangeException or OverflowException) { return L["LeasingInvalidLines"]; } }

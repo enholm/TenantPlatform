@@ -562,6 +562,11 @@ else
     {
         return role switch
         {
+            UserRole.LeasingPlanApprover => L["UserRoleLeasingPlanApprover"],
+            UserRole.LeasingInvoiceApprover => L["UserRoleLeasingInvoiceApprover"],
+            UserRole.LeasingVarianceApprover => L["UserRoleLeasingVarianceApprover"],
+            UserRole.LeasingOrderApprover => L["UserRoleLeasingOrderApprover"],
+            UserRole.LeasingLimitApprover => L["UserRoleLeasingLimitApprover"],
             UserRole.AccountAdmin =>
                 L["AccountAdmin"],
 

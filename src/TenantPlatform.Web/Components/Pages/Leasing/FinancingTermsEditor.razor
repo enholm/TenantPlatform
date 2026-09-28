@@ -1,0 +1,20 @@
+<div class="row g-2">
+<div class="col-md-4"><label class="form-label">@L["PaymentFinanceReference"]<InputText class="form-control" @bind-Value="Terms.FinanceReference" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentAdvanceRent"]<InputNumber class="form-control" @bind-Value="Terms.AdvanceRent" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentResidualValue"]<InputNumber class="form-control" @bind-Value="Terms.ResidualValue" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentEstablishmentFee"]<InputNumber class="form-control" @bind-Value="Terms.EstablishmentFee" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentOtherFees"]<InputNumber class="form-control" @bind-Value="Terms.OtherFees" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentFirstDue"]<InputDate class="form-control" @bind-Value="Terms.FirstDueDate" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentObservedRate"]<InputNumber class="form-control" @bind-Value="Terms.ObservedReferenceRate" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentObservationDate"]<InputDate class="form-control" @bind-Value="Terms.ObservationDate" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentRateFloor"]<InputNumber class="form-control" @bind-Value="Terms.RateFloor" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentRateCap"]<InputNumber class="form-control" @bind-Value="Terms.RateCap" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentObligationDocument"]<InputText class="form-control" @bind-Value="Terms.ResidualDocumentReference" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentDocumentReference"]<InputText class="form-control" @bind-Value="Terms.DocumentReference" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentNotes"]<InputTextArea class="form-control" @bind-Value="Terms.FinancingNotes" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentTiming"]<InputSelect class="form-select" @bind-Value="Terms.PaymentTiming"><option value="">@L["DashboardUnspecified"]</option>@foreach(var v in Enum.GetValues<LeasingPaymentTiming>()){<option value="@v">@L[$"PaymentTiming{v}"]</option>}</InputSelect></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentResetFrequency"]<InputSelect class="form-select" @bind-Value="Terms.RateResetFrequency"><option value="">@L["DashboardUnspecified"]</option>@foreach(var v in Enum.GetValues<LeasingPaymentFrequency>()){<option value="@v">@L[$"PaymentResetFrequency{v}"]</option>}</InputSelect></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentRateBasis"]<InputSelect class="form-select" @bind-Value="Terms.RateLimitBasis"><option value="">@L["DashboardUnspecified"]</option>@foreach(var v in Enum.GetValues<LeasingRateLimitBasis>()){<option value="@v">@L[$"PaymentRateBasis{v}"]</option>}</InputSelect></label></div>
+<div class="col-md-4"><label class="form-label">@L["PaymentResidualObligation"]<InputCheckbox class="form-check-input ms-2" @bind-Value="Terms.ResidualIsObligation" /></label></div>
+</div><p class="text-muted">@L["PaymentNoAutomaticAmounts"]</p>
+@code{[Parameter,EditorRequired]public LeasingTerms Terms{get;set;}=null!;}

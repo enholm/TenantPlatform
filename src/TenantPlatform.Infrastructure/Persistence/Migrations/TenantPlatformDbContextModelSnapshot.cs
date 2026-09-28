@@ -2229,6 +2229,9 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid");
+
                     b.Property<long>("Size")
                         .HasColumnType("bigint");
 
@@ -2251,10 +2254,54 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("AccountId", "FrameworkId");
 
+                    b.HasIndex("AccountId", "OrderId");
+
                     b.ToTable("leasing_documents", null, t =>
                         {
-                            t.HasCheckConstraint("CK_leasing_document_parent", "(\"FrameworkId\" IS NULL) <> (\"AcquisitionId\" IS NULL)");
+                            t.HasCheckConstraint("CK_leasing_document_parent", "num_nonnulls(\"FrameworkId\", \"AcquisitionId\", \"OrderId\") = 1");
                         });
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingFinancingRevision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcquisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("RecordedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "AcquisitionId")
+                        .IsUnique()
+                        .HasFilter("\"EffectiveFrom\" IS NULL");
+
+                    b.HasIndex("AccountId", "AcquisitionId", "EffectiveFrom")
+                        .IsUnique();
+
+                    b.ToTable("leasing_financing_revisions", (string)null);
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingFramework", b =>
@@ -2387,6 +2434,51 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingInstallment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcquisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("BillingComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("CheckedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CheckedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ControlReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("VarianceAccepted")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "AcquisitionId", "Reference")
+                        .IsUnique();
+
+                    b.ToTable("leasing_installments", (string)null);
+                });
+
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingInvoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2408,6 +2500,9 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("ApprovedUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Currency")
                         .IsRequired()
                         .HasMaxLength(3)
@@ -2422,6 +2517,9 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("FinanceOrganizationId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateOnly?>("InvoiceDate")
                         .HasColumnType("date");
@@ -2442,6 +2540,9 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("OriginalInvoiceId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Processing")
                         .HasColumnType("integer");
@@ -2504,7 +2605,11 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("AccountId", "FileHash");
 
+                    b.HasIndex("AccountId", "OriginalInvoiceId");
+
                     b.HasIndex("Processing", "ProcessingStartedUtc");
+
+                    b.HasIndex("AccountId", "Category", "Status");
 
                     b.HasIndex("AccountId", "SupplierIdentity", "Kind", "Number");
 
@@ -2694,6 +2799,553 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.ToTable("leasing_items", null, t =>
                         {
                             t.HasCheckConstraint("CK_leasing_item_positive", "\"Quantity\" > 0 AND \"UnitPrice\" >= 0 AND \"VatPercent\" >= 0 AND \"VatPercent\" <= 100");
+                        });
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingLimitChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ApprovedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DocumentReference")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("FrameworkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("NewLimit")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<decimal>("PreviousLimit")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<Guid>("ProposedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ProposedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "FrameworkId");
+
+                    b.ToTable("leasing_limit_changes", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ApprovedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<DateOnly?>("ExpectedDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("FrameworkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateOnly>("OrderDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProposalJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid?>("ProposedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SupplierOrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "FrameworkId");
+
+                    b.HasIndex("AccountId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("leasing_orders", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrderEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("RecordedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "OrderId");
+
+                    b.ToTable("leasing_order_events", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrderLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClassificationJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("Fulfilled")
+                        .HasPrecision(20, 4)
+                        .HasColumnType("numeric(20,4)");
+
+                    b.Property<string>("ItemNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(20, 4)
+                        .HasColumnType("numeric(20,4)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(20, 4)
+                        .HasColumnType("numeric(20,4)");
+
+                    b.Property<decimal>("Unreserved")
+                        .HasPrecision(20, 4)
+                        .HasColumnType("numeric(20,4)");
+
+                    b.Property<decimal>("VatPercent")
+                        .HasPrecision(20, 4)
+                        .HasColumnType("numeric(20,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "OrderId");
+
+                    b.ToTable("leasing_order_lines", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_order_scope", "\"Quantity\" > 0 AND \"UnitPrice\" >= 0 AND \"Fulfilled\" >= 0 AND \"Unreserved\" >= 0 AND \"Fulfilled\" + \"Unreserved\" <= CASE WHEN \"Method\" = 1 THEN \"Quantity\" ELSE 1 END");
+                        });
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrderRealization", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcquisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ActualNet")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<decimal>("ActualVat")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<decimal>("ApprovedNet")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<decimal>("ApprovedVat")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrderLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("RecordedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Reversed")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("Scope")
+                        .HasPrecision(20, 4)
+                        .HasColumnType("numeric(20,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "AcquisitionId");
+
+                    b.HasIndex("AccountId", "ItemId")
+                        .IsUnique();
+
+                    b.HasIndex("AccountId", "OrderId");
+
+                    b.HasIndex("AccountId", "OrderLineId");
+
+                    b.ToTable("leasing_order_realizations", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPaymentAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreditedAllocationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InstallmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Net")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<DateTimeOffset>("RecordedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Reversed")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("Vat")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "CreditedAllocationId");
+
+                    b.HasIndex("AccountId", "InstallmentId");
+
+                    b.HasIndex("AccountId", "InvoiceId");
+
+                    b.ToTable("leasing_payment_allocations", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_payment_allocation_positive", "\"Net\" >= 0 AND \"Vat\" >= 0 AND \"Net\" + \"Vat\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPaymentEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AcquisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid?>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("RecordedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "AcquisitionId");
+
+                    b.HasIndex("AccountId", "InvoiceId");
+
+                    b.ToTable("leasing_payment_events", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPaymentPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcquisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BasedOnPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CheckedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CheckedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("SourceDocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceDocumentId");
+
+                    b.HasIndex("AccountId", "AcquisitionId")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 2");
+
+                    b.HasIndex("AccountId", "AcquisitionId", "Version")
+                        .IsUnique();
+
+                    b.ToTable("leasing_payment_plans", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPlanTerm", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("CapitalComponent")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<bool>("ComponentsComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("FeeComponent")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<Guid?>("FinancingRevisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Gross")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<Guid>("InstallmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("InterestComponent")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<bool>("NeedsReview")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("Net")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<string>("ObligationDocumentReference")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateOnly>("PeriodFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodTo")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ReviewReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("Vat")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "FinancingRevisionId");
+
+                    b.HasIndex("AccountId", "InstallmentId");
+
+                    b.HasIndex("AccountId", "PlanId", "InstallmentId")
+                        .IsUnique();
+
+                    b.ToTable("leasing_plan_terms", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_payment_term_totals", "(\"Net\" IS NULL OR \"Net\" >= 0) AND (\"Vat\" IS NULL OR \"Vat\" >= 0) AND (\"Gross\" IS NULL OR \"Gross\" >= 0) AND (\"Net\" IS NULL OR \"Vat\" IS NULL OR \"Gross\" IS NULL OR \"Gross\" = \"Net\" + \"Vat\")");
                         });
                 });
 
@@ -4267,9 +4919,32 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                             b1.Property<Guid>("LeasingAcquisitionId")
                                 .HasColumnType("uuid");
 
+                            b1.Property<decimal?>("AdvanceRent")
+                                .HasPrecision(20, 2)
+                                .HasColumnType("numeric(20,2)");
+
                             b1.Property<decimal?>("AnnualRatePercent")
                                 .HasPrecision(9, 4)
                                 .HasColumnType("numeric(9,4)");
+
+                            b1.Property<string>("DocumentReference")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<decimal?>("EstablishmentFee")
+                                .HasPrecision(20, 2)
+                                .HasColumnType("numeric(20,2)");
+
+                            b1.Property<string>("FinanceReference")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<string>("FinancingNotes")
+                                .HasMaxLength(10000)
+                                .HasColumnType("character varying(10000)");
+
+                            b1.Property<DateOnly?>("FirstDueDate")
+                                .HasColumnType("date");
 
                             b1.Property<int>("InterestKind")
                                 .HasColumnType("integer");
@@ -4281,12 +4956,51 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                             b1.Property<int>("Months")
                                 .HasColumnType("integer");
 
+                            b1.Property<DateOnly?>("ObservationDate")
+                                .HasColumnType("date");
+
+                            b1.Property<decimal?>("ObservedReferenceRate")
+                                .HasPrecision(9, 4)
+                                .HasColumnType("numeric(9,4)");
+
+                            b1.Property<decimal?>("OtherFees")
+                                .HasPrecision(20, 2)
+                                .HasColumnType("numeric(20,2)");
+
                             b1.Property<int>("PaymentFrequency")
+                                .HasColumnType("integer");
+
+                            b1.Property<int?>("PaymentTiming")
+                                .HasColumnType("integer");
+
+                            b1.Property<decimal?>("RateCap")
+                                .HasPrecision(9, 4)
+                                .HasColumnType("numeric(9,4)");
+
+                            b1.Property<decimal?>("RateFloor")
+                                .HasPrecision(9, 4)
+                                .HasColumnType("numeric(9,4)");
+
+                            b1.Property<int?>("RateLimitBasis")
+                                .HasColumnType("integer");
+
+                            b1.Property<int?>("RateResetFrequency")
                                 .HasColumnType("integer");
 
                             b1.Property<string>("ReferenceRateName")
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)");
+
+                            b1.Property<string>("ResidualDocumentReference")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<bool>("ResidualIsObligation")
+                                .HasColumnType("boolean");
+
+                            b1.Property<decimal?>("ResidualValue")
+                                .HasPrecision(20, 2)
+                                .HasColumnType("numeric(20,2)");
 
                             b1.HasKey("LeasingAcquisitionId");
 
@@ -4379,6 +5093,22 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .HasForeignKey("AccountId", "FrameworkId")
                         .HasPrincipalKey("AccountId", "Id")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingOrder", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "OrderId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingFinancingRevision", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingAcquisition", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "AcquisitionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingFramework", b =>
@@ -4406,9 +5136,32 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                             b1.Property<Guid>("LeasingFrameworkId")
                                 .HasColumnType("uuid");
 
+                            b1.Property<decimal?>("AdvanceRent")
+                                .HasPrecision(20, 2)
+                                .HasColumnType("numeric(20,2)");
+
                             b1.Property<decimal?>("AnnualRatePercent")
                                 .HasPrecision(9, 4)
                                 .HasColumnType("numeric(9,4)");
+
+                            b1.Property<string>("DocumentReference")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<decimal?>("EstablishmentFee")
+                                .HasPrecision(20, 2)
+                                .HasColumnType("numeric(20,2)");
+
+                            b1.Property<string>("FinanceReference")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<string>("FinancingNotes")
+                                .HasMaxLength(10000)
+                                .HasColumnType("character varying(10000)");
+
+                            b1.Property<DateOnly?>("FirstDueDate")
+                                .HasColumnType("date");
 
                             b1.Property<int>("InterestKind")
                                 .HasColumnType("integer");
@@ -4420,12 +5173,51 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                             b1.Property<int>("Months")
                                 .HasColumnType("integer");
 
+                            b1.Property<DateOnly?>("ObservationDate")
+                                .HasColumnType("date");
+
+                            b1.Property<decimal?>("ObservedReferenceRate")
+                                .HasPrecision(9, 4)
+                                .HasColumnType("numeric(9,4)");
+
+                            b1.Property<decimal?>("OtherFees")
+                                .HasPrecision(20, 2)
+                                .HasColumnType("numeric(20,2)");
+
                             b1.Property<int>("PaymentFrequency")
+                                .HasColumnType("integer");
+
+                            b1.Property<int?>("PaymentTiming")
+                                .HasColumnType("integer");
+
+                            b1.Property<decimal?>("RateCap")
+                                .HasPrecision(9, 4)
+                                .HasColumnType("numeric(9,4)");
+
+                            b1.Property<decimal?>("RateFloor")
+                                .HasPrecision(9, 4)
+                                .HasColumnType("numeric(9,4)");
+
+                            b1.Property<int?>("RateLimitBasis")
+                                .HasColumnType("integer");
+
+                            b1.Property<int?>("RateResetFrequency")
                                 .HasColumnType("integer");
 
                             b1.Property<string>("ReferenceRateName")
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)");
+
+                            b1.Property<string>("ResidualDocumentReference")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<bool>("ResidualIsObligation")
+                                .HasColumnType("boolean");
+
+                            b1.Property<decimal?>("ResidualValue")
+                                .HasPrecision(20, 2)
+                                .HasColumnType("numeric(20,2)");
 
                             b1.HasKey("LeasingFrameworkId");
 
@@ -4460,6 +5252,16 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingInstallment", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingAcquisition", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "AcquisitionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingInvoice", b =>
                 {
                     b.HasOne("TenantPlatform.Core.Accounts.Account", null)
@@ -4471,6 +5273,12 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.HasOne("TenantPlatform.Core.Leasing.LeasingAcquisition", null)
                         .WithMany()
                         .HasForeignKey("AccountId", "AcquisitionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "OriginalInvoiceId")
                         .HasPrincipalKey("AccountId", "Id")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
@@ -4523,6 +5331,153 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.HasOne("TenantPlatform.Core.Leasing.LeasingAcquisition", null)
                         .WithMany("Items")
                         .HasForeignKey("AccountId", "AcquisitionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingLimitChange", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingFramework", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "FrameworkId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrder", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingFramework", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "FrameworkId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrderEvent", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingOrder", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "OrderId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrderLine", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingOrder", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("AccountId", "OrderId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrderRealization", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingAcquisition", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "AcquisitionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingItem", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "ItemId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingOrder", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "OrderId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingOrderLine", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "OrderLineId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPaymentAllocation", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingPaymentAllocation", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "CreditedAllocationId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingInstallment", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "InstallmentId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "InvoiceId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPaymentEvent", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingAcquisition", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "AcquisitionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingInvoice", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "InvoiceId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPaymentPlan", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingDocument", null)
+                        .WithMany()
+                        .HasForeignKey("SourceDocumentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingAcquisition", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "AcquisitionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPlanTerm", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingFinancingRevision", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "FinancingRevisionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingInstallment", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "InstallmentId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingPaymentPlan", null)
+                        .WithMany("Terms")
+                        .HasForeignKey("AccountId", "PlanId")
                         .HasPrincipalKey("AccountId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -4899,6 +5854,16 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.Navigation("AllocationRows");
 
                     b.Navigation("DimensionSelections");
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingOrder", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingPaymentPlan", b =>
+                {
+                    b.Navigation("Terms");
                 });
 #pragma warning restore 612, 618
         }

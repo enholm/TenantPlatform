@@ -1,4 +1,4 @@
-# Leasing phases 1, 2 and 3
+# Leasing phases 1–4
 
 Run from the repository root:
 
@@ -37,3 +37,10 @@ The same runner verifies upgrading a populated phase-one schema, dimension uniqu
 See [implementation, format support and configuration](../../docs/leasing-invoice-import.md). `InvoiceChecks` runs against real PostgreSQL and local document storage with production auditing. It covers UBL invoice/credit parsing, safe XML and unsupported formats, line/header adjustments, VAT categories, prepayments/rounding, manual matching of 40,000 + 60,000 against a 100,000 purchase, preserved purchase date/terms/classification, excess documentation, full/partial credit, explicitly undecided/false/true release policies, policy locking, cross-format duplicates, retry without overwritten corrections, explicit replacement, rejection, stale reviews, immutable approvals, simultaneous approvals, reversal dependencies/capacity rollback, explicit persisted document discounts, and account/owner access.
 
 `InvoiceComponentChecks` renders upload, review and approved views using Blazor HtmlRenderer. HTTP mocks verify Responses API structured JSON schema, original PDF/image input and preservation of page references/missing fields. No real customer documents or live external service are used. Migration checks upgrade populated legacy data without changed totals or an assumed credit policy.
+
+## Phase 4
+
+See [orders, reservations, approvals and validation](../../docs/leasing-orders.md). `OrderChecks` and `OrderComponentChecks` cover the phase-four financial workflow and rendered UI using the same PostgreSQL runner. Manual purchase registration now permits later invoice documentation; framework limit changes use proposals and approval.
+
+
+Fase 5: `PaymentChecks` tester forankrede termindatoer og skuddår, CSV/XLSX med norske formater, avvisning av formler, importutkast og originalfiler, stabile terminreferanser, vilkårsrevisjoner uten omberegning, eksplisitt planaktivering, fakturaallokering på tvers av terminer/anskaffelser, delvis fakturering, avviksaksept, kreditnota og reversering. Samtidig godkjenning/korrigering, separat dokumentkategori, rettigheter og tenantgrenser verifiseres. Kjøpsverdi, finansiert beløp, ramme og reservasjoner kontrolleres før/etter. Migrering over eksisterende data bekrefter ukjent historisk virkningsdato og ingen genererte planer. `PaymentComponentChecks` rendrer de fire nye visningene med norsk lokalisering.

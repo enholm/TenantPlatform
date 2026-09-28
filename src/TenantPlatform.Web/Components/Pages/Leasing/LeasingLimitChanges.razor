@@ -1,0 +1,36 @@
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+<section class="card mb-3"><div class="card-body"><h2 class="h5">@L["OrderLimitChanges"]</h2>
+@if(error!=null) { <p class="alert alert-danger">@L[error]</p> }
+@if(canChange)
+{
+    <EditForm Model="@this" OnValidSubmit="Propose" FormName="limit-change"><fieldset disabled="@busy"><div class="row g-2">
+    <label class="col-md-3">@L["OrderNewLimit"]<InputNumber class="form-control" @bind-Value="limit" step="0.01" /></label>
+    <label class="col-md-5">@L["LeasingChangeReason"]<InputText class="form-control" @bind-Value="reason" /></label>
+    <label class="col-md-4">@L["OrderDocumentReference"]<InputText class="form-control" @bind-Value="document" /></label></div>
+    <p class="mt-2">@L["LeasingBefore"]: @Framework.Limit.ToString("N2") · @L["OrderAvailableAfter"]: @((limit-Used-Reserved).ToString("N2")) @Framework.Currency</p>
+    <button class="btn btn-outline-primary">@L["OrderPropose"]</button></fieldset></EditForm>
+}
+@foreach(var change in changes)
+{
+    <div class="border-top mt-3 pt-2"><p>@change.PreviousLimit.ToString("N2") → @change.NewLimit.ToString("N2") @Framework.Currency · @change.Reason · @change.DocumentReference</p>
+    <p>@L["OrderProposedBy"]: @Name(change.ProposedByUserId) · @change.ProposedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'")</p>
+    @if(change.ApprovedUtc.HasValue) { <p>@L["OrderApprovedBy"]: @Name(change.ApprovedByUserId!.Value) · @change.ApprovedUtc.Value.ToString("dd.MM.yyyy HH:mm 'UTC'")</p> }
+    else if(canChange) { <p>@L["OrderAvailableAfter"]: @((change.NewLimit-Used-Reserved).ToString("N2"))</p><button class="btn btn-success" disabled="@busy" @onclick="()=>Approve(change.Id)">@L["OrderApprove"]</button> }
+    </div>
+}
+</div></section>
+@code {
+    [Parameter, EditorRequired] public LeasingFramework Framework {get;set;}=null!;
+    [Parameter] public decimal Used {get;set;}
+    [Parameter] public decimal Reserved {get;set;}
+    [Parameter] public EventCallback Changed {get;set;}
+    private Guid request = Guid.NewGuid();
+    private List<LeasingLimitChange> changes=[]; private LeasingOptions? options; private bool busy,canChange; private string? error,document; private decimal limit; private string reason="";
+    private Guid Account=>User.Current.CurrentAccountId!.Value;
+    private string Name(Guid id)=>options?.Owners.FirstOrDefault(x=>x.Id==id)?.Name??id.ToString();
+    protected override async Task OnParametersSetAsync() { try { canChange=await Service.CanChangeLimitAsync(Account); changes=await Service.LimitChangesAsync(Account,Framework.Id); options=await Service.OptionsAsync(Account); limit=Framework.Limit; } catch(UnauthorizedAccessException) { canChange=false; } }
+    private Task Propose()=>Run(async()=>{ await Service.ProposeLimitAsync(Account,Framework.Id,Framework.Revision,limit,reason,document,request); changes=await Service.LimitChangesAsync(Account,Framework.Id); request=Guid.NewGuid(); });
+    private Task Approve(Guid id)=>Run(async()=>{ await Service.ApproveLimitAsync(Account,id); await Changed.InvokeAsync(); });
+    private async Task Run(Func<Task> action) { if(busy)return;busy=true;error=null;try{await action();}catch(LeasingValidationException e){error=e.Message;}catch(Exception){error="LeasingFailed";}finally{busy=false;} }
+}

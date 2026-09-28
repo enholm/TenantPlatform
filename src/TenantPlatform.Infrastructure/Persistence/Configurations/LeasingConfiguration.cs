@@ -70,7 +70,8 @@ public sealed class LeasingDocumentConfiguration : IEntityTypeConfiguration<Leas
 {
     public void Configure(EntityTypeBuilder<LeasingDocument> b)
     {
-        b.ToTable("leasing_documents", t => t.HasCheckConstraint("CK_leasing_document_parent", "(\"FrameworkId\" IS NULL) <> (\"AcquisitionId\" IS NULL)"));
+        b.ToTable("leasing_documents", t => t.HasCheckConstraint("CK_leasing_document_parent", "num_nonnulls(\"FrameworkId\", \"AcquisitionId\", \"OrderId\") = 1"));
+        b.HasOne<LeasingOrder>().WithMany().HasForeignKey(x => new { x.AccountId, x.OrderId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         b.HasKey(x => x.Id); b.Property(x => x.FileName).HasMaxLength(255); b.Property(x => x.StorageKey).HasMaxLength(500); b.Property(x => x.MediaType).HasMaxLength(200);
         b.HasOne<LeasingFramework>().WithMany().HasForeignKey(x => new { x.AccountId, x.FrameworkId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<LeasingAcquisition>().WithMany().HasForeignKey(x => new { x.AccountId, x.AcquisitionId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
@@ -97,5 +98,9 @@ internal static class LeasingMapping
         b.Property(x => x.AnnualRatePercent).HasPrecision(9, 4);
         b.Property(x => x.MarginPercentagePoints).HasPrecision(9, 4);
         b.Property(x => x.ReferenceRateName).HasMaxLength(100);
+        foreach (var name in new[] { "AdvanceRent", "ResidualValue", "EstablishmentFee", "OtherFees" }) b.Property<decimal?>(name).HasPrecision(20,2);
+        foreach (var name in new[] { "ObservedReferenceRate", "RateFloor", "RateCap" }) b.Property<decimal?>(name).HasPrecision(9,4);
+        b.Property(x => x.FinanceReference).HasMaxLength(200); b.Property(x => x.DocumentReference).HasMaxLength(500);
+        b.Property(x => x.ResidualDocumentReference).HasMaxLength(500); b.Property(x => x.FinancingNotes).HasMaxLength(10000);
     }
 }

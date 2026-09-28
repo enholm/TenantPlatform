@@ -1,0 +1,5 @@
+<div class="table-responsive"><table class="table table-sm"><thead><tr><th>@L["PaymentReference"]</th><th>@L["PaymentCurrent"]</th><th>@L["PaymentProposed"]</th></tr></thead><tbody>
+@foreach(var reference in Current.Select(x=>x.Reference).Union(Proposed.Select(x=>x.Reference))){var old=Current.FirstOrDefault(x=>x.Reference==reference);var next=Proposed.FirstOrDefault(x=>x.Reference==reference);<tr class="@(Text(old)==Text(next)?"":"table-warning")"><td>@reference</td><td>@Text(old)</td><td>@Text(next)</td></tr>}
+</tbody></table></div>
+@code{[Parameter]public List<LeasingPlanTerm> Current{get;set;}=[];[Parameter]public List<LeasingPlanTerm> Proposed{get;set;}=[];
+string Text(LeasingPlanTerm? t)=>t==null?L["PaymentAbsent"]:$"{t.PeriodFrom:dd.MM.yyyy}–{t.PeriodTo:dd.MM.yyyy} · {L["PaymentDue"]}: {t.DueDate:dd.MM.yyyy} · {L[$"PaymentType{t.Type}"]} · {t.Net?.ToString("N2")??"?"} / {t.Vat?.ToString("N2")??"?"} / {t.Gross?.ToString("N2")??"?"} · {L["PaymentCapital"]}: {t.CapitalComponent} · {L["PaymentInterest"]}: {t.InterestComponent} · {L["PaymentFee"]}: {t.FeeComponent} · {L["PaymentFinancingBasis"]}: {t.FinancingRevisionId} · {t.ReviewReason}";}

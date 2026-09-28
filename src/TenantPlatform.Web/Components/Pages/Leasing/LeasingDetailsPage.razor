@@ -16,6 +16,7 @@
     <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h1>@(f?.Name ?? a!.Name)</h1><span class="badge text-bg-secondary">@L[$"LeasingStatus{(f is null ? a!.Status.ToString() : f.Status.ToString())}"]</span></div>
         @if (data.CanEdit) { <a class="btn btn-primary align-self-center" href="@($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{Id}/edit")">@L["Edit"]</a> }
     </div>
+    @if(a is not null){<a class="btn btn-outline-primary mb-3" href="@($"/leasing/acquisitions/{Id}/payments")">@L["PaymentDetails"]</a><p class="text-muted">@L["PaymentOriginalFinancingHelp"]</p>}
     <div class="row g-3 mb-3"><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h5">@L["LeasingDetails"]</h2><dl class="row">
         <dt class="col-sm-5">@L["LeasingNumber"]</dt><dd class="col-sm-7">@(f?.Number ?? a!.Reference)</dd>
         <dt class="col-sm-5">@L["LeasingFinanceCompany"]</dt><dd class="col-sm-7">@data.FinanceName</dd>
@@ -44,8 +45,11 @@
         <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingCapacity"]</h2><div class="row g-3">
             <div class="col-sm-4"><div>@L["LeasingLimit"]</div><strong class="fs-4">@f.Limit.ToString("N2") @currency</strong></div>
             <div class="col-sm-4"><div>@L["LeasingUsed"]</div><strong class="fs-4">@data.Used.ToString("N2") @currency</strong></div>
-            <div class="col-sm-4"><div>@L["LeasingAvailable"]</div><strong class="fs-4">@((f.Limit - data.Used).ToString("N2")) @currency</strong></div>
+            <div class="col-sm-4"><div>@L["OrderReserved"]</div><strong class="fs-4">@data.Reserved.ToString("N2") @currency</strong></div>
+            <div class="col-sm-4"><div>@L["LeasingAvailable"]</div><strong class="fs-4">@((f.Limit - data.Used - data.Reserved).ToString("N2")) @currency</strong></div>
         </div><p class="small text-muted mt-3">@L["InvoiceCreditRule"] @L[f.CreditNotesReleaseLimit.HasValue ? (f.CreditNotesReleaseLimit.Value ? "Yes" : "No") : "DashboardUnspecified"]</p><p class="small text-muted mt-3 mb-0">@L["LeasingCapacityHelp"]</p></div></section>
+        <div class="d-flex gap-2 mb-3"><a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders?framework={f.Id}")">@L["PurchaseOrders"]</a><a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders/create?framework={f.Id}")">@L["OrderNew"]</a></div>
+        <LeasingLimitChanges Framework="f" Used="data.Used" Reserved="data.Reserved" Changed="Load" />
         <section class="card mb-3"><div class="card-body"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><h2 class="h5">@L["LeasingAcquisitions"]</h2>
             @if (f.Status == LeasingFrameworkStatus.Open && data.CanEdit) { <a class="btn btn-outline-primary" href="@($"/leasing/acquisitions/create?framework={f.Id}")">@L["LeasingNewAcquisition"]</a> }
         </div><p class="small text-muted">@L["LeasingPeriodHelp"]</p>
@@ -60,6 +64,7 @@
     }
     else
     {
+        @if (purchaseOrders.Count > 0) { <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["PurchaseOrders"]</h2><ul>@foreach(var order in purchaseOrders) { <li><a href="@($"/leasing/purchase-orders/{order.Id}")">@order.Number</a> · @L[LeasingService.FulfillmentKey(order)]</li> }</ul><p>@L["OrderReopenHelp"]</p></div></section> }
         <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["InvoiceDocuments"]</h2>
             @if (data.CanEdit) { <a class="btn btn-outline-primary mb-3" href="@($"/leasing/invoices?acquisition={a!.Id}")">@L["InvoiceUpload"]</a> }
             <p>@L["InvoiceNetPurchase", a!.GrossTotal.ToString("N2"), (a.CreditNetTotal + a.CreditVatTotal).ToString("N2"), (a.ReversedNetTotal + a.ReversedVatTotal).ToString("N2"), (a.GrossTotal - a.CreditNetTotal - a.CreditVatTotal - a.ReversedNetTotal - a.ReversedVatTotal).ToString("N2")] @a.Currency</p>
@@ -111,6 +116,7 @@
 }
 @code {
     [Parameter] public Guid Id { get; set; }
+    private List<LeasingOrder> purchaseOrders = [];
     private List<LeasingInvoice> invoiceDocuments = []; private List<LeasingInvoiceLine> invoiceLines = [];
     private LeasingClassificationCatalog? catalog;
     private Guid account; private bool framework, busy = true; private string? error; private string cancelReason = ""; private LeasingDetails? data;
@@ -123,7 +129,7 @@
     private async Task Load()
     {
         busy = true; error = null;
-        try { data = await Service.GetAsync(account, Id, framework); if (!framework) { catalog = await Service.ClassificationCatalogAsync(account); (invoiceDocuments, invoiceLines) = await Service.PurchaseInvoicesAsync(account, Id); } }
+        try { data = await Service.GetAsync(account, Id, framework); if (!framework) { purchaseOrders = await Service.AcquisitionOrdersAsync(account, Id); catalog = await Service.ClassificationCatalogAsync(account); (invoiceDocuments, invoiceLines) = await Service.PurchaseInvoicesAsync(account, Id); } }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (Exception) { error = "LeasingFailed"; }
         finally { busy = false; }

@@ -1,0 +1,22 @@
+@page "/leasing/payment-plans"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject LeasingService Service
+@inject ICurrentUserContextService User
+@inject NavigationManager Navigation
+<h1>@L["PaymentPlans"]</h1><p>@L["PaymentScopeHelp"]</p>
+@if(error!=null){<p class="alert alert-danger">@L[error]</p>}
+<div class="d-flex flex-wrap gap-2 mb-3">
+<input class="form-control w-auto" aria-label="@L["Search"]" placeholder="@L["Search"]" @bind="search" />
+<input class="form-control w-auto" aria-label="@L["LeasingCurrency"]" placeholder="@L["LeasingCurrency"]" @bind="currency" maxlength="3" />
+<select class="form-select w-auto" aria-label="@L["LeasingFinanceCompany"]" @bind="finance"><option value="">@L["LeasingFinanceCompany"]</option>@foreach(var p in options?.Parties??[]){<option value="@p.Id">@p.Name</option>}</select>
+<select class="form-select w-auto" aria-label="@L["Status"]" @bind="status"><option value="">@L["Status"]</option>@foreach(var s in Enum.GetValues<LeasingPlanStatus>()){<option value="@s">@L[$"PaymentPlan{s}"]</option>}</select>
+<button class="btn btn-secondary" @onclick="Load">@L["Search"]</button></div>
+<div class="table-responsive"><table class="table"><thead><tr><th>@L["LeasingAcquisition"]</th><th>@L["LeasingFinanceCompany"]</th><th>@L["Status"]</th><th>@L["LeasingCurrency"]</th><th>@L["PaymentPeriod"]</th><th>@L["PaymentNextDue"]</th><th>@L["PaymentReview"]</th></tr></thead><tbody>
+@foreach(var r in rows){<tr><td><a href="@($"/leasing/acquisitions/{r.AcquisitionId}/payments")">@r.Acquisition</a></td><td>@r.FinanceCompany</td><td>@(r.Status.HasValue?L[$"PaymentPlan{r.Status}"]:L["PaymentNoPlan"]) @r.Version</td><td>@r.Currency</td><td>@r.From?.ToString("dd.MM.yyyy") – @r.To?.ToString("dd.MM.yyyy")</td><td>@r.NextDue?.ToString("dd.MM.yyyy")</td><td>@(r.NeedsReview?L["PaymentReview"]:"")</td></tr>}
+</tbody></table></div>
+@code {
+List<PaymentPlanRow> rows=[];LeasingOptions? options;string? error;string search="",currency="";Guid? finance;LeasingPlanStatus? status;
+protected override Task OnInitializedAsync()=>Load();
+async Task Load(){try{var account=User.Current.CurrentAccountId??throw new UnauthorizedAccessException();options=await Service.OptionsAsync(account);rows=await Service.ListPaymentPlansAsync(account,search,currency.ToUpperInvariant(),finance,status);}catch(UnauthorizedAccessException){Navigation.NavigateTo("/access-denied");}catch{error="LeasingFailed";}}
+}
