@@ -21,7 +21,7 @@
     @foreach(var entry in data.Reports)
     {
         <section class="card"><div class="card-body"><h3 class="h6"><a href="@Report(entry.Key,entry.Key==LeasingReportKind.Payments?new(){DateField=LeasingReportDate.Due,From=shownFrom,To=shownTo}:new())">@L[$"LifeReport{entry.Key}"] <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></h3>
-        @if(entry.Value.Totals.Count == 0){<p class="small text-body-secondary mb-0">@L["LeasingNoRows"]</p>}
+        @if(entry.Value.Totals.Count == 0){<div class="leasing-summary"><p class="small text-body-secondary mb-0">@L["LeasingNoRows"]</p></div>}
         @foreach(var t in entry.Value.Totals)
         {
             <div class="leasing-summary"><div class="leasing-summary-currency">@t.Currency @(t.Basis==""?"":L[t.Basis])</div><dl class="leasing-amounts">

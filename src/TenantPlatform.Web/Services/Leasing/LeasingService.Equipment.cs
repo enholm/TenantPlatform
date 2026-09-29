@@ -27,6 +27,7 @@ public sealed partial class LeasingService
         var before=new List<LeasingEquipment>();var result=new List<LeasingEquipment>();
         foreach(var input in inputs)
         {
+            if(input.ItemId==Guid.Empty)throw new LeasingValidationException("LifeSelectEquipmentItem");
             var item=await db.LeasingItems.SingleOrDefaultAsync(x=>x.AccountId==account&&x.AcquisitionId==acquisition&&x.Id==input.ItemId,ct)??throw new UnauthorizedAccessException();
             if(!item.CountableEquipment)throw new LeasingValidationException("LifeCountableRequired");
             if(string.IsNullOrWhiteSpace(input.Description)||input.Description.Length>500||input.Notes.Length>10000||input.SerialNumber?.Length>200||input.InternalId?.Length>100||input.RegisteredDate==default||input.Status is not(LeasingEquipmentStatus.InUse or LeasingEquipmentStatus.PlannedReturn))throw new LeasingValidationException("LifeInvalidEquipment");

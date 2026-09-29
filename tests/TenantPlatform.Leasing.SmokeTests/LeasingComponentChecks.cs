@@ -48,6 +48,12 @@ static class LeasingComponentChecks
                 await root.QuiescenceTask;
                 var html = System.Net.WebUtility.HtmlDecode(root.ToHtmlString());
                 Require(!html.Contains("Kunne ikke fullføre"), "component loads without error"); check(html);
+                if (type == typeof(LeasingDetailsPage))
+                {
+                    foreach (var section in new[] { "leasing-overview", "leasing-documents", "leasing-history" })
+                        Require(html.Contains($"href=\"http://localhost/{path}#{section}\"") && html.Contains($"id=\"{section}\""),
+                            $"{section} links to a section on the current detail page, not the application root");
+                }
                 if (dimensions != null && type == typeof(LeasingEditor) && path.Contains("/acquisitions/"))
                 {
                     const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;

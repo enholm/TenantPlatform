@@ -49,6 +49,8 @@ static class LifecycleChecks
         var ownTasks=await owner.ListLeasingFollowupsAsync(account);var task=ownTasks.Rows.First(x=>x.AcquisitionId==a1&&x.Kind==LeasingFollowupKind.UnknownTerms||x.AcquisitionId==a2&&x.Kind==LeasingFollowupKind.UnknownTerms);await owner.UpdateLeasingFollowupAsync(account,task.Id,task.Revision,LeasingFollowupStatus.Completed,adminId,"Reviewed unknown terms",Guid.NewGuid());await processor.RunAccountAsync(account);var completed=(await owner.ListLeasingFollowupsAsync(account,status:LeasingFollowupStatus.Completed)).Rows.Single(x=>x.Id==task.Id);Check(completed.OwnerUserId==adminId&&completed.CompletedByUserId==ownerId,"completed tasks and explicit assignee survive job reruns");
         var item=initial.Acquisition.Items.Single().Id;await admin.SetCountableAsync(account,a1,item,true,"Physical devices");var replacementItem=(await Details(a2)).Acquisition.Items.Single().Id;await admin.SetCountableAsync(account,a2,replacementItem,true,"Physical devices");
         LeasingEquipment Unit(Guid line,string serial,string code)=>new(){ItemId=line,Description="Laptop",SerialNumber=serial,InternalId=code,RegisteredDate=new(2027,1,1),OwnerUserId=ownerId};
+        await Reject(()=>admin.SaveEquipmentAsync(account,a1,[Unit(Guid.Empty,"S1","ASSET-1")],true,"Confirmed duplicates without selecting a line",Guid.NewGuid()),"LifeSelectEquipmentItem");
+        await Deny(()=>admin.SaveEquipmentAsync(account,a1,[Unit(replacementItem,"S1","ASSET-1")],true,"Line belongs to another acquisition",Guid.NewGuid()));
         var saveRequest=Guid.NewGuid();var units=await admin.SaveEquipmentAsync(account,a1,[Unit(item,"S1","ASSET-1"),Unit(item,"S2","ASSET-2")],false,"Register",saveRequest);Check((await admin.SaveEquipmentAsync(account,a1,[],false,"Retry",saveRequest)).SequenceEqual(units),"bulk equipment retry is idempotent");
         await Reject(()=>admin.SaveEquipmentAsync(account,a1,[Unit(item,"S3","ASSET-1")],false,"Duplicate",Guid.NewGuid()),"LifeDuplicateInternalId");await Reject(()=>admin.SaveEquipmentAsync(account,a1,[Unit(item,"S1","ASSET-3")],false,"Duplicate",Guid.NewGuid()),"LifeDuplicateSerial");
         var replacement=(await admin.SaveEquipmentAsync(account,a2,[Unit(replacementItem,"S1","REPLACEMENT")],true,"Reviewed manufacturer serial duplicate",Guid.NewGuid())).Single();
@@ -106,7 +108,7 @@ static class LifecycleChecks
         Check(!(await outsider.GetPaymentsAsync(account,a1)).Permissions.CanActivate,"report read access does not grant plan approval");
         await Deny(()=>outsider.GetLeasingReportAsync(account,LeasingReportKind.Capacity,new(),export:true));
         await Deny(()=>outsider.SaveLifecycleTermsAsync(account,a1,(Details(a1).Result).Lifecycle,"No write role",Guid.NewGuid()));
-        await LifecycleComponentChecks.Run(admin,account,adminId,a1);
+        await LifecycleComponentChecks.Run(admin,account,adminId,a1,a2);
         Console.WriteLine("All phase-six lifecycle checks passed.");
     }
     sealed class MutableClock:TimeProvider{public DateTimeOffset Now{get;set;}public override DateTimeOffset GetUtcNow()=>Now;}

@@ -18,15 +18,15 @@
         @if (data.CanEdit) { <a class="btn btn-primary align-self-center" href="@($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{Id}/edit")">@L["Edit"]</a> }
     </div>
     <nav class="leasing-subnav" aria-label="@L["LeasingDetails"]">
-        <a href="#leasing-overview"><i class="bi bi-grid" aria-hidden="true"></i> @L["LeasingDetails"]</a>
+        <a href="@SectionLink("leasing-overview")"><i class="bi bi-grid" aria-hidden="true"></i> @L["LeasingDetails"]</a>
         @if(a is not null)
         {
             <a href="@($"/leasing/acquisitions/{Id}/payments")"><i class="bi bi-wallet2" aria-hidden="true"></i> @L["PaymentDetails"]</a>
             <a href="@($"/leasing/equipment?acquisition={Id}")"><i class="bi bi-box-seam" aria-hidden="true"></i> @L["LifeEquipment"]</a>
             <a href="@($"/leasing/acquisitions/{Id}/lifecycle")"><i class="bi bi-clock-history" aria-hidden="true"></i> @L["LifeLifecycle"]</a>
         }
-        <a href="#leasing-documents"><i class="bi bi-files" aria-hidden="true"></i> @L["LeasingDocuments"]</a>
-        <a href="#leasing-history"><i class="bi bi-clock-history" aria-hidden="true"></i> @L["LeasingHistory"]</a>
+        <a href="@SectionLink("leasing-documents")"><i class="bi bi-files" aria-hidden="true"></i> @L["LeasingDocuments"]</a>
+        <a href="@SectionLink("leasing-history")"><i class="bi bi-clock-history" aria-hidden="true"></i> @L["LeasingHistory"]</a>
     </nav>
     @if(a is not null){<p class="small text-body-secondary">@L["PaymentOriginalFinancingHelp"]</p>}
     <div id="leasing-overview" class="row g-3 mb-3"><div class="col-lg-6"><section class="card"><div class="card-body"><h2 class="h5">@L["LeasingDetails"]</h2><dl class="row">
@@ -123,10 +123,10 @@
             </details>
         }
     </details>
-    <a href="/leasing">@L["LeasingOverview"]</a>
 }
 </div>
 @code {
+    private string SectionLink(string section) => $"{Navigation.Uri.Split('#')[0]}#{section}";
     [Parameter] public Guid Id { get; set; }
     private List<LeasingOrder> purchaseOrders = [];
     private List<LeasingInvoice> invoiceDocuments = []; private List<LeasingInvoiceLine> invoiceLines = [];

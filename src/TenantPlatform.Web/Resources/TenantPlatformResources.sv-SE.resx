@@ -3234,4 +3234,5 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingMoreFilters" xml:space="preserve"><value>Fler filter</value></data>
   <data name="LeasingAllColumns" xml:space="preserve"><value>Visa alla kolumner</value></data>
   <data name="LeasingNoRows" xml:space="preserve"><value>Inga rader i detta urval.</value></data>
+  <data name="LifeSelectEquipmentItem" xml:space="preserve"><value>Välj en räkningsbar varurad innan du sparar utrustningen.</value></data>
 </root>

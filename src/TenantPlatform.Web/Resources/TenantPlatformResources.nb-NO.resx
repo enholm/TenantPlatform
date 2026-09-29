@@ -3233,4 +3233,5 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="LeasingMoreFilters" xml:space="preserve"><value>Flere filtre</value></data>
   <data name="LeasingAllColumns" xml:space="preserve"><value>Vis alle kolonner</value></data>
   <data name="LeasingNoRows" xml:space="preserve"><value>Ingen rader i valgt utvalg.</value></data>
+  <data name="LifeSelectEquipmentItem" xml:space="preserve"><value>Velg en tellbar varelinje før du lagrer utstyret.</value></data>
 </root>
