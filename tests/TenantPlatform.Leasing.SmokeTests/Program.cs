@@ -160,6 +160,7 @@ try
     await Deny(() => outsider.DownloadAsync(account, document.Id)); await Deny(() => admin.DownloadAsync(foreignAccount, document.Id));
     Check(storage.Stored == 1, "documents use shared storage with parent/tenant authorization");
     await LeasingComponentChecks.Run(admin, account, adminId, framework, standalone);
+    await LeasingNavigationChecks.Run(admin, new TenantAuthorizationService(factory, new Context(adminId, account)), account, adminId);
     await using (var upgradeDb = factory.CreateDbContext())
     {
         // This schema belongs exclusively to this test. Recreate the populated phase-one schema,

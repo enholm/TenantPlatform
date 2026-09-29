@@ -1,8 +1,3 @@
-@page "/leasing"
-@page "/leasing/frameworks"
-@page "/leasing/orders"
-@attribute [Authorize]
-@rendermode InteractiveServer
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject ITenantAuthorizationService Authorization
@@ -18,7 +13,7 @@
         <a class="btn btn-primary" href="/leasing/acquisitions/create">@L["LeasingNewOrder"]</a></div>
     }
 </div>
-@if (allowed && Navigation.Uri.Split('?')[0].TrimEnd('/').EndsWith("/leasing")){<LeasingDashboard />}
+@if (allowed && ViewKind == "all"){<LeasingDashboard />}
 @if (allowed)
 {
     <div class="card mb-3"><div class="card-body"><fieldset disabled="@busy"><div class="row g-3">
@@ -58,16 +53,17 @@ else if (data is not null)
 }
 </div>
 @code {
+    [Parameter] public string ViewKind { get; set; } = "all";
     private Guid account; private bool busy = true, allowed, error;
     private string? search, status; private string kind = "all"; private Guid? owner; private int page = 1;
     private LeasingOptions? options; private LeasingPage? data;
-    private string Title => L[Navigation.Uri.Split('?')[0].EndsWith("/frameworks") ? "LeasingFrameworks" : Navigation.Uri.Split('?')[0].EndsWith("/orders") ? "LeasingOrders" : "LeasingOverview"];
+    private string Title => L[ViewKind == "frameworks" ? "LeasingFrameworks" : ViewKind == "orders" ? "LeasingOrders" : "LeasingOverview"];
     protected override async Task OnParametersSetAsync()
     {
         if (User.Current.CurrentAccountId is not Guid id || !await Authorization.CanUseLeasingAsync()) { Navigation.NavigateTo("/access-denied"); return; }
         if (account != id) options = null;
         account = id; allowed = true;
-        kind = Navigation.Uri.Split('?')[0].EndsWith("/frameworks") ? "frameworks" : Navigation.Uri.Split('?')[0].EndsWith("/orders") ? "orders" : "all";
+        kind = ViewKind == "frameworks" ? "frameworks" : ViewKind == "orders" ? "orders" : "all";
         page = 1; await Load();
     }
     private async Task Load()
