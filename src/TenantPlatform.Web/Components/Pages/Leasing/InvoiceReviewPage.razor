@@ -6,6 +6,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <PageTitle>@L["InvoiceReview"]</PageTitle><h1>@L["InvoiceReview"]</h1>
 @if (error != null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (details == null) { <p role="status">@L["Loading"]</p> }
@@ -171,6 +172,7 @@ else
         { <details><summary>@entry.RecordedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'") · @entry.ActorUserId · @L[$"InvoiceAction{entry.Action}"]</summary><p>@entry.Reason</p><div class="row"><div class="col-md-6"><strong>@L["LeasingBefore"]</strong><InvoiceDataView Data="@(JsonSerializer.Deserialize<InvoiceReview>(entry.BeforeJson)?.Data ?? new())" /></div><div class="col-md-6"><strong>@L["LeasingAfter"]</strong><InvoiceDataView Data="@(JsonSerializer.Deserialize<InvoiceReview>(entry.AfterJson)?.Data ?? new())" /></div></div></details> }
     </div></section>
 }
+</div>
 @code {
     [Parameter] public Guid Id { get; set; }
     [SupplyParameterFromQuery(Name="order")] public Guid? FromOrder { get; set; }

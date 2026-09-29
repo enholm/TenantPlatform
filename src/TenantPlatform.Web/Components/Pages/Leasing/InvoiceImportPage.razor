@@ -4,6 +4,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <PageTitle>@L["InvoiceImport"]</PageTitle><h1>@L["InvoiceImport"]</h1>
 @if (error != null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 <section class="card mb-3"><div class="card-body">
@@ -20,6 +21,7 @@ else
     @foreach (var item in items) { <tr><td><a href="@($"/leasing/invoices/{item.Id}")">@item.FileName</a></td><td>@item.UploadedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'")</td><td>@L[$"InvoiceProcessing{item.Processing}"]</td><td>@L[$"InvoiceStatus{item.Status}"]</td></tr> }
     </tbody></table></div><p class="small text-muted">@L["InvoiceListLimit"]</p>
 }
+</div>
 @code {
     [SupplyParameterFromQuery(Name = "acquisition")] public Guid? Acquisition { get; set; }
     [SupplyParameterFromQuery(Name = "order")] public Guid? Order { get; set; }

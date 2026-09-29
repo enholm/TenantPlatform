@@ -5,6 +5,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <h1>@L["LifeLifecycle"] – @data?.Acquisition.Name</h1><p>@L["LifeFinancialSeparation"]</p>
 @if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
 @if(data!=null){
@@ -40,6 +41,7 @@
 @if(data.CanApprove){<label class="d-block">@L["PaymentReason"]<input class="form-control" @bind="reason" /></label>@if(e.Decision==LeasingLifecycleDecision.Pending){<button class="btn btn-success m-1" disabled="@busy" @onclick="()=>Decide(e,true)">@L["LifeApprove"]</button><button class="btn btn-outline-danger m-1" disabled="@busy" @onclick="()=>Decide(e,false)">@L["LifeReject"]</button>}@if(e.Decision==LeasingLifecycleDecision.Approved){<button class="btn btn-outline-danger m-1" disabled="@busy" @onclick="()=>Reverse(e)">@L["LifeReverse"]</button>}}
 </details>}
 }
+</div>
 @code{
 [Parameter]public Guid Id{get;set;}LifecycleDetails? data;LeasingOptions? options;LeasingLifecycle terms=new();LifecycleEventInput proposal=new();string? error;string reason="",replacementSearch="";bool busy;HashSet<Guid> selected=[];List<LeasingEquipment> replacements=[];Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
 protected override Task OnParametersSetAsync()=>Run(Load);

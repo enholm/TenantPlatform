@@ -6,6 +6,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <h1>@L["LifeFollowup"]</h1>
 @if(error!=null){<p class="alert alert-danger">@L[error]</p>}
 @if(data!=null){
@@ -18,6 +19,7 @@
 @if(settings!=null){<details class="card p-3 my-3"><summary>@L["LifeNotificationSettings"]</summary><p>@L["LifeActivationRule"]</p><EditForm Model="settings" OnValidSubmit="SaveSettings"><fieldset disabled="@busy"><label class="d-block"><InputCheckbox @bind-Value="settings.Enabled" /> @L["LifeEnableNotifications"]</label><label class="d-block">@L["LifeNotificationDays"]<InputText class="form-control" @bind-Value="days" /></label><label class="d-block">@L["LifeTimeZone"]<InputSelect class="form-select" @bind-Value="settings.TimeZoneId">@foreach(var z in AgreementTimeZones.Options(settings.TimeZoneId)){<option>@z</option>}</InputSelect></label><p>@L["LifeExtraRecipients"]</p>@foreach(var u in options!.Owners){<label class="d-block"><input type="checkbox" checked="@recipients.Contains(u.Id)" @onchange="e=>Recipient(u.Id,(bool)e.Value!)" /> @u.Name</label>}<label class="d-block">@L["PaymentReason"]<InputText class="form-control" @bind-Value="reason" /></label><button class="btn btn-primary my-2">@L["Save"]</button></fieldset></EditForm>
 <h3 class="h5">@L["LifeDeliveryHistory"]</h3>@foreach(var n in deliveryHistory){<p>@n.ScheduledUtc · @options?.Owners.FirstOrDefault(x=>x.Id==n.RecipientUserId)?.Name · @L[$"LifeNotification{n.Status}"] · @(n.ResultKey==null?"":L[n.ResultKey])</p>}
 </details>}
+</div>
 @code{
 [SupplyParameterFromQuery(Name="to")]public string? QueryTo{get;set;}
 TenantPlatform.Web.Services.Leasing.LeasingFollowupPage? data;LeasingOptions? options;LeasingNotificationSettings? settings;List<LeasingNotification> deliveryHistory=[];string? error;string days="90,30,7",reason="";HashSet<Guid> recipients=[];bool busy;int page=1;LeasingFollowupKind? kind;LeasingFollowupStatus? status=LeasingFollowupStatus.Open;DateOnly? to=DateOnly.FromDateTime(DateTime.Today.AddDays(90));Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();

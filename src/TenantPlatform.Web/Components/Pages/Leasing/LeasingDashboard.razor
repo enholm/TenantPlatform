@@ -1,12 +1,44 @@
 @using System.Text.Json
 @inject LeasingService Service
 @inject ICurrentUserContextService User
-<section class="card mb-4"><div class="card-body"><h2 class="h4">@L["LifeDashboard"]</h2><p>@L["LifeDashboardHelp"]</p><div class="d-flex gap-2 mb-3"><label>@L["PaymentFrom"]<input class="form-control" type="date" @bind="from" /></label><label>@L["PaymentTo"]<input class="form-control" type="date" @bind="to" /></label><button class="btn btn-secondary align-self-end" disabled="@busy" @onclick="Load">@L["Search"]</button></div>
-@if(error!=null){<p class="alert alert-danger">@L[error]</p>}
-@if(data!=null){<div class="row g-3">
-<div class="col-md-3"><a href="@Report(LeasingReportKind.Agreements,new(){Status="LifeActive"})">@L["LifeActive"]: @data.Active</a></div><div class="col-md-3"><a href="@Report(LeasingReportKind.Agreements,new(){DateField=LeasingReportDate.End,From=shownFrom,To=shownTo,AcquisitionsOnly=true,Status="LifeActive"})">@L["LifeExpiring"]: @data.Expiring</a></div><div class="col-md-3"><a href="@Report(LeasingReportKind.Agreements,new(){DateField=LeasingReportDate.Notice,From=shownFrom,To=shownTo,Status="LifeActive"})">@L["LifeNoticeDate"]: @data.Notices</a></div><div class="col-md-3"><a href="@Report(LeasingReportKind.Agreements,new(){DateField=LeasingReportDate.Return,From=shownFrom,To=shownTo,Status="LifeActive"})">@L["LifeReturnDue"]: @data.Returns</a></div>
-<div class="col-md-3"><a href="@($"/leasing/followup?to={shownTo:yyyy-MM-dd}")">@L["LifeOpenFollowups"]: @data.OpenTasks</a></div><div class="col-md-3"><a href="@Report(LeasingReportKind.Payments,new(){Status="PaymentNoPlan"})">@L["PaymentNoPlan"]: @data.MissingPlans</a></div><div class="col-md-3"><a href="@Report(LeasingReportKind.InvoiceControl,new(){Status="PaymentBillingVariance"})">@L["PaymentBillingVariance"]: @data.Variances</a></div></div>
-@foreach(var entry in data.Reports){<h3 class="h5 mt-3"><a href="@Report(entry.Key,entry.Key==LeasingReportKind.Payments?new(){DateField=LeasingReportDate.Due,From=shownFrom,To=shownTo}:new())">@L[$"LifeReport{entry.Key}"]</a></h3>@foreach(var t in entry.Value.Totals){<p><strong>@t.Currency @(t.Basis==""?"":L[t.Basis])</strong> · @if(entry.Key==LeasingReportKind.Capacity){@L["LifeColumnLimit"] @t.Limit.ToString("N2") <span> · @L["LifeColumnUsed"] @t.Used.ToString("N2") · @L["LifeColumnReserved"] @t.Reserved.ToString("N2") · @L["LifeColumnAvailable"] @t.Available.ToString("N2")</span>}else if(entry.Key==LeasingReportKind.Payments){@L["LifePlannedPayments"] @t.Expected.ToString("N2")}else{<span>@L["PaymentInvoiced"] @t.Invoiced.ToString("N2") · @L["RentalUnallocated"] @t.Unallocated.ToString("N2")</span>} · @L["LifeIncompleteRows"]: @t.Incomplete</p>}}
+<section class="leasing-dashboard mb-4">
+    <div class="leasing-section-heading"><div><h2 class="h4">@L["LifeDashboard"]</h2><p class="text-body-secondary">@L["LifeDashboardHelp"]</p></div>
+    <div class="leasing-period"><label>@L["PaymentFrom"]<input class="form-control" type="date" @bind="from" /></label><label>@L["PaymentTo"]<input class="form-control" type="date" @bind="to" /></label><button class="btn btn-outline-secondary align-self-end" disabled="@busy" @onclick="Load">@L["Search"]</button></div></div>
+@if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
+@if(data!=null)
+{
+    <div class="leasing-metrics">
+        <LeasingMetric Value="data.Active" Label="@L["LifeActive"]" Icon="bi-file-earmark-check" Tone="blue" Href="@(Report(LeasingReportKind.Agreements,new(){Status="LifeActive"}))" />
+        <LeasingMetric Value="data.Expiring" Label="@L["LifeExpiring"]" Icon="bi-calendar-event" Tone="amber" Href="@(Report(LeasingReportKind.Agreements,new(){DateField=LeasingReportDate.End,From=shownFrom,To=shownTo,AcquisitionsOnly=true,Status="LifeActive"}))" />
+        <LeasingMetric Value="data.Notices" Label="@L["LifeNoticeDate"]" Icon="bi-clock" Tone="amber" Href="@(Report(LeasingReportKind.Agreements,new(){DateField=LeasingReportDate.Notice,From=shownFrom,To=shownTo,Status="LifeActive"}))" />
+        <LeasingMetric Value="data.Returns" Label="@L["LifeReturnDue"]" Icon="bi-box-arrow-in-left" Tone="purple" Href="@(Report(LeasingReportKind.Agreements,new(){DateField=LeasingReportDate.Return,From=shownFrom,To=shownTo,Status="LifeActive"}))" />
+    </div><h3 class="h6 mt-4 mb-3">@L["LifeFollowup"]</h3><div class="leasing-metrics leasing-metrics-followup">
+        <LeasingMetric Value="data.OpenTasks" Label="@L["LifeOpenFollowups"]" Icon="bi-list-check" Tone="blue" Href="@($"/leasing/followup?to={shownTo:yyyy-MM-dd}")" />
+        <LeasingMetric Value="data.MissingPlans" Label="@L["PaymentNoPlan"]" Icon="bi-file-earmark-x" Tone="amber" Href="@(Report(LeasingReportKind.Payments,new(){Status="PaymentNoPlan"}))" />
+        <LeasingMetric Value="data.Variances" Label="@L["PaymentBillingVariance"]" Icon="bi-exclamation-triangle" Tone="red" Href="@(Report(LeasingReportKind.InvoiceControl,new(){Status="PaymentBillingVariance"}))" />
+    </div>
+    <div class="leasing-summary-grid mt-4">
+    @foreach(var entry in data.Reports)
+    {
+        <section class="card"><div class="card-body"><h3 class="h6"><a href="@Report(entry.Key,entry.Key==LeasingReportKind.Payments?new(){DateField=LeasingReportDate.Due,From=shownFrom,To=shownTo}:new())">@L[$"LifeReport{entry.Key}"] <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></h3>
+        @if(entry.Value.Totals.Count == 0){<p class="small text-body-secondary mb-0">@L["LeasingNoRows"]</p>}
+        @foreach(var t in entry.Value.Totals)
+        {
+            <div class="leasing-summary"><div class="leasing-summary-currency">@t.Currency @(t.Basis==""?"":L[t.Basis])</div><dl class="leasing-amounts">
+            @if(entry.Key==LeasingReportKind.Capacity)
+            {
+                <dt>@L["LifeColumnLimit"]</dt><dd>@t.Limit.ToString("N2")</dd>
+                <dt>@L["LifeColumnUsed"]</dt><dd>@t.Used.ToString("N2")</dd>
+                <dt>@L["LifeColumnReserved"]</dt><dd>@t.Reserved.ToString("N2")</dd>
+                <dt>@L["LifeColumnAvailable"]</dt><dd class="@(t.Available<0?"text-danger-emphasis":"fw-semibold")">@t.Available.ToString("N2")</dd>
+            }
+            else if(entry.Key==LeasingReportKind.Payments){<dt>@L["LifePlannedPayments"]</dt><dd>@t.Expected.ToString("N2")</dd>}
+            else{<dt>@L["PaymentInvoiced"]</dt><dd>@t.Invoiced.ToString("N2")</dd><dt>@L["RentalUnallocated"]</dt><dd>@t.Unallocated.ToString("N2")</dd>}
+            </dl><div class="small text-body-secondary">@L["LifeIncompleteRows"]: @t.Incomplete</div></div>
+        }
+        </div></section>
+    }
+    </div>
 }
-</div></section>
+</section>
 @code{LeasingDashboardResult? data;DateOnly from=DateOnly.FromDateTime(DateTime.Today),to=DateOnly.FromDateTime(DateTime.Today.AddDays(90));DateOnly shownFrom,shownTo;string? error;bool busy;protected override Task OnInitializedAsync()=>Load();async Task Load(){busy=true;error=null;try{data=await Service.GetLeasingDashboardAsync(User.Current.CurrentAccountId??throw new UnauthorizedAccessException(),from,to);shownFrom=from;shownTo=to;}catch(LeasingValidationException ex){error=ex.Message;}catch{error="LeasingFailed";}finally{busy=false;}}string Report(LeasingReportKind kind,LeasingReportFilter filter)=>$"/leasing/reports?kind={(int)kind}&filter={Uri.EscapeDataString(JsonSerializer.Serialize(filter))}";}

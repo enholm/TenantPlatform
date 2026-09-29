@@ -27,6 +27,7 @@ static class OrderComponentChecks
             await renderer.Dispatcher.InvokeAsync(async()=>
             {
                 var root=renderer.BeginRenderingComponent(type,ParameterView.FromDictionary(parameters));await root.QuiescenceTask;
+                UiPreview.Write(type.Name + (path.EndsWith("create") ? "Create" : ""), root.ToHtmlString());
                 var html=System.Net.WebUtility.HtmlDecode(root.ToHtmlString());
                 if(!html.Contains(expected)||html.Contains("Kunne ikke fullføre"))throw new Exception("Order component failed: "+type.Name+" "+html);
                 if(navigation.Destination != null) throw new Exception("Unexpected navigation: " + navigation.Destination);

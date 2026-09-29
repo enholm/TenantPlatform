@@ -5,17 +5,21 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <h1>@L["PurchaseOrders"] · @data?.Order.Number</h1>
 @if(error!=null) { <p class="alert alert-danger">@L[error]</p> }
 @if(data is {} d)
 {
     var o=d.Order; var reserved=LeasingOrderCalculator.Reserved(o,d.Framework.IncludesVat);
     <p>@L["PurchaseOrderHelp"]</p>
-    <p>@L[$"OrderStatus{o.Status}"] · @L[LeasingService.FulfillmentKey(o)] · <a href="@($"/leasing/frameworks/{o.FrameworkId}")">@d.Framework.Name</a></p>
-    <p>@L["LeasingSupplier"]: @Name(o.SupplierOrganizationId) · @L["LeasingOwner"]: @Name(o.OwnerUserId) · @L["OrderDate"]: @o.OrderDate.ToString("dd.MM.yyyy") · @L["OrderExpected"]: @o.ExpectedDate?.ToString("dd.MM.yyyy")</p>
-    <p>@L["LeasingLimit"]: @d.Capacity.Limit.ToString("N2") · @L["LeasingUsed"]: @d.Capacity.Used.ToString("N2") · @L["OrderReserved"]: @d.Capacity.Reserved.ToString("N2") · @L["LeasingAvailable"]: @d.Capacity.Available.ToString("N2") @o.Currency</p>
+    <p><span class="leasing-status">@L[$"OrderStatus{o.Status}"]</span> · @L[LeasingService.FulfillmentKey(o)] · <a href="@($"/leasing/frameworks/{o.FrameworkId}")">@d.Framework.Name</a></p>
+    <div class="row g-3 mb-4"><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h6">@L["LeasingDetails"]</h2><dl class="leasing-amounts">
+        <dt>@L["LeasingSupplier"]</dt><dd>@Name(o.SupplierOrganizationId)</dd><dt>@L["LeasingOwner"]</dt><dd>@Name(o.OwnerUserId)</dd><dt>@L["OrderDate"]</dt><dd>@o.OrderDate.ToString("dd.MM.yyyy")</dd><dt>@L["OrderExpected"]</dt><dd>@o.ExpectedDate?.ToString("dd.MM.yyyy")</dd>
+    </dl></div></section></div><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h6">@L["LeasingCapacity"] · @o.Currency · @L[d.Framework.IncludesVat ? "LeasingGross" : "LeasingNet"]</h2><dl class="leasing-amounts">
+        <dt>@L["LeasingLimit"]</dt><dd>@d.Capacity.Limit.ToString("N2")</dd><dt>@L["LeasingUsed"]</dt><dd>@d.Capacity.Used.ToString("N2")</dd><dt>@L["OrderReserved"]</dt><dd>@d.Capacity.Reserved.ToString("N2")</dd><dt>@L["LeasingAvailable"]</dt><dd class="fw-semibold">@d.Capacity.Available.ToString("N2")</dd>
+    </dl></div></section></div></div>
     @if(d.NeedsReview) { <p class="alert alert-warning">@L["OrderNeedsReview"]</p> }
-    <div class="d-flex gap-2 mb-3">@if(d.CanEdit) { <a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders/{Id}/edit")">@L["Edit"]</a> }
+    <div class="d-flex flex-wrap gap-2 mb-3">@if(d.CanEdit) { <a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders/{Id}/edit")">@L["Edit"]</a> }
     @if(d.CanEdit && o.Status==LeasingOrderStatus.Approved) { <a class="btn btn-primary" href="@($"/leasing/acquisitions/create?framework={o.FrameworkId}&order={Id}")">@L["OrderRealize"]</a> }
     <a class="btn btn-outline-primary" href="@($"/leasing/invoices?order={Id}")">@L["InvoiceImport"]</a></div>
     <div class="table-responsive"><table class="table"><thead><tr><th>@L["LeasingDescription"]</th><th>@L["OrderMethod"]</th><th>@L["LeasingQuantity"]</th><th>@L["OrderRealized"]</th><th>@L["OrderRemaining"]</th><th>@L["OrderReserved"]</th><th>@L["OrderActual"] (@L["LeasingNet"]) / @L["OrderVariance"]</th></tr></thead><tbody>
@@ -32,7 +36,7 @@
     <h2 class="h5">@L["LeasingAcquisitions"]</h2><ul>@foreach(var group in d.Realizations.GroupBy(x=>x.AcquisitionId)) { <li><a href="@($"/leasing/acquisitions/{group.Key}")">@group.Key</a> · @group.Sum(x=>x.ActualNet).ToString("N2")</li> }</ul>
     <h2 class="h5">@L["InvoiceDocuments"]</h2><ul>@foreach(var invoice in d.Invoices) { <li><a href="@($"/leasing/invoices/{invoice.Id}")">@invoice.Number</a> · @L[$"InvoiceStatus{invoice.Status}"]</li> }</ul>
     <p style="white-space:pre-wrap">@o.Notes</p>
-    <EditForm Model="@this" FormName="order-actions"><fieldset disabled="@busy">
+    <section class="leasing-form-section"><EditForm Model="@this" FormName="order-actions"><fieldset disabled="@busy">
     @if(o.ProposalJson!=null)
     {
         var proposal=JsonSerializer.Deserialize<LeasingOrder>(o.ProposalJson)!;
@@ -64,11 +68,13 @@
         <label>@L["LeasingAcquisitions"]<InputSelect class="form-select" @bind-Value="linkId" @bind-Value:after="LoadLink"><option value="">@L["LeasingChoose"]</option>@foreach(var a in candidates) { <option value="@a.Id">@a.Name · @a.PurchaseDate</option> }</InputSelect></label>
         @if(link!=null) { <OrderDeliveryEditor Details="d" Delivery="delivery" Items="link.Items" Existing="true" /><button type="button" class="btn btn-primary" @onclick="Link">@L["OrderLink"]</button> }
     }
-    </fieldset></EditForm>
+    </fieldset></EditForm></section>
     <h2 class="h5 mt-4">@L["LeasingDocuments"]</h2><ul>@foreach(var doc in d.Documents) { <li><a href="@($"/leasing/documents/{doc.Id}/download")">@doc.FileName</a></li> }</ul>@if(d.CanEdit) { <InputFile OnChange="Upload" disabled="@busy" /> }
-    <h2 class="h5 mt-4">@L["LeasingHistory"]</h2>
+    <details class="leasing-disclosure mt-4"><summary>@L["LeasingHistory"]</summary>
     @foreach(var h in d.History) { <details class="border-bottom py-2"><summary>@h.RecordedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'") · @Name(h.ActorUserId) · @L[$"OrderAction{h.Action}"]</summary><p>@h.Reason</p><div class="row"><div class="col-md-6"><h3 class="h6">@L["LeasingBefore"]</h3><OrderHistorySnapshot Json="h.BeforeJson" /></div><div class="col-md-6"><h3 class="h6">@L["LeasingAfter"]</h3><OrderHistorySnapshot Json="h.AfterJson" /></div></div></details> }
+    </details>
 }
+</div>
 @code {
     [Parameter] public Guid Id { get; set; }
     private Guid actionRequest = Guid.NewGuid();

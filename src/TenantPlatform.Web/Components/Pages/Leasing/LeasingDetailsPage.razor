@@ -6,6 +6,7 @@
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
 
+<div class="leasing-workspace">
 <PageTitle>@(data?.Framework?.Name ?? data?.Acquisition?.Name ?? L["LeasingTitle"])</PageTitle>
 @if (busy && data is null) { <p role="status">@L["Loading"]</p> }
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error] <button class="btn btn-outline-secondary btn-sm" disabled="@busy" @onclick="Load">@L["DashboardRetry"]</button></div> }
@@ -16,8 +17,19 @@
     <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h1>@(f?.Name ?? a!.Name)</h1><span class="badge text-bg-secondary">@L[$"LeasingStatus{(f is null ? a!.Status.ToString() : f.Status.ToString())}"]</span></div>
         @if (data.CanEdit) { <a class="btn btn-primary align-self-center" href="@($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{Id}/edit")">@L["Edit"]</a> }
     </div>
-    @if(a is not null){<a class="btn btn-outline-primary mb-3 me-2" href="@($"/leasing/acquisitions/{Id}/lifecycle")">@L["LifeLifecycle"]</a><a class="btn btn-outline-primary mb-3" href="@($"/leasing/acquisitions/{Id}/payments")">@L["PaymentDetails"]</a><p class="text-muted">@L["PaymentOriginalFinancingHelp"]</p>}
-    <div class="row g-3 mb-3"><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h5">@L["LeasingDetails"]</h2><dl class="row">
+    <nav class="leasing-subnav" aria-label="@L["LeasingDetails"]">
+        <a href="#leasing-overview"><i class="bi bi-grid" aria-hidden="true"></i> @L["LeasingDetails"]</a>
+        @if(a is not null)
+        {
+            <a href="@($"/leasing/acquisitions/{Id}/payments")"><i class="bi bi-wallet2" aria-hidden="true"></i> @L["PaymentDetails"]</a>
+            <a href="@($"/leasing/equipment?acquisition={Id}")"><i class="bi bi-box-seam" aria-hidden="true"></i> @L["LifeEquipment"]</a>
+            <a href="@($"/leasing/acquisitions/{Id}/lifecycle")"><i class="bi bi-clock-history" aria-hidden="true"></i> @L["LifeLifecycle"]</a>
+        }
+        <a href="#leasing-documents"><i class="bi bi-files" aria-hidden="true"></i> @L["LeasingDocuments"]</a>
+        <a href="#leasing-history"><i class="bi bi-clock-history" aria-hidden="true"></i> @L["LeasingHistory"]</a>
+    </nav>
+    @if(a is not null){<p class="small text-body-secondary">@L["PaymentOriginalFinancingHelp"]</p>}
+    <div id="leasing-overview" class="row g-3 mb-3"><div class="col-lg-6"><section class="card"><div class="card-body"><h2 class="h5">@L["LeasingDetails"]</h2><dl class="row">
         <dt class="col-sm-5">@L["LeasingNumber"]</dt><dd class="col-sm-7">@(f?.Number ?? a!.Reference)</dd>
         <dt class="col-sm-5">@L["LeasingFinanceCompany"]</dt><dd class="col-sm-7">@data.FinanceName</dd>
         <dt class="col-sm-5">@L["LeasingOwner"]</dt><dd class="col-sm-7">@data.OwnerName</dd>
@@ -34,12 +46,11 @@
             <dt class="col-sm-5">@L["LeasingPurchaseDate"]</dt><dd class="col-sm-7">@Date(a!.PurchaseDate)</dd>
             <dt class="col-sm-5">@L["LeasingEndDate"]</dt><dd class="col-sm-7">@Date(a.EndDate)</dd>
             <dt class="col-sm-5">@L["LeasingFinanced"]</dt><dd class="col-sm-7">@a.FinancedAmount.ToString("N2") @currency</dd>
-            <dt class="col-sm-12 text-muted">@L["InvoiceLegacyReference"]</dt>
-            <dt class="col-sm-5">@L["LeasingInvoiceNumber"]</dt><dd class="col-sm-7">@(a.InvoiceNumber ?? L["DashboardUnspecified"])</dd>
-            <dt class="col-sm-5">@L["LeasingInvoiceDate"]</dt><dd class="col-sm-7">@(a.InvoiceDate?.ToString("dd.MM.yyyy") ?? L["DashboardUnspecified"])</dd>
+
         }
-    </dl></div></section></div>
-    <div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h5">@L[f is null ? "LeasingTerms" : "LeasingDefaultTerms"]</h2><LeasingTermsView Terms="@(f?.Terms ?? a!.Terms)" /><p class="text-muted small mt-3">@L["LeasingDateRule"]</p></div></section></div></div>
+    </dl>@if(a is not null){<details><summary class="small text-body-secondary">@L["InvoiceLegacyReference"]</summary><dl class="row mt-3">            <dt class="col-sm-5">@L["LeasingInvoiceNumber"]</dt><dd class="col-sm-7">@(a.InvoiceNumber ?? L["DashboardUnspecified"])</dd>
+            <dt class="col-sm-5">@L["LeasingInvoiceDate"]</dt><dd class="col-sm-7">@(a.InvoiceDate?.ToString("dd.MM.yyyy") ?? L["DashboardUnspecified"])</dd></dl></details>}</div></section></div>
+    <div class="col-lg-6"><section class="card"><div class="card-body"><h2 class="h5">@L[f is null ? "LeasingTerms" : "LeasingDefaultTerms"]</h2><LeasingTermsView Terms="@(f?.Terms ?? a!.Terms)" /><p class="text-muted small mt-3">@L["LeasingDateRule"]</p></div></section></div></div>
     @if (f is not null)
     {
         <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingCapacity"]</h2><div class="row g-3">
@@ -92,28 +103,29 @@
         </div></section>
     }
     <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingNotes"]</h2><p style="white-space: pre-wrap">@(f?.Notes ?? a?.Notes)</p></div></section>
-    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingDocuments"]</h2>
+    <section id="leasing-documents" class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingDocuments"]</h2>
         @if (data.Documents.Count == 0) { <p class="text-muted">@L["LeasingNoDocuments"]</p> }
         else { <ul>@foreach (var doc in data.Documents) { <li><a href="@($"/leasing/documents/{doc.Id}/download")">@doc.FileName</a> <span class="small text-muted">@doc.UploadedUtc.ToString("dd.MM.yyyy")</span></li> }</ul> }
         @if (data.CanEdit) { <label class="form-label" for="leasing-upload">@L["LeasingUpload"]</label><InputFile id="leasing-upload" class="form-control" OnChange="Upload" disabled="@busy" /><p class="small text-muted mt-2">@L["LeasingFileLimit", Service.MaxFileSizeBytes / 1024 / 1024]</p> }
     </div></section>
     @if (a is not null && data.CanEdit)
     {
-        <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingCancelAcquisition"]</h2><p>@L["LeasingCancelHelp"]</p>
+        <details class="leasing-disclosure"><summary>@L["LeasingCancelAcquisition"]</summary><p>@L["LeasingCancelHelp"]</p>
             <label for="leasing-cancel-reason" class="form-label">@L["LeasingChangeReason"]</label><textarea id="leasing-cancel-reason" class="form-control mb-2" @bind="cancelReason" maxlength="2000" disabled="@busy"></textarea>
             <button class="btn btn-outline-danger" disabled="@(busy || string.IsNullOrWhiteSpace(cancelReason))" @onclick="CancelAcquisition">@L["LeasingCancelAcquisition"]</button>
-        </div></section>
+        </details>
     }
-    <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingHistory"]</h2>
+    <details id="leasing-history" class="leasing-disclosure"><summary>@L["LeasingHistory"]</summary>
         @foreach (var entry in data.History)
         {
             <details class="border-bottom py-2"><summary>@entry.RecordedUtc.ToString("dd.MM.yyyy HH:mm 'UTC'") · @entry.Actor · @L[$"LeasingAction{entry.Action}"]</summary><p class="mt-2">@entry.Reason</p>
                 <div class="row"><div class="col-md-6"><h3 class="h6">@L["LeasingBefore"]</h3><LeasingHistorySnapshot Json="@entry.BeforeJson" Framework="framework" ReferenceNames="data.ReferenceNames" /></div><div class="col-md-6"><h3 class="h6">@L["LeasingAfter"]</h3><LeasingHistorySnapshot Json="@entry.AfterJson" Framework="framework" ReferenceNames="data.ReferenceNames" /></div></div>
             </details>
         }
-    </div></section>
+    </details>
     <a href="/leasing">@L["LeasingOverview"]</a>
 }
+</div>
 @code {
     [Parameter] public Guid Id { get; set; }
     private List<LeasingOrder> purchaseOrders = [];

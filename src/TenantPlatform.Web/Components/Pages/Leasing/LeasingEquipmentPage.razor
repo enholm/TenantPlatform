@@ -5,6 +5,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <h1>@L["LifeEquipment"]</h1><p>@L["LifeEquipmentHelp"]</p>
 @if(error!=null){<p class="alert alert-danger">@L[error]</p>}
 <div class="d-flex flex-wrap gap-2 mb-3"><input class="form-control w-auto" aria-label="@L["Search"]" @bind="search" /><select class="form-select w-auto" aria-label="@L["Status"]" @bind="status"><option value="">@L["AgreementAll"]</option>@foreach(var s in Enum.GetValues<LeasingEquipmentStatus>()){<option value="@s">@L[$"LifeEquipment{s}"]</option>}</select><button class="btn btn-secondary" @onclick="()=>Run(Load)">@L["Search"]</button></div>
@@ -21,6 +22,7 @@
 @if(equipment.Id==Guid.Empty){<label class="col-12">@L["LifeBulkSerialHelp"]<InputTextArea class="form-control" @bind-Value="bulk" rows="5" /></label><label class="col-md-3">@L["LifeBulkCount"]<InputNumber class="form-control" @bind-Value="count" min="1" max="1000" /></label>}
 <label class="col-12"><InputCheckbox @bind-Value="duplicateConfirmed" /> @L["LifeConfirmSerial"]</label><label class="col-12">@L["PaymentReason"]<InputText class="form-control" @bind-Value="reason" /></label></div><button class="btn btn-primary my-2">@L["Save"]</button></fieldset></EditForm>
 }}
+</div>
 @code{
 [SupplyParameterFromQuery(Name="acquisition")]public Guid? Acquisition{get;set;}EquipmentPage? rows;LifecycleDetails? data;LeasingEquipment equipment=new(){RegisteredDate=DateOnly.FromDateTime(DateTime.Today)};LeasingOptions? options;List<LeasingOption> buildings=[];string? error;string search="",reason="",bulk="";LeasingEquipmentStatus? status;int page=1,count=1;bool busy,duplicateConfirmed;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
 protected override Task OnParametersSetAsync()=>Run(Load);

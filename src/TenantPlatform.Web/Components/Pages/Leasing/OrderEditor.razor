@@ -7,7 +7,8 @@
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
 @inject ILogger<OrderEditor> Logger
-<h1>@L["PurchaseOrders"]</h1><p>@L["PurchaseOrderHelp"]</p>
+<div class="leasing-workspace">
+<h1><i class="bi bi-cart" aria-hidden="true"></i> @L[Id.HasValue ? "Edit" : "OrderNew"]</h1><p>@L["PurchaseOrderHelp"]</p>
 @if (error != null) { <div class="alert alert-danger">@L[error]</div> }
 @if (options != null && catalog != null)
 {
@@ -19,13 +20,15 @@
 }
 <EditForm Model="order" OnValidSubmit="Save" FormName="order-editor"><fieldset disabled="@busy">
     @if (order.Status == LeasingOrderStatus.Approved) { <p class="alert alert-info">@L["OrderProposalHelp"]</p> }
-    <label class="form-label">@L["LeasingFramework"]<InputSelect class="form-select" @bind-Value="order.FrameworkId" @bind-Value:after="FrameworkChanged" disabled="@Id.HasValue"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach(var f in options.Frameworks) { <option value="@f.Id">@f.Name</option> }</InputSelect></label>
+    <section class="leasing-form-section"><h2 class="h5">@L["LeasingDetails"]</h2>
+    <label class="form-label d-block">@L["LeasingFramework"]<InputSelect class="form-select" @bind-Value="order.FrameworkId" @bind-Value:after="FrameworkChanged" disabled="@Id.HasValue"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach(var f in options.Frameworks) { <option value="@f.Id">@f.Name</option> }</InputSelect></label>
     <div class="row g-3 mb-3">
         <label class="col-md-4">@L["LeasingSupplier"]<InputSelect class="form-select" @bind-Value="order.SupplierOrganizationId"><option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach(var p in options.Parties) { <option value="@p.Id">@p.Name</option> }</InputSelect></label>
         <label class="col-md-4">@L["LeasingOwner"]<InputSelect class="form-select" @bind-Value="order.OwnerUserId">@foreach(var p in options.Owners) { <option value="@p.Id">@p.Name</option> }</InputSelect></label>
         <label class="col-md-4">@L["OrderDate"]<InputDate class="form-control" @bind-Value="order.OrderDate" /></label>
         <label class="col-md-4">@L["OrderExpected"]<InputDate class="form-control" @bind-Value="order.ExpectedDate" /></label>
     </div>
+    </section><h2 class="h5 mb-3">@L["LeasingItems"]</h2>
     @foreach (var line in order.Lines)
     {
         <section class="card mb-3" @key="line"><div class="card-body"><div class="row g-2">
@@ -40,11 +43,13 @@
         <button type="button" class="btn btn-outline-danger mt-2" @onclick="() => order.Lines.Remove(line)">@L["LeasingRemoveLine"]</button></div></section>
     }
     <button type="button" class="btn btn-outline-primary mb-3" @onclick="() => order.Lines.Add(new())">@L["LeasingAddLine"]</button>
+    <section class="leasing-form-section"><h2 class="h5">@L["LeasingNotes"]</h2>
     <label class="d-block">@L["LeasingNotes"]<InputTextArea class="form-control" @bind-Value="order.Notes" /></label>
     <label class="d-block my-3">@L["LeasingChangeReason"]<InputTextArea class="form-control" @bind-Value="reason" /></label>
-    <button class="btn btn-primary">@L["Save"]</button>
+    </section><div class="leasing-form-actions"><button class="btn btn-primary"><i class="bi bi-check2" aria-hidden="true"></i> @L[busy ? "Loading" : "Save"]</button><a class="btn btn-outline-secondary" href="/leasing/purchase-orders">@L["PurchaseOrders"]</a></div>
 </fieldset></EditForm>
 }
+</div>
 @code {
     [Parameter] public Guid? Id { get; set; }
     [SupplyParameterFromQuery(Name="framework")] public Guid? Framework { get; set; }

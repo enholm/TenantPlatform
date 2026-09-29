@@ -5,6 +5,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <h1>@L["RentalInvoices"]</h1><p>@L["PaymentScopeHelp"]</p>
 @if(error!=null){<p class="alert alert-danger">@L[error]</p>}
 @if(canRegister){<button class="btn btn-primary mb-3" disabled="@busy" @onclick="New">@L["RentalNew"]</button><label class="d-block mb-3">@L["RentalUpload"] <InputFile OnChange="Upload" accept=".xml,.pdf,.png,.jpg,.jpeg" disabled="@busy" /></label>}
@@ -13,6 +14,7 @@
 @foreach(var r in rows){var d=JsonSerializer.Deserialize<RentalInvoiceReview>(r.Invoice.ReviewJson)?.Data;var gross=r.Invoice.Status==LeasingInvoiceStatus.Review?d?.Gross:r.Invoice.Net+r.Invoice.Vat;<tr><td>@r.FinanceName</td><td><a href="@($"/leasing/rental-invoices/{r.Invoice.Id}")">@(string.IsNullOrEmpty(r.Invoice.Number)?L["RentalDraft"]:r.Invoice.Number)</a> · @L[$"InvoiceKind{d?.Kind}"]</td><td>@(r.Invoice.InvoiceDate??d?.Date)</td><td>@r.Invoice.Currency</td><td>@gross?.ToString("N2")</td><td>@L[$"InvoiceStatus{r.Invoice.Status}"] · @L[$"InvoiceProcessing{r.Invoice.Processing}"]</td><td>@((r.AllocatedNet+r.AllocatedVat).ToString("N2"))</td><td>@((gross-r.AllocatedNet-r.AllocatedVat)?.ToString("N2"))</td><td>@string.Join(", ",r.Acquisitions)</td></tr>}
 </tbody></table></div>
 @foreach(var group in rows.Where(x=>x.Invoice.Status==LeasingInvoiceStatus.Approved).GroupBy(x=>x.Invoice.Currency)){<p>@L["RentalApprovedTotal"] (@group.Key): @group.Sum(x=>(x.Invoice.Kind==LeasingInvoiceKind.CreditNote?-1:1)*(x.Invoice.Net+x.Invoice.Vat)).ToString("N2")</p>}
+</div>
 @code{List<RentalInvoiceRow> rows=[];LeasingOptions? options;string? error;string search="",currency="";Guid? finance;LeasingInvoiceStatus? status;bool busy,canRegister;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
 protected override Task OnInitializedAsync()=>Run(Load);
 async Task Load(){options=await Service.OptionsAsync(account);canRegister=await Service.CanRegisterRentalInvoiceAsync(account);rows=await Service.ListRentalInvoicesAsync(account,search,currency.ToUpperInvariant(),finance,status);}

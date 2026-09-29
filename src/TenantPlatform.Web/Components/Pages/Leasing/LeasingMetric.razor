@@ -1,0 +1,12 @@
+<a class="leasing-metric leasing-tone-@(Value == 0 ? "neutral" : Tone)" href="@Href">
+    <span class="leasing-metric-icon"><i class="bi @Icon" aria-hidden="true"></i></span>
+    <span><strong class="leasing-metric-value">@Value.ToString("N0")</strong><span class="leasing-metric-label">@Label</span></span>
+    <i class="bi bi-arrow-up-right leasing-metric-arrow" aria-hidden="true"></i>
+</a>
+@code {
+    [Parameter] public int Value { get; set; }
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Href { get; set; } = "";
+    [Parameter] public string Icon { get; set; } = "bi-file-earmark-check";
+    [Parameter] public string Tone { get; set; } = "blue";
+}

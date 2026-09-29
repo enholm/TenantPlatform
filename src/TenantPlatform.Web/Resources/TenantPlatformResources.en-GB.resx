@@ -3194,4 +3194,7 @@ This is a reminder, not a termination or renewal.</value>
 <data name="PaymentEventLifecycleNotifications" xml:space="preserve"><value>Notification settings changed</value></data>
 <data name="PaymentEventEquipmentSaved" xml:space="preserve"><value>Equipment registered or corrected</value></data>
 <data name="PaymentEventEquipmentCountable" xml:space="preserve"><value>Unit tracking changed</value></data>
+  <data name="LeasingMoreFilters" xml:space="preserve"><value>More filters</value></data>
+  <data name="LeasingAllColumns" xml:space="preserve"><value>Show all columns</value></data>
+  <data name="LeasingNoRows" xml:space="preserve"><value>No rows in this selection.</value></data>
 </root>

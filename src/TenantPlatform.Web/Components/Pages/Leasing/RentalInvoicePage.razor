@@ -4,6 +4,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <h1>@L["RentalInvoice"] @details?.Invoice.Number</h1>
 @if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
 @if(details!=null){
@@ -29,6 +30,7 @@
 @if(details.CanApprove&&details.Invoice.Status==LeasingInvoiceStatus.Approved){<button class="btn btn-outline-danger" disabled="@busy" @onclick="Reverse">@L["RentalReverse"]</button>}
 <details class="my-3"><summary>@L["PaymentHistory"]</summary>@foreach(var h in details.History){<p>@h.RecordedUtc · @L[$"PaymentEvent{h.Action}"] · @h.ActorUserId · @h.Reason</p>}@foreach(var a in details.Allocations){<p>@a.RecordedUtc · @a.InstallmentId · @a.Net / @a.Vat · @(a.Reversed?L["RentalReversedAllocation"]:L["RentalAllocated"])</p>}</details>
 }
+</div>
 @code{
 [Parameter]public Guid Id{get;set;}RentalInvoiceDetails? details;RentalInvoiceReview review=new();List<RentalAllocationInput> allocations=[];LeasingOptions? options;string? error;string reason="";bool busy;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
 protected override Task OnParametersSetAsync()=>Run(Load);

@@ -4,16 +4,18 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
-<h1>@L["PurchaseOrders"]</h1><p>@L["PurchaseOrderHelp"]</p>
+<div class="leasing-workspace">
+<h1><i class="bi bi-cart" aria-hidden="true"></i> @L["PurchaseOrders"]</h1><p>@L["PurchaseOrderHelp"]</p>
 @if(options?.CanRegisterOrders == true) { <a class="btn btn-primary mb-3" href="@($"/leasing/purchase-orders/create{(Framework.HasValue?$"?framework={Framework}":"")}")">@L["OrderNew"]</a> }
 @if(error!=null) { <p class="alert alert-danger">@L[error]</p> }
-<div class="table-responsive"><table class="table"><thead><tr><th>@L["LeasingNumber"]</th><th>@L["LeasingSupplier"] / @L["LeasingFramework"]</th><th>@L["Status"]</th><th>@L["OrderFulfillment"]</th><th>@L["OrderApprovedValue"]</th><th>@L["OrderReserved"]</th><th>@L["LeasingOwner"] / @L["OrderDate"] / @L["OrderExpected"]</th></tr></thead><tbody>
+<div class="table-responsive"><table class="table"><thead><tr><th>@L["LeasingNumber"]</th><th>@L["LeasingSupplier"] / @L["LeasingFramework"]</th><th>@L["Status"]</th><th>@L["OrderFulfillment"]</th><th class="leasing-numeric">@L["OrderApprovedValue"]</th><th class="leasing-numeric">@L["OrderReserved"]</th><th>@L["LeasingOwner"] / @L["OrderDate"] / @L["OrderExpected"]</th></tr></thead><tbody>
 @foreach(var d in rows)
 {
     var o=d.Order;
-    <tr><td><a href="@($"/leasing/purchase-orders/{o.Id}")">@o.Number</a></td><td>@Name(o.SupplierOrganizationId) / @d.Framework.Name</td><td>@L[$"OrderStatus{o.Status}"]</td><td>@L[LeasingService.FulfillmentKey(o)]</td><td>@LeasingService.ApprovedOrderValue(d).ToString("N2") @o.Currency</td><td>@LeasingOrderCalculator.Reserved(o,d.Framework.IncludesVat).ToString("N2")</td><td>@Name(o.OwnerUserId)<br />@o.OrderDate.ToString("dd.MM.yyyy") / @o.ExpectedDate?.ToString("dd.MM.yyyy")</td></tr>
+    <tr><td><a href="@($"/leasing/purchase-orders/{o.Id}")">@o.Number</a></td><td>@Name(o.SupplierOrganizationId) / @d.Framework.Name</td><td><span class="leasing-status">@L[$"OrderStatus{o.Status}"]</span></td><td>@L[LeasingService.FulfillmentKey(o)]</td><td class="leasing-numeric">@LeasingService.ApprovedOrderValue(d).ToString("N2") @o.Currency</td><td class="leasing-numeric">@LeasingOrderCalculator.Reserved(o,d.Framework.IncludesVat).ToString("N2")</td><td>@Name(o.OwnerUserId)<br />@o.OrderDate.ToString("dd.MM.yyyy") / @o.ExpectedDate?.ToString("dd.MM.yyyy")</td></tr>
 }
 </tbody></table></div>
+</div>
 @code {
     [SupplyParameterFromQuery(Name="framework")] public Guid? Framework { get; set; }
     private List<OrderDetails> rows=[]; private LeasingOptions? options; private string? error;

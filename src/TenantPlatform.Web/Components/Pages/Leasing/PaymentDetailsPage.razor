@@ -5,6 +5,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <h1>@L["PaymentDetails"] – @data?.Acquisition.Name</h1>
 <p>@L["PaymentScopeHelp"]</p>
 @if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
@@ -60,6 +61,7 @@ else{<FinancingSnapshotView Snapshot="@(JsonSerializer.Deserialize<LeasingFinanc
 </details>}
 <details class="my-3"><summary>@L["PaymentHistory"]</summary>@foreach(var h in data.History){<p>@h.RecordedUtc · @L[$"PaymentEvent{h.Action}"] · @h.ActorUserId · @h.Reason</p>}</details>
 }
+</div>
 @code{
 [Parameter]public Guid Id{get;set;}
 PaymentDetails? data;LeasingOptions? options;LeasingPaymentPlan? active;LeasingFinancingSnapshot financing=new();List<LeasingPlanTerm> terms=[];PaymentImportGrid? grid;PaymentImportPreview? importPreview;PaymentColumnMap mapping=new();

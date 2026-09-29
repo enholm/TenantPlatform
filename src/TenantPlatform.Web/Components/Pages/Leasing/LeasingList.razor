@@ -8,6 +8,7 @@
 @inject ITenantAuthorizationService Authorization
 @inject NavigationManager Navigation
 
+<div class="leasing-workspace">
 <PageTitle>@Title</PageTitle>
 <div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
     <h1>@Title</h1>
@@ -47,7 +48,7 @@ else if (data is not null)
         </tr></thead><tbody>@foreach (var row in data.Items)
         {
             <tr><td><a href="@($"/leasing/{(row.Framework ? "frameworks" : "acquisitions")}/{row.Id}")">@row.Name</a></td><td>@row.Number</td><td>@L[row.Framework ? "LeasingFramework" : "LeasingAcquisition"]</td>
-                <td>@L[$"LeasingStatus{row.Status}"]</td><td>@row.Owner</td><td>@row.Start.ToString("dd.MM.yyyy")–@row.End.ToString("dd.MM.yyyy")</td><td class="text-end text-nowrap">@row.Amount.ToString("N2") @row.Currency</td></tr>
+                <td><span class="leasing-status">@L[$"LeasingStatus{row.Status}"]</span></td><td>@row.Owner</td><td>@row.Start.ToString("dd.MM.yyyy")–@row.End.ToString("dd.MM.yyyy")</td><td class="text-end text-nowrap">@row.Amount.ToString("N2") @row.Currency</td></tr>
         }</tbody></table></div></div>
         <p class="small text-muted mt-2">@L["LeasingListAmounts"]</p>
         <div class="d-flex justify-content-between align-items-center"><button class="btn btn-outline-secondary" disabled="@(data.Page == 1)" @onclick="Previous">@L["AgreementPrevious"]</button>
@@ -55,6 +56,7 @@ else if (data is not null)
             <button class="btn btn-outline-secondary" disabled="@(data.Page * data.PageSize >= data.Count)" @onclick="Next">@L["AgreementNext"]</button></div>
     }
 }
+</div>
 @code {
     private Guid account; private bool busy = true, allowed, error;
     private string? search, status; private string kind = "all"; private Guid? owner; private int page = 1;

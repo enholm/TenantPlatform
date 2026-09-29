@@ -3231,4 +3231,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
 <data name="PaymentEventLifecycleNotifications" xml:space="preserve"><value>Aviseringsinställningar ändrade</value></data>
 <data name="PaymentEventEquipmentSaved" xml:space="preserve"><value>Utrustning registrerad eller korrigerad</value></data>
 <data name="PaymentEventEquipmentCountable" xml:space="preserve"><value>Enhetsregistrering ändrad</value></data>
+  <data name="LeasingMoreFilters" xml:space="preserve"><value>Fler filter</value></data>
+  <data name="LeasingAllColumns" xml:space="preserve"><value>Visa alla kolumner</value></data>
+  <data name="LeasingNoRows" xml:space="preserve"><value>Inga rader i detta urval.</value></data>
 </root>

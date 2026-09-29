@@ -4,6 +4,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+<div class="leasing-workspace">
 <h1>@L["PaymentPlans"]</h1><p>@L["PaymentScopeHelp"]</p>
 @if(error!=null){<p class="alert alert-danger">@L[error]</p>}
 <div class="d-flex flex-wrap gap-2 mb-3">
@@ -15,6 +16,7 @@
 <div class="table-responsive"><table class="table"><thead><tr><th>@L["LeasingAcquisition"]</th><th>@L["LeasingFinanceCompany"]</th><th>@L["Status"]</th><th>@L["LeasingCurrency"]</th><th>@L["PaymentPeriod"]</th><th>@L["PaymentNextDue"]</th><th>@L["PaymentReview"]</th></tr></thead><tbody>
 @foreach(var r in rows){<tr><td><a href="@($"/leasing/acquisitions/{r.AcquisitionId}/payments")">@r.Acquisition</a></td><td>@r.FinanceCompany</td><td>@(r.Status.HasValue?L[$"PaymentPlan{r.Status}"]:L["PaymentNoPlan"]) @r.Version</td><td>@r.Currency</td><td>@r.From?.ToString("dd.MM.yyyy") – @r.To?.ToString("dd.MM.yyyy")</td><td>@r.NextDue?.ToString("dd.MM.yyyy")</td><td>@(r.NeedsReview?L["PaymentReview"]:"")</td></tr>}
 </tbody></table></div>
+</div>
 @code {
 List<PaymentPlanRow> rows=[];LeasingOptions? options;string? error;string search="",currency="";Guid? finance;LeasingPlanStatus? status;
 protected override Task OnInitializedAsync()=>Load();

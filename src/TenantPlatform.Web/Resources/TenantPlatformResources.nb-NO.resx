@@ -3230,4 +3230,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
 <data name="PaymentEventLifecycleNotifications" xml:space="preserve"><value>Varslingsoppsett endret</value></data>
 <data name="PaymentEventEquipmentSaved" xml:space="preserve"><value>Utstyr registrert eller korrigert</value></data>
 <data name="PaymentEventEquipmentCountable" xml:space="preserve"><value>Enhetsregistrering endret</value></data>
+  <data name="LeasingMoreFilters" xml:space="preserve"><value>Flere filtre</value></data>
+  <data name="LeasingAllColumns" xml:space="preserve"><value>Vis alle kolonner</value></data>
+  <data name="LeasingNoRows" xml:space="preserve"><value>Ingen rader i valgt utvalg.</value></data>
 </root>
