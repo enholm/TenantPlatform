@@ -37,9 +37,9 @@ p { text-wrap: pretty; }
 .actions { display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; }
 .site-header { border-bottom: 1px solid var(--line); position: relative; z-index: 5; }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 3rem; min-height: 96px; }
-.wordmark { display: inline-flex; align-items: center; font-size: 1.55rem; letter-spacing: -.06em; font-weight: 750; gap: .5rem; }
-.brand-dot { color: var(--forest); margin-left: -.5rem; }
-.brand-mark { background: var(--forest); color: var(--lime); width: 29px; height: 29px; display: grid; place-items: center; border-radius: 7px; font: italic 28px/.8 var(--editorial); margin-right: .2rem; }
+.wordmark { display: inline-flex; align-items: center; flex-shrink: 0; }
+.brand-logo { display: block; width: 150px; max-width: 100%; height: auto; }
+.footer-brand .brand-logo { width: 180px; }
 .navigation-shell { flex: 1; }
 .main-navigation { display: flex; gap: 2rem; align-items: center; font-size: .85rem; }
 .nav-actions { margin-left: auto; display: flex; gap: 1.8rem; align-items: center; }
@@ -94,11 +94,12 @@ summary::-webkit-details-marker { display: none; }
 .product-stage { padding: 2.6rem; border-radius: 5px; overflow: hidden; }
 .services-stage { background: var(--sage); }
 .contracts-stage { background: var(--sand); }
-.subscriptions-stage { background: #e5e9ee; }
+.revenue-stage { background: #e5e9ee; }
 .leasing-stage { background: #e9ecd9; }
 .product-window { background: var(--white); padding: 1.5rem; border: 1px solid rgb(17 24 39 / 9%); border-radius: 5px; box-shadow: var(--shadow); }
 .window-top { display: flex; justify-content: space-between; align-items: center; gap: .75rem; font-size: .6rem; color: var(--muted); margin-bottom: 1.8rem; }
-.mini-brand { font-size: .55rem; font-weight: 600; letter-spacing: .09em; }
+.mini-brand { display: inline-flex; align-items: center; gap: .35rem; font-size: .55rem; font-weight: 600; letter-spacing: .09em; }
+.mini-brand .brand-logo { width: 76px; flex-shrink: 0; }
 .product-window h4 { font-size: 1.5rem; line-height: 1.2; }
 .ui-muted { font-size: .65rem; margin-top: .5rem; color: var(--muted); }
 .service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; margin-top: 1.5rem; }
@@ -114,7 +115,8 @@ summary::-webkit-details-marker { display: none; }
 .contract-facts dd { margin: .3rem 0 0; font-size: 1rem; letter-spacing: -.03em; }
 .renewal-note { padding: .8rem; background: #f2f3e8; font-size: .65rem; display: flex; align-items: center; }
 .renewal-note > span:last-child { margin-left: auto; }
-.subscription-heading { display: flex; justify-content: space-between; align-items: center; gap: .6rem; }
+.revenue-table { table-layout: fixed; overflow-wrap: anywhere; }
+.revenue-table th:nth-child(3), .revenue-table td:nth-child(3) { text-align: right; padding-right: .5rem; }
 .mock-table { width: 100%; border-collapse: collapse; margin-top: 1.2rem; font-size: .65rem; }
 .mock-table th { text-align: left; font-size: .55rem; font-weight: 400; color: var(--muted); padding-bottom: .6rem; }
 .mock-table td { border-top: 1px solid var(--line); padding: .85rem .3rem .85rem 0; }
@@ -169,6 +171,7 @@ summary::-webkit-details-marker { display: none; }
 .ecosystem-labels { display: flex; justify-content: center; flex-wrap: wrap; gap: .6rem; }
 .ecosystem-labels span { padding: .6rem .8rem; border: 1px solid #ccd7c9; background: var(--white); border-radius: 4px; font-size: .7rem; }
 .ecosystem-hub { font-size: 1.8rem; font-weight: 600; letter-spacing: -.06em; margin: 1.8rem auto; padding: 1.1rem; border-block: 1px solid #a9b8a7; width: 60%; color: var(--forest); }
+.ecosystem-hub .brand-logo { margin-inline: auto; }
 .ecosystem-hub span { display: block; font-size: .65rem; font-weight: 400; letter-spacing: .02em; }
 .ecosystem > small { display: block; margin-top: 1.5rem; font-size: .58rem; color: var(--muted); }
 .final-cta { padding-block: var(--section-space); background: var(--lime); }
