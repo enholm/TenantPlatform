@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TenantPlatform.Core", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TenantPlatform.Infrastructure", "src\TenantPlatform.Infrastructure\TenantPlatform.Infrastructure.csproj", "{7510161C-F24C-4C13-ABE4-00462018C5F8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serga.Website", "src\Serga.Website\Serga.Website.csproj", "{D2F79C4F-454D-4457-AB72-2C922863C7AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,10 +34,15 @@ Global
 		{7510161C-F24C-4C13-ABE4-00462018C5F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7510161C-F24C-4C13-ABE4-00462018C5F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7510161C-F24C-4C13-ABE4-00462018C5F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2F79C4F-454D-4457-AB72-2C922863C7AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2F79C4F-454D-4457-AB72-2C922863C7AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2F79C4F-454D-4457-AB72-2C922863C7AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2F79C4F-454D-4457-AB72-2C922863C7AF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{BAAD81F9-2C6F-43E3-960D-7C079930260A} = {D4E0476A-389B-4805-B6B6-1E8959834BDB}
 		{53221ECA-1148-42AB-AF74-16A0EDA61202} = {D4E0476A-389B-4805-B6B6-1E8959834BDB}
 		{7510161C-F24C-4C13-ABE4-00462018C5F8} = {D4E0476A-389B-4805-B6B6-1E8959834BDB}
+		{D2F79C4F-454D-4457-AB72-2C922863C7AF} = {D4E0476A-389B-4805-B6B6-1E8959834BDB}
 	EndGlobalSection
 EndGlobal

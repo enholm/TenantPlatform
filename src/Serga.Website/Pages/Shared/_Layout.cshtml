@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="@(ViewData["Description"] ?? "Services, contracts, subscriptions and leased assets — connected in one Serga platform.")" />
+    <meta name="theme-color" content="#f3f6fa" />
+    <title>@ViewData["Title"] · Serga</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/site.js" asp-append-version="true" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <partial name="_Navigation" />
+    <main id="main" tabindex="-1">@RenderBody()</main>
+    <partial name="_Footer" />
+</body>
+</html>
