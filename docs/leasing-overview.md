@@ -461,6 +461,10 @@ For en leasingkreditnota velges godkjent originalfaktura. Hver kredittallokering
 
 For feilfordeling på en godkjent faktura endrer du allokeringsradene, oppgir begrunnelse og bruker korrigeringshandlingen. Gamle allokeringer reverseres og nye opprettes med historikk. Skal hele dokumentets effekt oppheves, brukes reversering med begrunnelse. Avhengige kredittkoblinger må håndteres først.
 
+### 13.4 Slette en faktura før godkjenning
+
+Leasingfakturaer under kontroll kan slettes av den som registrerte fakturaen eller en kontoadministrator. Sletting fjerner fakturaen og eventuelle vedlegg, men beholder revisjonssporet. Godkjente fakturaer kan bare reverseres; reverserte fakturaer kan ikke slettes. Åpne fakturaen, velg **Slett faktura**, og bekreft slettingen.
+
 ## 14. Fullføre fakturakontroll og håndtere avvik
 
 1. Åpne anskaffelsens finansierings-/betalingsside og finn **Terminer og fakturakontroll**.

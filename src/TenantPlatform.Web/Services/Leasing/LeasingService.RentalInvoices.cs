@@ -43,6 +43,29 @@ public sealed partial class LeasingService
         var invoice=new LeasingInvoice{Id=request,AccountId=account,Category=LeasingInvoiceCategory.Rental,Status=LeasingInvoiceStatus.Review,Processing=LeasingInvoiceProcessing.Ready,Revision=Guid.NewGuid(),UploadedByUserId=user,UploadedUtc=clock.GetUtcNow(),ReviewJson=Snapshot(new RentalInvoiceReview())};db.LeasingInvoices.Add(invoice);
         PaymentEvent(db,account,null,invoice.Id,user,"RentalCreated","","{}",invoice.ReviewJson,request);await db.SaveChangesAsync(ct);await tx.CommitAsync(ct);return invoice.Id;
     }
+    public async Task DeleteRentalInvoiceAsync(Guid account, Guid id, Guid revision, CancellationToken ct = default)
+    {
+        await using var db = await factory.CreateDbContextAsync(ct);
+        var (user, admin) = await Member(db, account, ct);
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        await Lock(db, account, ct);
+        var invoice = await RentalInvoices(db, account, user, admin).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        if (invoice.Status != LeasingInvoiceStatus.Review) throw new LeasingValidationException("RentalDeleteOnlyDraft");
+        CheckRevision(invoice.Revision, revision, true);
+        db.LeasingInvoiceInterpretations.RemoveRange(await db.LeasingInvoiceInterpretations.Where(x => x.AccountId == account && x.InvoiceId == id).ToListAsync(ct));
+        db.LeasingInvoiceHistory.RemoveRange(await db.LeasingInvoiceHistory.Where(x => x.AccountId == account && x.InvoiceId == id).ToListAsync(ct));
+        // Keep the payment audit trail after removing the draft and its foreign-key reference.
+        foreach (var entry in await db.LeasingPaymentEvents.Where(x => x.AccountId == account && x.InvoiceId == id).ToListAsync(ct)) entry.InvoiceId = null;
+        PaymentEvent(db, account, null, null, user, "RentalDeleted", id.ToString(), invoice.ReviewJson, "{}", Guid.NewGuid());
+        db.LeasingInvoices.Remove(invoice);
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+        if (!string.IsNullOrEmpty(invoice.StorageKey))
+        {
+            try { await storage.DeleteAsync(invoice.StorageKey); }
+            catch (Exception ex) { logger.LogWarning(ex, "Could not remove the file for deleted rental invoice {InvoiceId}", id); }
+        }
+    }
     public Task<Guid> UploadRentalInvoiceAsync(Guid account,string filename,Stream stream,CancellationToken ct=default)=>UploadInvoiceCore(account,null,filename,stream,LeasingInvoiceCategory.Rental,ct);
     public async Task<List<RentalInvoiceRow>> ListRentalInvoicesAsync(Guid account,string? search=null,string? currency=null,Guid? finance=null,LeasingInvoiceStatus? status=null,CancellationToken ct=default)
     {
@@ -128,7 +151,7 @@ public sealed partial class LeasingService
         var amounts=InvoiceCalculator.Calculate(d);if(amounts.Errors.Count>0)throw new LeasingValidationException(amounts.Errors[0]);
         if(!await db.Organizations.AnyAsync(x=>x.AccountId==account&&x.Id==r.FinanceOrganizationId,ct))throw new LeasingValidationException("LeasingInvalidParty");
         var party=await db.Organizations.AsNoTracking().SingleAsync(x=>x.AccountId==account&&x.Id==r.FinanceOrganizationId,ct);
-        if(!string.IsNullOrWhiteSpace(party.OrganizationNumber)&&Identity(d)!=new string(party.OrganizationNumber.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant())throw new LeasingValidationException("InvoiceSupplierMismatch");
+        if(!string.IsNullOrWhiteSpace(party.OrganizationNumber)&&Identity(d)!=new string(party.OrganizationNumber.Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant())throw new LeasingValidationException("RentalSupplierMismatch");
         var number=InvoiceNumber(d);
         if(await db.LeasingInvoices.AnyAsync(x=>x.AccountId==account&&x.Category==LeasingInvoiceCategory.Rental&&x.Status==LeasingInvoiceStatus.Approved&&x.Id!=id&&(i.FileHash!=""&&x.FileHash==i.FileHash||x.FinanceOrganizationId==r.FinanceOrganizationId&&x.Kind==d.Kind&&x.Number==number),ct))throw new LeasingValidationException("InvoiceCertainDuplicate");
         if(d.Kind==LeasingInvoiceKind.CreditNote)

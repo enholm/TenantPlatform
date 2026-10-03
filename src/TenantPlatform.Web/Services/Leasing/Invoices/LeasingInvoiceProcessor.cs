@@ -21,7 +21,8 @@ public sealed class LeasingInvoiceProcessor(IDbContextFactory<TenantPlatformDbCo
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Processing, LeasingInvoiceProcessing.Processing).SetProperty(x => x.ProcessingToken, token)
                 .SetProperty(x => x.ProcessingStartedUtc, now).SetProperty(x => x.Revision, Guid.NewGuid()), ct);
         if (claimed == 0) return true;
-        var invoice = await db.LeasingInvoices.AsNoTracking().SingleAsync(x => x.AccountId == candidate.AccountId && x.Id == candidate.Id, ct);
+        var invoice = await db.LeasingInvoices.AsNoTracking().SingleOrDefaultAsync(x => x.AccountId == candidate.AccountId && x.Id == candidate.Id, ct);
+        if (invoice == null) return true; // The draft may have been deleted after claiming it.
         InvoiceInterpretationResult? result = null; string? error = null;
         try { using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromMinutes(5)); result = await interpreter.InterpretAsync(invoice, timeout.Token); }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
@@ -29,8 +30,8 @@ public sealed class LeasingInvoiceProcessor(IDbContextFactory<TenantPlatformDbCo
         catch (Exception) { error = "InvoiceProcessingFailed"; } // No invoice content/provider body in logs.
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM accounts WHERE \"Id\" = {candidate.AccountId} FOR UPDATE", ct);
-        var entity = await db.LeasingInvoices.SingleAsync(x => x.AccountId == candidate.AccountId && x.Id == candidate.Id, ct);
-        if (entity.ProcessingToken != token) return true;
+        var entity = await db.LeasingInvoices.SingleOrDefaultAsync(x => x.AccountId == candidate.AccountId && x.Id == candidate.Id, ct);
+        if (entity == null || entity.ProcessingToken != token) return true;
         entity.Processing = result == null ? LeasingInvoiceProcessing.Failed : LeasingInvoiceProcessing.Ready; entity.ProcessingError = error;
         entity.ProcessingToken = null; entity.Revision = Guid.NewGuid();
         if (result != null)

@@ -76,6 +76,23 @@ static class PaymentChecks
         for(var attempt=0;attempt<50&&(await owner.GetRentalInvoiceAsync(account,upload)).Invoice.Processing==LeasingInvoiceProcessing.Uploaded;attempt++)await processor.ProcessOneAsync();
         var parsed=await owner.GetRentalInvoiceAsync(account,upload);
         Check(parsed.Interpretations.Count==1&&parsed.Review.Data.Number=="RENTAL-PARSED"&&parsed.Invoice.AcquisitionId==null&&parsed.Invoice.Status==LeasingInvoiceStatus.Review,"shared worker interprets rental source into separate editable review without equipment effects");
+        await owner.DeleteRentalInvoiceAsync(account, upload, parsed.Invoice.Revision);
+        await using (var db = await factory.CreateDbContextAsync())
+        {
+            Check(!await db.LeasingInvoices.AnyAsync(x => x.AccountId == account && x.Id == upload) &&
+                !await db.LeasingInvoiceInterpretations.AnyAsync(x => x.AccountId == account && x.InvoiceId == upload) &&
+                !await db.LeasingInvoiceHistory.AnyAsync(x => x.AccountId == account && x.InvoiceId == upload), "deleting uploaded draft removes invoice, interpretations and history");
+            Check(await db.LeasingPaymentEvents.AnyAsync(x => x.AccountId == account && x.Action == "RentalDeleted" && x.Reason == upload.ToString()), "draft deletion retains audit trail");
+        }
+        Check(!storage.Contains(parsed.Invoice.StorageKey), "draft deletion removes original file");
+        await Deny(() => owner.GetRentalInvoiceAsync(account, upload));
+        var deletable = await owner.NewRentalInvoiceAsync(account, Guid.NewGuid());
+        var deletionDraft = await owner.GetRentalInvoiceAsync(account, deletable);
+        await Deny(() => outsider.DeleteRentalInvoiceAsync(account, deletable, deletionDraft.Invoice.Revision));
+        await Deny(() => owner.DeleteRentalInvoiceAsync(foreignAccount, deletable, deletionDraft.Invoice.Revision));
+        await Reject(() => owner.DeleteRentalInvoiceAsync(account, deletable, Guid.NewGuid()), "LeasingConcurrency");
+        await admin.DeleteRentalInvoiceAsync(account, deletable, deletionDraft.Invoice.Revision);
+        Check(!(await admin.ListRentalInvoicesAsync(account)).Any(x => x.Invoice.Id == deletable), "account admin can delete a manual draft");
         var d1=await Details(a1);Check(d1.Terms.Count==3&&d1.Terms.Sum(x=>x.Term.Gross)==375,"advance rent, fees and residual are never auto-added; special first and last amounts retained");
         var ids=d1.Terms.Select(x=>x.Installment.Id).ToArray();
         async Task<Guid> Active(Guid a){var ds=await Details(a);var t=new LeasingPlanTerm{Reference="1",PeriodFrom=new(2028,1,1),PeriodTo=new(2028,1,31),DueDate=new(2028,2,5),Net=100,Vat=25,Gross=125,FinancingRevisionId=ds.Financing.Single(x=>x.EffectiveFrom.HasValue).Id};var id=await owner.SavePaymentPlanAsync(account,a,null,[t],"",LeasingPlanSource.Manual,null,Guid.NewGuid());var pp=(await Details(a)).Plans.Single(x=>x.Id==id);await admin.ActivatePaymentPlanAsync(account,id,pp.Revision,"Checked",false,Guid.NewGuid());return (await Details(a)).Terms.Single().Installment.Id;}
@@ -87,6 +104,7 @@ static class PaymentChecks
         var beforeApproval=(await admin.GetRentalInvoiceAsync(account,inv)).Invoice.Revision;
         await Task.WhenAll(admin.ApproveRentalInvoiceAsync(account,inv,beforeApproval),Service(adminId).ApproveRentalInvoiceAsync(account,inv,beforeApproval));
         var approved=await admin.GetRentalInvoiceAsync(account,inv);Check(approved.Allocations.Count==3&&approved.Allocations.Sum(x=>x.Net)==150,"concurrent approval creates allocations once across terms and acquisitions with unallocated remainder");
+        await Reject(() => admin.DeleteRentalInvoiceAsync(account, inv, approved.Invoice.Revision), "RentalDeleteOnlyDraft");
         await Deny(()=>admin.GetInvoiceAsync(account,inv));Check(!(await admin.ListInvoicesAsync(account)).Any(x=>x.Id==inv),"rental documents never enter equipment invoice path");
         Check((await Details(a1)).Terms.First().Status==LeasingBillingStatus.Partial,"partial invoicing is not final variance");
         var second=await DraftInvoice(40,[new(){InstallmentId=ids[0],Net=40,Vat=10}]);await Approve(second);
@@ -118,6 +136,8 @@ static class PaymentChecks
             ownReview.Review.Allocations=[new(){InstallmentId=foreignTerm.Id,Net=1}];
             await Deny(()=>owner.SaveRentalReviewAsync(account,ownDraft,ownReview.Invoice.Revision,ownReview.Review));
         }
+        var reversedInvoice = await admin.GetRentalInvoiceAsync(account, inv);
+        await Reject(() => admin.DeleteRentalInvoiceAsync(account, inv, reversedInvoice.Invoice.Revision), "RentalDeleteOnlyDraft");
         // Dedicated roles can inspect options and act only in their own approval domain.
         await using(var db=factory.CreateDbContext()){var m=await db.UserAccounts.SingleAsync(x=>x.AccountId==account&&x.UserId==outsiderId);db.UserAccountRoles.Add(new(){Id=Guid.NewGuid(),UserAccountId=m.Id,Role=UserRole.LeasingPlanApprover});await db.SaveChangesAsync();}
         Check((await outsider.GetPaymentsAsync(account,a1)).Permissions.CanActivate&&!(await outsider.GetPaymentsAsync(account,a1)).Permissions.CanApproveInvoices,"plan approval role is separate from invoice and variance approval");await outsider.OptionsAsync(account);await Deny(()=>outsider.NewRentalInvoiceAsync(account,Guid.NewGuid()));
@@ -137,6 +157,7 @@ static class PaymentChecks
     sealed class PaymentStorage:IAgreementDocumentStorage
     {
         readonly Dictionary<string,byte[]> files=[];public long MaxFileSizeBytes=>1_000_000;
+        public bool Contains(string key) => files.ContainsKey(key);
         public async Task<StoredAgreementFile> StoreAsync(Stream source,string fileName,CancellationToken ct=default){using var buffer=new MemoryStream();await source.CopyToAsync(buffer,ct);var key=Guid.NewGuid().ToString();files[key]=buffer.ToArray();return new(key,fileName,fileName.EndsWith(".csv")?"text/csv":"application/xml",buffer.Length);}
         public Task<Stream> OpenReadAsync(string key,CancellationToken ct=default)=>Task.FromResult<Stream>(new MemoryStream(files[key]));
         public Task DiscardUncommittedAsync(string key){files.Remove(key);return Task.CompletedTask;}

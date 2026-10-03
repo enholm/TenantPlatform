@@ -26,19 +26,24 @@
 <button type="button" class="btn btn-outline-primary" @onclick="()=>allocations.Add(new())">@L["RentalAddAllocation"]</button>
 <label class="d-block mt-2">@L["PaymentReason"]<InputText class="form-control" @bind-Value="reason" /></label><button class="btn btn-primary my-2">@L[details.Invoice.Status==LeasingInvoiceStatus.Approved?"RentalCorrectMatching":"RentalSaveMatching"]</button>
 </fieldset></EditForm>
+@if(details.CanEdit){
+@if(confirmDelete){<div class="alert alert-warning" role="alert"><p>@L["RentalDeleteConfirmation"]</p><button class="btn btn-danger" disabled="@busy" @onclick="Delete">@L["RentalDelete"]</button> <button class="btn btn-outline-secondary" disabled="@busy" @onclick="()=>confirmDelete=false">@L["Cancel"]</button></div>}
+else{<button class="btn btn-outline-danger my-2" disabled="@busy" @onclick="()=>confirmDelete=true">@L["RentalDelete"]</button>}
+}
 @if(details.CanApprove&&details.Invoice.Status==LeasingInvoiceStatus.Review){<p>@L["RentalApproveSaved"]</p><button class="btn btn-success" disabled="@busy" @onclick="Approve">@L["RentalApprove"]</button>}
 @if(details.CanApprove&&details.Invoice.Status==LeasingInvoiceStatus.Approved){<button class="btn btn-outline-danger" disabled="@busy" @onclick="Reverse">@L["RentalReverse"]</button>}
 <details class="my-3"><summary>@L["PaymentHistory"]</summary>@foreach(var h in details.History){<p>@h.RecordedUtc · @L[$"PaymentEvent{h.Action}"] · @h.ActorUserId · @h.Reason</p>}@foreach(var a in details.Allocations){<p>@a.RecordedUtc · @a.InstallmentId · @a.Net / @a.Vat · @(a.Reversed?L["RentalReversedAllocation"]:L["RentalAllocated"])</p>}</details>
 }
 </div>
 @code{
-[Parameter]public Guid Id{get;set;}RentalInvoiceDetails? details;RentalInvoiceReview review=new();List<RentalAllocationInput> allocations=[];LeasingOptions? options;string? error;string reason="";bool busy;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
+[Parameter]public Guid Id{get;set;}RentalInvoiceDetails? details;RentalInvoiceReview review=new();List<RentalAllocationInput> allocations=[];LeasingOptions? options;string? error;string reason="";bool busy,confirmDelete;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
 protected override Task OnParametersSetAsync()=>Run(Load);
 async Task Run(Func<Task> f){if(busy)return;busy=true;error=null;try{await f();}catch(UnauthorizedAccessException){Navigation.NavigateTo("/access-denied");}catch(LeasingValidationException ex){error=ex.Message;}catch{error="LeasingFailed";}finally{busy=false;}}
 async Task Load(){details=await Service.GetRentalInvoiceAsync(account,Id);options=await Service.OptionsAsync(account);review=details.Review;allocations=details.Invoice.Status==LeasingInvoiceStatus.Review?review.Allocations:details.Allocations.Where(x=>!x.Reversed).Select(x=>new RentalAllocationInput{InstallmentId=x.InstallmentId,Net=x.Net,Vat=x.Vat,CreditedAllocationId=x.CreditedAllocationId}).ToList();}
 Task Save()=>Run(async()=>{review.Allocations=allocations;await Service.SaveRentalReviewAsync(account,Id,details!.Invoice.Revision,review);await Load();});
 Task SaveAllocations()=>details!.Invoice.Status==LeasingInvoiceStatus.Review?Save():Run(async()=>{await Service.CorrectRentalAllocationsAsync(account,Id,details.Invoice.Revision,allocations,reason,Guid.NewGuid());await Load();});
 Task Approve()=>Run(async()=>{await Service.ApproveRentalInvoiceAsync(account,Id,details!.Invoice.Revision);await Load();});
+Task Delete()=>Run(async()=>{await Service.DeleteRentalInvoiceAsync(account,Id,details!.Invoice.Revision);Navigation.NavigateTo("/leasing/rental-invoices");});
 Task Reverse()=>Run(async()=>{await Service.ReverseRentalInvoiceAsync(account,Id,details!.Invoice.Revision,reason,Guid.NewGuid());await Load();});
 Task Retry()=>Run(async()=>{await Service.RetryRentalInterpretationAsync(account,Id,details!.Invoice.Revision);await Load();});
 Task Use(Guid interpretation)=>Run(async()=>{await Service.UseRentalInterpretationAsync(account,Id,details!.Invoice.Revision,interpretation);await Load();});

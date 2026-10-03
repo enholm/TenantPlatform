@@ -2694,6 +2694,13 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="InvoicePossibleDuplicate" xml:space="preserve"><value>Ett godkänt dokument har samma fakturanummer eller datum, valuta och belopp. Kontrollera möjlig dubblett.</value></data>
   <data name="InvoiceDuplicateReason" xml:space="preserve"><value>Motivera varför den möjliga dubbletten ändå ska godkännas.</value></data>
   <data name="InvoicePurchaseConflict" xml:space="preserve"><value>Anskaffningen är annullerad eller har en annan valuta än fakturan.</value></data>
+  <data name="RentalDelete" xml:space="preserve"><value>Ta bort faktura</value></data>
+  <data name="RentalDeleteConfirmation" xml:space="preserve"><value>Vill du ta bort denna faktura och eventuella bilagor? Detta kan inte ångras.</value></data>
+  <data name="RentalDeleteOnlyDraft" xml:space="preserve"><value>Endast fakturor som inte är godkända kan tas bort. Godkända fakturor måste återföras.</value></data>
+  <data name="PaymentEventRentalDeleted" xml:space="preserve"><value>Faktura borttagen</value></data>
+  <data name="RentalIssuerName" xml:space="preserve"><value>Fakturautställarens namn</value></data>
+  <data name="RentalIssuerNumber" xml:space="preserve"><value>Fakturautställarens organisationsnummer</value></data>
+  <data name="RentalSupplierMismatch" xml:space="preserve"><value>Fakturans organisationsnummer stämmer inte med det valda finansbolaget. Kontrollera organisationsnumret och finansbolaget och spara granskningen före godkännande.</value></data>
   <data name="InvoiceSupplierMismatch" xml:space="preserve"><value>Fakturans leverantörsnummer stämmer inte med anskaffningens leverantör.</value></data>
   <data name="InvoiceCreditMatch" xml:space="preserve"><value>Kreditnotan måste kopplas till godkända fakturarader på samma anskaffning.</value></data>
   <data name="InvoiceOverCredit" xml:space="preserve"><value>Kreditnotan överstiger återstående dokumenterat antal, netto eller moms.</value></data>

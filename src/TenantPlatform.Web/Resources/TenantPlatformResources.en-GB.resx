@@ -2658,6 +2658,13 @@ This is a reminder, not a termination or renewal.</value>
   <data name="InvoicePossibleDuplicate" xml:space="preserve"><value>An approved document has the same number or date, currency and totals. Check the possible duplicate.</value></data>
   <data name="InvoiceDuplicateReason" xml:space="preserve"><value>Explain why the possible duplicate should be approved.</value></data>
   <data name="InvoicePurchaseConflict" xml:space="preserve"><value>The acquisition is cancelled or has a different currency.</value></data>
+  <data name="RentalDelete" xml:space="preserve"><value>Delete invoice</value></data>
+  <data name="RentalDeleteConfirmation" xml:space="preserve"><value>Delete this invoice and any attachments? This cannot be undone.</value></data>
+  <data name="RentalDeleteOnlyDraft" xml:space="preserve"><value>Only unapproved invoices can be deleted. Approved invoices must be reversed.</value></data>
+  <data name="PaymentEventRentalDeleted" xml:space="preserve"><value>Invoice deleted</value></data>
+  <data name="RentalIssuerName" xml:space="preserve"><value>Invoice issuer name</value></data>
+  <data name="RentalIssuerNumber" xml:space="preserve"><value>Invoice issuer registration number</value></data>
+  <data name="RentalSupplierMismatch" xml:space="preserve"><value>The invoice registration number does not match the selected finance company. Check the registration number and finance company, and save the review before approval.</value></data>
   <data name="InvoiceSupplierMismatch" xml:space="preserve"><value>Supplier registration number does not match the acquisition supplier.</value></data>
   <data name="InvoiceCreditMatch" xml:space="preserve"><value>Match the credit to approved invoice lines in the same acquisition.</value></data>
   <data name="InvoiceOverCredit" xml:space="preserve"><value>Credit exceeds the remaining documented quantity, net or VAT.</value></data>

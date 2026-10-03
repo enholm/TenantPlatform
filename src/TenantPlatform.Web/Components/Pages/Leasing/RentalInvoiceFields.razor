@@ -1,8 +1,8 @@
 <div class="row g-2">
 <div class="col-md-4"><label class="form-label">@L["LeasingFinanceCompany"]<InputSelect class="form-select" @bind-Value="Review.FinanceOrganizationId"><option value="@Guid.Empty">@L["Select"]</option>@foreach(var p in Parties){<option value="@p.Id">@p.Name</option>}</InputSelect></label></div>
 <div class="col-md-4"><label class="form-label">@L["InvoiceKind"]<InputSelect class="form-select" @bind-Value="Review.Data.Kind">@foreach(var k in Enum.GetValues<LeasingInvoiceKind>()){<option value="@k">@L[$"InvoiceKind{k}"]</option>}</InputSelect></label></div>
-<div class="col-md-4"><label class="form-label">@L["LeasingFinanceCompany"]<InputText class="form-control" @bind-Value="Review.Data.SupplierName" /></label></div>
-<div class="col-md-4"><label class="form-label">@L["InvoiceSupplierNumber"]<InputText class="form-control" @bind-Value="Review.Data.SupplierNumber" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["RentalIssuerName"]<InputText class="form-control" @bind-Value="Review.Data.SupplierName" /></label></div>
+<div class="col-md-4"><label class="form-label">@L["RentalIssuerNumber"]<InputText class="form-control" @bind-Value="Review.Data.SupplierNumber" /></label></div>
 <div class="col-md-4"><label class="form-label">@L["LeasingInvoiceNumber"]<InputText class="form-control" @bind-Value="Review.Data.Number" /></label></div>
 <div class="col-md-4"><label class="form-label">@L["LeasingInvoiceDate"]<InputDate class="form-control" @bind-Value="Review.Data.Date" /></label></div>
 <div class="col-md-4"><label class="form-label">@L["PaymentInvoiceDue"]<InputDate class="form-control" @bind-Value="Review.Data.DueDate" /></label></div>

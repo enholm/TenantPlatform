@@ -6,6 +6,7 @@ public interface IAgreementDocumentStorage
     Task<StoredAgreementFile> StoreAsync(Stream source, string originalFileName, CancellationToken cancellationToken = default);
     Task<Stream> OpenReadAsync(string storageKey, CancellationToken cancellationToken = default);
     Task DiscardUncommittedAsync(string storageKey);
+    Task DeleteAsync(string storageKey) => DiscardUncommittedAsync(storageKey);
 }
 
 public record StoredAgreementFile(string StorageKey, string FileName, string MediaType, long Size);

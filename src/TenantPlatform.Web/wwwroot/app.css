@@ -103,3 +103,25 @@ h1:focus {
 @media (min-width: 1200px) {
     .dashboard-grid { grid-template-columns: minmax(0, .85fr) minmax(0, 1.1fr) minmax(0, 1.15fr); }
 }
+
+/* Shared page and section surfaces across all features. */
+:root {
+    --tp-page-bg: #f3f4f6;
+    --tp-surface-bg: #ffffff;
+    --tp-surface-border: #d9dee5;
+    --tp-surface-shadow: 0 2px 6px rgb(15 23 42 / 5%);
+}
+[data-bs-theme="dark"] {
+    --tp-page-bg: #171a1f;
+    --tp-surface-bg: #22262d;
+    --tp-surface-border: #3d444e;
+    --tp-surface-shadow: none;
+}
+.card {
+    --bs-card-bg: var(--tp-surface-bg);
+    --bs-card-border-color: var(--tp-surface-border);
+    box-shadow: var(--tp-surface-shadow);
+}
+.table {
+    --bs-table-bg: var(--tp-surface-bg);
+}

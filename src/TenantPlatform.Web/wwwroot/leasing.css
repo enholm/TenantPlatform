@@ -17,10 +17,10 @@
 }
 .leasing-workspace h1 { font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 650; letter-spacing: -.025em; margin-bottom: 1rem; overflow-wrap: anywhere; }
 .leasing-workspace h2, .leasing-workspace h3 { font-weight: 600; }
-.leasing-workspace .card, .leasing-workspace .table-responsive { border: 1px solid var(--bs-border-color); border-radius: .8rem; background: var(--bs-body-bg); box-shadow: none; }
+.leasing-workspace .card, .leasing-workspace .table-responsive { border: 1px solid var(--tp-surface-border); border-radius: .8rem; background: var(--tp-surface-bg); box-shadow: var(--tp-surface-shadow); }
 .leasing-workspace .card .table-responsive { border: 0; }
 .leasing-workspace .card-body { padding: 1.25rem; }
-.leasing-workspace .table { margin-bottom: 0; vertical-align: middle; }
+.leasing-workspace .table { --bs-table-bg: var(--tp-surface-bg); margin-bottom: 0; vertical-align: middle; }
 .leasing-workspace .table > :not(caption) > * > * { padding: .85rem 1rem; }
 .leasing-workspace .table thead th { background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-size: .8rem; font-weight: 600; white-space: nowrap; }
 .leasing-workspace .table td { font-size: .9rem; }
@@ -61,10 +61,10 @@
 .leasing-subnav { display: flex; flex-wrap: wrap; gap: .5rem; padding: .75rem; margin-bottom: 1.5rem; background: var(--bs-tertiary-bg); border-radius: .75rem; }
 .leasing-subnav a { padding: .4rem .75rem; text-decoration: none; color: var(--bs-body-color); border-radius: .4rem; }
 .leasing-subnav a:hover { background: var(--bs-secondary-bg); }
-.leasing-disclosure { border: 1px solid var(--bs-border-color); border-radius: .75rem; padding: 1rem; margin-bottom: 1rem; background: var(--bs-body-bg); }
+.leasing-workspace .leasing-disclosure { border: 1px solid var(--tp-surface-border); border-radius: .75rem; padding: 1rem; margin-bottom: 1rem; background: var(--tp-surface-bg); box-shadow: var(--tp-surface-shadow); }
 .leasing-disclosure > summary { font-weight: 600; cursor: pointer; }
 .leasing-disclosure[open] > summary { margin-bottom: 1rem; }
-.leasing-form-section { padding: 1.25rem; border: 1px solid var(--bs-border-color); border-radius: .8rem; margin-bottom: 1.25rem; background: var(--bs-body-bg); }
+.leasing-workspace .leasing-form-section { padding: 1.25rem; border: 1px solid var(--tp-surface-border); border-radius: .8rem; margin-bottom: 1.25rem; background: var(--tp-surface-bg); box-shadow: var(--tp-surface-shadow); }
 .leasing-form-actions { display: flex; gap: .75rem; padding-block: 1rem; border-top: 1px solid var(--bs-border-color); }
 .leasing-numeric { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .leasing-workspace [id] { scroll-margin-top: 5rem; }
