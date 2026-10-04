@@ -1,4 +1,0 @@
-@page "/{section}/{slug?}"
-@model PreviewModel
-@{ ViewData["Title"] = Model.Title; ViewData["Description"] = Model.Description; }
-<section class="preview-page container"><p class="eyebrow">@Model.Category</p><h1>@Model.Title</h1><p class="preview-description">@Model.Description</p><div class="preview-notice"><span class="eyebrow">A first look at Serga</span><p>@Model.Note</p></div><div class="actions"><a class="button button-dark" href="/#products">Explore the platform <span aria-hidden="true">↗</span></a><a class="text-link" href="/">Back to home</a></div></section>
