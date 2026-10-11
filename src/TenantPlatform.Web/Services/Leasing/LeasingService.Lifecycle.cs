@@ -62,6 +62,7 @@ public sealed partial class LeasingService
         await using var tx=await db.Database.BeginTransactionAsync(ct);await Lock(db,account,ct);var a=await LifecycleAcquisition(db,account,id,user,admin,ct);
         if(await PaymentRetry(db,account,request,user,"LifecycleTerms",id,null,ct))return;
         var state=await LifecycleState(db,a,ct);CheckRevision(state.Revision,input.Revision,true);Reason(reason,true);
+        if(input.NoticeBasis==LeasingNoticeBasis.None){input.ExplicitNoticeDate=null;input.NoticeCount=null;}
         if(input.ExplicitNoticeDate==DateOnly.MinValue||input.ReturnDueDate==DateOnly.MinValue||!Enum.IsDefined(input.NoticeBasis)||input.Notes.Length>10000||input.NoticeCount is <0 or >36500||input.ExtensionMonths is <1 or >600||input.AutomaticExtension==true&&!input.ExtensionMonths.HasValue||input.NoticeBasis==LeasingNoticeBasis.Explicit&&!input.ExplicitNoticeDate.HasValue||input.NoticeBasis is LeasingNoticeBasis.Days or LeasingNoticeBasis.CalendarMonths&&(!input.NoticeCount.HasValue||LeasingLifecycleCalculator.Notice(state.AgreedEndDate,input.NoticeBasis,null,input.NoticeCount)==null))throw new LeasingValidationException("LifeInvalidTerms");
         if(input.AgreedEndDate!=state.AgreedEndDate)throw new LeasingValidationException("LifeUseExtension");
         await LifecycleReferences(db,account,id,input.OwnerUserId,input.SourceDocumentId,ct);var before=Snapshot(state);

@@ -4,7 +4,7 @@
     --lease-amber-bg: #fff5df; --lease-amber-fg: #815500;
     --lease-purple-bg: #f3edff; --lease-purple-fg: #7041a4;
     --lease-red-bg: #fff0ee; --lease-red-fg: #ad342d;
-    --lease-neutral-bg: #f1f3f5; --lease-neutral-fg: #52606d;
+    --lease-neutral-bg: #e2e7ed; --lease-neutral-fg: #52606d;
     max-width: 1600px; margin-inline: auto; padding-bottom: 2rem;
     color: var(--bs-body-color); line-height: 1.55;
 }

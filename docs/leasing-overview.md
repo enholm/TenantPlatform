@@ -545,6 +545,8 @@ Nåværende plassering/ansvarlig endrer ikke historiske økonomiske dimensjoner.
 
 Kalendermåneder følger månedssluttregler: 31. mars 2028 minus én måned blir 29. februar. Ingen helligdagsjustering foretas. Ukjente vilkår skal stå som uavklart. Ny avtalt sluttdato registreres gjennom forlengelsesflyten, ikke ved å overskrive tidligere historikk i fristskjemaet.
 
+Velg **Ingen oppsigelsesfrist / ikke relevant** når avtalen ikke har en oppsigelsesfrist. **Uavklart** brukes til avtalen er kontrollert. Automatisk forlengelse avklares separat med ja eller nei. Når begge er avklart, tas oppfølgingspunktet **Uavklarte frister og vilkår** ut av listen over åpne oppgaver ved neste automatiske oppdatering.
+
 ### 16.2 Behandle oppfølgingspunkter
 
 1. Gå til **Oppfølging**.

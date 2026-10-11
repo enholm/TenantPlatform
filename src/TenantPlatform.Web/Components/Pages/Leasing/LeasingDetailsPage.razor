@@ -15,7 +15,15 @@
     var f = data.Framework; var a = data.Acquisition;
     var currency = f?.Currency ?? a!.Currency;
     <div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h1>@(f?.Name ?? a!.Name)</h1><span class="badge text-bg-secondary">@L[$"LeasingStatus{(f is null ? a!.Status.ToString() : f.Status.ToString())}"]</span></div>
-        @if (data.CanEdit) { <a class="btn btn-primary align-self-center" href="@($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{Id}/edit")">@L["Edit"]</a> }
+        <div class="d-flex flex-wrap align-self-center gap-2">
+            @if (data.CanEdit) { <a class="btn btn-primary" href="@($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{Id}/edit")">@L["Edit"]</a> }
+            @if (f is not null)
+            {
+                <a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders?framework={f.Id}")">@L["PurchaseOrders"]</a>
+                <a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders/create?framework={f.Id}")">@L["OrderNew"]</a>
+                @if (f.Status == LeasingFrameworkStatus.Open && data.CanEdit) { <a class="btn btn-outline-primary" href="@($"/leasing/acquisitions/create?framework={f.Id}")">@L["LeasingNewAcquisition"]</a> }
+            }
+        </div>
     </div>
     <nav class="leasing-subnav" aria-label="@L["LeasingDetails"]">
         <a href="@SectionLink("leasing-overview")"><i class="bi bi-grid" aria-hidden="true"></i> @L["LeasingDetails"]</a>
@@ -59,7 +67,6 @@
             <div class="col-sm-4"><div>@L["OrderReserved"]</div><strong class="fs-4">@data.Reserved.ToString("N2") @currency</strong></div>
             <div class="col-sm-4"><div>@L["LeasingAvailable"]</div><strong class="fs-4">@((f.Limit - data.Used - data.Reserved).ToString("N2")) @currency</strong></div>
         </div><p class="small text-muted mt-3">@L["InvoiceCreditRule"] @L[f.CreditNotesReleaseLimit.HasValue ? (f.CreditNotesReleaseLimit.Value ? "Yes" : "No") : "DashboardUnspecified"]</p><p class="small text-muted mt-3 mb-0">@L["LeasingCapacityHelp"]</p></div></section>
-        <div class="d-flex gap-2 mb-3"><a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders?framework={f.Id}")">@L["PurchaseOrders"]</a><a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders/create?framework={f.Id}")">@L["OrderNew"]</a></div>
         <LeasingLimitChanges Framework="f" Used="data.Used" Reserved="data.Reserved" Changed="Load" />
         <section class="card mb-3"><div class="card-body"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><h2 class="h5">@L["LeasingAcquisitions"]</h2>
             @if (f.Status == LeasingFrameworkStatus.Open && data.CanEdit) { <a class="btn btn-outline-primary" href="@($"/leasing/acquisitions/create?framework={f.Id}")">@L["LeasingNewAcquisition"]</a> }

@@ -8,6 +8,7 @@
 @inject NavigationManager Navigation
 <div class="leasing-workspace">
 <h1>@L["LifeFollowup"]</h1>
+<p class="text-body-secondary">@L["LifeUnknownTermsHelp"]</p>
 @if(error!=null){<p class="alert alert-danger">@L[error]</p>}
 @if(data!=null){
 @if(data.Notifications.Count>0){<section class="alert alert-info"><h2 class="h5">@L["LifeNotifications"]</h2>@foreach(var n in data.Notifications){var task=data.NotificationTasks[n.FollowupId];<p><a href="@(task.AcquisitionId.HasValue?$"/leasing/acquisitions/{task.AcquisitionId}/lifecycle":$"/leasing/frameworks/{task.FrameworkId}")">@data.Names.GetValueOrDefault(task.AcquisitionId??task.FrameworkId??Guid.Empty) · @L[$"LifeFollowup{task.Kind}"] · @task.DueDate</a> · @n.DeliveredUtc · @n.DaysBefore @L["LifeDaysBefore"] @if(n.ReadUtc==null){<button class="btn btn-sm btn-outline-primary" @onclick="()=>Read(n.Id)">@L["LifeMarkRead"]</button>}<a href="#tasks">@L["LifeFollowup"]</a></p>}</section>}

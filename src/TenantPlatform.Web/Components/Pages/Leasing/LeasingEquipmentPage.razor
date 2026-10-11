@@ -5,6 +5,7 @@
 @inject LeasingService Service
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
+@inject ILogger<LeasingEquipmentPage> Logger
 <div class="leasing-workspace">
 <h1>@L["LifeEquipment"]</h1><p>@L["LifeEquipmentHelp"]</p>
 @if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
@@ -28,7 +29,7 @@
 [SupplyParameterFromQuery(Name="acquisition")]public Guid? Acquisition{get;set;}EquipmentPage? rows;LifecycleDetails? data;LeasingEquipment equipment=new(){RegisteredDate=DateOnly.FromDateTime(DateTime.Today)};LeasingOptions? options;List<LeasingOption> buildings=[];string? error;string search="",reason="",bulk="";LeasingEquipmentStatus? status;int page=1,count=1;bool busy,duplicateConfirmed;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
 protected override Task OnParametersSetAsync()=>Run(Load);
 async Task Load(){rows=await Service.ListEquipmentAsync(account,search,status,Acquisition,page);if(Acquisition.HasValue){data=await Service.GetLifecycleAsync(account,Acquisition.Value);options=await Service.OptionsAsync(account);buildings=await Service.EquipmentBuildingsAsync(account);}}
-async Task Run(Func<Task> f){if(busy)return;busy=true;error=null;try{await f();}catch(UnauthorizedAccessException){Navigation.NavigateTo("/access-denied");}catch(LeasingValidationException ex){error=ex.Message;}catch{error="LeasingFailed";}finally{busy=false;}}
+async Task Run(Func<Task> f){if(busy)return;busy=true;error=null;try{await f();}catch(UnauthorizedAccessException){Navigation.NavigateTo("/access-denied");}catch(LeasingValidationException ex){error=ex.Message;}catch(Exception ex){Logger.LogError(ex,"Leasing equipment operation failed for account {AccountId}, acquisition {AcquisitionId}",account,Acquisition);error="LeasingFailed";}finally{busy=false;}}
 Task Page(int change){page+=change;return Run(Load);}void New(){equipment=new(){RegisteredDate=DateOnly.FromDateTime(DateTime.Today)};bulk="";count=1;duplicateConfirmed=false;}void Edit(LeasingEquipment e){equipment=JsonSerializer.Deserialize<LeasingEquipment>(JsonSerializer.Serialize(e))!;bulk="";count=1;}
 Task Countable(LeasingItem item)=>Run(async()=>{await Service.SetCountableAsync(account,Acquisition!.Value,item.Id,!item.CountableEquipment,L["LifeCountableChange"]);await Load();});
 Task Save()=>Run(async()=>{if(equipment.ItemId==Guid.Empty)throw new LeasingValidationException("LifeSelectEquipmentItem");var list=new List<LeasingEquipment>();if(equipment.Id!=Guid.Empty)list.Add(equipment);else if(!string.IsNullOrWhiteSpace(bulk)){foreach(var line in bulk.Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries)){var cells=line.Split(';');var e=JsonSerializer.Deserialize<LeasingEquipment>(JsonSerializer.Serialize(equipment))!;e.SerialNumber=cells[0];e.InternalId=cells.Length>1?cells[1]:null;list.Add(e);}}else for(var i=0;i<count;i++)list.Add(JsonSerializer.Deserialize<LeasingEquipment>(JsonSerializer.Serialize(equipment))!);await Service.SaveEquipmentAsync(account,Acquisition!.Value,list,duplicateConfirmed,reason,Guid.NewGuid());New();await Load();});

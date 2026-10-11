@@ -3099,6 +3099,9 @@ This is a reminder, not a termination or renewal.</value>
 <data name="LifeEquipmentReplaced" xml:space="preserve"><value>Replaced</value></data>
 <data name="LifeEquipmentBoughtOut" xml:space="preserve"><value>Bought out</value></data>
 <data name="LifeEquipmentLostOrDamaged" xml:space="preserve"><value>Lost or damaged</value></data>
+<data name="LifeNoticeNone" xml:space="preserve"><value>No notice period / not applicable</value></data>
+<data name="LifeNoticeHelp" xml:space="preserve"><value>Enter the notice terms from the agreement, or select “No notice period / not applicable” if none applies. Keep “Unknown” until the terms have been reviewed. Also specify whether the agreement extends automatically; if yes, enter the number of months.</value></data>
+<data name="LifeUnknownTermsHelp" xml:space="preserve"><value>“Unknown deadlines and terms” means that notice terms or automatic extension have not been clarified for the acquisition. Open the object to record the terms on its lifecycle page. Once both are clarified, the item leaves the open task list at the next automatic update.</value></data>
 <data name="LifeNoticeUnknown" xml:space="preserve"><value>Unknown</value></data>
 <data name="LifeNoticeExplicit" xml:space="preserve"><value>Explicit date</value></data>
 <data name="LifeNoticeDays" xml:space="preserve"><value>Calendar days before expiry</value></data>

@@ -3135,6 +3135,9 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
 <data name="LifeEquipmentReplaced" xml:space="preserve"><value>Erstattet</value></data>
 <data name="LifeEquipmentBoughtOut" xml:space="preserve"><value>Kjøpt ut</value></data>
 <data name="LifeEquipmentLostOrDamaged" xml:space="preserve"><value>Tapt eller skadet</value></data>
+<data name="LifeNoticeNone" xml:space="preserve"><value>Ingen oppsigelsesfrist / ikke relevant</value></data>
+<data name="LifeNoticeHelp" xml:space="preserve"><value>Registrer oppsigelsesfristen fra avtalen, eller velg «Ingen oppsigelsesfrist / ikke relevant» hvis avtalen ikke har en slik frist. Behold «Uavklart» til vilkårene er kontrollert. Angi også om avtalen forlenges automatisk; ved ja må antall måneder registreres.</value></data>
+<data name="LifeUnknownTermsHelp" xml:space="preserve"><value>«Uavklarte frister og vilkår» betyr at oppsigelsesfrist eller automatisk forlengelse ikke er avklart for anskaffelsen. Velg «Åpne objekt» for å registrere vilkårene på livsløpssiden. Når begge er avklart, fjernes punktet fra åpne oppgaver ved neste automatiske oppdatering.</value></data>
 <data name="LifeNoticeUnknown" xml:space="preserve"><value>Uavklart</value></data>
 <data name="LifeNoticeExplicit" xml:space="preserve"><value>Eksplisitt dato</value></data>
 <data name="LifeNoticeDays" xml:space="preserve"><value>Kalenderdager før slutt</value></data>

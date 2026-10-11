@@ -2,7 +2,7 @@ namespace TenantPlatform.Core.Leasing;
 
 public enum LeasingLifecycleStatus { Active=1, Closing=2, Extended=3, Closed=4 }
 public enum LeasingEquipmentStatus { InUse=1, PlannedReturn=2, Returned=3, Replaced=4, BoughtOut=5, LostOrDamaged=6 }
-public enum LeasingNoticeBasis { Unknown=0, Explicit=1, Days=2, CalendarMonths=3 }
+public enum LeasingNoticeBasis { Unknown=0, Explicit=1, Days=2, CalendarMonths=3, None=4 }
 public enum LeasingLifecycleKind { Return=1, Replace=2, Buyout=3, LossOrDamage=4, Extend=5, StartClosing=6, Close=7, EarlyClose=8, Correct=9 }
 public enum LeasingLifecycleDecision { Pending=1, Approved=2, Rejected=3, Reversed=4 }
 public enum LeasingFollowupKind { Expiry=1, Notice=2, Return=3, ExtensionOutcome=4, OpenReservation=5, Equipment=6, UnknownTerms=7, MissingOwner=8, PaymentPlan=9, Documents=10, FrameworkEnd=11 }

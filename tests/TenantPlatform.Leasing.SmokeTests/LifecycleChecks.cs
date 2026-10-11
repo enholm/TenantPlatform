@@ -40,6 +40,17 @@ static class LifecycleChecks
         await Deny(()=>outsider.GetLifecycleAsync(account,a1));await Deny(()=>admin.GetLifecycleAsync(foreignAccount,a1));await Deny(()=>outsider.SaveEquipmentAsync(account,a1,[],false,"No permission",Guid.NewGuid()));
         var f=(await admin.GetAsync(account,frame,true)).Framework!;f.Status=LeasingFrameworkStatus.Finished;await Reject(()=>admin.SaveFrameworkAsync(account,frame,f,"Close"),"LifeFrameworkUnresolved");
         async Task<LifecycleDetails> Details(Guid id)=>await admin.GetLifecycleAsync(account,id);
+        var noNotice = initial.Lifecycle;
+        noNotice.NoticeBasis = LeasingNoticeBasis.None; noNotice.ExplicitNoticeDate = new(2027, 12, 1); noNotice.NoticeCount = 30;
+        await owner.SaveLifecycleTermsAsync(account, a1, noNotice, "No contractual notice period", Guid.NewGuid());
+        await processor.RunAccountAsync(account);
+        Check((await admin.ListLeasingFollowupsAsync(account)).Rows.Any(x => x.AcquisitionId == a1 && x.Kind == LeasingFollowupKind.UnknownTerms), "automatic extension must still be clarified when no notice applies");
+        noNotice = (await admin.GetLifecycleAsync(account, a1)).Lifecycle; noNotice.AutomaticExtension = false;
+        await owner.SaveLifecycleTermsAsync(account, a1, noNotice, "No automatic extension", Guid.NewGuid());
+        await processor.RunAccountAsync(account);
+        initial = await admin.GetLifecycleAsync(account, a1);
+        Check(initial.Lifecycle.NoticeBasis == LeasingNoticeBasis.None && initial.Lifecycle.NoticeDate == null && initial.Lifecycle.ExplicitNoticeDate == null && initial.Lifecycle.NoticeCount == null, "no notice persists and clears stale deadline inputs");
+        Check(!(await admin.ListLeasingFollowupsAsync(account)).Rows.Any(x => x.AcquisitionId == a1 && x.Kind is LeasingFollowupKind.UnknownTerms or LeasingFollowupKind.Notice), "clarified absence of notice and extension removes unknown terms without generating notice tasks");
         var l=initial.Lifecycle;l.NoticeBasis=LeasingNoticeBasis.CalendarMonths;l.NoticeCount=1;l.AutomaticExtension=true;l.ExtensionMonths=12;l.ReturnDueDate=new(2028,2,15);await owner.SaveLifecycleTermsAsync(account,a1,l,"Documented notice",Guid.NewGuid());
         var settings=await admin.GetLeasingNotificationSettingsAsync(account);settings.Enabled=true;settings.Days=[30,7,0];settings.ExtraRecipientIds=[outsiderId];await admin.SaveLeasingNotificationSettingsAsync(account,settings,"Explicit activation");await processor.RunAccountAsync(account);
         await using(var db=factory.CreateDbContext()){Check(!await db.LeasingNotifications.AnyAsync(x=>x.AccountId==account&&x.Status==LeasingNotificationStatus.Delivered),"activation sends no historical backlog");Check(await db.LeasingNotifications.AnyAsync(x=>x.AccountId==account&&x.Status==LeasingNotificationStatus.Skipped&&x.ResultKey=="LifeNotificationHistorical"),"historical notification skip status retained");}

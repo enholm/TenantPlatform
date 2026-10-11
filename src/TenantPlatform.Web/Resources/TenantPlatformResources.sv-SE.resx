@@ -3136,6 +3136,9 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
 <data name="LifeEquipmentReplaced" xml:space="preserve"><value>Ersatt</value></data>
 <data name="LifeEquipmentBoughtOut" xml:space="preserve"><value>Utköpt</value></data>
 <data name="LifeEquipmentLostOrDamaged" xml:space="preserve"><value>Förlorad eller skadad</value></data>
+<data name="LifeNoticeNone" xml:space="preserve"><value>Ingen uppsägningsfrist / inte relevant</value></data>
+<data name="LifeNoticeHelp" xml:space="preserve"><value>Registrera uppsägningsfristen från avtalet eller välj ”Ingen uppsägningsfrist / inte relevant” om avtalet saknar en sådan frist. Behåll ”Oklart” tills villkoren har kontrollerats. Ange också om avtalet förlängs automatiskt; vid ja måste antalet månader registreras.</value></data>
+<data name="LifeUnknownTermsHelp" xml:space="preserve"><value>”Oklara frister och villkor” betyder att uppsägningsfrist eller automatisk förlängning inte har klarlagts för anskaffningen. Öppna objektet för att registrera villkoren på livscykelsidan. När båda har klarlagts försvinner punkten från öppna uppgifter vid nästa automatiska uppdatering.</value></data>
 <data name="LifeNoticeUnknown" xml:space="preserve"><value>Oklart</value></data>
 <data name="LifeNoticeExplicit" xml:space="preserve"><value>Uttryckligt datum</value></data>
 <data name="LifeNoticeDays" xml:space="preserve"><value>Kalenderdagar före slut</value></data>
