@@ -7,16 +7,33 @@
 @inject NavigationManager Navigation
 
 <PageTitle>@L["Agreements"]</PageTitle>
-<div class="d-flex justify-content-between mb-3"><h1>@L["Agreements"]</h1>
-@if (allowed) { <a href="/agreements/bases/generate" class="btn btn-outline-primary align-self-center">@L["BulkTitle"]</a> }
-@if (canCreate) { <AgreementAnalysisDialog /> <a href="/agreements/create" class="btn btn-primary align-self-center"><i class="bi bi-plus-lg"></i> @L["AgreementCreate"]</a> }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">@L["Agreements"]</h1>
+
+    <div class="d-flex gap-2 align-items-center">
+        @if (allowed)
+        {
+            <a href="/agreements/bases/generate" class="btn btn-outline-primary">
+                @L["BulkTitle"]
+            </a>
+        }
+
+        @if (canCreate)
+        {
+            <AgreementAnalysisDialog />
+
+            <a href="/agreements/create" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> @L["AgreementCreate"]
+            </a>
+        }
+    </div>
 </div>
 @if (error) { <div class="alert alert-danger" role="alert">@L["AgreementOperationFailed"]</div> }
 @if (allowed)
 {
     <div class="card mb-3"><div class="card-body">
     <fieldset disabled="@busy"><div class="row g-3">
-        <div class="col-md-3"><label for="agreement-search" class="form-label">@L["Search"]</label><input id="agreement-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
+        <div class="col-md-2"><label for="agreement-search" class="form-label">@L["Search"]</label><input id="agreement-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
         <div class="col-md-2"><label for="agreement-status" class="form-label">@L["Status"]</label><select id="agreement-status" class="form-select" @bind="filter.Status">
             <option value="">@L["AgreementAll"]</option>
             @foreach (var value in Enum.GetValues<AgreementStatus>()) { <option value="@value">@L[$"AgreementStatus{value}"]</option> }
@@ -29,7 +46,7 @@
             <option value="">@L["AgreementAll"]</option>
             @if (result is not null) { @foreach (var owner in result.Owners) { <option value="@owner.Id">@owner.Name</option> } }
         </select></div>
-        <div class="col-md-3"><label for="agreement-attention" class="form-label">@L["DashboardAttention"]</label>
+        <div class="col-md-2"><label for="agreement-attention" class="form-label">@L["DashboardAttention"]</label>
             <select id="agreement-attention" class="form-select" @bind="filter.Attention">
                 <option value="">@L["AgreementAll"]</option>
                 @foreach (var value in Enum.GetValues<AgreementAttention>()) { <option value="@value">@L[$"DashboardAttention{value}"]</option> }

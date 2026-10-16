@@ -14,36 +14,69 @@
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (allowed)
 {
-    <div class="card mb-3"><div class="card-body"><fieldset disabled="@busy"><div class="row g-3">
-        <div class="col-md-4"><label for="follow-search" class="form-label">@L["Search"]</label><input id="follow-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
-        <div class="col-md-4"><label for="follow-range" class="form-label">@L["FollowupRange"]</label><select id="follow-range" class="form-select" @bind="range" @bind:after="RangeChanged">
-            <option value="30">@L["FollowupNextDays", 30]</option><option value="60">@L["FollowupNextDays", 60]</option><option value="90">@L["FollowupNextDays", 90]</option><option value="0">@L["FollowupCustomRange"]</option>
-        </select></div>
-        <div class="col-md-4"><label for="follow-owner" class="form-label">@L["FollowupOwner"]</label><select id="follow-owner" class="form-select" @bind="filter.AssignedUserId">
-            <option value="">@L["AgreementAll"]</option>
-            @if (result is not null) { @foreach (var owner in result.Owners) { <option value="@owner.Id">@owner.Name</option> } }
-        </select></div>
-        @if (filter.CustomDates)
-        {
-            <div class="col-md-6"><label for="follow-from" class="form-label">@L["FollowupFrom"]</label><input id="follow-from" type="date" class="form-control" @bind="filter.From" /></div>
-            <div class="col-md-6"><label for="follow-to" class="form-label">@L["FollowupTo"]</label><input id="follow-to" type="date" class="form-control" @bind="filter.To" /></div>
-        }
-        <div class="col-md-3"><label for="follow-type" class="form-label">@L["AgreementType"]</label><select id="follow-type" class="form-select" @bind="filter.AgreementType">
-            <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementType>()) { <option value="@v">@L[$"AgreementType{v}"]</option> }
-        </select></div>
-        <div class="col-md-3"><label for="follow-kind" class="form-label">@L["FollowupKind"]</label><select id="follow-kind" class="form-select" @bind="filter.Kind">
-            <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementDeadlineKind>()) { <option value="@v">@L[$"FollowupKind{v}"]</option> }
-        </select></div>
-        <div class="col-md-3"><label for="follow-status" class="form-label">@L["FollowupStatus"]</label><select id="follow-status" class="form-select" @bind="filter.Status">
-            <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementFollowupStatus>()) { <option value="@v">@L[$"FollowupStatus{v}"]</option> }
-        </select></div>
-        <div class="col-md-3"><label for="follow-state" class="form-label">@L["FollowupState"]</label><select id="follow-state" class="form-select" @bind="filter.State">
-            <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementDeadlineState>()) { <option value="@v">@L[$"FollowupState{v}"]</option> }
-        </select></div>
-        <div class="col-md-4"><div class="form-check"><input id="mine" type="checkbox" class="form-check-input" @bind="filter.Mine" /><label for="mine">@L["FollowupMine"]</label></div></div>
-        <div class="col-md-4"><div class="form-check"><input id="completed" type="checkbox" class="form-check-input" @bind="filter.IncludeCompleted" /><label for="completed">@L["FollowupIncludeCompleted"]</label></div></div>
-        <div class="col-md-4"><button class="btn btn-primary" @onclick="SearchAsync">@L["Search"]</button></div>
-    </div></fieldset></div></div>
+    <div class="card mb-3">
+        <div class="card-body">
+            <fieldset disabled="@busy">
+                <div class="row g-3">
+                    <div class="col-md-3"><label for="follow-search" class="form-label">@L["Search"]</label><input id="follow-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
+                    <div class="col-md-3"><label for="follow-range" class="form-label">@L["FollowupRange"]</label><select id="follow-range" class="form-select" @bind="range" @bind:after="RangeChanged">
+                        <option value="30">@L["FollowupNextDays", 30]</option><option value="60">@L["FollowupNextDays", 60]</option><option value="90">@L["FollowupNextDays", 90]</option><option value="0">@L["FollowupCustomRange"]</option>
+                    </select></div>
+                    <div class="col-md-3"><label for="follow-owner" class="form-label">@L["FollowupOwner"]</label><select id="follow-owner" class="form-select" @bind="filter.AssignedUserId">
+                        <option value="">@L["AgreementAll"]</option>
+                        @if (result is not null) { @foreach (var owner in result.Owners) { <option value="@owner.Id">@owner.Name</option> } }
+                    </select></div>
+                    @if (filter.CustomDates)
+                    {
+                        <div class="col-md-6"><label for="follow-from" class="form-label">@L["FollowupFrom"]</label><input id="follow-from" type="date" class="form-control" @bind="filter.From" /></div>
+                        <div class="col-md-6"><label for="follow-to" class="form-label">@L["FollowupTo"]</label><input id="follow-to" type="date" class="form-control" @bind="filter.To" /></div>
+                    }
+                    <div class="col-md-3"><label for="follow-type" class="form-label">@L["AgreementType"]</label><select id="follow-type" class="form-select" @bind="filter.AgreementType">
+                        <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementType>()) { <option value="@v">@L[$"AgreementType{v}"]</option> }
+                    </select></div>
+                    <div class="col-md-3"><label for="follow-kind" class="form-label">@L["FollowupKind"]</label><select id="follow-kind" class="form-select" @bind="filter.Kind">
+                        <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementDeadlineKind>()) { <option value="@v">@L[$"FollowupKind{v}"]</option> }
+                    </select></div>
+                    <div class="col-md-3"><label for="follow-status" class="form-label">@L["FollowupStatus"]</label><select id="follow-status" class="form-select" @bind="filter.Status">
+                        <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementFollowupStatus>()) { <option value="@v">@L[$"FollowupStatus{v}"]</option> }
+                    </select></div>
+                    <div class="col-md-3"><label for="follow-state" class="form-label">@L["FollowupState"]</label><select id="follow-state" class="form-select" @bind="filter.State">
+                        <option value="">@L["AgreementAll"]</option>@foreach (var v in Enum.GetValues<AgreementDeadlineState>()) { <option value="@v">@L[$"FollowupState{v}"]</option> }
+                    </select></div>
+
+                    <div class="col-12">
+                        <div class="d-flex align-items-center gap-4">
+                            <div class="form-check">
+                                <input id="mine"
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    @bind="filter.Mine" />
+                                <label for="mine" class="form-check-label">
+                                    @L["FollowupMine"]
+                                </label>
+                            </div>
+
+                            <div class="form-check">
+                                <input id="completed"
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    @bind="filter.IncludeCompleted" />
+                                <label for="completed" class="form-check-label">
+                                    @L["FollowupIncludeCompleted"]
+                                </label>
+                            </div>
+
+                            <button class="btn btn-primary"
+                                    @onclick="SearchAsync">
+                                @L["Search"]
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </fieldset>
+        </div>
+    </div>
 }
 @if (busy) { <p role="status">@L["Loading"]</p> }
 else if (result is not null)
