@@ -32,6 +32,25 @@ services:
       - frontend
       - backend
 
+  serga-website:
+    build:
+      context: ..
+      dockerfile: docker/website/Dockerfile
+
+    container_name: serga-website
+    restart: unless-stopped
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Serga__ApplicationUrl: ${Serga__ApplicationUrl:-http://192.168.123.105:8080}
+
+    ports:
+      - "192.168.123.105:8081:8080"
+
+    networks:
+      - frontend
+
   postgres:
     image: postgres:17
     container_name: tenantplatform-postgres

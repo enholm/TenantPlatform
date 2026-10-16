@@ -1,3 +1,4 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 <header class="site-header">
     <div class="container header-inner">
         <a class="wordmark" href="/" aria-label="Serga home"><img class="brand-logo" src="/assets/images/branding/serga-logo-light.png" alt="Serga" width="646" height="188" /></a>
@@ -15,7 +16,7 @@
                     </div>
                 </details>
                 <a href="/platform">Platform</a><a href="/pricing">Pricing</a>
-                <div class="nav-actions"><a href="https://serga.magida.org">Sign in <span aria-hidden="true">↗</span></a><a class="button button-dark button-small" href="/contact">Book a demo <span aria-hidden="true">↗</span></a></div>
+                <div class="nav-actions"><a href="@Configuration["Serga:ApplicationUrl"]">Sign in <span aria-hidden="true">↗</span></a><a class="button button-dark button-small" href="/contact">Book a demo <span aria-hidden="true">↗</span></a></div>
             </nav>
         </details>
     </div>

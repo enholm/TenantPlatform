@@ -80,37 +80,57 @@ public static class DemoDataInitializer
                 Id = accountId, Name = "Magida", DefaultLanguage = SupportedLanguages.NbNo, IsActive = true
             });
 
-        if (!await dbContext.Users.AnyAsync(x => x.Id == userId, cancellationToken))
-            dbContext.Users.Add(new User
-            {
-                Id = userId, Email = "morten@magida.org", FirstName = "Morten", LastName = "Enholm",
-                PreferredLanguage = SupportedLanguages.NbNo, IsActive = true, IsPlatformAdmin = false
-            });
-
-        if (!await dbContext.LoginAccounts.AnyAsync(x => x.Id == SeedIds.MagidaLoginAccount, cancellationToken))
+        const string administratorEmail = "morten@magida.org";
+        var user = await dbContext.Users.SingleOrDefaultAsync(
+            x => x.Id == userId || x.Email == administratorEmail, cancellationToken);
+        if (user is null)
         {
-            var login = new LoginAccount
+            user = new User
             {
-                Id = SeedIds.MagidaLoginAccount, UserId = userId, Email = "morten@magida.org",
+                Id = userId, Email = administratorEmail, FirstName = "Morten", LastName = "Enholm",
+                PreferredLanguage = SupportedLanguages.NbNo, IsActive = true, IsPlatformAdmin = false
+            };
+            dbContext.Users.Add(user);
+        }
+        // Existing installations may already have this identity with a different ID.
+        // Preserve the user's profile and use its actual ID throughout the demo graph.
+        userId = user.Id;
+
+        var login = await dbContext.LoginAccounts.SingleOrDefaultAsync(
+            x => x.UserId == userId || x.Email == administratorEmail || x.Id == SeedIds.MagidaLoginAccount,
+            cancellationToken);
+        if (login is null)
+        {
+            login = new LoginAccount
+            {
+                Id = SeedIds.MagidaLoginAccount, UserId = userId, Email = administratorEmail,
                 LastAccountId = accountId, IsEnabled = true, CreatedUtc = recordedUtc
             };
             login.PasswordHash = passwordService.HashPassword(login, "JallaBalla24");
             dbContext.LoginAccounts.Add(login);
         }
+        else if (login.UserId != userId)
+        {
+            throw new InvalidOperationException("The Magida demo login belongs to a different user.");
+        }
 
-        if (!await dbContext.UserAccounts.AnyAsync(
-                x => x.AccountId == accountId && x.Id == SeedIds.MagidaUserAccount, cancellationToken))
-            dbContext.UserAccounts.Add(new UserAccount
+        var userAccount = await dbContext.UserAccounts.SingleOrDefaultAsync(
+            x => x.AccountId == accountId && x.UserId == userId, cancellationToken);
+        if (userAccount is null)
+        {
+            userAccount = new UserAccount
             {
                 Id = SeedIds.MagidaUserAccount, AccountId = accountId, UserId = userId
-            });
+            };
+            dbContext.UserAccounts.Add(userAccount);
+        }
 
         if (!await dbContext.UserAccountRoles.AnyAsync(
-                x => x.UserAccountId == SeedIds.MagidaUserAccount && x.Role == UserRole.AccountAdmin,
+                x => x.UserAccountId == userAccount.Id && x.Role == UserRole.AccountAdmin,
                 cancellationToken))
             dbContext.UserAccountRoles.Add(new UserAccountRole
             {
-                Id = SeedIds.MagidaAccountAdminRole, UserAccountId = SeedIds.MagidaUserAccount,
+                Id = SeedIds.MagidaAccountAdminRole, UserAccountId = userAccount.Id,
                 Role = UserRole.AccountAdmin
             });
 
