@@ -3245,4 +3245,9 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingAllColumns" xml:space="preserve"><value>Visa alla kolumner</value></data>
   <data name="LeasingNoRows" xml:space="preserve"><value>Inga rader i detta urval.</value></data>
   <data name="LifeSelectEquipmentItem" xml:space="preserve"><value>Välj en räkningsbar varurad innan du sparar utrustningen.</value></data>
+<data name="PageSections" xml:space="preserve"><value>Sidans avsnitt</value></data>
+<data name="AgreementFilters" xml:space="preserve"><value>Filter</value></data>
+<data name="AgreementResults" xml:space="preserve"><value>Resultat</value></data>
+<data name="AgreementPlacement" xml:space="preserve"><value>Placering</value></data>
+<data name="AgreementActions" xml:space="preserve"><value>Åtgärder</value></data>
 </root>

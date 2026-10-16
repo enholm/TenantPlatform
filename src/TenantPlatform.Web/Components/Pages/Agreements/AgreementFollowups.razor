@@ -7,6 +7,7 @@
 @inject NavigationManager Navigation
 @inject ILogger<AgreementFollowups> Logger
 
+<div class="page-workspace">
 <PageTitle>@L["FollowupTitle"]</PageTitle>
 <h1>@L["FollowupTitle"]</h1>
 <p>@L["FollowupOverviewHelp"]</p>
@@ -14,8 +15,9 @@
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (allowed)
 {
-    <div class="card mb-3">
-        <div class="card-body">
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("agreement-filters", L["AgreementFilters"].Value), ("agreement-results", L["AgreementResults"].Value) })" />
+    <div id="agreement-filters" class="card mb-3">
+        <div class="card-body"><h2 class="h5">@L["AgreementFilters"]</h2>
             <fieldset disabled="@busy">
                 <div class="row g-3">
                     <div class="col-md-3"><label for="follow-search" class="form-label">@L["Search"]</label><input id="follow-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
@@ -78,6 +80,7 @@
         </div>
     </div>
 }
+<section id="agreement-results" class="page-section"><h2 class="h5">@L["AgreementResults"]</h2>
 @if (busy) { <p role="status">@L["Loading"]</p> }
 else if (result is not null)
 {
@@ -85,7 +88,7 @@ else if (result is not null)
     @if (result.Items.Count == 0) { <div class="alert alert-info">@L["FollowupEmpty"]</div> }
     else
     {
-        <div class="card"><div class="table-responsive"><table class="table table-hover mb-0">
+        <div class="table-responsive"><table class="table table-hover mb-0">
             <thead class="text-nowrap"><tr><th>@L["Name"]</th><th>@L["AgreementCounterparty"]</th><th>@L["AgreementType"]</th><th>@L["FollowupKind"]</th><th>@L["FollowupDue"]</th><th>@L["FollowupDays"]</th><th>@L["FollowupOwner"]</th><th>@L["FollowupStatus"]</th><th>@L["FollowupActivity"]</th></tr></thead>
             <tbody>@foreach (var row in result.Items)
             {
@@ -95,12 +98,14 @@ else if (result is not null)
                     <td>@L[$"FollowupStatus{row.Status}"] @if (row.State != AgreementDeadlineState.Current) { <span class="badge text-bg-secondary">@L[$"FollowupState{row.State}"]</span> }</td>
                     <td>@row.UpdatedUtc.ToString("g") UTC</td></tr>
             }</tbody>
-        </table></div></div>
+        </table></div>
         <div class="d-flex justify-content-between mt-3"><button class="btn btn-outline-secondary" disabled="@(result.Page <= 1)" @onclick="PreviousAsync">@L["AgreementPrevious"]</button>
         <span>@L["FollowupPage", result.Page, Math.Max(1, (result.Total + result.PageSize - 1) / result.PageSize), result.Total]</span>
         <button class="btn btn-outline-secondary" disabled="@(result.Page * result.PageSize >= result.Total)" @onclick="NextAsync">@L["AgreementNext"]</button></div>
     }
 }
+</section>
+</div>
 @code {
     private readonly AgreementDeadlineFilter filter = new();
     private AgreementDeadlinePage? result;

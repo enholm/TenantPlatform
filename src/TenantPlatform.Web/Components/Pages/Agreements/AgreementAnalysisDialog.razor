@@ -99,7 +99,7 @@
                 @if (!AgreementId.HasValue)
                 {
                     <h3 class="fs-5">@L["AgreementCreate"]</h3>
-                    <EditForm Model="approval.Agreement"><div class="row g-3"><AgreementFields Model="approval.Agreement" Options="options" HideCounterparty="true" OriginalForm="AgreementForm.FixedTerm" /></div></EditForm>
+                    <EditForm Model="approval.Agreement"><AgreementFields Model="approval.Agreement" Options="options" HideCounterparty="true" OriginalForm="AgreementForm.FixedTerm" /></EditForm>
                 }
                 else { <div class="alert alert-info">@L["AnalysisVersionHelp"]</div> }
             }

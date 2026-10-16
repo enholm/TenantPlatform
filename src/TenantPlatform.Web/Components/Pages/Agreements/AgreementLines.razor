@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 @inject ILogger<AgreementLines> Logger
 
+<div class="page-workspace">
 <PageTitle>@L["FinanceLinesAndForecast"]</PageTitle>
 <a href="@($"/agreements/{AgreementId}")">@L["Agreement"]</a>
 <h1>@L["FinanceLinesAndForecast"]</h1>
@@ -16,6 +17,7 @@
 @if (data is null) { <p>@L["Loading"]</p> }
 else
 {
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("finance-lines", L["FinanceLinesAndForecast"].Value), ("finance-forecast", L["FinancePreview"].Value) })" />
     <p><strong>@title</strong> · @(data.Direction.HasValue ? L[$"FinanceDirection{data.Direction}"] : L["FinanceUnclassified"]) · @data.Currency</p>
     <p class="text-body-secondary">@L["FinanceForecastHelp"]</p>
     <p class="text-body-secondary">@L["AutoIndexHelp"]</p>
@@ -25,6 +27,7 @@ else
         <div class="alert alert-warning">@L["FinanceSetupRequired"] <a href="@($"/agreements/{AgreementId}/edit")">@L["Edit"]</a></div>
     }
     @if (affectedBases.Count > 0) { <div class="alert alert-warning"><p>@L["SimpleAffectedBases"]</p>@foreach (var b in affectedBases) { <div><a href="@($"/agreements/bases/{b.Basis.Id}")">@b.Basis.InvoiceDate.ToString("d") · @b.Basis.Id</a> · @L[b.Stale ? "ProcessingStale" : "ProcessingCorrectionNeeded"]</div> }</div> }
+    <section id="finance-lines" class="page-section"><h2 class="h5">@L["FinanceLinesAndForecast"]</h2>
     <fieldset disabled="@busy">
     @if (data.CanEdit && data.Direction.HasValue && data.Currency is not null)
     {
@@ -100,7 +103,8 @@ else
             </details>
         </div></div>
     }
-    <div class="card"><div class="card-body"><h2 class="h4">@L["FinancePreview"]</h2><div class="row g-3 mb-3">
+    </fieldset></section>
+    <section id="finance-forecast" class="page-section"><fieldset disabled="@busy"><h2 class="h5">@L["FinancePreview"]</h2><div class="row g-3 mb-3">
         <div class="col-md-4"><label for="forecast-from" class="form-label">@L["FinanceFrom"]</label><input id="forecast-from" class="form-control" type="date" @bind="from" /></div>
         <div class="col-md-4"><label for="forecast-to" class="form-label">@L["FinanceTo"]</label><input id="forecast-to" class="form-control" type="date" @bind="to" /></div>
         <div class="col-md-4 align-self-end"><button class="btn btn-primary" @onclick="PreviewAsync">@L["FinanceCalculate"]</button></div>
@@ -118,9 +122,10 @@ else
         }
         </tbody></table></div>
     }
-    </div></div></fieldset>
+    </fieldset></section>
 }
 
+</div>
 @code {
     [Parameter] public Guid AgreementId { get; set; }
     private Guid accountId;

@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 @inject ILogger<AgreementIndices> Logger
 
+<div class="page-workspace">
 <PageTitle>@L["ProcessingIndices"]</PageTitle>
 <h1>@L["ProcessingIndices"]</h1><p>@L["ProcessingIndexHelp"]</p>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
@@ -13,17 +14,21 @@
 
 @if (data is not null)
 {
+@if (data.CanWrite)
+{
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("index-setup", L["ProcessingNewIndex"].Value), ("index-value-section", L["ProcessingRecordValue"].Value) })" />
+}
 <fieldset disabled="@busy">
 @if (data.CanWrite)
 {
-<div class="card mb-3 p-3"><h2 class="h5">@L[editingIndex.HasValue ? "Edit" : "ProcessingNewIndex"]</h2><div class="row g-3 mt-1">
+<div id="index-setup" class="card mb-3 p-3"><h2 class="h5">@L[editingIndex.HasValue ? "Edit" : "ProcessingNewIndex"]</h2><div class="row g-3 mt-1">
 <div class="col-md-3"><label for="index-code">@L["ProcessingCode"]</label><input id="index-code" class="form-control" @bind="code" maxlength="50" /></div>
 <div class="col-md-5"><label for="index-name">@L["Name"]</label><input id="index-name" class="form-control" @bind="name" maxlength="200" /></div>
 <div class="col-md-4"><label for="index-resolution">@L["ProcessingResolution"]</label><select id="index-resolution" class="form-select" @bind="resolution">@foreach(var v in Enum.GetValues<AgreementIndexResolution>()){<option value="@v">@L[$"ProcessingResolution{v}"]</option>}</select></div>
 <div class="col-md-6"><label for="index-source">@L["ProcessingSource"]</label><input id="index-source" class="form-control" @bind="source" maxlength="2000" /></div>
 <div class="col-md-6"><label for="index-description">@L["Description"]</label><input id="index-description" class="form-control" @bind="description" maxlength="4000" /></div>
 <div><button class="btn btn-primary" @onclick="Create">@L["Save"]</button> <button class="btn btn-outline-secondary" @onclick="CancelIndex">@L["Cancel"]</button></div></div></div>
-<div class="card mb-3 p-3"><h2 class="h5">@L[editingValue.HasValue ? "Edit" : "ProcessingRecordValue"]</h2><div class="row g-3">
+<div id="index-value-section" class="card mb-3 p-3"><h2 class="h5">@L[editingValue.HasValue ? "Edit" : "ProcessingRecordValue"]</h2><div class="row g-3">
 <div class="col-md-4"><label for="value-index">@L["ProcessingIndex"]</label><select id="value-index" class="form-select" @bind="indexId" disabled="@editingValue.HasValue"><option value="@Guid.Empty">@L["AgreementSelect"]</option>@foreach(var i in data.Indices){<option value="@i.Id">@i.Code — @i.Name</option>}</select></div>
 <div class="col-md-3"><label for="value-period">@L["ProcessingIndexPeriod"]</label><InputDate id="value-period" class="form-control" @bind-Value="period" /></div>
 <div class="col-md-2"><label for="index-value">@L["ProcessingIndexValue"]</label><input id="index-value" type="number" step="any" class="form-control" @bind="value" /></div>
@@ -94,6 +99,7 @@
 </fieldset>
 }
 
+</div>
 @code {
     private AgreementIndexRegister? data;
     private string code = "", name = "", description = "", source = "", reason = "";

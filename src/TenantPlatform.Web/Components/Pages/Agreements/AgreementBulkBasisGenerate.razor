@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 @inject ILogger<AgreementBulkBasisGenerate> Logger
 
+<div class="page-workspace">
 <PageTitle>@L["BulkTitle"]</PageTitle>
 <a href="/agreements">@L["Agreements"]</a>
 <h1>@L["BulkTitle"]</h1>
@@ -14,8 +15,9 @@
 <a href="/agreements/bases">@L["ProcessingBases"]</a>
 @if (error is not null) { <div class="alert alert-danger mt-3" role="alert">@L[error]</div> }
 @if (busy) { <p class="mt-3" role="status">@L[generating ? "BulkGenerating" : "Loading"]</p> }
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("processing-filters", L["AgreementFilters"].Value), ("processing-selection", L["ProcessingPreview"].Value) })" />
 <fieldset disabled="@busy" class="mt-3">
-    <div class="card mb-3"><div class="card-body row g-3">
+    <div id="processing-filters" class="card mb-3"><div class="card-body"><h2 class="h5">@L["AgreementFilters"]</h2><div class="row g-3">
         <div class="col-md-3"><label for="bulk-from" class="form-label">@L["BulkFrom"]</label><InputDate id="bulk-from" class="form-control" @bind-Value="from" /></div>
         <div class="col-md-3"><label for="bulk-to" class="form-label">@L["BulkTo"]</label><InputDate id="bulk-to" class="form-control" @bind-Value="to" /></div>
         <div class="col-md-3"><label for="bulk-party" class="form-label">@L["AgreementCounterparty"]</label>
@@ -27,7 +29,8 @@
                 @foreach (var a in options.Where(x => !counterpartyId.HasValue || x.CounterpartyId == counterpartyId)) { <option value="@a.Id">@a.Title</option> }
             </select></div>
         <div><button id="bulk-preview" class="btn btn-outline-primary" @onclick="Preview">@L["ProcessingPreview"]</button></div>
-    </div></div>
+    </div></div></div>
+<section id="processing-selection" class="page-section"><h2 class="h5">@L["ProcessingPreview"]</h2>
     @if (preview is not null)
     {
         @if (FiltersChanged) { <div class="alert alert-warning">@L["BulkFilterChanged"]</div> }
@@ -64,11 +67,12 @@
             }</tbody>
         </table></div>
     }
+</section>
 </fieldset>
 @if (results.Count > 0)
 {
-    <section class="mt-4" aria-live="polite">
-        <h2>@L["BulkResults"]</h2>
+    <section id="processing-results" class="page-section" aria-live="polite">
+        <h2 class="h5">@L["BulkResults"]</h2>
         <p>@L["ProcessingRunResult", results.Values.Sum(x => x.Created.Count), results.Values.Sum(x => x.Existing.Count)]</p>
         <p>@L["BulkFollowupCount", results.Values.Count(x => x.Status == AgreementBulkBasisStatus.Followup)]</p>
         <h3 class="h5">@L["BulkCreatedTotals"]</h3>
@@ -87,6 +91,7 @@
     </section>
 }
 
+</div>
 @code {
     private List<AgreementBulkBasisOption> options = [];
     private List<AgreementBulkBasisPreview>? preview;

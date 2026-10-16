@@ -3,8 +3,8 @@
 @inject NavigationManager Navigation
 @inject ILogger<AgreementFollowupPanel> Logger
 
-<section class="mb-4">
-<h2>@L["FollowupSection"]</h2>
+<section class="page-section">
+<h2 class="h5">@L["FollowupSection"]</h2>
 <p>@L["FollowupUserActionHelp"]</p>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (data is null) { <p>@L["Loading"]</p> }

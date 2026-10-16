@@ -5,6 +5,7 @@
 @inject ICurrentUserContextService UserContext
 @inject NavigationManager Navigation
 @inject ILogger<AgreementReminderSettings> Logger
+<div class="page-workspace">
 <PageTitle>@L["FollowupAccountSettings"]</PageTitle>
 <h1>@L["FollowupAccountSettings"]</h1>
 <p>@L["FollowupActivationHelp"]</p>
@@ -13,7 +14,7 @@
 @if (settings is null) { <p>@L["Loading"]</p> }
 else
 {
-    <div class="card"><div class="card-body"><fieldset disabled="@busy">
+    <div class="card"><div class="card-body"><h2 class="h5">@L["FollowupReminderSettings"]</h2><fieldset disabled="@busy">
         <div class="form-check mb-3"><input id="reminder-enabled" type="checkbox" class="form-check-input" @bind="settings.Enabled" /><label for="reminder-enabled">@L["FollowupEnable"]</label></div>
         <div class="mb-3"><label for="reminder-days" class="form-label">@L["FollowupThresholds"]</label><input id="reminder-days" class="form-control" @bind="days" /></div>
         <AgreementTimeZoneSelect @bind-Value="settings.TimeZoneId" />
@@ -22,6 +23,7 @@ else
         <a class="btn btn-outline-secondary ms-2" href="/agreements/follow-up">@L["Cancel"]</a>
     </fieldset></div></div>
 }
+</div>
 @code {
     private SaveAgreementReminderSettings? settings;
     private string days = "90,30,7";

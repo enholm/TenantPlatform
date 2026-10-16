@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 @inject ILogger<AgreementBasisApproval> Logger
 
+<div class="page-workspace">
 @if (reviewId is Guid basisId)
 {
     <AgreementBasisDetailsPage @key="basisId" BasisId="basisId" ReturnToApproval="ReturnFromDetails" />
@@ -20,8 +21,9 @@ else
     @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
     @if (selectionChanged) { <div class="alert alert-warning" role="status">@L["ApprovalSelectionChanged"]</div> }
     @if (busy) { <p role="status">@L[approving ? "ApprovalBusy" : "Loading"]</p> }
-    <fieldset disabled="@busy">
-        <div class="card mb-3"><div class="card-body row g-3">
+    <PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("processing-filters", L["AgreementFilters"].Value), ("processing-selection", L["ProcessingPreview"].Value) })" />
+<fieldset disabled="@busy">
+        <div id="processing-filters" class="card mb-3"><div class="card-body"><h2 class="h5">@L["AgreementFilters"]</h2><div class="row g-3">
             <div class="col-md-3"><label for="approval-party" class="form-label">@L["AgreementCounterparty"]</label>
                 <select id="approval-party" class="form-select" @bind="counterpartyId" @bind:after="PartyChanged"><option value="">@L["AgreementAll"]</option>
                     @foreach (var party in options.DistinctBy(x => x.CounterpartyId).OrderBy(x => x.Counterparty)) { <option value="@party.CounterpartyId">@party.Counterparty</option> }
@@ -37,7 +39,8 @@ else
             <div class="col-md-2"><label for="approval-from" class="form-label">@L["ApprovalFrom"]</label><InputDate id="approval-from" class="form-control" @bind-Value="from" @bind-Value:after="FiltersChanged" /></div>
             <div class="col-md-2"><label for="approval-to" class="form-label">@L["ApprovalTo"]</label><InputDate id="approval-to" class="form-control" @bind-Value="to" @bind-Value:after="FiltersChanged" /></div>
             <div><button id="approval-refresh" class="btn btn-outline-primary" @onclick="Refresh">@L["ApprovalRefresh"]</button></div>
-        </div></div>
+        </div></div></div>
+<section id="processing-selection" class="page-section"><h2 class="h5">@L["ProcessingPreview"]</h2>
         <div class="d-flex flex-wrap gap-2 mb-3">
             <button id="approval-all" class="btn btn-outline-secondary" @onclick="SelectAll">@L["ApprovalSelectAll"]</button>
             <button class="btn btn-outline-secondary" @onclick="ClearSelection">@L["BulkSelectNone"]</button>
@@ -68,11 +71,12 @@ else
             <span>@L["AgreementPageSummary", page, PageCount, items.Count]</span>
             <button id="approval-next" class="btn btn-outline-secondary" disabled="@(page >= PageCount)" @onclick="Next">@L["AgreementNext"]</button>
         </div>
-    </fieldset>
+    </section>
+</fieldset>
     @if (results.Count > 0)
     {
-        <section class="mt-4" aria-live="polite">
-            <h2>@L["ApprovalResults"]</h2>
+        <section id="processing-results" class="page-section" aria-live="polite">
+            <h2 class="h5">@L["ApprovalResults"]</h2>
             <p>@L["ApprovalResultCounts", results.Count(x => x.Outcome == AgreementBasisApprovalOutcome.Approved), results.Count(x => x.Outcome == AgreementBasisApprovalOutcome.AlreadyProcessed), results.Count(x => x.Outcome == AgreementBasisApprovalOutcome.Failed)]</p>
             @foreach (var result in results)
             {
@@ -83,6 +87,7 @@ else
     }
 }
 
+</div>
 @code {
     private List<AgreementBasisApprovalItem> items = [];
     private List<AgreementBulkBasisOption> options = [];

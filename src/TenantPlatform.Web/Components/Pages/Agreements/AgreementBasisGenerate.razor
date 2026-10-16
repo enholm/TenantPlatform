@@ -7,18 +7,22 @@
 @inject ILogger<AgreementBasisGenerate> Logger
 @using System.Text.Json
 
+<div class="page-workspace">
 <PageTitle>@L["ProcessingGenerate"]</PageTitle><a href="@($"/agreements/{AgreementId}/lines")">@L["FinanceLinesAndForecast"]</a><h1>@L["ProcessingGenerate"]</h1><p>@L["ProcessingGenerationHelp"]</p>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (busy) { <p role="status">@L["Loading"]</p> }
 
-@if(lines?.Direction is not null){<h2 class="h5">@L[$"ProcessingDirection{lines.Direction}"] · @lines.Currency</h2>
+@if(lines?.Direction is not null){
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("generation-options", L["ProcessingGenerate"].Value) }.Concat(preview is not null ? new (string Id, string Label)[] { ("generation-preview", L["ProcessingPreview"].Value) } : []).ToArray())" />
+<p class="fw-semibold">@L[$"ProcessingDirection{lines.Direction}"] · @lines.Currency</p>
 <p>@L["AutoIndexHelp"]</p>
 @if (indexNeedsReview) { <div class="alert alert-warning">@L["SimpleIndexReview"]</div> }
-<fieldset disabled="@busy"><div class="row g-3 mb-3"><div class="col-md-4"><label for="basis-from">@L["FinanceFrom"]</label><InputDate id="basis-from" class="form-control" @bind-Value="from" /></div><div class="col-md-4"><label for="basis-to">@L["ProcessingTo"]</label><InputDate id="basis-to" class="form-control" @bind-Value="to" /></div><div class="col-md-4 align-self-end"><button class="btn btn-outline-primary me-2" @onclick="Preview">@L["ProcessingPreview"]</button>@if(lines.CanEdit){<button class="btn btn-primary" @onclick="Generate">@L["ProcessingGenerateDraft"]</button>}</div></div></fieldset>
-@if(preview is not null){<p>@L["FinanceDirectionIncome"]: @preview.Income.ToString("N2") @preview.Currency · @L["FinanceDirectionCost"]: @preview.Cost.ToString("N2") @preview.Currency</p><AgreementPeriodTable Periods="preview.Periods" />}
+<section id="generation-options" class="page-section"><h2 class="h5">@L["ProcessingGenerate"]</h2><fieldset disabled="@busy"><div class="row g-3 mb-3"><div class="col-md-4"><label for="basis-from">@L["FinanceFrom"]</label><InputDate id="basis-from" class="form-control" @bind-Value="from" /></div><div class="col-md-4"><label for="basis-to">@L["ProcessingTo"]</label><InputDate id="basis-to" class="form-control" @bind-Value="to" /></div><div class="col-md-4 align-self-end"><button class="btn btn-outline-primary me-2" @onclick="Preview">@L["ProcessingPreview"]</button>@if(lines.CanEdit){<button class="btn btn-primary" @onclick="Generate">@L["ProcessingGenerateDraft"]</button>}</div></div></fieldset></section>
+@if(preview is not null){<section id="generation-preview" class="page-section"><h2 class="h5">@L["ProcessingPreview"]</h2><p>@L["FinanceDirectionIncome"]: @preview.Income.ToString("N2") @preview.Currency · @L["FinanceDirectionCost"]: @preview.Cost.ToString("N2") @preview.Currency</p><AgreementPeriodTable Periods="preview.Periods" /></section>}
 @if(result is not null){<div class="alert alert-info">@L["ProcessingRunResult",result.Created.Count,result.Existing.Count]</div>@foreach(var id in result.Created.Concat(result.Existing)){<p><a href="@($"/agreements/bases/{id}")">@L["Open"] · @id</a></p>}}
 }else if(lines is not null){<p>@L["FinanceSetupRequired"]</p>}
 
+</div>
 @code {
     [Parameter] public Guid AgreementId {get;set;}
     private AgreementLinesDto? lines;

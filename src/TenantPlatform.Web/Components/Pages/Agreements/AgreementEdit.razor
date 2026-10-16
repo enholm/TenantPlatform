@@ -6,20 +6,22 @@
 @inject ICurrentUserContextService UserContext
 @inject NavigationManager Navigation
 
+<div class="page-workspace">
 <PageTitle>@L[Id.HasValue ? "AgreementEdit" : "AgreementCreate"]</PageTitle>
 <h1>@L[Id.HasValue ? "AgreementEdit" : "AgreementCreate"]</h1>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (loading) { <p>@L["Loading"]</p> }
 else if (options is not null)
 {
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("agreement-fields-overview", L["FollowupContractData"].Value), ("agreement-fields-finance", L["FinanceLinesAndForecast"].Value), ("agreement-fields-notice", L["NoticeRules"].Value), ("agreement-fields-location", L["AgreementPlacement"].Value), ("agreement-fields-terms", L["AgreementTerms"].Value) })" />
     <EditForm Model="model" OnValidSubmit="SaveAsync">
     <ValidationSummary class="text-danger" />
-    <fieldset disabled="@busy"><div class="card"><div class="card-body"><div class="row g-3">
+    <fieldset disabled="@busy">
         <AgreementFields Model="model" Options="options" CanManage="canManage" Existing="Id.HasValue" OriginalForm="originalForm" />
-    </div></div></div>
-    <div class="d-flex gap-2 mt-3"><button type="submit" class="btn btn-primary">@L["Save"]</button><a class="btn btn-outline-secondary" href="@(Id.HasValue ? $"/agreements/{Id}" : "/agreements")">@L["Cancel"]</a></div>
+    <div class="page-form-actions"><button type="submit" class="btn btn-primary">@L["Save"]</button><a class="btn btn-outline-secondary" href="@(Id.HasValue ? $"/agreements/{Id}" : "/agreements")">@L["Cancel"]</a></div>
     </fieldset></EditForm>
 }
+</div>
 @code {
     [Parameter] public Guid? Id { get; set; }
     private SaveAgreementRequest model = new();

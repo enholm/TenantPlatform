@@ -7,18 +7,31 @@
 @inject NavigationManager Navigation
 @inject ILogger<AgreementDetails> Logger
 
+<div class="page-workspace">
 <PageTitle>@(details?.Title ?? L["Agreements"])</PageTitle>
 <a href="/agreements">@L["Agreements"]</a>
 @if (error is not null) { <div class="alert alert-danger mt-3" role="alert">@L[error]</div> }
 @if (loading) { <p>@L["Loading"]</p> }
 else if (details is not null)
 {
-    <div class="d-flex justify-content-between my-3"><h1>@details.Title</h1>
-    @if (details.CanEdit) { <AgreementAnalysisDialog AgreementId="Id" Saved="LoadAsync" /> <a class="btn btn-outline-primary align-self-center" href="@($"/agreements/{Id}/edit")">@L["Edit"]</a> }
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 my-3">
+        <h1 class="mb-0">@details.Title</h1>
+
+        @if (details.CanEdit)
+        {
+            <div class="d-flex align-items-center gap-2">
+                <AgreementAnalysisDialog AgreementId="Id" Saved="LoadAsync" />
+
+                <a class="btn btn-outline-primary"
+                href="@($"/agreements/{Id}/edit")">
+                    @L["Edit"]
+                </a>
+            </div>
+        }
     </div>
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("agreement-overview", L["FollowupContractData"].Value), ("agreement-finance", L["FinanceLinesAndForecast"].Value), ("agreement-notice", L["NoticeRules"].Value), ("agreement-followup", L["FollowupSection"].Value), ("agreement-analysis", L["AnalysisFindings"].Value), ("agreement-documents", L["AgreementDocuments"].Value) }.Concat(details.CanManageAccess && options is not null ? new (string Id, string Label)[] { ("agreement-access", L["AgreementAccess"].Value) } : []).ToArray())" />
     @if (details.IsArchived) { <div class="alert alert-secondary">@L["FollowupArchived"]</div> }
-    <h2>@L["FollowupContractData"]</h2>
-    <div class="card mb-3"><div class="card-body"><dl class="row mb-0">
+    <section id="agreement-overview" class="card mb-3"><div class="card-body"><h2 class="h5">@L["FollowupContractData"]</h2><dl class="row mb-0">
         <dt class="col-sm-4">@L["AgreementCounterparty"]</dt><dd class="col-sm-8">@details.CounterpartyName</dd>
         <dt class="col-sm-4">@L["AgreementOwner"]</dt><dd class="col-sm-8">@details.OwnerName</dd>
         <dt class="col-sm-4">@L["AgreementType"]</dt><dd class="col-sm-8">@L[$"AgreementType{details.Type}"]</dd>
@@ -43,32 +56,32 @@ else if (details is not null)
         <dt class="col-sm-4">@L["AgreementTerms"]</dt><dd class="col-sm-8" style="white-space: pre-wrap">@details.Terms</dd>
         <dt class="col-sm-4">@L["AgreementCreated"]</dt><dd class="col-sm-8">@details.CreatedUtc.ToString("g") UTC · @details.CreatedByName</dd>
         <dt class="col-sm-4">@L["AgreementUpdated"]</dt><dd class="col-sm-8">@details.UpdatedUtc.ToString("g") UTC · @details.UpdatedByName</dd>
-    </dl><p class="text-body-secondary mt-3 mb-0">@L["AgreementPeriodHelp"]</p></div></div>
+    </dl><p class="text-body-secondary mt-3 mb-0">@L["AgreementPeriodHelp"]</p></div></section>
 
-    <div class="card mb-3"><div class="card-body">
+    <div id="agreement-finance" class="card mb-3"><div class="card-body"><h2 class="h5">@L["FinanceLinesAndForecast"]</h2>
         <p><strong>@L["ProcessingIndex"]:</strong> @(details.IndexName ?? L["AgreementNone"].Value)</p>
         @if (details.IndexSetupNeedsReview) { <div class="alert alert-warning">@L["SimpleIndexReview"]</div> }
         <strong>@L["FinanceDirection"]:</strong> @(details.Direction.HasValue ? L[$"FinanceDirection{details.Direction}"] : L["FinanceUnclassified"]) · @details.Currency
         <a class="btn btn-outline-primary ms-2" href="@($"/agreements/{Id}/lines")">@L["FinanceLinesAndForecast"]</a>
     </div></div>
-    <AgreementNoticePanel Details="details" Changed="LoadAsync" />
-    <AgreementFollowupPanel AgreementId="Id" ParentRevision="details.Revision" Changed="LoadAsync" />
-    <AgreementAnalysisHistory AgreementId="Id" Revision="details.Revision" />
-    <h2>@L["AgreementDocuments"]</h2>
+    <div id="agreement-notice"><AgreementNoticePanel Details="details" Changed="LoadAsync" /></div>
+    <div id="agreement-followup"><AgreementFollowupPanel AgreementId="Id" ParentRevision="details.Revision" Changed="LoadAsync" /></div>
+    <section id="agreement-analysis" class="page-section"><h2 class="h5">@L["AnalysisFindings"]</h2><AgreementAnalysisHistory AgreementId="Id" Revision="details.Revision" /></section>
+    <section id="agreement-documents" class="page-section"><h2 class="h5">@L["AgreementDocuments"]</h2>
     @if (details.Documents.Count == 0) { <p>@L["AgreementNoDocuments"]</p> }
     else
     {
-        <div class="card mb-3"><div class="table-responsive"><table class="table table-hover mb-0">
+        <div class="table-responsive"><table class="table table-hover mb-0">
         <thead><tr><th>@L["Name"]</th><th>@L["AgreementCategory"]</th><th>@L["Description"]</th><th>@L["AgreementFileSize"]</th><th>@L["AgreementUploaded"]</th></tr></thead>
         <tbody>@foreach (var doc in details.Documents)
         {
             <tr><td><a href="@($"/agreements/documents/{doc.Id}/download")" data-enhance-nav="false"><i class="bi bi-download"></i> @doc.FileName</a></td>
                 <td>@L[$"AgreementCategory{doc.Category}"]</td><td>@doc.Description</td><td>@L["AgreementBytes", doc.Size]</td><td>@doc.UploadedUtc.ToString("g") UTC · @doc.UploadedByName</td></tr>
-        }</tbody></table></div></div>
+        }</tbody></table></div>
     }
     @if (details.CanEdit)
     {
-        <div class="card mb-4"><div class="card-body">
+        <div class="mt-3">
         <fieldset disabled="@busy">
             <p class="text-body-secondary">@L["AgreementUploadHelp", AgreementsService.MaxFileSizeBytes / (1024m * 1024m)]</p>
             <div class="row g-3">
@@ -81,14 +94,15 @@ else if (details is not null)
             </div>
         </fieldset>
         @if (busy) { <p role="status" class="mt-2">@L["Loading"]</p> }
-        </div></div>
+        </div>
     }
+    </section>
 
     @if (details.CanManageAccess && options is not null)
     {
-        <h2>@L["AgreementAccess"]</h2>
+        <section id="agreement-access" class="page-section"><h2 class="h5">@L["AgreementAccess"]</h2>
         <p class="text-body-secondary">@L["AgreementAccessHelp"]</p>
-        <fieldset disabled="@busy"><div class="card"><div class="card-body">
+        <fieldset disabled="@busy">
             @foreach (var grant in details.Access)
             {
                 <div class="d-flex gap-3 align-items-center mb-2"><span>@grant.Name · @L[$"AgreementAccess{grant.Level}"]</span>
@@ -104,9 +118,10 @@ else if (details is not null)
                 </select></div>
                 <div class="col-md-3 d-flex align-items-end"><button class="btn btn-primary" disabled="@(memberId == Guid.Empty)" @onclick="() => ChangeAccessAsync(memberId, level)">@L["AgreementGrant"]</button></div>
             </div>
-        </div></div></fieldset>
+        </fieldset></section>
     }
 }
+</div>
 @code {
     [Parameter] public Guid Id { get; set; }
     private readonly CancellationTokenSource lifetime = new();

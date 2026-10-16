@@ -3208,4 +3208,9 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingAllColumns" xml:space="preserve"><value>Show all columns</value></data>
   <data name="LeasingNoRows" xml:space="preserve"><value>No rows in this selection.</value></data>
   <data name="LifeSelectEquipmentItem" xml:space="preserve"><value>Select a countable item line before saving the equipment.</value></data>
+<data name="PageSections" xml:space="preserve"><value>Page sections</value></data>
+<data name="AgreementFilters" xml:space="preserve"><value>Filters</value></data>
+<data name="AgreementResults" xml:space="preserve"><value>Results</value></data>
+<data name="AgreementPlacement" xml:space="preserve"><value>Location</value></data>
+<data name="AgreementActions" xml:space="preserve"><value>Actions</value></data>
 </root>

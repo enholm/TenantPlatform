@@ -7,18 +7,27 @@
 @inject ILogger<AgreementBases> Logger
 @using System.Text.Json
 
+<div class="page-workspace">
 <PageTitle>@L["ProcessingBases"]</PageTitle><h1>@L["ProcessingBases"]</h1><p>@L["ProcessingBasisHelp"]</p>
 <p><a href="/agreements/bases/approve" class="btn btn-primary">@L["ApprovalTitle"]</a></p>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (busy) { <p role="status">@L["Loading"]</p> }
 
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("basis-filters", L["AgreementFilters"].Value), ("basis-results", L["ProcessingBases"].Value) })" />
+<section id="basis-filters" class="page-section"><h2 class="h5">@L["AgreementFilters"]</h2>
 <fieldset disabled="@busy"><label for="basis-direction">@L["FinanceDirection"]</label><select id="basis-direction" class="form-select mb-3" @bind="direction" @bind:after="Reload">@foreach(var d in Enum.GetValues<AgreementDirection>()){<option value="@d">@L[$"ProcessingDirection{d}"]</option>}</select></fieldset>
+
+</section>
+<section id="basis-results" class="page-section"><h2 class="h5">@L["ProcessingBases"]</h2>
 @if(items is not null){
 @if(items.Count==0){<p>@L["ProcessingEmpty"]</p>}
 <div class="table-responsive"><table class="table table-hover"><thead><tr><th>@L["Agreements"]</th><th>@L["AgreementCounterparty"]</th><th>@L[direction == AgreementDirection.Cost ? "FinanceExpectedInvoice" : "FinancePlannedInvoice"]</th><th>@L["Status"]</th><th>@L["FinanceAmount"]</th><th></th></tr></thead><tbody>
 @foreach(var x in items){<tr><td>@x.Title @if(x.Basis.OriginalBasisId.HasValue){<span class="badge text-bg-info">@L["ProcessingCorrection"]</span>}</td><td>@x.Counterparty</td><td>@x.Basis.InvoiceDate.ToString("d")</td><td>@L[$"ProcessingStatus{x.Basis.Status}"]</td><td>@x.Amount.ToString("N2") @x.Currency</td><td><a href="@($"/agreements/bases/{x.Basis.Id}")">@L["Open"]</a></td></tr>}
 </tbody></table></div><p class="text-body-secondary">@L["ProcessingListLimit"]</p>}
 
+</section>
+
+</div>
 @code {
     private AgreementDirection direction=AgreementDirection.Income;
     private List<AgreementBasisSummary>? items;

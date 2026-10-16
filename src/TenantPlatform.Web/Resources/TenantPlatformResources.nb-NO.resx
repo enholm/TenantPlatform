@@ -3244,4 +3244,9 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="LeasingAllColumns" xml:space="preserve"><value>Vis alle kolonner</value></data>
   <data name="LeasingNoRows" xml:space="preserve"><value>Ingen rader i valgt utvalg.</value></data>
   <data name="LifeSelectEquipmentItem" xml:space="preserve"><value>Velg en tellbar varelinje før du lagrer utstyret.</value></data>
+<data name="PageSections" xml:space="preserve"><value>Deler på siden</value></data>
+<data name="AgreementFilters" xml:space="preserve"><value>Filtre</value></data>
+<data name="AgreementResults" xml:space="preserve"><value>Resultater</value></data>
+<data name="AgreementPlacement" xml:space="preserve"><value>Plassering</value></data>
+<data name="AgreementActions" xml:space="preserve"><value>Handlinger</value></data>
 </root>

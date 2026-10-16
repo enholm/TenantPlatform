@@ -1,0 +1,12 @@
+@inject NavigationManager Navigation
+
+<nav class="page-subnav" aria-label="@L["PageSections"]">
+    @foreach (var section in Sections)
+    {
+        <a href="@($"{Navigation.Uri.Split('#')[0]}#{section.Id}")">@section.Label</a>
+    }
+</nav>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<(string Id, string Label)> Sections { get; set; } = [];
+}
