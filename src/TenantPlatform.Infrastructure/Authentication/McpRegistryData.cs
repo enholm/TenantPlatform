@@ -66,6 +66,19 @@ public sealed class McpRegistryData(DbContextOptions<OAuthDbContext> options) : 
         catch (DbUpdateConcurrencyException) { throw new McpClientException("CONFIGURATION_CHANGED"); }
         return row.Revision;
     }
+    public async Task SetToolPolicyAsync(Guid account, Guid connection, Guid revision, string name, string version,
+        McpToolAudience audience, string grants, McpToolUse useClass, CancellationToken ct)
+    {
+        await using var db = new OAuthDbContext(options);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var row = await db.Set<McpServerDefinition>().FromSqlInterpolated($"SELECT * FROM oauth.mcp_servers WHERE \"AccountId\" = {account} AND \"Id\" = {connection} AND \"Revision\" = {revision} FOR UPDATE").SingleOrDefaultAsync(ct)
+            ?? throw new McpClientException("CONFIGURATION_CHANGED");
+        var tool = await db.Set<McpDiscoveredTool>().SingleOrDefaultAsync(t => t.ConnectionId == connection && t.Name == name && t.Version == version, ct)
+            ?? throw new McpClientException("CONFIGURATION_CHANGED");
+        row.Revision = Guid.NewGuid(); tool.Audience = audience; tool.AccessGrants = grants; tool.UseClass = useClass;
+        try { await db.SaveChangesAsync(ct); await transaction.CommitAsync(ct); }
+        catch (DbUpdateConcurrencyException) { throw new McpClientException("CONFIGURATION_CHANGED"); }
+    }
     public async Task ApproveAsync(Guid account, Guid connection, Guid revision, string name, string version, bool approved, CancellationToken ct)
     {
         await using var db = new OAuthDbContext(options);

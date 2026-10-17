@@ -292,8 +292,16 @@ namespace TenantPlatform.Infrastructure.Persistence.OAuth.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<string>("AccessGrants")
+                        .IsRequired()
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)");
+
                     b.Property<bool>("Approved")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("Audience")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Description")
                         .HasMaxLength(4000)
@@ -311,6 +319,9 @@ namespace TenantPlatform.Infrastructure.Persistence.OAuth.Migrations
                         .HasMaxLength(16000)
                         .HasColumnType("character varying(16000)");
 
+                    b.Property<int>("UseClass")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Version")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -327,8 +338,16 @@ namespace TenantPlatform.Infrastructure.Persistence.OAuth.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccessGrants")
+                        .IsRequired()
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)");
+
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Audience")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("CredentialEpoch")
                         .HasColumnType("uuid");

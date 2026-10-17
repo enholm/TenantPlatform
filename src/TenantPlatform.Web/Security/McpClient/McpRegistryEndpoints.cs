@@ -20,16 +20,16 @@ public static class McpRegistryEndpoints
                 if (!await Cookie(http)) return Results.Unauthorized();
                 if (http.RequestServices.GetService<McpRegistryService>() is not { } service) return Results.StatusCode(503);
                 var page = await service.ListAsync(ct);
-                var states = new Dictionary<Guid, McpClientStatus>();
+                var states = new Dictionary<Guid, McpConnectionState>();
                 var tools = new Dictionary<Guid, IReadOnlyList<TenantPlatform.Core.Identity.McpDiscoveredTool>>();
                 foreach (var row in page.Servers)
                 {
-                    try { states[row.Id] = await service.StatusAsync(row.Id, ct); }
+                    try { states[row.Id] = await service.DescribeAsync(row.Id, ct); }
                     catch (McpClientException) { }
                     tools[row.Id] = await service.ToolsAsync(row.Id, ct);
                 }
                 http.Response.Headers.CacheControl = "no-store";
-                return new RazorComponentResult<McpRegistryPageView>(new { Page = page, States = states, Tools = tools, NowUtc = http.RequestServices.GetRequiredService<TimeProvider>().GetUtcNow(), VerificationToken = csrf.GetAndStoreTokens(http).RequestToken });
+                return new RazorComponentResult<McpRegistryPageView>(new { Page = page, States = states, Tools = tools, Directory = page.CanManage ? await service.AccessDirectoryAsync(ct) : null, NowUtc = http.RequestServices.GetRequiredService<TimeProvider>().GetUtcNow(), VerificationToken = csrf.GetAndStoreTokens(http).RequestToken });
             }
             catch (UnauthorizedAccessException) { return Results.Unauthorized(); }
             catch (Exception) { return Failure(http); }
@@ -39,8 +39,8 @@ public static class McpRegistryEndpoints
             try
             {
                 if (!await Cookie(http)) return Results.Unauthorized();
-                if (http.Request.ContentLength > 16 * 1024) return Results.StatusCode(413);
-                http.Request.EnableBuffering(16 * 1024, 16 * 1024);
+                if (http.Request.ContentLength > 64 * 1024) return Results.StatusCode(413);
+                http.Request.EnableBuffering(64 * 1024, 64 * 1024);
                 await csrf.ValidateRequestAsync(http);
                 var form = await http.Request.ReadFormAsync(ct);
                 var service = http.RequestServices.GetRequiredService<McpRegistryService>();
@@ -51,6 +51,13 @@ public static class McpRegistryEndpoints
                         if (!string.IsNullOrEmpty(form["id"]) && id is null) return Results.BadRequest();
                         await service.SaveAsync(id, Guid.TryParseExact(form["revision"], "D", out var revision) ? revision : null,
                             form["name"].ToString(), form["profile"].ToString(), form["enabled"] == "true", ct); break;
+                    case "connection-access" when id.HasValue:
+                        await service.SetConnectionAccessAsync(id.Value, Guid.Parse(form["revision"]!),
+                            (TenantPlatform.Core.Identity.McpConnectionAudience)int.Parse(form["audience"]!), Grants(form), ct); break;
+                    case "tool-policy" when id.HasValue:
+                        await service.SetToolPolicyAsync(id.Value, form["tool"].ToString(), form["version"].ToString(),
+                            (TenantPlatform.Core.Identity.McpToolAudience)int.Parse(form["audience"]!), Grants(form),
+                            (TenantPlatform.Core.Identity.McpToolUse)int.Parse(form["useClass"]!), ct); break;
                     case "connect" when id.HasValue:
                         var page = await service.ListAsync(ct);
                         var row = page.Servers.SingleOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException();
@@ -71,6 +78,11 @@ public static class McpRegistryEndpoints
             }
             catch (AntiforgeryValidationException) { return Results.BadRequest(); }
             catch (IOException) { return Results.StatusCode(413); }
+            catch (McpClientException ex) { return Failure(http, ex.Code switch {
+                "TOOL_CLASSIFICATION_REQUIRED" => "McpPolicyClassificationRequired",
+                "CONFIRMATION_REQUIRED" => "McpAvailabilityConfirmationRequired",
+                "DISCOVERY_REQUIRED" => "McpAvailabilityDiscoveryRequired",
+                "RECONNECT_REQUIRED" => "McpAvailabilityAuthorizationRequired", _ => "McpClientFailed" }); }
             catch (UnauthorizedAccessException) { return Results.Unauthorized(); }
             catch (Exception) { return Failure(http); }
         });
@@ -88,6 +100,12 @@ public static class McpRegistryEndpoints
             !Guid.TryParseExact(value, "D", out var connection)) throw new McpClientException("CONNECTION_REJECTED");
         await http.RequestServices.GetRequiredService<McpRegistryService>().CompleteAsync(connection, ct);
         return Results.LocalRedirect("/mcp-client/registry");
+    }
+    private static IReadOnlyList<McpAccessGrant> Grants(IFormCollection form)
+    {
+        if (form["audience"] != "2") return [];
+        if (form["grant"].Count > 100) throw new McpClientException("INVALID_ARGUMENT");
+        return form["grant"].Select(value => System.Text.Json.JsonSerializer.Deserialize<McpAccessGrant>(value!) ?? throw new McpClientException("INVALID_ARGUMENT")).ToArray();
     }
     private static IResult Failure(HttpContext http, string key = "McpClientFailed")
     {

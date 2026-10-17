@@ -16,12 +16,13 @@ public static class McpRegistryComposition
         services.AddSingleton(profiles); services.AddSingleton<IMcpAuthProfiles>(profiles);
         if (profiles.Loaded.Count == 0) return;
         services.AddScoped<IMcpRegistryData, McpRegistryData>();
+        services.AddScoped<IMcpAccessDirectory, McpAccessDirectoryData>();
         services.AddScoped<IMcpRegisteredClientFactory, McpRegisteredClientFactory>();
         services.AddScoped<McpRegistryService>(sp =>
         {
             var actor = new RegistryCookieActor(sp.GetRequiredService<IHttpContextAccessor>());
             return new(actor, new AuthorizationService(actor, sp.GetRequiredService<IAuthorizationData>(), sp.GetRequiredService<TimeProvider>()),
-                sp.GetRequiredService<IMcpRegistryData>(), profiles, sp.GetRequiredService<IMcpRegisteredClientFactory>(), sp.GetRequiredService<TimeProvider>());
+                sp.GetRequiredService<IMcpRegistryData>(), profiles, sp.GetRequiredService<IMcpRegisteredClientFactory>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<IMcpAccessDirectory>());
         });
         services.AddOpenIddict().AddClient(client =>
         {

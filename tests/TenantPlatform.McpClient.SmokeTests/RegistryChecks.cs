@@ -25,7 +25,7 @@ using TenantPlatform.Web.Security.McpClient;
 using TenantPlatform.Web.Security.OAuth;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
-static class RegistryChecks
+static partial class RegistryChecks
 {
     public static async Task Run(Factory factory, string connection, OAuthIssuerOptions issuer, InternalMcpClientOptions own,
         WebApplication internalServer, WebApplication originalIssuer, Guid accountA, Guid accountB, string password)
@@ -83,6 +83,7 @@ static class RegistryChecks
             await Approve(a, a2); await Approve(a, a3); await Approve(b, b1);
             Check((await Call(a, a2)).StatusCode == HttpStatusCode.OK, "external non-Guid identity works through actual OAuth and MCP libraries");
             Check((await Call(m, a2)).StatusCode == HttpStatusCode.OK, "member uses only own personally authorized credentials");
+            await RunPolicies(web, factory, adminA, adminB, member, accountA, accountB, a1, a2, a3, clock, () => remoteCalls, a, m);
             Check((await Post(m, "disconnect", new() { ["id"] = a2.ToString() })).StatusCode == HttpStatusCode.Redirect &&
                 (await Call(a, a2)).IsSuccessStatusCode && !(await Credentials()).Any(x => x.ConnectionId == a2 && x.UserId == member), "disconnect erases only the initiating user's credentials");
             await Connect(m, a2);
@@ -219,12 +220,12 @@ static class RegistryChecks
             var data = scope.ServiceProvider.GetRequiredService<IMcpRegistryData>();
             var actor = new FixedActor(new(true, platform, accountA));
             var authorization = new TenantPlatform.Application.Security.AuthorizationService(actor, new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory), clock);
-            var service = new McpRegistryService(actor, authorization, data, scope.ServiceProvider.GetRequiredService<IMcpAuthProfiles>(), scope.ServiceProvider.GetRequiredService<IMcpRegisteredClientFactory>(), clock);
+            var service = new McpRegistryService(actor, authorization, data, scope.ServiceProvider.GetRequiredService<IMcpAuthProfiles>(), scope.ServiceProvider.GetRequiredService<IMcpRegisteredClientFactory>(), clock, scope.ServiceProvider.GetRequiredService<IMcpAccessDirectory>());
             try { await service.ListAsync(); throw new Exception("Platform admin unexpectedly bypassed membership"); } catch (UnauthorizedAccessException) { }
             Check(true, "direct Application denies PlatformAdmin without ordinary membership");
             var adminActor = new FixedActor(new(true, adminA, accountA));
             var adminAuthorization = new TenantPlatform.Application.Security.AuthorizationService(adminActor, new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory), clock);
-            var adminService = new McpRegistryService(adminActor, adminAuthorization, data, scope.ServiceProvider.GetRequiredService<IMcpAuthProfiles>(), scope.ServiceProvider.GetRequiredService<IMcpRegisteredClientFactory>(), clock);
+            var adminService = new McpRegistryService(adminActor, adminAuthorization, data, scope.ServiceProvider.GetRequiredService<IMcpAuthProfiles>(), scope.ServiceProvider.GetRequiredService<IMcpRegisteredClientFactory>(), clock, scope.ServiceProvider.GetRequiredService<IMcpAccessDirectory>());
             Check((await adminService.ListAsync()).CanManage, "direct Application grants account-wide administrator management");
             var raw = new InternalMcpClientService(adminActor, scope.ServiceProvider.GetRequiredService<TenantPlatform.Application.Authentication.IOAuthUserData>(),
                 scope.ServiceProvider.GetRequiredService<TenantPlatform.Application.Authentication.IOAuthConnectionData>(), scope.ServiceProvider.GetRequiredService<IMcpClientStore>(),
@@ -306,7 +307,10 @@ static class RegistryChecks
         async Task<Guid> Save(Browser browser, string name, string profile)
         {
             Check((await Post(browser, "save", new() { ["name"] = name, ["profile"] = profile, ["enabled"] = "true" })).StatusCode == HttpStatusCode.Redirect, "create account-owned definition " + name);
-            await using var scope = web!.Services.CreateAsyncScope(); return (await scope.ServiceProvider.GetRequiredService<OAuthDbContext>().Set<McpServerDefinition>().SingleAsync(x => x.Name == name)).Id;
+            await using var scope = web!.Services.CreateAsyncScope(); var row = await scope.ServiceProvider.GetRequiredService<OAuthDbContext>().Set<McpServerDefinition>().SingleAsync(x => x.Name == name);
+            Check(row.Audience == McpConnectionAudience.Closed, "new definition starts closed");
+            Check((await Post(browser, "connection-access", new() { ["id"] = row.Id.ToString(), ["revision"] = row.Revision.ToString(), ["audience"] = "1" })).StatusCode == HttpStatusCode.Redirect, "administrator explicitly selects account role audience");
+            return row.Id;
         }
         async Task Edit(Browser browser, Guid id, string name, string profile, bool enabled)
         {
@@ -334,6 +338,7 @@ static class RegistryChecks
         async Task Approve(Browser browser, Guid id)
         {
             var tool = (await Tools(id)).Single(x => x.Name == "accounts_list");
+            Check((await Post(browser, "tool-policy", new() { ["id"] = id.ToString(), ["tool"] = tool.Name, ["version"] = tool.Version, ["audience"] = "1", ["useClass"] = "1" })).StatusCode == HttpStatusCode.Redirect, "administrator explicitly classifies automatic reading");
             Check((await Post(browser, "approve", new() { ["id"] = id.ToString(), ["tool"] = tool.Name, ["version"] = tool.Version, ["approved"] = "true" })).StatusCode == HttpStatusCode.Redirect, "administrator approves exact metadata version");
         }
         Task<HttpResponseMessage> Call(Browser browser, Guid id) => browser.Get("/fixture/registry/call?id=" + id);

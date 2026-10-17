@@ -5,6 +5,8 @@
 <body><main class="container py-4">
 <h1>@L["McpRegistryTitle"]</h1>
 <p>@L["McpRegistryPolicy"]</p>
+<p>@L["McpPolicyExplanation"]</p>
+@if (Page.Servers.Count == 0) { <p>@L["McpPolicyNoConnections"]</p> }
 @if (Page.CanManage)
 {
 <form method="post" action="/mcp-client/registry/save" class="card card-body mb-3">
@@ -19,8 +21,9 @@
 {
 <section class="card card-body mb-3">
 <h2 class="h4">@row.Name</h2>
-<p>@(row.Enabled ? L["McpRegistryEnabled"] : L["McpRegistryDisabled"]) · @(States.GetValueOrDefault(row.Id)?.Connected == true ? L["McpClientConnected"] : L["McpClientReconnect"])</p>
+<p>@(row.Enabled ? L["McpRegistryEnabled"] : L["McpRegistryDisabled"]) · @(States.GetValueOrDefault(row.Id)?.Personal?.Connected == true ? L["McpClientConnected"] : L["McpClientReconnect"])</p>
 @if (!Page.Profiles.Any(x => x.Id == row.ProfileId && x.Version == row.ProfileVersion)) { <p class="alert alert-warning">@L["McpRegistryProfileUnavailable"]</p> }
+<p class="alert alert-info">@L["McpAvailability" + (States.GetValueOrDefault(row.Id)?.Reason ?? McpAvailability.AuthorizationRequired)]</p>
 <p>@row.ProfileId · @Page.Profiles.FirstOrDefault(x => x.Id == row.ProfileId)?.Endpoint</p>
 @if (Page.CanManage)
 {
@@ -31,22 +34,35 @@
     <label><input type="checkbox" name="enabled" value="true" checked="@row.Enabled" /> @L["McpRegistryEnabled"]</label>
     <button class="btn btn-outline-primary">@L["McpRegistrySave"]</button>
 </form>
+<form method="post" action="/mcp-client/registry/connection-access" class="border p-2 mb-2">
+    <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" /><input type="hidden" name="id" value="@row.Id" /><input type="hidden" name="revision" value="@row.Revision" />
+    <McpAccessEditor Connection="true" Policy="@((int)row.Audience)" GrantsJson="@row.AccessGrants" Directory="@Directory" />
+    <button class="btn btn-outline-primary">@L["McpPolicySave"]</button>
+</form>
 }
 @foreach (var action in Page.CanManage ? new[] { "connect", "disconnect", "discover" } : new[] { "connect", "disconnect" })
 {
 <form method="post" action="@($"/mcp-client/registry/{action}")" class="d-inline-block mb-2">
     <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" /><input type="hidden" name="id" value="@row.Id" />
-    <button class="btn btn-outline-secondary" disabled="@(action != "disconnect" && (!row.Enabled || !Page.Profiles.Any(x => x.Id == row.ProfileId && x.Version == row.ProfileVersion)))">@L[action == "connect" ? "McpClientConnect" : action == "disconnect" ? "McpClientDisconnect" : "McpRegistryDiscover"]</button>
+    <button class="btn btn-outline-secondary" disabled="@(action != "disconnect" && (States.GetValueOrDefault(row.Id)?.Reason == McpAvailability.AccessDenied || !row.Enabled || !Page.Profiles.Any(x => x.Id == row.ProfileId && x.Version == row.ProfileVersion)))">@L[action == "connect" ? "McpClientConnect" : action == "disconnect" ? "McpClientDisconnect" : "McpRegistryDiscover"]</button>
 </form>
 }
 <p>@L[row.DiscoveryComplete && row.DiscoveredUtc >= NowUtc.AddHours(-24) && Page.Profiles.Any(x => x.Id == row.ProfileId && x.Version == row.ProfileVersion) ? "McpRegistryComplete" : "McpRegistryIncomplete"] @row.DiscoveredUtc?.ToString("u")</p>
 @foreach (var tool in Tools.GetValueOrDefault(row.Id) ?? [])
 {
 <div class="border-top py-2"><strong>@tool.Name</strong> · @L[tool.Approved ? "McpRegistryApproved" : "McpRegistryUnapproved"]
+<p>@L[Enum.IsDefined(tool.UseClass) ? "McpUse" + tool.UseClass : "McpUseUnclassified"] · @tool.Version</p>
 <p class="text-break">@tool.Description</p>
 <details><summary>@L["McpRegistrySchema"]</summary><pre>@tool.InputSchema</pre><pre>@tool.OutputSchema</pre></details>
 @if (Page.CanManage)
 {
+<form method="post" action="/mcp-client/registry/tool-policy" class="border p-2 mb-2">
+    <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" /><input type="hidden" name="id" value="@row.Id" />
+    <input type="hidden" name="tool" value="@tool.Name" /><input type="hidden" name="version" value="@tool.Version" />
+    <label>@L["McpPolicyUseClass"] <select name="useClass" class="form-select">@foreach (var use in Enum.GetValues<McpToolUse>()) { <option value="@((int)use)" selected="@(tool.UseClass == use)">@L["McpUse" + use]</option> }</select></label>
+    <McpAccessEditor Policy="@((int)tool.Audience)" GrantsJson="@tool.AccessGrants" Directory="@Directory" />
+    <button class="btn btn-outline-primary">@L["McpPolicySave"]</button>
+</form>
 <form method="post" action="/mcp-client/registry/approve">
     <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" /><input type="hidden" name="id" value="@row.Id" />
     <input type="hidden" name="tool" value="@tool.Name" /><input type="hidden" name="version" value="@tool.Version" /><input type="hidden" name="approved" value="@(!tool.Approved ? "true" : "false")" />
@@ -61,8 +77,9 @@
 </main></body></html>
 @code {
     [Parameter, EditorRequired] public McpRegistryPage Page { get; set; } = default!;
-    [Parameter] public Dictionary<Guid, McpClientStatus> States { get; set; } = [];
+    [Parameter] public Dictionary<Guid, McpConnectionState> States { get; set; } = [];
     [Parameter] public Dictionary<Guid, IReadOnlyList<McpDiscoveredTool>> Tools { get; set; } = [];
+    [Parameter] public McpAccessDirectory? Directory { get; set; }
     [Parameter] public DateTimeOffset NowUtc { get; set; }
     [Parameter] public string? VerificationToken { get; set; }
 }

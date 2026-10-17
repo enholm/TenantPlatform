@@ -1,0 +1,35 @@
+@using TenantPlatform.Application.Mcp
+@using TenantPlatform.Core.Identity
+@using System.Text.Json
+<label>@L["McpPolicyAudience"]
+<select name="audience" class="form-select">
+<option value="0" selected="@(Policy == 0)">@L["McpPolicyClosed"]</option>
+<option value="1" selected="@(Policy == 1)">@L[Connection ? "McpPolicyAccountRoles" : "McpPolicyInherit"]</option>
+<option value="2" selected="@(Policy == 2)">@L["McpPolicySelected"]</option>
+</select></label>
+<details class="my-2"><summary>@L["McpPolicyTargets"]</summary>
+<p>@L["McpPolicyTargetsHint"]</p>
+@if (Directory is not null)
+{
+@foreach (var member in Directory.Members)
+{
+    var grant = new McpAccessGrant(UserId: member.UserId);
+    <label class="d-block"><input type="checkbox" name="grant" value="@JsonSerializer.Serialize(grant)" checked="@Selected.Contains(grant)" /> @member.Name</label>
+}
+@foreach (var grant in RoleTargets)
+{
+    var scope = Directory.Scopes?.FirstOrDefault(x => x.OrganizationId == grant.OrganizationId && x.BuildingId == grant.BuildingId);
+    <label class="d-block"><input type="checkbox" name="grant" value="@JsonSerializer.Serialize(grant)" checked="@Selected.Contains(grant)" /> @L[RoleKey(grant.Role!.Value)] · @(scope?.Name ?? L["McpPolicyAccountScope"].Value)</label>
+}
+}
+</details>
+@code {
+    [Parameter] public bool Connection { get; set; }
+    [Parameter] public int Policy { get; set; }
+    [Parameter] public string GrantsJson { get; set; } = "[]";
+    [Parameter] public McpAccessDirectory? Directory { get; set; }
+    private static string RoleKey(UserRole role) => role.ToString().StartsWith("Leasing", StringComparison.Ordinal) ? "UserRole" + role : role.ToString();
+    private IReadOnlyList<McpAccessGrant> Selected => McpAccessPolicy.Parse(GrantsJson) ?? [];
+    private IEnumerable<McpAccessGrant> RoleTargets => Enum.GetValues<UserRole>().Select(role => new McpAccessGrant(Role: role))
+        .Concat(Directory?.Roles.Select(r => new McpAccessGrant(Role: r.Role, OrganizationId: r.OrganizationId, BuildingId: r.BuildingId)) ?? []).Distinct();
+}

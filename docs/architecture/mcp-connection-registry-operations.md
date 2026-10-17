@@ -1,6 +1,65 @@
-# MCP-tilkoblingsregister (6A)
+# MCP-tilkoblingsregister (6A og steg 7)
 
 6A bygger videre på [5B3](internal-mcp-client-operations.md). Web har et minimalt, statisk serverrendret register på `/mcp-client/registry`, lenket fra `/mcp-client`. Ingen chat, modell, rapportmotor eller konsoll for vilkårlige verktøykall er lagt til. Egen MCP-host eksponerer fortsatt nøyaktig tre verktøy. Funksjonen krever eksplisitt aktivering; [konfigurasjonsmalen](../../docker/web/mcp-registry.example.json) lastes ikke automatisk.
+
+## Steg 7: tilgang og tilgjengelig verktøykilde
+
+Steg 7 er implementert og automatisert verifisert lokalt 17. oktober 2026 og bygger videre på samme register, OAuth-klient, krypterte credentials og katalog. Reglene i dette avsnittet har forrang fremfor den historiske 6A-beskrivelsen nedenfor. Ingen agent, rapportmotor, modellkall, egendefinerte roller eller bekreftelsesflyt er implementert.
+
+### Seks uavhengige nivåer
+
+1. Felles `mcp-connections.manage` krever fortsatt kontoomfattende AccountAdmin og medlemskap. Det gir rett til å konfigurere, ikke automatisk bruke en forbindelse eller et verktøy.
+2. `mcp-connections.use` er generell inngangsrett. I tillegg må tilkoblingens lokale brukerutvalg tillate innringeren.
+3. Verktøyet må tillate den samme innringeren. Det kan arve tilkoblingens brukerutvalg eller begrense det ytterligere; det kan aldri utvide det.
+4. Den aktuelle metadataversjonen må være godkjent av administrator, med eksplisitt lokal bruksklasse.
+5. Brukeren må ha sin egen aktive personlige autorisering for den aktuelle definisjonen og profilen.
+6. Målserveren håndhever fortsatt egne data-/handlingsrettigheter. Lokal katalog er ikke bevis for at en eksternt tilbakekalt grant eller målserverrettighet fortsatt gjelder; avvisning kan først komme ved tokenbruk/refresh.
+
+Application `McpRegistryService` og den rene `McpAccessPolicy` eier disse lokale beslutningene. Infrastruktur leser rå, kontoavgrensede medlems-/rollefakta og lagrer Application-bestemte policyer. Ingen ny rollemodell eller separat rettighetsevaluator er lagt i Infrastructure. Fersk bruker, medlemskap, generell bruksrettighet, definisjon, profil, brukerutvalg, verktøyversjon, godkjenning og bruksklasse kontrolleres på nytt ved bruk, også etter venting/refresh. UI-skjuling er ikke autorisasjon.
+
+### Brukerutvalg og omfang
+
+| Tilkoblingspolicy | Betydning |
+|---|---|
+| Closed | Ingen bruksadgang. Standard for nye definisjoner. Administrasjon er fortsatt mulig for autorisert kontoadministrator. |
+| AccountRoles | Eksplisitt valgt kompatibilitets-/breddepolicy: kontoens brukere med generell MCP-bruksrettighet. |
+| Selected | Union av uttrykkelig valgte lokale brukere eller eksisterende rolletildelinger i aktuell konto. Tom liste gir ingen tilgang. |
+
+Verktøy har Closed, Inherit eller Selected. Inherit bruker akkurat tilkoblingens brukerutvalg. Selected krever **både** tilkoblingsadgang **og** treff i verktøyets eget utvalg. Det er ingen generell deny-motor, prioritering mellom regler eller administratoropprettede roller.
+
+En brukerreferanse må ha medlemskap i valgt konto ved lagring. En rolletildeling består av rolle, valgt konto, eventuell organisasjon og eventuell bygning. Et rolletreff må matche én faktisk, komplett tildeling med samme rolle og samme organisasjons-/bygningsomfang. En kontoavgrenset rolletildeling matcher ikke automatisk en snevrere tildeling; ingen rettighet fra én tildeling kombineres med omfang fra en annen. Kontoomfattende roller kan velges fra de eksisterende enumverdiene; scoped rollevalg hentes fra eksisterende, gyldige tildelinger i aktuell konto. Referanser til fremmede scopes/navn filtreres før materialisering. Global PlatformAdmin gir ingen kontobypass.
+
+Ukjente enumverdier, manglende/misformet JSON-policy eller ugyldige tildelinger gir avvisning. Policydata inneholder bare lokale referanser, aldri credentials. Bare administrator får bruker-/rollekandidater og lagrede tilgangsutvalg i GUI. Vanlige brukere ser ikke uautoriserte definisjoner, skjemaer eller andre brukeres personlige status. Å konfigurere en tildeling oppretter ikke medlemskap, rolle, ekstern identitet eller OAuth-grant.
+
+### Katalog for senere konsumenter
+
+`AvailableToolsAsync` returnerer bare lokalt tilgjengelige verktøy for betrodd innringer i valgt konto. Identiteten er `(ConnectionId, Name)`, supplert med godkjent `Version`, forbindelsens navn, beskrivelse, input-/outputskjema og lokal `UseClass`. Ingen token, grant-ID, personlig bruker-/rolleliste eller autorisert scope inngår.
+
+Utvalget krever aktiv definisjon, riktig lastet profil/credential-epoke, fersk lokal tilgang, egen brukbar credential-payload med gjenværende lokal grantlevetid, fullstendig katalog fra siste 24 timer, godkjent metadataversjon og matchende verktøypolicy. Bare AutomaticRead og ConfirmationRequired returneres. Statuslesing kontrollerer også at personlig payload kan dekrypteres med riktig bruker-/profilbinding og inneholder nødvendig legitimasjon. Den verken skriver, fornyer tokens, initialiserer data eller kaller målserveren. Definisjonsrevisjonen kontrolleres igjen før metadata returneres. Fjernserverens grant-/datatilgang må fortsatt håndheves der; en lokal status er ingen online introspection.
+
+Senere konsumenter bruker `CallAsync(connectionId, toolName, version, arguments, cancellationToken)` med versjonen de fikk fra katalogen. Alle kontroller utføres igjen, og den oppgitte metadataversjonen må fortsatt stemme. Et tidligere katalogresultat er ingen fullmakt. 6As kalloverlast uten eksplisitt versjon beholdes for de etablerte avgrensede testene; den håndhever de samme aktuelle policyene og er ingen vei rundt godkjenning eller bruksklasse. Ingen generell HTTP-kjørekonsoll er lagt til.
+
+Guid.Empty-plassen til 5B3 inngår aldri i registerkatalogen. Registerkall med denne ID-en avvises, uten fallback til den gamle klienten. De tre manuelle, typede 5B3-lesetestene beholdes separat og gir ingen katalog-/agentadgang til registrerte definisjoner.
+
+### Lokal bruksklasse og godkjenning
+
+Unclassified er standard for ny/endret metadata og kan ikke brukes. Før positiv versjonsgodkjenning må administrator velge og lagre AutomaticRead eller ConfirmationRequired. Klassevalget avledes aldri fra navn, beskrivelse eller readOnlyHint. Det er en lokal tillitspolicy, ikke teknisk bevis for sideeffektfrihet. Feilklassifisering kan ikke repareres av en generisk MCP-klient.
+
+AutomaticRead tillater den eksisterende automatiske kallinngangen når alle øvrige krav er oppfylt. ConfirmationRequired vises i den tilgjengelige katalogen, men CallAsync avviser med sikker `CONFIRMATION_REQUIRED`. Ingen klientparameter kan omgå dette, og det finnes ingen generell bekreftet skriveinngang i steg 7. Unclassified og ukjente klasser avvises.
+
+Uendret metadataversjon beholder eksplisitt klasse og godkjenning. Endret metadata mister godkjenning og får Unclassified; et eksisterende verktøys snevre brukerutvalg beholdes, så ny oppdagelse ikke utilsiktet utvider det. Nye verktøy arver tilkoblingens brukerutvalg, men mangler klasse og godkjenning. Tilgang, klasse og godkjenning er separate innstillinger. Å fjerne én av dem stopper neste kall uten at andre nivåer endres.
+
+### GUI og drift
+
+På `/mcp-client/registry` kan administrator fortsatt administrere navn, aktivstatus og valgt lastet operatørprofil. Nye forms velger tilkoblingsutvalg, lokale brukere/eksisterende rolletildelinger, verktøyets arv/innsnevring og bruksklasse. Godkjent versjon vises separat. Policyendringer lagres med kontoavgrenset radlås og revisjonsvern og krever ingen restart. Policyforms har 64 KiB bodygrense, høyst 100 tildelinger og 20 KiB lagret policy; MCP-kallargumenter har fortsatt 16 KiB-grensen fra 6A.
+
+Brukeren ser egne tilgjengelige tilkoblinger og personlig status, til-/frakobling og sine tilgjengelige verktøy. Lokaliserte årsaker skiller manglende egen autorisering, deaktivert definisjon, manglende/endret operatørprofil, ufullstendig/foreldet katalog, manglende godkjenning/klasse/tilgang og bekreftelseskrav. Administrator kan se «ingen bruksadgang» for seg selv selv om vedkommende kan administrere. Ingen andres personlige status eller interne protokollfeil vises. Operatørprofiler krever fortsatt konfigurasjon/restart som i 6A; dette løses ikke med en GUI-policyendring.
+
+Migreringen `20261017155801_AddMcpAccessPolicies` er generert gjennom eksisterende migreringsskript for OAuthDbContext. Den legger bare til policy-/klassekolonner i registertabellene. Eksisterende definisjoner får AccountRoles og eksisterende verktøy Inherit med tomme tildelingslister. Bare verktøy som allerede var godkjent i 6A får AutomaticRead; øvrige får Unclassified. Dette bevarer eksisterende utføringsadgang uten å godkjenne nye verktøy eller friske opp gammel katalog/legitimasjon. Nye definisjoner starter Closed. Credentials og den reserverte legacyplassen endres ikke. En nedgradering til 6A mister nye innsnevringer og må ikke behandles som en sikker, automatisk rollback.
+
+Faktisk siste verifikasjon: solution og sju testprosjekter bygget, alle sju suiter bestod, seks med isolert PostgreSQL og Dashboard med eksisterende InMemory-/SQL-/komponentoppsett. Klyngen ble stoppet og fjernet. Direkte Application-policytester, ekte MCP-kall, kompatibilitetsmigrering, SSR-/formkontroller og hele 5B3-/6A-regresjonen inngår. Eksisterende pakkevarsler består. Docker-daemonen er utilgjengelig; faktisk containerbygg er ikke gjennomført i steg 7. Se moderniseringsplanens 26.3 for konkrete kontroller og manuell rest.
+
+Migreringen anvendes fortsatt bare i isolerte tester her. Før senere drift: backup, eksplisitt OAuth-migrering med riktig DDL-identitet og oppdatert runtime. Ingen automatisk OAuth-migrering/seed, driftsaktivering eller endring av MCP-hostens tre verktøy er innført. Faktisk automatisert verifikasjon og manuell rest for steg 7 står i moderniseringsplanens avsnitt 26; 6A-resultatene nedenfor er historiske. Interaktiv GUI på tre språk, containerbygg og virkelig proxy/TLS/egress må fortsatt skilles fra TestServer-/PostgreSQL-tester.
 
 ## Modell, kontoeierskap og kompatibilitet
 

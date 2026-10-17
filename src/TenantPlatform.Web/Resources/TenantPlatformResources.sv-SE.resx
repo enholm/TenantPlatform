@@ -3297,4 +3297,28 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="McpRegistryApprove" xml:space="preserve"><value>Godkänn denna version</value></data>
   <data name="McpRegistryRevoke" xml:space="preserve"><value>Återkalla godkännande</value></data>
   <data name="McpRegistryProfileUnavailable" xml:space="preserve"><value>Profilen är inte inläst eller har ändrats. Operatören måste konfigurera och starta om alla Web-instanser; administratören måste sedan spara rätt profil och användaren auktorisera på nytt.</value></data>
+  <data name="McpPolicyAudience" xml:space="preserve"><value>Vem får använda</value></data>
+  <data name="McpPolicyClosed" xml:space="preserve"><value>Ingen åtkomst</value></data>
+  <data name="McpPolicyAccountRoles" xml:space="preserve"><value>Alla med kontots MCP-behörighet</value></data>
+  <data name="McpPolicyInherit" xml:space="preserve"><value>Ärv anslutningens användarurval</value></data>
+  <data name="McpPolicySelected" xml:space="preserve"><value>Endast valda användare eller rolltilldelningar</value></data>
+  <data name="McpPolicyTargets" xml:space="preserve"><value>Användare och befintliga roller</value></data>
+  <data name="McpPolicyTargetsHint" xml:space="preserve"><value>Val gäller endast valt användarurval. En roll gäller exakt den visade omfattningen.</value></data>
+  <data name="McpPolicyAccountScope" xml:space="preserve"><value>Hela kontot</value></data>
+  <data name="McpPolicySave" xml:space="preserve"><value>Spara åtkomst och användningsklass</value></data>
+  <data name="McpPolicyUseClass" xml:space="preserve"><value>Tillåten användning</value></data>
+  <data name="McpUseUnclassified" xml:space="preserve"><value>Oklassificerat – kan inte användas</value></data>
+  <data name="McpUseAutomaticRead" xml:space="preserve"><value>Tillåtet för automatisk läsning</value></data>
+  <data name="McpUseConfirmationRequired" xml:space="preserve"><value>Kräver konkret användarbekräftelse – automatisk användning är spärrad</value></data>
+  <data name="McpPolicyExplanation" xml:space="preserve"><value>Åtkomst, godkännande, användningsklass och personlig auktorisering kontrolleras separat. Klassen är en lokal tillitspolicy, inte en garanti om verktygets effekter. Bekräftelseflöden är inte tillgängliga ännu.</value></data>
+  <data name="McpPolicyNoConnections" xml:space="preserve"><value>Inga anslutningar är tillgängliga för dig i valt konto. Kontakta kontoadministratören vid behov.</value></data>
+  <data name="McpAvailabilityAvailable" xml:space="preserve"><value>Godkända verktyg är tillgängliga för automatisk läsning.</value></data>
+  <data name="McpAvailabilityAuthorizationRequired" xml:space="preserve"><value>Auktorisera din egen anslutning innan verktyg kan användas.</value></data>
+  <data name="McpAvailabilityDisabled" xml:space="preserve"><value>Anslutningen har inaktiverats av administratören.</value></data>
+  <data name="McpAvailabilityProfileUnavailable" xml:space="preserve"><value>Operatörsprofilen saknas eller har ändrats. Konfiguration, omstart och uppdaterad definition kan behövas.</value></data>
+  <data name="McpAvailabilityDiscoveryRequired" xml:space="preserve"><value>Verktygskatalogen saknas, är ofullständig eller inaktuell. Administratören måste upptäcka verktyg igen.</value></data>
+  <data name="McpAvailabilityNoApprovedTools" xml:space="preserve"><value>Inga aktuella godkända verktyg med rätt åtkomst och användningsklass är tillgängliga.</value></data>
+  <data name="McpAvailabilityConfirmationRequired" xml:space="preserve"><value>Tillgängliga verktyg kräver användarbekräftelse. Automatisk läsning är spärrad.</value></data>
+  <data name="McpAvailabilityAccessDenied" xml:space="preserve"><value>Du saknar behörighet att använda anslutningen. Administration ger inte automatiskt användningsbehörighet.</value></data>
+  <data name="McpPolicyClassificationRequired" xml:space="preserve"><value>Välj och spara en användningsklass innan denna metadataversion godkänns.</value></data>
 </root>

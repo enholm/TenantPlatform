@@ -83,7 +83,18 @@ try
         var protection=scope.ServiceProvider.GetRequiredService<IMcpClientTokenProtection>();
         var payload=protection.Protect(legacyUser,legacyBinding,new() { AccessToken="migration-fixture-access",RefreshToken="migration-fixture-refresh" });
         await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO oauth.mcp_client_credentials (\"UserId\",\"ClientId\",\"Issuer\",\"Resource\",\"ProtectedTokens\") VALUES ({legacyUser},{options.ClientId},{options.Issuer},{options.Resource},{payload})");
+        await db.GetService<IMigrator>().MigrateAsync("20261017151954_AddMcpConnectionRegistry");
+        var legacyDefinition=Guid.NewGuid();var legacyRevision=Guid.NewGuid();var legacyEpoch=Guid.NewGuid();var now=clock.GetUtcNow();
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO oauth.mcp_servers (\"Id\",\"AccountId\",\"Name\",\"ProfileId\",\"ProfileVersion\",\"Enabled\",\"Revision\",\"CredentialEpoch\",\"DiscoveryComplete\") VALUES ({legacyDefinition},{accountA},{"Migration fixture"},{"tenantplatform"},{"version"},{true},{legacyRevision},{legacyEpoch},{true})");
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO oauth.mcp_tools (\"ConnectionId\",\"Name\",\"Version\",\"InputSchema\",\"DiscoveredUtc\",\"Approved\") VALUES ({legacyDefinition},{"approved"},{"version"},{"{}"},{now},{true}),({legacyDefinition},{"unapproved"},{"version"},{"{}"},{now},{false})");
         await db.Database.MigrateAsync();
+        var definition=await db.Set<McpServerDefinition>().SingleAsync(x=>x.Id==legacyDefinition);
+        var migratedTools=await db.Set<McpDiscoveredTool>().Where(x=>x.ConnectionId==legacyDefinition).ToArrayAsync();
+        Check(definition.Audience==McpConnectionAudience.AccountRoles&&definition.AccessGrants=="[]"&&migratedTools.All(x=>x.Audience==McpToolAudience.Inherit&&x.AccessGrants=="[]")&&
+            migratedTools.Single(x=>x.Name=="approved").UseClass==McpToolUse.AutomaticRead&&migratedTools.Single(x=>x.Name=="unapproved").UseClass==McpToolUse.Unclassified,
+            "6A upgrade explicitly preserves existing audiences and classifies only already approved tools for automatic use");
+        Check(!db.Database.HasPendingModelChanges(),"OAuth policy model matches migration snapshot");
+        db.RemoveRange(migratedTools);db.Remove(definition);await db.SaveChangesAsync();
         var migrated=await db.Set<McpClientCredential>().SingleAsync(x=>x.UserId==legacyUser);
         Check(migrated.ConnectionId==Guid.Empty&&migrated.ProfileVersion==""&&migrated.ProtectedTokens==payload&&protection.Unprotect(legacyUser,legacyBinding,payload).RefreshToken=="migration-fixture-refresh","upgrade preserves legacy slot and ciphertext without reassigning credentials");
         db.Remove(migrated);await db.SaveChangesAsync();

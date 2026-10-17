@@ -13,8 +13,17 @@ public sealed class InternalMcpClientService(ICurrentActor actor, IOAuthUserData
         return await store.WithUserLockAsync(user, async (slot, token) =>
         {
             var row = await slot.ReadAsync(token);
-            return new McpClientStatus(Matches(row) && row!.ProtectedTokens is not null && row.GrantExpiresUtc > clock.GetUtcNow(),
-                Matches(row) && row!.PendingExpiresUtc > clock.GetUtcNow(), Matches(row) ? row!.GrantExpiresUtc : null);
+            var connected = Matches(row) && row!.ProtectedTokens is not null && row.GrantExpiresUtc > clock.GetUtcNow() && row.GrantId is not null && row.AccessExpiresUtc is not null;
+            if (connected)
+            {
+                try
+                {
+                    var credentials = protection.Unprotect(user, binding, row!.ProtectedTokens!);
+                    connected = !string.IsNullOrEmpty(credentials.AccessToken) && !string.IsNullOrEmpty(credentials.RefreshToken);
+                }
+                catch (Exception) { connected = false; } // Read-only: inaccessible credentials require reauthorization, never a status-time write/refresh.
+            }
+            return new McpClientStatus(connected, Matches(row) && row!.PendingExpiresUtc > clock.GetUtcNow(), Matches(row) ? row!.GrantExpiresUtc : null);
         }, ct);
     }
     public async Task<McpConnectRequest> BeginAsync(CancellationToken ct = default)
