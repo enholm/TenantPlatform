@@ -107,6 +107,7 @@ public sealed class AuthorizationService(ICurrentActor actor, IAuthorizationData
                 await data.HasAgreementRelationshipAsync(account, current.UserId, ct);
         if (permission == Permissions.Leasing.Open)
             return assignments.Any(a => LegacyRolePermissions.Grants(a, permission)) || await data.HasLeasingOwnershipAsync(account, current.UserId, ct);
+        if (permission == Permissions.McpConnections.Use) return resource.Kind == ResourceKind.Account && assignments.Any(a => LegacyRolePermissions.Grants(a, permission));
         if (permission == Permissions.MeetingRooms.Open) return true; // Existing use rule: account member.
         if (resource.Kind == ResourceKind.Account)
         {

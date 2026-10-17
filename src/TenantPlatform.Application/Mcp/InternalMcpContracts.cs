@@ -3,7 +3,8 @@ using TenantPlatform.Core.Agreements;
 
 namespace TenantPlatform.Application.Mcp;
 
-public sealed record McpClientBinding(string ClientId, string Issuer, string Resource);
+public sealed record McpClientBinding(string ClientId, string Issuer, string Resource, Guid ConnectionId = default, string ProfileVersion = "", bool External = false);
+public interface IMcpConnectionAccess { Task VerifyAsync(CancellationToken ct); }
 public sealed record McpClientStatus(bool Connected, bool Pending, DateTimeOffset? ExpiresUtc);
 public sealed record McpConnectRequest(Guid UserId, Guid PendingId);
 public sealed record McpClientAccount(Guid Id, string Name);
@@ -49,6 +50,8 @@ public interface IDelegatedMcpGateway
     Task<McpTokenReceipt> RefreshAsync(McpClientTokens tokens, CancellationToken ct);
     Task<bool> RevokeAsync(McpClientTokens tokens, CancellationToken ct);
     Task<McpClientAccounts> AccountsAsync(string accessToken, CancellationToken ct);
+    Task<McpToolDiscovery> DiscoverAsync(string accessToken, CancellationToken ct) => throw new NotSupportedException();
+    Task<string> CallToolAsync(string accessToken, string name, string arguments, CancellationToken ct) => throw new NotSupportedException();
     Task<McpClientAttention> AttentionAsync(string accessToken, Guid accountId, CancellationToken ct);
     Task<McpClientAgreements> AgreementsAsync(string accessToken, McpClientQuery query, CancellationToken ct);
 }

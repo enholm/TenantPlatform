@@ -1,5 +1,7 @@
 # Steg 5A – implementeringsgrunnlag for autentisert MCP-lesehost
 
+6A bygger videre på 5B3 med kontoeide serverdefinisjoner og et felles klientgrunnlag for egen/ekstern OAuth. [Registerdrift og begrensninger](mcp-connection-registry-operations.md) beskriver profilgodkjenning, restart, credential-migrering og verktøygodkjenning; faktisk verifikasjon er samlet i moderniseringsplanens avsnitt 25. Ingen agent, rapportmotor eller utvidelse av egen MCP-host inngår.
+
 Dato: 17. oktober 2026. **5A er historisk dokumentasjonsgrunnlag; 5B1-utsteder, 5B2-lesehost og [5B3 intern delegert Web-klient](internal-mcp-client-operations.md) er nå implementert lokalt.** Se [5B2-status og faktisk verifikasjon](modernization-plan.md#23-steg-5b2-separat-autentisert-mcp-lesehost) og [MCP-driftsveiledningen](mcp-read-host-operations.md). Ingen ekstern publisering eller ChatGPT-prøve er gjennomført. Resten av den opprinnelige planen beskriver grunnlaget; statusendringene nedenfor har forrang.
 
 Planen bygger på [moderniseringsplanens avsnitt 18](modernization-plan.md#18-steg-4e-skrivefri-autorisert-oppfølgingslesing), dagens kode og [sluttstatus 19.35](modernization-plan.md#1935-steg-4-implementert-og-sluttkontrollert). Restlistene i avsnitt 18 er historikk: flere av områdene er senere migrert. De historiske anbefalingene må leses sammen med gjennomføringen og de presiserte grensene i 5B2-driftsveiledningen.

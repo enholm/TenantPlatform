@@ -8,30 +8,30 @@ using TenantPlatform.Infrastructure.Persistence.OAuth;
 
 namespace TenantPlatform.Infrastructure.Authentication;
 
-public sealed class McpClientStore(DbContextOptions<OAuthDbContext> options) : IMcpClientStore
+public sealed class McpClientStore(DbContextOptions<OAuthDbContext> options, Guid connectionId = default) : IMcpClientStore
 {
     public async Task<T> WithUserLockAsync<T>(Guid user, Func<IMcpClientSlot, CancellationToken, Task<T>> action, CancellationToken ct)
     {
-        var key = BinaryPrimitives.ReadInt64BigEndian(SHA256.HashData(Encoding.UTF8.GetBytes("TenantPlatform.InternalMcp:" + user.ToString("D"))));
+        var key = BinaryPrimitives.ReadInt64BigEndian(SHA256.HashData(Encoding.UTF8.GetBytes("TenantPlatform.InternalMcp:" + user.ToString("D") + (connectionId == Guid.Empty ? "" : ":" + connectionId.ToString("D")))));
         // This dedicated transaction holds ONLY a coordination lock. Individual credential saves below
         // use separate contexts/transactions so "consumed" is durable before a refresh is sent.
         await using var coordination = new OAuthDbContext(options);
         await using var transaction = await coordination.Database.BeginTransactionAsync(ct);
         await coordination.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({key})", ct);
-        return await action(new Slot(options, user), ct); // disposal releases lock on success, error and cancellation
+        return await action(new Slot(options, user, connectionId), ct); // disposal releases lock on success, error and cancellation
     }
-    private sealed class Slot(DbContextOptions<OAuthDbContext> options, Guid user) : IMcpClientSlot
+    private sealed class Slot(DbContextOptions<OAuthDbContext> options, Guid user, Guid connectionId) : IMcpClientSlot
     {
         public async Task<McpClientCredential?> ReadAsync(CancellationToken ct)
         {
             await using var db = new OAuthDbContext(options);
-            return await db.Set<McpClientCredential>().AsNoTracking().SingleOrDefaultAsync(x => x.UserId == user, ct);
+            return await db.Set<McpClientCredential>().AsNoTracking().SingleOrDefaultAsync(x => x.UserId == user && x.ConnectionId == connectionId, ct);
         }
         public async Task SaveAsync(McpClientCredential? value, CancellationToken ct)
         {
-            if (value is not null && value.UserId != user) throw new InvalidOperationException("Credential slot mismatch.");
+            if (value is not null && (value.UserId != user || value.ConnectionId != connectionId)) throw new InvalidOperationException("Credential slot mismatch.");
             await using var db = new OAuthDbContext(options);
-            var existing = await db.Set<McpClientCredential>().SingleOrDefaultAsync(x => x.UserId == user, ct);
+            var existing = await db.Set<McpClientCredential>().SingleOrDefaultAsync(x => x.UserId == user && x.ConnectionId == connectionId, ct);
             if (value is null) { if (existing is not null) db.Remove(existing); }
             else if (existing is null) db.Add(value);
             else db.Entry(existing).CurrentValues.SetValues(value);

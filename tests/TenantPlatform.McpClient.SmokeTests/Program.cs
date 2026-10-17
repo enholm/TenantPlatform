@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Http;
 using Npgsql;
 using OpenIddict.Abstractions;
@@ -73,12 +75,25 @@ WebApplication? web=null,mcp=null;
 try
 {
     web=await StartWeb();
-    await using(var scope=web.Services.CreateAsyncScope()) await scope.ServiceProvider.GetRequiredService<OAuthDbContext>().Database.MigrateAsync();
+    await using(var scope=web.Services.CreateAsyncScope())
+    {
+        var db=scope.ServiceProvider.GetRequiredService<OAuthDbContext>();
+        await db.GetService<IMigrator>().MigrateAsync("20261017142957_AddInternalMcpCredentials");
+        var legacyUser=Guid.NewGuid();var legacyBinding=new McpClientBinding(options.ClientId,options.Issuer,options.Resource);
+        var protection=scope.ServiceProvider.GetRequiredService<IMcpClientTokenProtection>();
+        var payload=protection.Protect(legacyUser,legacyBinding,new() { AccessToken="migration-fixture-access",RefreshToken="migration-fixture-refresh" });
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO oauth.mcp_client_credentials (\"UserId\",\"ClientId\",\"Issuer\",\"Resource\",\"ProtectedTokens\") VALUES ({legacyUser},{options.ClientId},{options.Issuer},{options.Resource},{payload})");
+        await db.Database.MigrateAsync();
+        var migrated=await db.Set<McpClientCredential>().SingleAsync(x=>x.UserId==legacyUser);
+        Check(migrated.ConnectionId==Guid.Empty&&migrated.ProfileVersion==""&&migrated.ProtectedTokens==payload&&protection.Unprotect(legacyUser,legacyBinding,payload).RefreshToken=="migration-fixture-refresh","upgrade preserves legacy slot and ciphertext without reassigning credentials");
+        db.Remove(migrated);await db.SaveChangesAsync();
+    }
     await OAuthComposition.RegisterClientsAsync(web.Services,issuerOptions);
     mcp=await StartMcp();
     var a=new Browser(web.GetTestClient()); var b=new Browser(web.GetTestClient());
     await Login(a,user); await Login(b,other);
     await Connect(a); await Connect(b);
+    await RegistryChecks.Run(factory,connection,issuerOptions,options,mcp,web,accountA,accountB,password);
     var page=await (await a.Get("/mcp-client")).Content.ReadAsStringAsync();
     Check(page.Contains("Connected")||page.Contains("Tilkoblet"),"connected GUI status");
     var probe=await Probe(a,accountA); Check(probe.Contains("Account A")&&!probe.Contains("Account B"),"real MCP probe with own accounts/Attention");
@@ -253,7 +268,7 @@ try
     }
     async Task<List<McpClientCredential>> Rows()
     {
-        await using var scope=web!.Services.CreateAsyncScope();return await scope.ServiceProvider.GetRequiredService<OAuthDbContext>().Set<McpClientCredential>().AsNoTracking().ToListAsync();
+        await using var scope=web!.Services.CreateAsyncScope();return await scope.ServiceProvider.GetRequiredService<OAuthDbContext>().Set<McpClientCredential>().AsNoTracking().Where(x=>x.ConnectionId==Guid.Empty).ToListAsync();
     }
     async Task ForceRefresh(Guid id)
     {

@@ -1,5 +1,7 @@
 # Steg 5B1: drift og verifikasjon av OAuth-utstederen
 
+[Tilkoblingsregisteret fra 6A](mcp-connection-registry-operations.md) bruker det samme OAuth-schemaet med flere klientcredentials og kontoeide definisjoner/verktøy. Ny migrering anvendes fortsatt bare gjennom eksplisitt driftsmigrering. Eksterne OAuth-profiler registreres hos sine egne utstedere, ikke gjennom TenantPlatforms `--oauth-register-clients`.
+
 Status 17. oktober 2026: implementert lokalt; ingen ekstern publisering, utviklings-/produksjonsmigrering eller ekstern ChatGPT-test. OAuth er deaktivert uten eksplisitt `OAuth:Enabled=true`. Vanlig GUI bruker fortsatt eksisterende cookie og lokale User/LoginAccount. MCP-host og intern OAuth-klient inngår ikke i 5B1. MCP-resource-serveren er senere implementert og testet separat i [5B2](mcp-read-host-operations.md), inklusive faktisk tokenprofil og JWT-restlevetid etter grantrevokering. Den interne delegerte Web-klienten er senere implementert i [5B3](internal-mcp-client-operations.md). Der beskrives separat klientregistrering/callback, den nye klientlagringstabellen, kryptering, refresh-koordinering og frakobling. Agent og rapportmotor er fortsatt utsatt.
 
 ## Komponenter og grenser

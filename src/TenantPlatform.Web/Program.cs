@@ -58,7 +58,7 @@ var builder = WebApplication.CreateBuilder(args.Where(x => x is not "--oauth-reg
 var oauthOptions = builder.Configuration.GetSection("OAuth").Get<OAuthIssuerOptions>() ?? new();
 builder.Services.AddTenantOAuth(oauthOptions);
 var internalMcpOptions = builder.Configuration.GetSection("InternalMcp").Get<TenantPlatform.Web.Security.McpClient.InternalMcpClientOptions>() ?? new();
-TenantPlatform.Web.Security.McpClient.InternalMcpClientComposition.AddInternalMcpClient(builder.Services, internalMcpOptions, oauthOptions);
+TenantPlatform.Web.Security.McpClient.InternalMcpClientComposition.AddInternalMcpClient(builder.Services, internalMcpOptions, oauthOptions, builder.Configuration.GetSection("McpRegistry").Get<TenantPlatform.Web.Security.McpClient.McpRegistryOptions>() ?? new());
 builder.Logging.AddFilter("OpenIddict", LogLevel.Warning);
 
 var connectionString =
@@ -403,6 +403,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 app.MapTenantOAuth(oauthOptions);
 TenantPlatform.Web.Security.McpClient.InternalMcpClientEndpoints.MapInternalMcpClient(app);
+TenantPlatform.Web.Security.McpClient.McpRegistryEndpoints.MapMcpRegistry(app);
 
 
 app.MapRazorComponents<App>()

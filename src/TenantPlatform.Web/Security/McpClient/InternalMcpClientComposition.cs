@@ -12,7 +12,7 @@ namespace TenantPlatform.Web.Security.McpClient;
 
 public static class InternalMcpClientComposition
 {
-    public static IServiceCollection AddInternalMcpClient(this IServiceCollection services, InternalMcpClientOptions options, OAuthIssuerOptions issuer)
+    public static IServiceCollection AddInternalMcpClient(this IServiceCollection services, InternalMcpClientOptions options, OAuthIssuerOptions issuer, McpRegistryOptions? registry = null)
     {
         options.Inspect(issuer); services.AddSingleton(options);
         if (!options.Available) return services; // Ordinary GUI login remains available with missing/disabled client configuration.
@@ -33,7 +33,7 @@ public static class InternalMcpClientComposition
             foreach (var previous in certificates.PreviousSigning) client.AddSigningCertificate(previous);
             foreach (var previous in certificates.PreviousEncryption) client.AddEncryptionCertificate(previous);
             client.UseAspNetCore().EnableRedirectionEndpointPassthrough().EnableErrorPassthrough();
-            client.UseSystemNetHttp(http => http.ConfigureHttpClient(c => c.Timeout = TimeSpan.FromSeconds(10))
+            client.UseSystemNetHttp(http => http.ConfigureHttpClient(c => { c.Timeout = TimeSpan.FromSeconds(10); c.MaxResponseContentBufferSize = 64 * 1024; })
                 .ConfigureHttpClientHandler(h => { h.AllowAutoRedirect = false; h.UseCookies = false; }).SetHttpResiliencePipeline(_ => { })); // No retry of consumed refresh/code.
             var registration = new OpenIddictClientRegistration
             {
@@ -48,14 +48,29 @@ public static class InternalMcpClientComposition
             client.Configure(configuration => { configuration.CodeChallengeMethods.Clear(); configuration.CodeChallengeMethods.Add(CodeChallengeMethods.Sha256); });
             client.AddEventHandler<OpenIddictClientEvents.ProcessChallengeContext>(handler => handler
                 .SetOrder(OpenIddictClientHandlers.AttachChallengeParameters.Descriptor.Order - 500)
-                .UseInlineHandler(context => { context.Resources.Clear(); context.Resources.Add(options.Resource); return ValueTask.CompletedTask; }));
+                .UseInlineHandler(context =>
+                {
+                    var resource = ResourceFor(context.Registration.RegistrationId, options, registry);
+                    if (context.Configuration.AuthorizationEndpoint is not { } endpoint || endpoint.Scheme != "https" ||
+                        endpoint.GetLeftPart(UriPartial.Authority) != context.Registration.Issuer!.GetLeftPart(UriPartial.Authority))
+                        throw new InvalidOperationException("OAuth authorization endpoint rejected.");
+                    context.Resources.Clear(); context.Resources.Add(resource);
+                    return ValueTask.CompletedTask;
+                }));
+            client.AddEventHandler<OpenIddictClientEvents.ProcessAuthenticationContext>(handler => handler
+                .SetOrder(OpenIddictClientHandlers.EvaluateUserInfoRequest.Descriptor.Order - 500)
+                .UseInlineHandler(context => { context.DisableUserInfoRetrieval = true; return ValueTask.CompletedTask; }));
             client.AddEventHandler<OpenIddictClientEvents.PrepareTokenRequestContext>(handler => handler
-                .UseInlineHandler(context => { context.Request.Resources = [options.Resource]; return ValueTask.CompletedTask; }));
+                .UseInlineHandler(context =>
+                {
+                    context.Request.Resources = [ResourceFor(context.Registration.RegistrationId, options, registry)];
+                    return ValueTask.CompletedTask;
+                }));
         })
         .AddValidation(validation =>
         {
             validation.SetIssuer(new Uri(options.Issuer)).AddAudiences(options.Resource);
-            validation.UseSystemNetHttp(http => http.ConfigureHttpClient(c => c.Timeout = TimeSpan.FromSeconds(10)).ConfigureHttpClientHandler(h => { h.AllowAutoRedirect = false; h.UseCookies = false; }));
+            validation.UseSystemNetHttp(http => http.ConfigureHttpClient(c => { c.Timeout = TimeSpan.FromSeconds(10); c.MaxResponseContentBufferSize = 64 * 1024; }).ConfigureHttpClientHandler(h => { h.AllowAutoRedirect = false; h.UseCookies = false; }));
             validation.Configure(configuration =>
             {
                 var p = configuration.TokenValidationParameters;
@@ -70,13 +85,17 @@ public static class InternalMcpClientComposition
         services.AddSingleton<IHttpMessageHandlerBuilderFilter>(new PinnedOAuthOriginFilter(new Uri(options.Issuer)));
         services.AddLogging(logging =>
         {
-            foreach (var category in new[] { "OpenIddict.Client", "OpenIddict.Validation", "ModelContextProtocol", "System.Net.Http.HttpClient.OpenIddict", "System.Net.Http.HttpClient." + DelegatedMcpGateway.HttpClientName })
+            foreach (var category in new[] { "OpenIddict.Client", "OpenIddict.Validation", "ModelContextProtocol", "System.Net.Http.HttpClient.OpenIddict", "System.Net.Http.HttpClient." + DelegatedMcpGateway.HttpClientName, "System.Net.Http.HttpClient.TenantPlatform.Mcp." })
                 logging.AddFilter(category, LogLevel.None);
             // Callback query carries protocol code/state. Never log request-start URLs at Information.
             logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
         });
+        services.AddMcpRegistry(options, registry ?? new());
         return services;
     }
+    private static string ResourceFor(string? registration, InternalMcpClientOptions own, McpRegistryOptions? registry) =>
+        registration == InternalMcpClientOptions.Registration ? own.Resource :
+        registry?.Profiles.SingleOrDefault(x => "mcp-registry-" + x.Id == registration)?.Resource ?? throw new InvalidOperationException("Unknown MCP profile.");
 }
 
 sealed class PinnedOAuthOriginFilter(Uri issuer) : IHttpMessageHandlerBuilderFilter
@@ -84,9 +103,11 @@ sealed class PinnedOAuthOriginFilter(Uri issuer) : IHttpMessageHandlerBuilderFil
     public Action<HttpMessageHandlerBuilder> Configure(Action<HttpMessageHandlerBuilder> next) => builder =>
     {
         next(builder);
-        if (builder.Name?.StartsWith("OpenIddict.Client.SystemNetHttp", StringComparison.Ordinal) == true ||
-            builder.Name?.StartsWith("OpenIddict.Validation.SystemNetHttp", StringComparison.Ordinal) == true)
-            builder.AdditionalHandlers.Insert(0, new PinnedOAuthOriginHandler(issuer));
+        var client = builder.Name?.StartsWith("OpenIddict.Client.SystemNetHttp", StringComparison.Ordinal) == true;
+        var validation = builder.Name?.StartsWith("OpenIddict.Validation.SystemNetHttp", StringComparison.Ordinal) == true;
+        if (!client && !validation) return;
+        var origin = client ? OpenIddict.Client.SystemNetHttp.OpenIddictClientSystemNetHttpContext.Current?.Registration.Issuer ?? issuer : issuer;
+        builder.AdditionalHandlers.Insert(0, new PinnedOAuthOriginHandler(origin));
     };
 }
 sealed class PinnedOAuthOriginHandler(Uri issuer) : DelegatingHandler

@@ -41,7 +41,7 @@ static class AuthorizationChecks
             [UserRole.LeasingReportExporter] = Permissions.Leasing.ExportReports
         };
         foreach (var (role, permission) in specialists)
-            Check(LegacyRolePermissions.For(role).Order().SequenceEqual(new[] { Permissions.Leasing.Open, permission }.Order()), "specialized leasing role has exactly its action: " + role);
+            Check(LegacyRolePermissions.For(role).Order().SequenceEqual(new[] { Permissions.Leasing.Open, permission, Permissions.McpConnections.Use }.Order()), "specialized leasing role has exactly its action: " + role);
         Check(await Can(Permissions.Agreements.Read, ResourceKind.Agreement, own) && await Can(Permissions.Agreements.Update, ResourceKind.Agreement, own) && await Can(Permissions.Agreements.ManageSharing, ResourceKind.Agreement, own), "owner reads, edits and manages sharing");
         Check(await Can(Permissions.Agreements.Read, ResourceKind.Agreement, read) && !await Can(Permissions.Agreements.Update, ResourceKind.Agreement, read) && !await Can(Permissions.Agreements.ManageSharing, ResourceKind.Agreement, read), "Read grant only reads");
         Check(await Can(Permissions.Agreements.Update, ResourceKind.Agreement, edit) && !await Can(Permissions.Agreements.ManageSharing, ResourceKind.Agreement, edit), "Edit grant cannot manage sharing");

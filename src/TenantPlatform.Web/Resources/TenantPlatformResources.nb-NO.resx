@@ -3280,4 +3280,20 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="McpClientRenewal" xml:space="preserve"><value>Fornyelse</value></data>
   <data name="McpClientExpired" xml:space="preserve"><value>Utløpt</value></data>
   <data name="McpClientOverlap" xml:space="preserve"><value>Kategoriene kan overlappe og skal ikke summeres til antall unike avtaler.</value></data>
+  <data name="McpRegistryTitle" xml:space="preserve"><value>MCP-tilkoblinger</value></data>
+  <data name="McpRegistryPolicy" xml:space="preserve"><value>Personlig autorisering kreves. Verktøybeskrivelser og skjemaer er ubetrodde data. Nye verktøy må godkjennes. Katalogen utløper etter 24 timer.</value></data>
+  <data name="McpRegistryName" xml:space="preserve"><value>Navn</value></data>
+  <data name="McpRegistryProfile" xml:space="preserve"><value>Operatørgodkjent profil</value></data>
+  <data name="McpRegistryEnabled" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="McpRegistryDisabled" xml:space="preserve"><value>Deaktivert</value></data>
+  <data name="McpRegistrySave" xml:space="preserve"><value>Lagre definisjon</value></data>
+  <data name="McpRegistryDiscover" xml:space="preserve"><value>Oppdag verktøy</value></data>
+  <data name="McpRegistryComplete" xml:space="preserve"><value>Fullstendig katalog fra</value></data>
+  <data name="McpRegistryIncomplete" xml:space="preserve"><value>Ufullstendig eller foreldet katalog. Ny oppdagelse kreves.</value></data>
+  <data name="McpRegistryApproved" xml:space="preserve"><value>Godkjent</value></data>
+  <data name="McpRegistryUnapproved" xml:space="preserve"><value>Ikke godkjent</value></data>
+  <data name="McpRegistrySchema" xml:space="preserve"><value>Verktøyskjemaer</value></data>
+  <data name="McpRegistryApprove" xml:space="preserve"><value>Godkjenn denne versjonen</value></data>
+  <data name="McpRegistryRevoke" xml:space="preserve"><value>Fjern godkjenning</value></data>
+  <data name="McpRegistryProfileUnavailable" xml:space="preserve"><value>Profilen er ikke lastet eller er endret. Operatøren må konfigurere og starte alle Web-instanser på nytt; administrator må deretter lagre riktig profil og brukeren autorisere på nytt.</value></data>
 </root>

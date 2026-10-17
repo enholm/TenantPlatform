@@ -2,6 +2,11 @@ namespace TenantPlatform.Application.Security;
 
 public static class Permissions
 {
+    public static class McpConnections
+    {
+        public const string Manage = "mcp-connections.manage";
+        public const string Use = "mcp-connections.use";
+    }
     public static class Users
     {
         public const string Manage = "users.manage";
@@ -103,6 +108,7 @@ public static class Permissions
 
     public static IReadOnlyList<string> All { get; } = Array.AsReadOnly(new[]
     {
+        McpConnections.Manage, McpConnections.Use,
         Users.Manage,
         Platform.OpenAccounts,
         Platform.CreateAccount,

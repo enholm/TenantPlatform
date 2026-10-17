@@ -1,0 +1,21 @@
+{
+  "McpRegistry": {
+    "Enabled": false,
+    "InternalAllowedPrivateAddresses": [],
+    "Profiles": [
+      {
+        "Id": "example-vendor",
+        "Name": "Example vendor",
+        "Issuer": "https://identity.example.org/",
+        "MetadataAddress": "https://identity.example.org/.well-known/oauth-authorization-server",
+        "Endpoint": "https://tools.example.org/mcp",
+        "Resource": "https://tools.example.org/mcp",
+        "ClientId": "operator-registered-client",
+        "ClientSecret": "",
+        "Callback": "https://app.example.no/mcp-client/registry/callback/example-vendor",
+        "Scopes": ["tools.read", "offline_access"],
+        "AllowedPrivateAddresses": []
+      }
+    ]
+  }
+}

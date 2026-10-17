@@ -234,7 +234,9 @@ namespace TenantPlatform.Infrastructure.Persistence.OAuth.Migrations
             modelBuilder.Entity("TenantPlatform.Core.Identity.McpClientCredential", b =>
                 {
                     b.Property<Guid>("UserId")
-                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConnectionId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("AccessExpiresUtc")
@@ -263,6 +265,11 @@ namespace TenantPlatform.Infrastructure.Persistence.OAuth.Migrations
                     b.Property<Guid?>("PendingId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ProfileVersion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("ProtectedTokens")
                         .HasColumnType("text");
 
@@ -271,9 +278,94 @@ namespace TenantPlatform.Infrastructure.Persistence.OAuth.Migrations
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)");
 
-                    b.HasKey("UserId");
+                    b.HasKey("UserId", "ConnectionId");
 
                     b.ToTable("mcp_client_credentials", "oauth");
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Identity.McpDiscoveredTool", b =>
+                {
+                    b.Property<Guid>("ConnectionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<bool>("Approved")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("DiscoveredUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InputSchema")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("character varying(16000)");
+
+                    b.Property<string>("OutputSchema")
+                        .HasMaxLength(16000)
+                        .HasColumnType("character varying(16000)");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("ConnectionId", "Name");
+
+                    b.ToTable("mcp_tools", "oauth");
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Identity.McpServerDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CredentialEpoch")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DiscoveredUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("DiscoveryComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ProfileId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ProfileVersion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("mcp_servers", "oauth");
                 });
 
             modelBuilder.Entity("OpenIddict.EntityFrameworkCore.Models.OpenIddictEntityFrameworkCoreAuthorization", b =>
@@ -298,6 +390,15 @@ namespace TenantPlatform.Infrastructure.Persistence.OAuth.Migrations
                     b.Navigation("Application");
 
                     b.Navigation("Authorization");
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Identity.McpDiscoveredTool", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Identity.McpServerDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("ConnectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OpenIddict.EntityFrameworkCore.Models.OpenIddictEntityFrameworkCoreApplication", b =>

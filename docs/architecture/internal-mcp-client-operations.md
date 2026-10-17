@@ -1,5 +1,7 @@
 # Intern delegert MCP-klient i Web (5B3)
 
+6A utvider senere det samme klientgrunnlaget med kontoeide serverdefinisjoner, bruker-/tilkoblingsbundet lagring, godkjente eksterne profiler og verktøykatalog. Se [registerdrift](mcp-connection-registry-operations.md). Beskrivelsen av én forbindelse per bruker nedenfor gjelder den bevarte 5B3-legacyplassen; nye forbindelser har egen ConnectionId og egne grants.
+
 Denne funksjonen kobler en innlogget TenantPlatform-bruker til den separate MCP-lesehosten. Den bruker OpenIddict Client.AspNetCore/SystemNetHttp 7.7.2, etablert OpenIddict JWT-validering og offisiell ModelContextProtocol-klient 2.2.0 med ekte Streamable HTTP. Ingen chatagent, modellkall, rapportmotor, servicekonto eller register over eksterne MCP-servere inngår.
 
 ## Aktivering og registrering

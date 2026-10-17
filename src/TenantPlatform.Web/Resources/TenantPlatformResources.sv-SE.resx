@@ -3281,4 +3281,20 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="McpClientRenewal" xml:space="preserve"><value>Förnyelse</value></data>
   <data name="McpClientExpired" xml:space="preserve"><value>Utgånget</value></data>
   <data name="McpClientOverlap" xml:space="preserve"><value>Kategorierna kan överlappa och ska inte summeras till antalet unika avtal.</value></data>
+  <data name="McpRegistryTitle" xml:space="preserve"><value>MCP-anslutningar</value></data>
+  <data name="McpRegistryPolicy" xml:space="preserve"><value>Personlig auktorisering krävs. Verktygsbeskrivningar och scheman är opålitliga data. Nya verktyg måste godkännas. Katalogen upphör efter 24 timmar.</value></data>
+  <data name="McpRegistryName" xml:space="preserve"><value>Namn</value></data>
+  <data name="McpRegistryProfile" xml:space="preserve"><value>Operatörsgodkänd profil</value></data>
+  <data name="McpRegistryEnabled" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="McpRegistryDisabled" xml:space="preserve"><value>Inaktiverad</value></data>
+  <data name="McpRegistrySave" xml:space="preserve"><value>Spara definition</value></data>
+  <data name="McpRegistryDiscover" xml:space="preserve"><value>Upptäck verktyg</value></data>
+  <data name="McpRegistryComplete" xml:space="preserve"><value>Fullständig katalog från</value></data>
+  <data name="McpRegistryIncomplete" xml:space="preserve"><value>Ofullständig eller inaktuell katalog. Ny upptäckt krävs.</value></data>
+  <data name="McpRegistryApproved" xml:space="preserve"><value>Godkänd</value></data>
+  <data name="McpRegistryUnapproved" xml:space="preserve"><value>Inte godkänd</value></data>
+  <data name="McpRegistrySchema" xml:space="preserve"><value>Verktygsscheman</value></data>
+  <data name="McpRegistryApprove" xml:space="preserve"><value>Godkänn denna version</value></data>
+  <data name="McpRegistryRevoke" xml:space="preserve"><value>Återkalla godkännande</value></data>
+  <data name="McpRegistryProfileUnavailable" xml:space="preserve"><value>Profilen är inte inläst eller har ändrats. Operatören måste konfigurera och starta om alla Web-instanser; administratören måste sedan spara rätt profil och användaren auktorisera på nytt.</value></data>
 </root>

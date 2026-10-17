@@ -3244,4 +3244,20 @@ This is a reminder, not a termination or renewal.</value>
   <data name="McpClientRenewal" xml:space="preserve"><value>Renewal</value></data>
   <data name="McpClientExpired" xml:space="preserve"><value>Expired</value></data>
   <data name="McpClientOverlap" xml:space="preserve"><value>Categories may overlap and must not be summed as unique agreements.</value></data>
+  <data name="McpRegistryTitle" xml:space="preserve"><value>MCP connections</value></data>
+  <data name="McpRegistryPolicy" xml:space="preserve"><value>Personal authorization is required. Tool descriptions and schemas are untrusted data. New tools require approval. The catalogue expires after 24 hours.</value></data>
+  <data name="McpRegistryName" xml:space="preserve"><value>Name</value></data>
+  <data name="McpRegistryProfile" xml:space="preserve"><value>Operator-approved profile</value></data>
+  <data name="McpRegistryEnabled" xml:space="preserve"><value>Enabled</value></data>
+  <data name="McpRegistryDisabled" xml:space="preserve"><value>Disabled</value></data>
+  <data name="McpRegistrySave" xml:space="preserve"><value>Save definition</value></data>
+  <data name="McpRegistryDiscover" xml:space="preserve"><value>Discover tools</value></data>
+  <data name="McpRegistryComplete" xml:space="preserve"><value>Complete catalogue from</value></data>
+  <data name="McpRegistryIncomplete" xml:space="preserve"><value>Incomplete or stale catalogue. Discovery is required.</value></data>
+  <data name="McpRegistryApproved" xml:space="preserve"><value>Approved</value></data>
+  <data name="McpRegistryUnapproved" xml:space="preserve"><value>Not approved</value></data>
+  <data name="McpRegistrySchema" xml:space="preserve"><value>Tool schemas</value></data>
+  <data name="McpRegistryApprove" xml:space="preserve"><value>Approve this version</value></data>
+  <data name="McpRegistryRevoke" xml:space="preserve"><value>Revoke approval</value></data>
+  <data name="McpRegistryProfileUnavailable" xml:space="preserve"><value>The profile is not loaded or has changed. The operator must configure and restart all Web instances; the administrator must then save the correct profile and the user authorize again.</value></data>
 </root>

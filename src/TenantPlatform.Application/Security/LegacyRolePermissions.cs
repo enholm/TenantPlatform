@@ -6,6 +6,17 @@ public static class LegacyRolePermissions
 {
     public static IReadOnlyList<string> For(UserRole role) => role switch
     {
+        UserRole.AccountAdmin => [.. ExistingFor(role), Permissions.McpConnections.Use, Permissions.McpConnections.Manage],
+        UserRole.PropertyAdmin or UserRole.TenantAdmin or UserRole.TenantUser or UserRole.ServiceProviderUser or
+        UserRole.LeasingOrderApprover or UserRole.LeasingLimitApprover or UserRole.LeasingPlanApprover or
+        UserRole.LeasingInvoiceApprover or UserRole.LeasingVarianceApprover or UserRole.LeasingEquipmentManager or
+        UserRole.LeasingLifecycleManager or UserRole.LeasingLifecycleApprover or UserRole.LeasingReportReader or
+        UserRole.LeasingReportExporter => [.. ExistingFor(role), Permissions.McpConnections.Use],
+        _ => ExistingFor(role)
+    };
+
+    private static IReadOnlyList<string> ExistingFor(UserRole role) => role switch
+    {
         UserRole.AccountAdmin =>
         [
             Permissions.Users.Manage,

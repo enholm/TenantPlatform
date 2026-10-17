@@ -1,0 +1,68 @@
+@using TenantPlatform.Application.Mcp
+@using TenantPlatform.Core.Identity
+<!DOCTYPE html>
+<html><head><meta charset="utf-8" /><title>@L["McpRegistryTitle"]</title><link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" /></head>
+<body><main class="container py-4">
+<h1>@L["McpRegistryTitle"]</h1>
+<p>@L["McpRegistryPolicy"]</p>
+@if (Page.CanManage)
+{
+<form method="post" action="/mcp-client/registry/save" class="card card-body mb-3">
+    <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" />
+    <label>@L["McpRegistryName"] <input class="form-control" name="name" maxlength="100" required /></label>
+    <label>@L["McpRegistryProfile"] <select class="form-select" name="profile">@foreach (var profile in Page.Profiles) { <option value="@profile.Id">@profile.Name</option> }</select></label>
+    <label><input type="checkbox" name="enabled" value="true" checked /> @L["McpRegistryEnabled"]</label>
+    <button class="btn btn-primary mt-2">@L["McpRegistrySave"]</button>
+</form>
+}
+@foreach (var row in Page.Servers)
+{
+<section class="card card-body mb-3">
+<h2 class="h4">@row.Name</h2>
+<p>@(row.Enabled ? L["McpRegistryEnabled"] : L["McpRegistryDisabled"]) · @(States.GetValueOrDefault(row.Id)?.Connected == true ? L["McpClientConnected"] : L["McpClientReconnect"])</p>
+@if (!Page.Profiles.Any(x => x.Id == row.ProfileId && x.Version == row.ProfileVersion)) { <p class="alert alert-warning">@L["McpRegistryProfileUnavailable"]</p> }
+<p>@row.ProfileId · @Page.Profiles.FirstOrDefault(x => x.Id == row.ProfileId)?.Endpoint</p>
+@if (Page.CanManage)
+{
+<form method="post" action="/mcp-client/registry/save" class="mb-2">
+    <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" /><input type="hidden" name="id" value="@row.Id" /><input type="hidden" name="revision" value="@row.Revision" />
+    <label>@L["McpRegistryName"] <input name="name" value="@row.Name" maxlength="100" required /></label>
+    <label>@L["McpRegistryProfile"] <select name="profile">@foreach (var profile in Page.Profiles) { <option value="@profile.Id" selected="@(profile.Id == row.ProfileId)">@profile.Name</option> }</select></label>
+    <label><input type="checkbox" name="enabled" value="true" checked="@row.Enabled" /> @L["McpRegistryEnabled"]</label>
+    <button class="btn btn-outline-primary">@L["McpRegistrySave"]</button>
+</form>
+}
+@foreach (var action in Page.CanManage ? new[] { "connect", "disconnect", "discover" } : new[] { "connect", "disconnect" })
+{
+<form method="post" action="@($"/mcp-client/registry/{action}")" class="d-inline-block mb-2">
+    <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" /><input type="hidden" name="id" value="@row.Id" />
+    <button class="btn btn-outline-secondary" disabled="@(action != "disconnect" && (!row.Enabled || !Page.Profiles.Any(x => x.Id == row.ProfileId && x.Version == row.ProfileVersion)))">@L[action == "connect" ? "McpClientConnect" : action == "disconnect" ? "McpClientDisconnect" : "McpRegistryDiscover"]</button>
+</form>
+}
+<p>@L[row.DiscoveryComplete && row.DiscoveredUtc >= NowUtc.AddHours(-24) && Page.Profiles.Any(x => x.Id == row.ProfileId && x.Version == row.ProfileVersion) ? "McpRegistryComplete" : "McpRegistryIncomplete"] @row.DiscoveredUtc?.ToString("u")</p>
+@foreach (var tool in Tools.GetValueOrDefault(row.Id) ?? [])
+{
+<div class="border-top py-2"><strong>@tool.Name</strong> · @L[tool.Approved ? "McpRegistryApproved" : "McpRegistryUnapproved"]
+<p class="text-break">@tool.Description</p>
+<details><summary>@L["McpRegistrySchema"]</summary><pre>@tool.InputSchema</pre><pre>@tool.OutputSchema</pre></details>
+@if (Page.CanManage)
+{
+<form method="post" action="/mcp-client/registry/approve">
+    <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" /><input type="hidden" name="id" value="@row.Id" />
+    <input type="hidden" name="tool" value="@tool.Name" /><input type="hidden" name="version" value="@tool.Version" /><input type="hidden" name="approved" value="@(!tool.Approved ? "true" : "false")" />
+    <button class="btn btn-outline-secondary">@L[tool.Approved ? "McpRegistryRevoke" : "McpRegistryApprove"]</button>
+</form>
+}
+</div>
+}
+</section>
+}
+<a href="/mcp-client">@L["McpClientTitle"]</a>
+</main></body></html>
+@code {
+    [Parameter, EditorRequired] public McpRegistryPage Page { get; set; } = default!;
+    [Parameter] public Dictionary<Guid, McpClientStatus> States { get; set; } = [];
+    [Parameter] public Dictionary<Guid, IReadOnlyList<McpDiscoveredTool>> Tools { get; set; } = [];
+    [Parameter] public DateTimeOffset NowUtc { get; set; }
+    [Parameter] public string? VerificationToken { get; set; }
+}

@@ -47,6 +47,8 @@ public static class InternalMcpClientEndpoints
             {
                 if (!await Cookie(http)) return Results.Unauthorized();
                 if (!options.Available) return Page(http, antiforgery, options, null, "UNAVAILABLE");
+                var protocol = await http.AuthenticateAsync(OpenIddictClientAspNetCoreDefaults.AuthenticationScheme);
+                if (protocol.Properties?.Items.ContainsKey(McpRegistryEndpoints.ConnectionProperty) == true) return await McpRegistryEndpoints.Complete(http, ct);
                 await http.RequestServices.GetRequiredService<InternalMcpClientService>().CompleteAsync(ct);
                 return Results.LocalRedirect("/mcp-client"); // Never sign the OAuth tokens/identity into the GUI cookie.
             }

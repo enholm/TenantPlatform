@@ -1,5 +1,7 @@
 # MCP-lesehost: oppsett og verifikasjon (5B2)
 
+[6A-registeret i Web](mcp-connection-registry-operations.md) kan koble personlige brukere til denne og andre MCP-servere. Det endrer ikke denne hostens tre verktøy, leserolle, tokenprofil eller prosjektavhengigheter. Registerets nye OAuth-tabeller skal ikke gjøres tilgjengelige for MCP-leserollen.
+
 TenantPlatform.Mcp er en separat .NET 10-resource-server. Den refererer Application og Infrastructure, aldri Web. Web er OAuth-utstederen fra [5B1](oauth-issuer-operations.md). Ingen intern OAuth-klient, agent eller rapportmotor inngår i selve 5B2-hosten. Den interne delegerte Web-klienten er senere implementert i [5B3](internal-mcp-client-operations.md), uten nye MCP-verktøy eller Web-referanse fra MCP-produksjonsprosjektet. Agent og rapportmotor er fortsatt utsatt. Ingen bakgrunnsjobber, migrering, seed eller initialisering registreres/startes av MCP.
 
 ## Konfigurasjon og oppstart

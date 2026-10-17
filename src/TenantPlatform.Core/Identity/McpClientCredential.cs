@@ -4,6 +4,9 @@ namespace TenantPlatform.Core.Identity;
 public sealed class McpClientCredential
 {
     public Guid UserId { get; set; }
+    // Empty is the reserved 5B3 legacy slot; never reassigned to a registered server.
+    public Guid ConnectionId { get; set; }
+    public string ProfileVersion { get; set; } = "";
     public string ClientId { get; set; } = "";
     public string Issuer { get; set; } = "";
     public string Resource { get; set; } = "";
