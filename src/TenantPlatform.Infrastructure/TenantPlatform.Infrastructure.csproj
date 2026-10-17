@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TenantPlatform.Core\TenantPlatform.Core.csproj" />
+    <ProjectReference Include="../TenantPlatform.Application/TenantPlatform.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

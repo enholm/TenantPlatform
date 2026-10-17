@@ -1,3 +1,4 @@
+using TenantPlatform.Application.Security;
 using TenantPlatform.Core.Identity;
 
 namespace TenantPlatform.Web.Security.Authorization;

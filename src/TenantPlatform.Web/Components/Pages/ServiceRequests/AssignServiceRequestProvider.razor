@@ -12,7 +12,7 @@
 @using TenantPlatform.Core.Services
 @using TenantPlatform.Web.Security.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
-@using TenantPlatform.Web.Services.ServiceRequests
+@using TenantPlatform.Application.ServiceRequests
 
 @inject IServiceRequestService ServiceRequestService
 @inject ICurrentUserContextService UserContext
@@ -300,7 +300,6 @@ else
                 .GetRequestAsync(
                     accountId.Value,
                     Id,
-                    UserContext.Current.UserId,
                     CultureInfo.CurrentUICulture.Name);
 
         if (request is null)
@@ -343,8 +342,7 @@ else
                 .AssignProviderAsync(
                     accountId.Value,
                     Id,
-                    model.ProviderOrganizationId.Value,
-                    UserContext.Current.UserId);
+                    model.ProviderOrganizationId.Value);
 
             Navigation.NavigateTo(
                 $"/portal/requests/{Id}");

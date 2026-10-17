@@ -2,11 +2,10 @@
 @attribute [Authorize]
 
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.EntityFrameworkCore
-@using TenantPlatform.Infrastructure.Persistence
+@using TenantPlatform.Application.Security
 @using TenantPlatform.Web.Security.CurrentUserContext
 
-@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
+@inject AccountContextReader Accounts
 @inject ICurrentUserContextService CurrentUserContextService
 
 <PageTitle>Velg selskap</PageTitle>
@@ -46,24 +45,10 @@ else
 }
 
 @code {
-    private List<AccountOption>? accounts;
-
+    private IReadOnlyList<MemberAccount>? accounts;
     protected override async Task OnInitializedAsync()
     {
-        var userId =
-            CurrentUserContextService.Current.UserId;
-        await using var dbContext =
-            await DbContextFactory.CreateDbContextAsync();
-        accounts = await dbContext.UserAccounts
-            .Where(x => x.UserId == userId)
-            .OrderBy(x => x.Account.Name)
-            .Select(x => new AccountOption(
-                x.AccountId,
-                x.Account.Name))
-            .ToListAsync();
+        try { accounts = await Accounts.ReadAsync(); }
+        catch (UnauthorizedAccessException) { accounts = []; }
     }
-
-    private record AccountOption(
-        Guid Id,
-        string Name);
 }

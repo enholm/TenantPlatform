@@ -1,3 +1,5 @@
+@using TenantPlatform.Application.Units
+@using TenantPlatform.Application.Organizations
 @page "/occupancies/{Id:guid}/edit"
 @attribute [Authorize]
 
@@ -6,7 +8,7 @@
 @using TenantPlatform.Core.Organizations
 @using TenantPlatform.Web.Security.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
-@using TenantPlatform.Web.Services.Occupancies
+@using TenantPlatform.Application.Occupancies
 @using TenantPlatform.Web.Services.Organizations
 @using TenantPlatform.Web.Services.Units
 

@@ -2,7 +2,7 @@ using TenantPlatform.Infrastructure.Persistence;
 
 namespace TenantPlatform.Infrastructure.Initialization;
 
-public static class PlatformDataInitializer
+internal static class PlatformDataInitializer
 {
     public static Task InitializeAsync(
         TenantPlatformDbContext dbContext,

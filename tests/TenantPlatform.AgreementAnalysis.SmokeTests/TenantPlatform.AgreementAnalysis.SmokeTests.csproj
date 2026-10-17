@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/TenantPlatform.Web/TenantPlatform.Web.csproj" />
+    <ProjectReference Include="../../src/TenantPlatform.Infrastructure/TenantPlatform.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
 

@@ -63,7 +63,7 @@
     private AgreementInsightDimension dimension = AgreementInsightDimension.Type;
     private Guid? selected, loadedAccount;
     private AgreementInsightsDto? data;
-    private IReadOnlyList<TenantPlatform.Web.Services.AccountSettings.AccountHierarchyRow> options = [];
+    private IReadOnlyList<TenantPlatform.Application.AccountSettings.AccountHierarchyRow> options = [];
     private bool loading = true, error;
     protected override async Task OnParametersSetAsync()
     { if (loadedAccount != AccountId) { loadedAccount = AccountId; selected = null; options = []; await LoadAsync(); } }

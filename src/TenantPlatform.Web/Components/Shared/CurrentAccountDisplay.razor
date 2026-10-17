@@ -1,8 +1,6 @@
-@using Microsoft.EntityFrameworkCore
-@using TenantPlatform.Infrastructure.Persistence
+@using TenantPlatform.Application.Security
 @using TenantPlatform.Web.Security.CurrentUserContext
-
-@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
+@inject AccountContextReader Accounts
 @inject ICurrentUserContextService UserContext
 
 @if (!string.IsNullOrWhiteSpace(accountName))
@@ -12,22 +10,10 @@
 
 @code {
     private string? accountName;
-
     protected override async Task OnInitializedAsync()
     {
-        var accountId = UserContext.Current.CurrentAccountId;
-
-        if (!accountId.HasValue)
-        {
-            return;
-        }
-
-        await using var dbContext =
-            await DbContextFactory.CreateDbContextAsync();
-
-        accountName = await dbContext.Accounts
-            .Where(x => x.Id == accountId.Value)
-            .Select(x => x.Name)
-            .SingleOrDefaultAsync();
+        if (!UserContext.Current.IsAuthenticated) return;
+        try { accountName = await Accounts.ReadSelectedNameAsync(); }
+        catch (UnauthorizedAccessException) { accountName = null; }
     }
 }

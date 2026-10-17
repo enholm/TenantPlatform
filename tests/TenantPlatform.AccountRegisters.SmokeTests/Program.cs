@@ -1,3 +1,8 @@
+using TenantPlatform.Application.Security;
+using TenantPlatform.Infrastructure.Authorization;
+using TenantPlatform.Infrastructure.AccountSettings;
+using TenantPlatform.Web.Security.Application;
+using TenantPlatform.Application.AccountSettings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -65,13 +70,14 @@ try
     {
         var context = new Context(admin, account);
         var auth = new TenantAuthorizationService(factory, context);
-        var departments = new OrganizationElementService(factory, context, auth);
-        var locations = new GeographicAreaService(factory, context, auth);
-        Task Save(Guid? id, AccountRegisterInput input) => location ? locations.SaveAsync(id, input) : departments.SaveAsync(id, input);
-        Task Delete(Guid id) => location ? locations.DeleteAsync(id) : departments.DeleteAsync(id);
+        var registers = new AccountRegisterService(new CurrentActorAdapter(context),
+            new AuthorizationService(new CurrentActorAdapter(context), new AuthorizationData(factory), TimeProvider.System), new AccountRegisterData(factory));
+        var kind = location ? AccountRegisterKind.GeographicAreas : AccountRegisterKind.OrganizationElements;
+        Task Save(Guid? id, AccountRegisterInput input) => registers.SaveAsync(kind, id, input);
+        Task Delete(Guid id) => registers.DeleteAsync(kind, id);
         async Task<List<(Guid Id, Guid AccountId, string Name, string? Description, bool IsActive)>> Read() => location
-            ? (await locations.GetAllAsync()).Select(x => (x.Id, x.AccountId, x.Name, x.Description, x.IsActive)).ToList()
-            : (await departments.GetAllAsync()).Select(x => (x.Id, x.AccountId, x.Name, x.Description, x.IsActive)).ToList();
+            ? (await registers.ReadGeographicAreasAsync()).Select(x => (x.Id, x.AccountId, x.Name, x.Description, x.IsActive)).ToList()
+            : (await registers.ReadOrganizationElementsAsync()).Select(x => (x.Id, x.AccountId, x.Name, x.Description, x.IsActive)).ToList();
         var label = location ? "geographic_areas" : "organization_elements";
         await Save(null, new() { Name = "  Operations  ", Description = "  Description  " });
         var item = (await Read()).Single();
@@ -113,12 +119,12 @@ try
         await Expect<AccountHierarchyException>(() => Delete(item.Id), label + ": cannot delete parent");
         await Save(child.Id, new() { Name = "Child moved to root" });
         var parentId = location
-            ? (await locations.GetAllAsync()).Single(x => x.Id == child.Id).ParentId
-            : (await departments.GetAllAsync()).Single(x => x.Id == child.Id).ParentId;
+            ? (await registers.ReadGeographicAreasAsync()).Single(x => x.Id == child.Id).ParentId
+            : (await registers.ReadOrganizationElementsAsync()).Single(x => x.Id == child.Id).ParentId;
         Assert(parentId == null, label + ": move to root");
         var grandchildParent = location
-            ? (await locations.GetAllAsync()).Single(x => x.Id == grandchild.Id).ParentId
-            : (await departments.GetAllAsync()).Single(x => x.Id == grandchild.Id).ParentId;
+            ? (await registers.ReadGeographicAreasAsync()).Single(x => x.Id == grandchild.Id).ParentId
+            : (await registers.ReadOrganizationElementsAsync()).Single(x => x.Id == grandchild.Id).ParentId;
         Assert(grandchildParent == child.Id, label + ": moving subtree preserves child links");
         await Delete(grandchild.Id);
         await Delete(child.Id);
@@ -158,7 +164,16 @@ try
             else db.OrganizationElements.Add(new OrganizationElement { Id = Guid.NewGuid(), AccountId = isolatedAccount, Name = "IT" });
             await db.SaveChangesAsync();
         }
-        var accountService = new TenantPlatform.Web.Services.Accounts.AccountService(factory);
+        var platformUser = Guid.NewGuid();
+        await using (var db = factory.CreateDbContext())
+        {
+            db.Users.Add(new User { Id = platformUser, FirstName = "Platform", Email = platformUser + "@example.test", IsActive = true, IsPlatformAdmin = true });
+            await db.SaveChangesAsync();
+        }
+        var platformContext = new Context(platformUser, isolatedAccount);
+        var accountService = new TenantPlatform.Application.Accounts.AccountService(
+            new AuthorizationService(new CurrentActorAdapter(platformContext), new AuthorizationData(factory), TimeProvider.System),
+            new TenantPlatform.Infrastructure.Accounts.AccountData(factory));
         Assert(!(await accountService.CanDeleteAccountAsync(isolatedAccount)).CanDelete,
             location ? "locations prevent account deletion" : "departments prevent account deletion");
     }

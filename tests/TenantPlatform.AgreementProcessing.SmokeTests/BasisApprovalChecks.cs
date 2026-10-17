@@ -1,3 +1,4 @@
+using TenantPlatform.Application.Agreements;
 using Microsoft.EntityFrameworkCore;
 using TenantPlatform.Core.Agreements;
 using TenantPlatform.Core.Organizations;

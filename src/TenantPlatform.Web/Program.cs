@@ -1,3 +1,17 @@
+using TenantPlatform.Application.Agreements;
+using ServiceRequestService = TenantPlatform.Web.Services.ServiceRequests.ServiceRequestService;
+using TenantPlatform.Application.Authentication;
+using ServiceDefinitionFieldService = TenantPlatform.Web.Services.ServiceDefinitionFields.ServiceDefinitionFieldService;
+using ServiceDefinitionService = TenantPlatform.Web.Services.ServiceDefinitions.ServiceDefinitionService;
+using OccupancyService = TenantPlatform.Web.Services.Occupancies.OccupancyService;
+using UnitService = TenantPlatform.Web.Services.Units.UnitService;
+using TenantPlatform.Application.Units;
+using OrganizationService = TenantPlatform.Web.Services.Organizations.OrganizationService;
+using TenantPlatform.Application.Organizations;
+using AccountService = TenantPlatform.Web.Services.Accounts.AccountService;
+using TenantPlatform.Application.Accounts;
+using BuildingService = TenantPlatform.Web.Services.Buildings.BuildingService;
+using TenantPlatform.Application.Buildings;
 using TenantPlatform.Web.Services.Leasing;
 using System.Net;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -19,18 +33,20 @@ using Microsoft.AspNetCore.Localization;
 using TenantPlatform.Web.Services.Buildings;
 using TenantPlatform.Web.Services.Organizations;
 using TenantPlatform.Web.Services.Units;
-using TenantPlatform.Web.Services.Occupancies;
+using TenantPlatform.Application.Occupancies;
 using TenantPlatform.Infrastructure.Auditing;
 using TenantPlatform.Web.Security.Auditing;
-using TenantPlatform.Web.Services.ServiceDefinitions;
+using TenantPlatform.Application.ServiceDefinitions;
 using TenantPlatform.Core.Localization;
-using TenantPlatform.Web.Services.ServiceDefinitionFields;
-using TenantPlatform.Web.Services.ServiceCatalog;
-using TenantPlatform.Web.Services.ServiceRequests;
+using TenantPlatform.Application.ServiceDefinitionFields;
+using TenantPlatform.Application.ServiceCatalog;
+using ServiceCatalogService = TenantPlatform.Web.Services.ServiceCatalog.ServiceCatalogService;
+using TenantPlatform.Application.ServiceRequests;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Web.Email;
 using TenantPlatform.Web.Services.Accounts;
-using TenantPlatform.Web.Services.UserAdministration;
+using TenantPlatform.Application.UserAdministration;
+using UserAdministrationService = TenantPlatform.Web.Services.UserAdministration.UserAdministrationService;
 using TenantPlatform.Web.Services.Agreements;
 using TenantPlatform.Infrastructure.Agreements;
 
@@ -77,25 +93,56 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 
 builder.Services.AddSingleton<PasswordService>();
+builder.Services.AddScoped<AuthenticationSessionService>();
+builder.Services.AddScoped<IAuthenticationSessionData, AuthenticationSessionData>();
 builder.Services.AddScoped<ILocalAuthenticationService, LocalAuthenticationService>();
 builder.Services.AddScoped<AuthenticationCookieService>();
 builder.Services.AddScoped<ITenantAuthorizationService, TenantAuthorizationService>();
+builder.Services.AddScoped<TenantPlatform.Application.Buildings.BuildingService>();
+builder.Services.AddScoped<TenantPlatform.Application.Buildings.IBuildingData, TenantPlatform.Infrastructure.Buildings.BuildingData>();
 builder.Services.AddScoped<IBuildingService, BuildingService>();
+builder.Services.AddScoped<TenantPlatform.Application.Organizations.OrganizationService>();
+builder.Services.AddScoped<TenantPlatform.Application.Organizations.IOrganizationData, TenantPlatform.Infrastructure.Organizations.OrganizationData>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+builder.Services.AddScoped<TenantPlatform.Application.Units.UnitService>();
+builder.Services.AddScoped<TenantPlatform.Application.Units.IUnitData, TenantPlatform.Infrastructure.Units.UnitData>();
 builder.Services.AddScoped<IUnitService, UnitService>();
+builder.Services.AddScoped<TenantPlatform.Application.Occupancies.OccupancyService>();
+builder.Services.AddScoped<TenantPlatform.Application.Occupancies.IOccupancyData, TenantPlatform.Infrastructure.Occupancies.OccupancyData>();
 builder.Services.AddScoped<IOccupancyService, OccupancyService>();
 builder.Services.AddScoped<IAuditUserContext, AuditUserContext>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceDefinitions.IServiceDefinitionData, TenantPlatform.Infrastructure.ServiceDefinitions.ServiceDefinitionData>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceDefinitions.ServiceDefinitionService>();
 builder.Services.AddScoped<IServiceDefinitionService, ServiceDefinitionService>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceDefinitionFields.ServiceDefinitionFieldService>();
 builder.Services.AddScoped<IServiceDefinitionFieldService, ServiceDefinitionFieldService>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceCatalog.ServiceCatalogService>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceCatalog.IServiceCatalogLocationData, TenantPlatform.Infrastructure.ServiceDefinitions.ServiceCatalogLocationData>();
 builder.Services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceRequests.ServiceRequestService>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceRequests.IServiceRequestData, TenantPlatform.Infrastructure.ServiceRequests.ServiceRequestData>();
 builder.Services.AddScoped<IServiceRequestService, ServiceRequestService>();
 builder.Services.AddScoped<IServiceRequestEmailAddressService, ServiceRequestEmailAddressService>();
 builder.Services.AddScoped<IServiceRequestEmailComposer, ServiceRequestEmailComposer>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddScoped<IInboundServiceRequestEmailService, InboundServiceRequestEmailService>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceRequests.IInboundServiceRequestData, TenantPlatform.Infrastructure.ServiceRequests.InboundServiceRequestData>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceRequests.IServiceRequestOutboxData, TenantPlatform.Infrastructure.ServiceRequests.ServiceRequestOutboxData>();
+builder.Services.AddScoped<TenantPlatform.Application.ServiceRequests.InboundServiceRequestEmailJob>(services => new(
+    services.GetRequiredService<TenantPlatform.Application.ServiceRequests.IInboundServiceRequestData>(), services.GetRequiredService<IServiceRequestReplyAddressParser>(),
+    new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.ServiceRequestInbound)));
+builder.Services.AddScoped<TenantPlatform.Application.ServiceRequests.EmailOutboxJob>(services => new(
+    services.GetRequiredService<TenantPlatform.Application.ServiceRequests.IServiceRequestOutboxData>(), services.GetRequiredService<IEmailSender>(),
+    services.GetRequiredService<IServiceRequestEmailAddressService>(), services.GetRequiredService<TimeProvider>(),
+    new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.EmailOutbox)));
 builder.Services.AddScoped<IServiceRequestReplyAddressParser, ServiceRequestReplyAddressParser>();
+builder.Services.AddScoped<TenantPlatform.Application.Accounts.AccountService>();
+builder.Services.AddScoped<TenantPlatform.Application.Accounts.IAccountData, TenantPlatform.Infrastructure.Accounts.AccountData>();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<TenantPlatform.Application.UserAdministration.UserAdministrationService>();
+builder.Services.AddScoped<TenantPlatform.Application.UserAdministration.IUserAdministrationData, TenantPlatform.Infrastructure.UserAdministration.UserAdministrationData>();
+builder.Services.AddScoped<TenantPlatform.Application.UserAdministration.IUserPasswordHasher, PasswordService>();
 builder.Services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddOptions<AgreementDocumentStorageOptions>()
@@ -112,24 +159,115 @@ builder.Services.AddOptions<AgreementDocumentStorageOptions>()
     .ValidateOnStart();
 builder.Services.AddSingleton<IAgreementDocumentStorage, LocalAgreementDocumentStorage>();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddOptions<AgreementAnalysisOptions>().Bind(builder.Configuration.GetSection("AgreementAnalysis"));
-builder.Services.AddHttpClient<IContractAnalysisClient, OpenAiContractAnalysisClient>(client => client.Timeout = TimeSpan.FromMinutes(5));
-builder.Services.AddScoped<IAgreementAnalysisService>(sp => sp.GetRequiredService<AgreementService>());
+builder.Services.AddOptions<TenantPlatform.Infrastructure.Agreements.AgreementAnalysisOptions>().Bind(builder.Configuration.GetSection("AgreementAnalysis"));
+builder.Services.AddHttpClient<TenantPlatform.Application.Agreements.IContractAnalysisClient, TenantPlatform.Infrastructure.Agreements.OpenAiContractAnalysisClient>(client => client.Timeout = TimeSpan.FromMinutes(5));
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementAnalysisService>(sp => sp.GetRequiredService<AgreementService>());
 builder.Services.AddScoped<AgreementAnalysisCleanup>();
 builder.Services.AddHostedService<AgreementAnalysisCleanupWorker>();
+builder.Services.AddScoped<TenantPlatform.Application.AccountSettings.AccountRegisterService>();
+builder.Services.AddScoped<TenantPlatform.Application.AccountSettings.IAccountRegisterData, TenantPlatform.Infrastructure.AccountSettings.AccountRegisterData>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.OrganizationElementService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.AccountSettings.GeographicAreaService>();
 builder.Services.AddScoped<LeasingService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingReportService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingReportData, TenantPlatform.Infrastructure.Leasing.LeasingReportData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingRentalInvoiceService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingRentalInvoiceData, TenantPlatform.Infrastructure.Leasing.LeasingRentalInvoiceData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.Invoices.LeasingPurchaseInvoiceService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.Invoices.ILeasingPurchaseInvoiceData, TenantPlatform.Infrastructure.Leasing.Invoices.LeasingPurchaseInvoiceData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingPaymentService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingPaymentData, TenantPlatform.Infrastructure.Leasing.LeasingPaymentData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingLifecycleService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingLifecycleData, TenantPlatform.Infrastructure.Leasing.LeasingLifecycleData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingEquipmentService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingEquipmentData, TenantPlatform.Infrastructure.Leasing.LeasingEquipmentData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingOrderWriter>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingOrderWriteData, TenantPlatform.Infrastructure.Leasing.LeasingOrderWriteData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingOrderReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingOrderReadData, TenantPlatform.Infrastructure.Leasing.LeasingOrderReadData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingAcquisitionWriter>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingAcquisitionData, TenantPlatform.Infrastructure.Leasing.LeasingAcquisitionData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingDocumentService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingDocumentData, TenantPlatform.Infrastructure.Leasing.LeasingDocumentData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.IPaymentPlanSourceReader, TenantPlatform.Infrastructure.Leasing.PaymentPlanSourceReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingReadData, TenantPlatform.Infrastructure.Leasing.LeasingReadData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingFrameworkWriter>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingFrameworkWriteData, TenantPlatform.Infrastructure.Leasing.LeasingFrameworkWriteData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingClassificationService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingClassificationData, TenantPlatform.Infrastructure.Leasing.LeasingClassificationData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingFollowupService>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingFollowupData, TenantPlatform.Infrastructure.Leasing.LeasingFollowupData>();
 builder.Services.AddScoped<LeasingLifecycleProcessor>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.ILeasingLifecycleJobData, TenantPlatform.Infrastructure.Leasing.LeasingLifecycleJobData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.LeasingLifecycleJob>(services => new(
+    services.GetRequiredService<TenantPlatform.Application.Leasing.ILeasingLifecycleJobData>(), services.GetRequiredService<TimeProvider>(),
+    new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.LeasingLifecycle)));
 builder.Services.AddHostedService<LeasingLifecycleWorker>();
-builder.Services.AddOptions<TenantPlatform.Web.Services.Leasing.Invoices.LeasingInvoiceInterpretationOptions>().Bind(builder.Configuration.GetSection("LeasingInvoiceInterpretation"));
-builder.Services.AddHttpClient<TenantPlatform.Web.Services.Leasing.Invoices.IInvoiceDocumentInterpreter, TenantPlatform.Web.Services.Leasing.Invoices.InvoiceDocumentInterpreter>(client => client.Timeout = TimeSpan.FromMinutes(5));
+builder.Services.AddOptions<TenantPlatform.Infrastructure.Leasing.Invoices.LeasingInvoiceInterpretationOptions>().Bind(builder.Configuration.GetSection("LeasingInvoiceInterpretation"));
+builder.Services.AddHttpClient<TenantPlatform.Application.Leasing.Invoices.IInvoiceDocumentInterpreter, TenantPlatform.Infrastructure.Leasing.Invoices.InvoiceDocumentInterpreter>(client => client.Timeout = TimeSpan.FromMinutes(5));
 builder.Services.AddScoped<TenantPlatform.Web.Services.Leasing.Invoices.LeasingInvoiceProcessor>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.Invoices.ILeasingInvoiceJobData, TenantPlatform.Infrastructure.Leasing.Invoices.LeasingInvoiceJobData>();
+builder.Services.AddScoped<TenantPlatform.Application.Leasing.Invoices.LeasingInvoiceJob>(services => new(
+    services.GetRequiredService<TenantPlatform.Application.Leasing.Invoices.ILeasingInvoiceJobData>(), services.GetRequiredService<TenantPlatform.Application.Leasing.Invoices.IInvoiceDocumentInterpreter>(),
+    services.GetRequiredService<TimeProvider>(), new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.LeasingInvoices)));
 builder.Services.AddHostedService<TenantPlatform.Web.Services.Leasing.Invoices.LeasingInvoiceWorker>();
+builder.Services.AddScoped<TenantPlatform.Application.Dimensions.DimensionService>();
+builder.Services.AddScoped<TenantPlatform.Application.Dimensions.IDimensionData, TenantPlatform.Infrastructure.AccountSettings.DimensionData>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.Dimensions.DimensionService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementInitializationService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementFollowupWriter>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementIndexService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementDocumentService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementManagementService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementAnalysisService>();
+builder.Services.AddScoped<TenantPlatform.Application.Initialization.IPlatformSeedData, PlatformSeedData>();
+builder.Services.AddScoped<TenantPlatform.Application.Initialization.IDemoSeedData, DemoSeedData>();
+builder.Services.AddSingleton<TenantPlatform.Application.Initialization.IBootstrapEnvironment>(new HostBootstrapEnvironment(builder.Environment.IsDevelopment()));
+builder.Services.AddScoped<TenantPlatform.Application.Initialization.PlatformInitializationJob>(services => new(
+    services.GetRequiredService<TenantPlatform.Application.Initialization.IPlatformSeedData>(),
+    new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.PlatformSeed)));
+builder.Services.AddScoped<TenantPlatform.Application.Initialization.DemoInitializationJob>(services => new(
+    services.GetRequiredService<TenantPlatform.Application.Initialization.IDemoSeedData>(),
+    new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.DemoSeed),
+    services.GetRequiredService<TenantPlatform.Application.Initialization.IBootstrapEnvironment>()));
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementAnalysisData, TenantPlatform.Infrastructure.Agreements.AgreementAnalysisData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementAnalysisCleanupService>(services => new(
+    new TenantPlatform.Infrastructure.Agreements.AgreementAnalysisCleanupData(services.GetRequiredService<IDbContextFactory<TenantPlatformDbContext>>()),
+    services.GetRequiredService<TenantPlatform.Application.Agreements.IAgreementDocumentStorage>(), services.GetRequiredService<TimeProvider>(),
+    new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.AgreementAnalysisCleanup)));
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementFinancialService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementFinancialData, TenantPlatform.Infrastructure.Agreements.AgreementFinancialData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementManagementData, TenantPlatform.Infrastructure.Agreements.AgreementManagementData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementDocumentData, TenantPlatform.Infrastructure.Agreements.AgreementDocumentData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementIndexData, TenantPlatform.Infrastructure.Agreements.AgreementIndexData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementFollowupWriteData, TenantPlatform.Infrastructure.Agreements.AgreementFollowupWriteData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementInitializationData, TenantPlatform.Infrastructure.Agreements.AgreementDeadlineInitializer>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementDeadlineReader, TenantPlatform.Application.Agreements.AgreementDeadlineReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementDeadlineData, TenantPlatform.Infrastructure.Agreements.AgreementDeadlineData>();
+builder.Services.AddScoped<TenantPlatform.Application.Dashboard.HomeReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Dashboard.IHomeData, TenantPlatform.Infrastructure.Authorization.HomeData>();
+builder.Services.AddScoped<TenantPlatform.Application.Security.NavigationReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Security.AccountContextReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Security.IAccountContextData, TenantPlatform.Infrastructure.Authorization.AccountContextData>();
+builder.Services.AddScoped<TenantPlatform.Application.Security.IAuthorizationData, TenantPlatform.Infrastructure.Authorization.AuthorizationData>();
+builder.Services.AddScoped<TenantPlatform.Application.Security.IAuthorizationService, TenantPlatform.Application.Security.AuthorizationService>();
+builder.Services.AddScoped<TenantPlatform.Application.Security.ICurrentActor, TenantPlatform.Web.Security.Application.CurrentActorAdapter>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementListData, AgreementListData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementFollowupData, TenantPlatform.Infrastructure.Agreements.AgreementFollowupData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementFollowupReader, TenantPlatform.Application.Agreements.AgreementFollowupReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementDetailsData, TenantPlatform.Infrastructure.Agreements.AgreementDetailsData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementDetailsReader, TenantPlatform.Application.Agreements.AgreementDetailsReader>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementInsightsData, TenantPlatform.Infrastructure.Agreements.AgreementInsightsData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementInsightsService, TenantPlatform.Application.Agreements.AgreementInsightsService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementDashboardData, TenantPlatform.Infrastructure.Agreements.AgreementDashboardData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementDashboardService, TenantPlatform.Application.Agreements.AgreementDashboardService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementAttentionData, TenantPlatform.Infrastructure.Agreements.AgreementAttentionData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementAttentionService, TenantPlatform.Application.Agreements.AgreementAttentionService>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementListService, TenantPlatform.Application.Agreements.AgreementListService>();
 builder.Services.AddScoped<AgreementService>();
 builder.Services.AddScoped<IAgreementService>(sp => sp.GetRequiredService<AgreementService>());
-builder.Services.AddScoped<IAgreementFollowupService>(sp => sp.GetRequiredService<AgreementService>());
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementFollowupService>(sp => sp.GetRequiredService<AgreementService>());
 builder.Services.AddOptions<AgreementReminderOptions>()
     .Bind(builder.Configuration.GetSection("AgreementReminders"))
     .Validate(o => o.TransportMode is "Capture" or "Smtp", "AgreementReminders:TransportMode must be Capture or Smtp.")
@@ -143,12 +281,22 @@ builder.Services.AddOptions<AgreementReminderOptions>()
     }).ValidateOnStart();
 builder.Services.AddScoped<IAgreementReminderTransport, AgreementReminderTransport>();
 builder.Services.AddScoped<AgreementReminderProcessor>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementReminderData, TenantPlatform.Infrastructure.Agreements.AgreementReminderData>();
+builder.Services.AddScoped<TenantPlatform.Application.Agreements.AgreementReminderJob>(services => new(
+    services.GetRequiredService<TenantPlatform.Application.Agreements.IAgreementReminderData>(), services.GetRequiredService<TimeProvider>(),
+    services.GetRequiredService<TenantPlatform.Application.Agreements.IAgreementReminderTransport>(),
+    new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.AgreementReminders)));
 builder.Services.AddHostedService<AgreementReminderWorker>();
-builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.IMeetingRoomService,
+builder.Services.AddScoped<TenantPlatform.Application.MeetingRooms.MeetingRoomAccess>();
+builder.Services.AddScoped<TenantPlatform.Application.MeetingRooms.IMeetingRoomData, TenantPlatform.Infrastructure.MeetingRooms.MeetingRoomData>();
+builder.Services.AddScoped<TenantPlatform.Application.MeetingRooms.MeetingRoomService>();
+builder.Services.AddScoped<TenantPlatform.Application.MeetingRooms.RoomBookingService>();
+builder.Services.AddScoped<TenantPlatform.Application.MeetingRooms.CalendarIntegrationService>();
+builder.Services.AddScoped<TenantPlatform.Application.MeetingRooms.IMeetingRoomService,
     TenantPlatform.Web.Services.MeetingRooms.MeetingRoomService>();
-builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.IRoomBookingService,
+builder.Services.AddScoped<TenantPlatform.Application.MeetingRooms.IRoomBookingService,
     TenantPlatform.Web.Services.MeetingRooms.RoomBookingService>();
-builder.Services.AddScoped<TenantPlatform.Web.Services.MeetingRooms.ICalendarIntegrationService,
+builder.Services.AddScoped<TenantPlatform.Application.MeetingRooms.ICalendarIntegrationService,
     TenantPlatform.Web.Services.MeetingRooms.CalendarIntegrationService>();
 
 builder.Services.AddScoped<CurrentUserContextService>();
@@ -186,7 +334,7 @@ builder.Services.Configure<ImapOptions>(
 
 builder.Services.AddHostedService<
     ImapInboundEmailWorker>();
-    
+
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 
@@ -207,22 +355,15 @@ var localizationOptions = app.Services
 app.UseRequestLocalization(localizationOptions);
 
 
-// Initialize database and add platform data (and also demo data if dev environment)
+// Schema is technical bootstrap. Fixed-data creation uses separate bounded system use cases.
 using (var scope = app.Services.CreateScope())
 {
-    var dbContextFactory = scope.ServiceProvider
-        .GetRequiredService<IDbContextFactory<TenantPlatformDbContext>>();
-    var logger = scope.ServiceProvider
-        .GetRequiredService<ILogger<Program>>();
-    var passwordService = scope.ServiceProvider
-        .GetRequiredService<PasswordService>();
-    await using var dbContext =
-        await dbContextFactory.CreateDbContextAsync();
-    await DatabaseInitializer.InitializeAsync(
-        dbContext,
-        logger,
-        passwordService,
-        includeDemoData: app.Environment.IsDevelopment());
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<TenantPlatformDbContext>>();
+    var startupLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    await using (var db = await factory.CreateDbContextAsync())
+        await DatabaseInitializer.MigrateSchemaAsync(db, startupLogger);
+    await scope.ServiceProvider.GetRequiredService<TenantPlatform.Application.Initialization.PlatformInitializationJob>().InitializeAsync();
+    await scope.ServiceProvider.GetRequiredService<TenantPlatform.Application.Initialization.DemoInitializationJob>().InitializeAsync();
 }
 
 app.UseForwardedHeaders();
@@ -253,157 +394,19 @@ app.MapRazorComponents<App>()
 //---------------
 // Endpoint login
 // --------------
-app.MapPost("/auth/login", async (
-    HttpContext httpContext,
-    ILocalAuthenticationService authenticationService,
-    AuthenticationCookieService cookieService,
-    ITenantAuthorizationService authorizationService,
-    TenantPlatformDbContext dbContext,
-    IFormCollection form,
-    CancellationToken cancellationToken) =>
+app.MapPost("/auth/login", async (HttpContext httpContext, AuthenticationSessionService sessions,
+    AuthenticationCookieService cookies, ITenantAuthorizationService navigation, IFormCollection form, CancellationToken ct) =>
 {
-    var email =
-        form["email"].ToString();
-
-    var password =
-        form["password"].ToString();
-
-    var rememberMe =
-        string.Equals(
-            form["rememberMe"].ToString(),
-            "true",
-            StringComparison.OrdinalIgnoreCase);
-
-    var result =
-        await authenticationService.AuthenticateAsync(
-            email,
-            password,
-            cancellationToken);
-
-    if (!result.Succeeded ||
-        result.User is null)
-    {
-        return Results.Redirect(
-            "/login?error=invalid-login");
-    }
-
-    var user =
-        result.User;
-
-    var accountIds =
-        await dbContext.UserAccounts
-            .AsNoTracking()
-            .Where(x =>
-                x.UserId == user.Id)
-            .Select(x =>
-                x.AccountId)
-            .ToListAsync(cancellationToken);
-
-    //
-    // En ren PlatformAdmin trenger ikke være
-    // knyttet til noen Account.
-    //
-    if (user.IsPlatformAdmin &&
-        accountIds.Count == 0)
-    {
-        await cookieService.SignInAsync(
-            httpContext,
-            user,
-            currentAccountId: null,
-            rememberMe);
-
-        cookieService.SetCulture(
-            httpContext,
-            user.PreferredLanguage);
-
-        return Results.Redirect("/accounts");
-    }
-
-    //
-    // Vanlige brukere må ha tilgang
-    // til minst én Account.
-    //
-    if (accountIds.Count == 0)
-    {
-        return Results.Redirect(
-            "/login?error=no-account-access");
-    }
-
-    var loginAccount =
-        await dbContext.LoginAccounts
-            .SingleAsync(
-                x => x.UserId == user.Id,
-                cancellationToken);
-
-    Guid? selectedAccountId = null;
-
-    if (accountIds.Count == 1)
-    {
-        selectedAccountId =
-            accountIds[0];
-
-        loginAccount.LastAccountId =
-            selectedAccountId;
-
-        await dbContext.SaveChangesAsync(
-            cancellationToken);
-    }
-    else if (
-        loginAccount.LastAccountId.HasValue &&
-        accountIds.Contains(
-            loginAccount.LastAccountId.Value))
-    {
-        selectedAccountId =
-            loginAccount.LastAccountId.Value;
-    }
-
-    //
-    // Opprett authentication-cookie.
-    //
-    await cookieService.SignInAsync(
-        httpContext,
-        user,
-        selectedAccountId,
-        rememberMe);
-
-    cookieService.SetCulture(
-        httpContext,
-        user.PreferredLanguage);
-
-    //
-    // Flere Accounts, men ingen tidligere
-    // valgt Account.
-    //
-    if (!selectedAccountId.HasValue)
-    {
-        return Results.Redirect(
-            "/select-account");
-    }
-
-    //
-    // Finn rollene brukeren faktisk har
-    // i valgt Account.
-    //
-    var roles =
-        await dbContext.UserAccountRoles
-            .AsNoTracking()
-            .Where(x =>
-                x.UserAccount.UserId == user.Id &&
-                x.UserAccount.AccountId ==
-                    selectedAccountId.Value)
-            .Select(x => x.Role)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-    var startPage =
-        authorizationService.GetStartPage(
-            user.IsPlatformAdmin,
-            roles);
-
-    return Results.Redirect(startPage);
+    AuthenticationSession session;
+    try { session = await sessions.LoginAsync(form["email"].ToString(), form["password"].ToString(), ct); }
+    catch (UnauthorizedAccessException) { return Results.Redirect("/login?error=invalid-login"); }
+    if (session.User is null) return Results.Redirect(session.Error == "no-account-access" ? "/login?error=no-account-access" : "/login?error=invalid-login");
+    var remember = string.Equals(form["rememberMe"].ToString(), "true", StringComparison.OrdinalIgnoreCase);
+    await cookies.SignInAsync(httpContext, session.User, session.AccountId, remember);
+    cookies.SetCulture(httpContext, session.User.PreferredLanguage);
+    if (!session.AccountId.HasValue) return Results.Redirect(session.SelectAccountRequired ? "/select-account" : "/accounts");
+    return Results.Redirect(navigation.GetStartPage(session.User.IsPlatformAdmin, session.Roles));
 });
-
-
 
 //----------------
 // Endpoint logout
@@ -419,149 +422,30 @@ app.MapPost("/auth/logout", async (HttpContext httpContext) =>
 //------------------------
 // Endpoint select-account
 // -----------------------
-app.MapPost("/auth/select-account", async (
-    HttpContext httpContext,
-    AuthenticationCookieService cookieService,
-    ITenantAuthorizationService authorizationService,
-    TenantPlatformDbContext dbContext,
-    IFormCollection form,
-    CancellationToken cancellationToken) =>
+app.MapPost("/auth/select-account", async (HttpContext httpContext, AuthenticationSessionService sessions,
+    AuthenticationCookieService cookies, ITenantAuthorizationService navigation, IFormCollection form, CancellationToken ct) =>
 {
-    var accountIdValue =
-        form["accountId"].ToString();
-
-    if (!Guid.TryParse(
-            accountIdValue,
-            out var accountId))
-    {
-        return Results.BadRequest(
-            "Invalid account ID.");
-    }
-
-    var userIdValue =
-        httpContext.User.FindFirstValue(
-            TenantPlatformClaimTypes.UserId);
-
-    if (!Guid.TryParse(
-            userIdValue,
-            out var userId))
-    {
-        return Results.Unauthorized();
-    }
-
-    var hasAccess = await dbContext.UserAccounts
-        .AnyAsync(
-            x => x.UserId == userId &&
-                 x.AccountId == accountId,
-            cancellationToken);
-
-    if (!hasAccess)
-    {
-        return Results.Forbid();
-    }
-
-    var loginAccount = await dbContext.LoginAccounts
-        .SingleAsync(
-            x => x.UserId == userId,
-            cancellationToken);
-
-    loginAccount.LastAccountId = accountId;
-
-    await dbContext.SaveChangesAsync(
-        cancellationToken);
-
-    var user = await dbContext.Users
-        .SingleAsync(
-            x => x.Id == userId,
-            cancellationToken);
-
-    // Behold "Husk meg"-egenskapen fra eksisterende cookie.
-    var authenticationResult =
-        await httpContext.AuthenticateAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme);
-
-    var rememberMe =
-        authenticationResult.Properties?.IsPersistent
-        ?? false;
-
-    await cookieService.SignInAsync(
-        httpContext,
-        user,
-        accountId,
-        rememberMe);
-
-    var roles =
-        await dbContext.UserAccountRoles
-            .AsNoTracking()
-            .Where(x =>
-                x.UserAccount.UserId == userId &&
-                x.UserAccount.AccountId == accountId)
-            .Select(x => x.Role)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-    var startPage =
-        authorizationService.GetStartPage(
-            user.IsPlatformAdmin,
-            roles);
-
-    return Results.Redirect(startPage);
+    if (httpContext.User.Identity?.IsAuthenticated != true) return Results.Unauthorized();
+    if (!Guid.TryParse(form["accountId"], out var account)) return Results.BadRequest("Invalid account ID.");
+    AuthenticationSession session;
+    try { session = await sessions.SelectAccountAsync(account, ct); }
+    catch (UnauthorizedAccessException) { return Results.Forbid(); }
+    var authentication = await httpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    await cookies.SignInAsync(httpContext, session.User!, session.AccountId, authentication.Properties?.IsPersistent ?? false);
+    return Results.Redirect(navigation.GetStartPage(session.User!.IsPlatformAdmin, session.Roles));
 });
 
 //------------------------------
 // Endpoint preferences/language
 // -----------------------------
-app.MapPost("/preferences/language", async (
-    HttpContext httpContext,
-    AuthenticationCookieService cookieService,
-    IDbContextFactory<TenantPlatformDbContext> dbContextFactory,
-    IFormCollection form,
-    CancellationToken cancellationToken) =>
+app.MapPost("/preferences/language", async (HttpContext httpContext, AuthenticationSessionService sessions,
+    AuthenticationCookieService cookies, IFormCollection form, CancellationToken ct) =>
 {
-    var culture = form["culture"].ToString();
-
-    var isSupportedCulture =
-        SupportedLanguages.All.Any(
-            x => string.Equals(
-                x.Code,
-                culture,
-                StringComparison.OrdinalIgnoreCase));
-
-    if (!isSupportedCulture)
-    {
-        return Results.BadRequest(
-            "Unsupported language.");
-    }
-
-    var userIdValue = httpContext.User.FindFirstValue(
-        TenantPlatformClaimTypes.UserId);
-
-    if (!Guid.TryParse(userIdValue, out var userId))
-    {
-        return Results.Unauthorized();
-    }
-
-    await using var dbContext =
-        await dbContextFactory.CreateDbContextAsync(cancellationToken);
-
-    var user = await dbContext.Users
-        .SingleOrDefaultAsync(
-            x => x.Id == userId,
-            cancellationToken);
-
-    if (user is null)
-    {
-        return Results.Unauthorized();
-    }
-
-    user.PreferredLanguage = culture;
-
-    await dbContext.SaveChangesAsync(cancellationToken);
-
-    cookieService.SetCulture(
-        httpContext,
-        culture);
-
+    string language;
+    try { language = await sessions.ChangeLanguageAsync(form["culture"].ToString(), ct); }
+    catch (UnauthorizedAccessException) { return Results.Unauthorized(); }
+    catch (ArgumentException) { return Results.BadRequest("Unsupported language."); }
+    cookies.SetCulture(httpContext, language);
     return Results.Redirect("/");
 });
 // ----------------------------------------------------------------------

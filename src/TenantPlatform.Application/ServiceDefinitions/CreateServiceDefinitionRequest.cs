@@ -1,0 +1,23 @@
+namespace TenantPlatform.Application.ServiceDefinitions;
+
+public class CreateServiceDefinitionRequest
+{
+    public string Code { get; init; } = string.Empty;
+
+    public string? Category { get; init; }
+
+    public string HandlerType { get; init; } = "Generic";
+
+    public bool RequiresApproval { get; init; }
+
+    public bool IsBookableByTenant { get; init; } = true;
+
+    public bool RequiresOccupancy { get; init; } = true;
+
+    public int? EstimatedDurationMinutes { get; init; }
+
+    public bool IsActive { get; init; } = true;
+
+    public List<ServiceDefinitionTranslationRequest> Translations { get; init; } = [];
+}
+

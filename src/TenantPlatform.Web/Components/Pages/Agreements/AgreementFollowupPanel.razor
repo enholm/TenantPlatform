@@ -2,6 +2,7 @@
 @inject ICurrentUserContextService UserContext
 @inject NavigationManager Navigation
 @inject ILogger<AgreementFollowupPanel> Logger
+@inject Microsoft.Extensions.Options.IOptions<AgreementReminderOptions> ReminderOptions
 
 <section class="page-section">
 <h2 class="h5">@L["FollowupSection"]</h2>
@@ -73,7 +74,7 @@ else
                                 <td>@reminder.Recipient</td><td>@reminder.ScheduledUtc.ToString("g") UTC</td><td>@reminder.Attempts</td>
                                 <td>@reminder.LastAttemptUtc?.ToString("g")</td><td>@reminder.SentUtc?.ToString("g")</td>
                                 <td>@if (reminder.ResultKey is not null) { @L[reminder.ResultKey] }
-                                    @if (reminder.TransportId is not null) { <small class="d-block">@reminder.TransportId</small> }</td></tr>
+</td></tr>
                         }</tbody></table></div>
                     }
                 </details>
@@ -84,7 +85,7 @@ else
         <h3 class="h5">@L["FollowupReminderSettings"]</h3>
         <p>@L["FollowupScheduleDescription", string.Join(", ", data.AccountDays), data.SendAt.ToString("HH:mm"), data.TimeZoneId]</p>
         @if (!data.AccountRemindersEnabled) { <div class="alert alert-info">@L["FollowupDisabled"]</div> }
-        <p class="text-body-secondary">@L[$"FollowupTransport{data.TransportMode}"]</p>
+        <p class="text-body-secondary">@L[$"FollowupTransport{TransportMode}"]</p>
         <fieldset disabled="@(!data.CanEdit || busy)">
             <label for="agreement-reminder-mode" class="form-label">@L["FollowupReminderMode"]</label>
             <select id="agreement-reminder-mode" class="form-select mb-2" @bind="mode">
@@ -112,6 +113,7 @@ else
     [Parameter] public Guid AgreementId { get; set; }
     [Parameter] public Guid ParentRevision { get; set; }
     [Parameter] public EventCallback Changed { get; set; }
+    private string TransportMode => string.IsNullOrWhiteSpace(ReminderOptions.Value.ApplicationBaseUrl) ? "NotConfigured" : ReminderOptions.Value.TransportMode;
     private AgreementFollowupDetails? data;
     private readonly Dictionary<Guid, string?> comments = new();
     private readonly Dictionary<Guid, Guid?> assignees = new();

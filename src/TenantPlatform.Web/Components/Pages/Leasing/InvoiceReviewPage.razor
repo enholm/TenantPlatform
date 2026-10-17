@@ -46,7 +46,7 @@ else
         <div class="col-md-4"><label>@L["LeasingInvoiceDate"]<InputDate class="form-control" @bind-Value="review.Data.Date" /></label></div>
         <div class="col-md-4"><label>@L["InvoiceDueDate"]<InputDate class="form-control" @bind-Value="review.Data.DueDate" /></label></div>
         <div class="col-md-4"><label>@L["InvoiceDeliveryDate"]<InputDate class="form-control" @bind-Value="review.Data.DeliveryDate" /></label></div>
-        <div class="col-md-4"><label>@L["LeasingCurrency"]<InputSelect class="form-select" @bind-Value="review.Data.Currency"><option value="">@L["LeasingChoose"]</option>@foreach (var c in TenantPlatform.Web.Services.Agreements.AgreementPeriodCalculator.Currencies) { <option value="@c">@c</option> }</InputSelect></label></div>
+        <div class="col-md-4"><label>@L["LeasingCurrency"]<InputSelect class="form-select" @bind-Value="review.Data.Currency"><option value="">@L["LeasingChoose"]</option>@foreach (var c in TenantPlatform.Application.Agreements.AgreementPeriodCalculator.Currencies) { <option value="@c">@c</option> }</InputSelect></label></div>
         <div class="col-md-4"><label>@L["InvoiceOrderReference"]<InputText class="form-control" @bind-Value="review.Data.OrderReference" /></label></div>
         <div class="col-md-4"><label>@L["InvoiceOriginalReference"]<InputText class="form-control" @bind-Value="review.Data.OriginalInvoiceReference" /></label></div>
         <div class="col-md-6"><label>@L["InvoiceDeliveryReference"]<InputText class="form-control" @bind-Value="review.Data.DeliveryReference" /></label></div>

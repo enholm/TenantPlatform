@@ -1,3 +1,6 @@
+using TenantPlatform.Application.Leasing;
+using TenantPlatform.Application.Leasing.Invoices;
+using TenantPlatform.Infrastructure.Leasing.Invoices;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -22,7 +25,7 @@ static class OrderChecks
             foreach(var user in new[]{adminId,ownerId,outsiderId}) { var member=new UserAccount { Id=Guid.NewGuid(), AccountId=account, UserId=user }; db.UserAccounts.Add(member); if(user==adminId) db.UserAccountRoles.Add(new(){Id=Guid.NewGuid(),UserAccountId=member.Id,Role=UserRole.AccountAdmin}); }
             await db.SaveChangesAsync();
         }
-        LeasingService Service(Guid user) { var context=new Context(user,account); return new(factory,context,new TenantAuthorizationService(factory,context),new MemoryStorage(),new Clock(),NullLogger<LeasingService>.Instance); }
+        LeasingService Service(Guid user) { var context=new Context(user,account); return LeasingUserComposition.Create(factory, context, new MemoryStorage(), new Clock()); }
         var admin=Service(adminId); var owner=Service(ownerId); var outsider=Service(outsiderId);
         async Task<Guid> Frame(decimal limit, bool vat=false, DateOnly? end=null)
         { return await admin.SaveFrameworkAsync(account,null,new(){ Name="Orders",Number=Guid.NewGuid().ToString(),OwnerUserId=ownerId,FinanceOrganizationId=party,AcquisitionFrom=new(2027,1,1),AcquisitionTo=end??new(2028,12,31),Limit=limit,IncludesVat=vat,CreditNotesReleaseLimit=true },""); }
@@ -169,7 +172,7 @@ static class OrderChecks
         await Buy(shareFrame,shareOrder,1,40,.4m);await Buy(shareFrame,shareOrder,1,50,.6m);
         Check((await Read(shareOrder)).Capacity.Used==90&&(await Read(shareOrder)).Capacity.Reserved==0,"full amount-share realization releases all approved reservation despite lower actual value");
         var dimensionContext=new Context(adminId,account);
-        var dimensions=new TenantPlatform.Web.Services.Dimensions.DimensionService(factory,dimensionContext,new TenantAuthorizationService(factory,dimensionContext),new Clock());
+        var dimensions=new TenantPlatform.Web.Services.Dimensions.DimensionService(new TenantPlatform.Application.Dimensions.DimensionService(new TenantPlatform.Web.Security.Application.CurrentActorAdapter(dimensionContext), new TenantPlatform.Application.Security.AuthorizationService(new TenantPlatform.Web.Security.Application.CurrentActorAdapter(dimensionContext), new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory), new Clock()), new TenantPlatform.Infrastructure.AccountSettings.DimensionData(factory), new Clock()));
         var dimension=await dimensions.SaveDimensionAsync(null,new(){Name="Department",Code="D"});
         var valueA=await dimensions.SaveValueAsync(dimension,null,new(){DimensionId=dimension,Name="A",Code="A"});
         var valueB=await dimensions.SaveValueAsync(dimension,null,new(){DimensionId=dimension,Name="B",Code="B"});

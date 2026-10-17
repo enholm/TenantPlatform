@@ -1,3 +1,5 @@
+using TenantPlatform.Application.Leasing;
+using TenantPlatform.Application.Leasing.Invoices;
 using System.Globalization;
 using System.IO.Compression;
 using System.Text;

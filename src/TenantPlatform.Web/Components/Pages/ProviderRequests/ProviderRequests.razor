@@ -5,7 +5,7 @@
 @using System.Globalization
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
-@using TenantPlatform.Web.Services.ServiceRequests
+@using TenantPlatform.Application.ServiceRequests
 @using TenantPlatform.Web.Security.Authorization
 @inject IServiceRequestService ServiceRequestService
 @inject ICurrentUserContextService UserContext
@@ -118,7 +118,6 @@ else
         requests =
             await ServiceRequestService.GetAssignedRequestsAsync(
                 accountId.Value,
-                UserContext.Current.UserId,
                 CultureInfo.CurrentUICulture.Name);
 
         isLoading = false;

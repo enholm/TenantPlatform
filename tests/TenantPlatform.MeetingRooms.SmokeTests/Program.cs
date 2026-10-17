@@ -1,3 +1,7 @@
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using TenantPlatform.Application.Security;
+using TenantPlatform.Infrastructure.Authorization;
+using TenantPlatform.Infrastructure.MeetingRooms;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using TenantPlatform.Core.Accounts;
@@ -7,7 +11,7 @@ using TenantPlatform.Core.Properties;
 using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
-using TenantPlatform.Web.Services.MeetingRooms;
+using TenantPlatform.Application.MeetingRooms;
 
 // Run only against a disposable PostgreSQL database with this exact name.
 // The web host is never started, so production initialization/email cannot run.
@@ -27,7 +31,8 @@ await using (var setup = new NpgsqlConnection(connection))
 }
 connectionBuilder.SearchPath = schema;
 Console.WriteLine($"Test schema: {schema}");
-var options = new DbContextOptionsBuilder<TenantPlatformDbContext>().UseNpgsql(connectionBuilder.ConnectionString).Options;
+var readGuard = new MeetingReadGuard();
+var options = new DbContextOptionsBuilder<TenantPlatformDbContext>().UseNpgsql(connectionBuilder.ConnectionString).AddInterceptors(readGuard).Options;
 var factory = new TestFactory(options);
 await using (var db = factory.CreateDbContext())
 {
@@ -142,16 +147,34 @@ await using (var db = factory.CreateDbContext())
     });
     await Expect<DbUpdateException>(() => db.SaveChangesAsync(), "database rejects invalid interval");
 }
+readGuard.Protect = true;
+try
+{
+    Assert((await admin.Rooms.GetBuildingsAsync(accountA)).Count == 1 && (await admin.Integrations.ListAsync(accountA)).Count == 1, "direct Application configuration readers never SaveChanges");
+    Assert((await member.Bookings.GetAsync(accountA, bookingId))?.Status == RoomBookingStatus.Cancelled, "direct Application booking history read never SaveChanges");
+}
+finally { readGuard.Protect = false; }
+await using (var db = factory.CreateDbContext())
+{ (await db.Users.SingleAsync(x => x.Id == adminId)).IsActive = false; await db.SaveChangesAsync(); }
+await Expect<UnauthorizedAccessException>(() => admin.Rooms.ListAsync(accountA), "inactive administrator denied on reused Application service");
+await using (var db = factory.CreateDbContext())
+{
+    (await db.Users.SingleAsync(x => x.Id == adminId)).IsActive = true;
+    db.UserAccountRoles.RemoveRange(await db.UserAccountRoles.Where(x => x.UserAccount.UserId == adminId && x.UserAccount.AccountId == accountA).ToListAsync());
+    await db.SaveChangesAsync();
+}
+await Expect<UnauthorizedAccessException>(() => admin.Integrations.ListAsync(accountA), "revoked calendar administrator denied on reused Application service");
+await using (var db = factory.CreateDbContext())
+{ (await db.Users.SingleAsync(x => x.Id == outsiderId)).IsPlatformAdmin = true; await db.SaveChangesAsync(); }
+await Expect<UnauthorizedAccessException>(() => outsider.Rooms.ListAsync(accountA), "global PlatformAdmin has no tenant membership bypass");
 Console.WriteLine("All meeting-room smoke tests passed.");
 
 SaveMeetingRoomRequest Room() => new() { Name = "Meeting room", BuildingId = buildingA, Capacity = 8 };
 (IMeetingRoomService Rooms, IRoomBookingService Bookings, ICalendarIntegrationService Integrations) Services(Guid userId, Guid accountId)
 {
-    var current = new TestUserContext(userId, accountId);
-    var authorization = new TenantAuthorizationService(factory, current);
-    return (new MeetingRoomService(factory, current, authorization),
-        new RoomBookingService(factory, current, authorization),
-        new CalendarIntegrationService(factory, current, authorization));
+    var authorization = new AuthorizationService(new MeetingActor(userId, accountId), new AuthorizationData(factory), TimeProvider.System);
+    var access = new MeetingRoomAccess(authorization); var data = new MeetingRoomData(factory);
+    return (new MeetingRoomService(access, data), new RoomBookingService(access, data, TimeProvider.System), new CalendarIntegrationService(access, data));
 }
 async Task<Guid?> Attempt()
 {
@@ -176,4 +199,15 @@ sealed class TestFactory(DbContextOptions<TenantPlatformDbContext> options) : ID
 sealed class TestUserContext(Guid userId, Guid accountId) : ICurrentUserContextService
 {
     public CurrentUserContext Current => new() { IsAuthenticated = true, UserId = userId, CurrentAccountId = accountId };
+}
+
+sealed class MeetingActor(Guid user, Guid account) : ICurrentActor
+{
+    public ActorSnapshot GetSnapshot() => new(true, user, account);
+}
+sealed class MeetingReadGuard : SaveChangesInterceptor
+{
+    public bool Protect;
+    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData data, InterceptionResult<int> result, CancellationToken ct = default)
+    { if (Protect) throw new Exception("Meeting-room reader attempted SaveChanges"); return ValueTask.FromResult(result); }
 }

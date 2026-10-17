@@ -1,3 +1,4 @@
+using TenantPlatform.Application.ServiceRequests;
 namespace TenantPlatform.Web.Email;
 
 public class ServiceRequestReplyAddressParser

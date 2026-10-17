@@ -7,7 +7,7 @@
 @using TenantPlatform.Core.Services
 @using TenantPlatform.Web.Security.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
-@using TenantPlatform.Web.Services.ServiceRequests
+@using TenantPlatform.Application.ServiceRequests
 
 @inject IServiceRequestService ServiceRequestService
 @inject ITenantAuthorizationService AuthorizationService
@@ -182,7 +182,6 @@ else
         isLoading = true;
         result = await ServiceRequestService.GetAdminRequestsAsync(
             accountId.Value,
-            UserContext.Current.UserId,
             CultureInfo.CurrentUICulture.Name,
             new ServiceRequestAdminFilter
             {

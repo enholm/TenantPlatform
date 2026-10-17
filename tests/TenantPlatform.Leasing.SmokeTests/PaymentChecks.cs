@@ -1,3 +1,7 @@
+using TenantPlatform.Application.Leasing;
+using TenantPlatform.Application.Leasing.Invoices;
+using TenantPlatform.Infrastructure.Leasing.Invoices;
+using TenantPlatform.Application.Agreements;
 using System.Text;
 using System.Text.Json;
 using System.IO.Compression;
@@ -25,29 +29,44 @@ static class PaymentChecks
             foreach(var u in new[]{adminId,ownerId,outsiderId}){var m=new UserAccount{Id=Guid.NewGuid(),AccountId=account,UserId=u};db.UserAccounts.Add(m);if(u==adminId)db.UserAccountRoles.Add(new(){Id=Guid.NewGuid(),UserAccountId=m.Id,Role=UserRole.AccountAdmin});}await db.SaveChangesAsync();
         }
         var storage=new PaymentStorage();
-        LeasingService Service(Guid u){var c=new Context(u,account);return new(factory,c,new TenantAuthorizationService(factory,c),storage,new Clock(),NullLogger<LeasingService>.Instance);}
+        LeasingService Service(Guid u){var c=new Context(u,account);return LeasingUserComposition.Create(factory, c, storage, new Clock());}
+        LeasingPaymentService Direct(Guid user,IDbContextFactory<TenantPlatformDbContext>? source=null)=>new(new TenantPlatform.Application.Security.AuthorizationService(new DirectActor(user,account),new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory),new Clock()),new TenantPlatform.Infrastructure.Leasing.LeasingPaymentData(source??factory),new Clock());
+        LeasingRentalInvoiceService Rental(Guid user,IDbContextFactory<TenantPlatformDbContext>? source=null)
+        {
+            var auth=new TenantPlatform.Application.Security.AuthorizationService(new DirectActor(user,account),new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory),new Clock());
+            return new(auth,new TenantPlatform.Infrastructure.Leasing.LeasingRentalInvoiceData(source??factory,storage,NullLogger<TenantPlatform.Infrastructure.Leasing.LeasingRentalInvoiceData>.Instance),storage,new Clock());
+        }
+        var rentAdmin=Rental(adminId);var rentOwner=Rental(ownerId);var rentOutsider=Rental(outsiderId);
+        var payAdmin=Direct(adminId);var payOwner=Direct(ownerId);var payOutsider=Direct(outsiderId);
         var admin=Service(adminId);var owner=Service(ownerId);var outsider=Service(outsiderId);
         var frame=await admin.SaveFrameworkAsync(account,null,new(){Name="Payments frame",Number="PAY",OwnerUserId=ownerId,FinanceOrganizationId=party,AcquisitionFrom=new(2027,1,1),AcquisitionTo=new(2029,1,1),Limit=100000,Terms=new(){Months=60}},"");
         async Task<Guid> Acquisition(string currency="NOK",Guid? finance=null){var a=await admin.NewAcquisitionAsync(account,currency=="NOK"?frame:null);a.Name="Payment acquisition";a.Reference=Guid.NewGuid().ToString();a.OwnerUserId=ownerId;a.SupplierOrganizationId=party;a.FinanceOrganizationId=finance??party;a.Currency=currency;a.PurchaseDate=new(2028,1,1);a.Status=LeasingAcquisitionStatus.Registered;a.FinancedAmount=600;a.Items=[new(){Description="Equipment",Quantity=1,UnitPrice=1000,VatPercent=25}];return await admin.SaveAcquisitionAsync(account,null,a,"");}
         var a1=await Acquisition();var a2=await Acquisition();var eur=await Acquisition("EUR");var wrongParty=await Acquisition("EUR",otherParty);
+        Microsoft.EntityFrameworkCore.DbContextOptions<TenantPlatformDbContext> guardedOptions;
+        await using(var db=factory.CreateDbContext())guardedOptions=new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<TenantPlatformDbContext>((Microsoft.EntityFrameworkCore.DbContextOptions<TenantPlatformDbContext>)Microsoft.EntityFrameworkCore.Infrastructure.AccessorExtensions.GetService<Microsoft.EntityFrameworkCore.Infrastructure.IDbContextOptions>(db)).AddInterceptors(new PaymentSaveGuard()).Options;
+        var pure=Direct(ownerId,new Factory(guardedOptions));
+        Check((await pure.GetPaymentsAsync(account,a1)).Plans.Count==0&&(await pure.ListPaymentPlansAsync(account)).Count==4,"direct payment readers have no hidden writes");
+        Check((await payOutsider.ListPaymentPlansAsync(account)).Count==0,"direct payment list preserves ownership filter");
+        await Deny(()=>payOwner.GetPaymentsAsync(account,Guid.NewGuid()));
+        await Deny(()=>payOutsider.SavePaymentPlanAsync(account,a1,null,[],null,LeasingPlanSource.Manual,null,Guid.NewGuid()));
         var order=await owner.SaveOrderAsync(account,null,new(){FrameworkId=frame,OwnerUserId=ownerId,SupplierOrganizationId=party,OrderDate=new(2028,1,1),Lines=[new(){Description="Reserved",Quantity=1,UnitPrice=2000}]},"",Guid.NewGuid());
         var od=await admin.GetOrderAsync(account,order);await admin.OrderActionAsync(account,order,od.Order.Revision,LeasingOrderStatus.Pending,"Review",Guid.NewGuid());od=await admin.GetOrderAsync(account,order);await admin.OrderActionAsync(account,order,od.Order.Revision,LeasingOrderStatus.Approved,"Reserve",Guid.NewGuid());
         var capacity=await admin.GetAsync(account,frame,true);
-        async Task<PaymentDetails> Details(Guid a)=>await admin.GetPaymentsAsync(account,a);
+        async Task<PaymentDetails> Details(Guid a)=>await payAdmin.GetPaymentsAsync(account,a);
         var baseline=(await Details(a1)).Financing.Single();Check(baseline.EffectiveFrom==null&&JsonSerializer.Deserialize<LeasingFinancingSnapshot>(baseline.SnapshotJson)!.FinancedAmount==600,"new acquisition retains financing with unknown effective date and no auto plan");
-        async Task Revision(Guid a,DateOnly date,decimal rate=4){var d=await Details(a);var f=LeasingFinancingSnapshot.From(d.Acquisition);f.Terms.InterestKind=LeasingInterestKind.Reference;f.Terms.AnnualRatePercent=null;f.Terms.ReferenceRateName="NIBOR 3M";f.Terms.MarginPercentagePoints=2;f.Terms.ObservedReferenceRate=rate;f.Terms.ObservationDate=date;f.Terms.PaymentFrequency=LeasingPaymentFrequency.Monthly;f.Terms.FinanceReference="LEASE-A";f.Terms.AdvanceRent=100;f.Terms.EstablishmentFee=50;f.Terms.ResidualValue=500;await owner.AddFinancingRevisionAsync(account,a,d.Acquisition.Revision,date,f,"New agreed terms",Guid.NewGuid());}
+        async Task Revision(Guid a,DateOnly date,decimal rate=4){var d=await Details(a);var f=LeasingFinancingSnapshot.From(d.Acquisition);f.Terms.InterestKind=LeasingInterestKind.Reference;f.Terms.AnnualRatePercent=null;f.Terms.ReferenceRateName="NIBOR 3M";f.Terms.MarginPercentagePoints=2;f.Terms.ObservedReferenceRate=rate;f.Terms.ObservationDate=date;f.Terms.PaymentFrequency=LeasingPaymentFrequency.Monthly;f.Terms.FinanceReference="LEASE-A";f.Terms.AdvanceRent=100;f.Terms.EstablishmentFee=50;f.Terms.ResidualValue=500;await payOwner.AddFinancingRevisionAsync(account,a,d.Acquisition.Revision,date,f,"New agreed terms",Guid.NewGuid());}
         foreach(var a in new[]{a1,a2,eur,wrongParty})await Revision(a,new(2028,1,1));
         var initial=(await Details(a1)).Financing.Single(x=>x.EffectiveFrom.HasValue);
         var snap=JsonSerializer.Deserialize<LeasingFinancingSnapshot>(initial.SnapshotJson)!;
-        await Reject(()=>owner.AddFinancingRevisionAsync(account,a1,Details(a1).Result.Acquisition.Revision,new(2028,1,1),snap,"Duplicate",Guid.NewGuid()),"PaymentEffectiveDuplicate");
+        await Reject(()=>payOwner.AddFinancingRevisionAsync(account,a1,Details(a1).Result.Acquisition.Revision,new(2028,1,1),snap,"Duplicate",Guid.NewGuid()),"PaymentEffectiveDuplicate");
         var terms=LeasingPaymentCalculator.Series(new(2028,1,1),new(2028,1,31),new(2028,1,31),3,LeasingPaymentFrequency.Monthly,true,100,25);
         terms[0].Net=80;terms[0].Vat=20;terms[0].Gross=100;terms[2].Net=120;terms[2].Vat=30;terms[2].Gross=150;
         foreach(var t in terms)t.FinancingRevisionId=initial.Id;
-        var draftRequest=Guid.NewGuid();var plan=await owner.SavePaymentPlanAsync(account,a1,null,terms,"Agreed series",LeasingPlanSource.Manual,null,draftRequest);
-        Check(await owner.SavePaymentPlanAsync(account,a1,null,terms,"Agreed series",LeasingPlanSource.Manual,null,draftRequest)==plan,"draft retry is idempotent");
-        Check(await owner.SavePaymentPlanAsync(account,a1,null,terms,"Agreed series",LeasingPlanSource.Manual,null,Guid.NewGuid())==plan,"same content reimport does not duplicate plan or instalments");
-        var p=(await Details(a1)).Plans.Single();await Deny(()=>owner.ActivatePaymentPlanAsync(account,plan,p.Revision,"No approval role",false,Guid.NewGuid()));await Deny(()=>outsider.GetPaymentsAsync(account,a1));await Deny(()=>admin.GetPaymentsAsync(foreignAccount,a1));
-        await admin.ActivatePaymentPlanAsync(account,plan,p.Revision,"Checked agreement",false,Guid.NewGuid());
+        var draftRequest=Guid.NewGuid();var plan=await payOwner.SavePaymentPlanAsync(account,a1,null,terms,"Agreed series",LeasingPlanSource.Manual,null,draftRequest);
+        Check(await payOwner.SavePaymentPlanAsync(account,a1,null,terms,"Agreed series",LeasingPlanSource.Manual,null,draftRequest)==plan,"draft retry is idempotent");
+        Check(await payOwner.SavePaymentPlanAsync(account,a1,null,terms,"Agreed series",LeasingPlanSource.Manual,null,Guid.NewGuid())==plan,"same content reimport does not duplicate plan or instalments");
+        var p=(await Details(a1)).Plans.Single();await Deny(()=>payOwner.ActivatePaymentPlanAsync(account,plan,p.Revision,"No approval role",false,Guid.NewGuid()));await Deny(()=>payOutsider.GetPaymentsAsync(account,a1));await Deny(()=>payAdmin.GetPaymentsAsync(foreignAccount,a1));
+        await payAdmin.ActivatePaymentPlanAsync(account,plan,p.Revision,"Checked agreement",false,Guid.NewGuid());
         // Import persists the original and returns only a draft; identical reimport is stable.
         var csv="Reference;From;To;Due;Net;VAT;Gross;Type\nIMP;01.01.2028;31.01.2028;05.02.2028;100;25;125;leie\n";
         await using var csvStream=new MemoryStream(Encoding.UTF8.GetBytes(csv));
@@ -55,28 +74,28 @@ static class PaymentChecks
         var readGrid=await owner.ReadPaymentPlanSourceAsync(account,a2,imported.Document);
         var importedTerms=PaymentPlanImport.Preview(readGrid,new(),"NOK").Terms;
         importedTerms.ForEach(t=>t.FinancingRevisionId=(Details(a2).Result).Financing.Single(x=>x.EffectiveFrom.HasValue).Id);
-        var importedId=await owner.SavePaymentPlanAsync(account,a2,null,importedTerms,"Imported",LeasingPlanSource.Imported,imported.Document,Guid.NewGuid());
+        var importedId=await payOwner.SavePaymentPlanAsync(account,a2,null,importedTerms,"Imported",LeasingPlanSource.Imported,imported.Document,Guid.NewGuid());
         Check((await Details(a2)).Plans.Single().Status==LeasingPlanStatus.Draft&&(await Details(a2)).Terms.Count==0,"CSV source round-trips and import never activates a plan");
-        Check(await owner.SavePaymentPlanAsync(account,a2,null,importedTerms,"Imported",LeasingPlanSource.Imported,imported.Document,Guid.NewGuid())==importedId,"reimport preserves draft identity");
+        Check(await payOwner.SavePaymentPlanAsync(account,a2,null,importedTerms,"Imported",LeasingPlanSource.Imported,imported.Document,Guid.NewGuid())==importedId,"reimport preserves draft identity");
         var unknown=Clone(terms);unknown[0].Net=null;
-        var unknownId=await owner.SavePaymentPlanAsync(account,a1,plan,unknown,"Unknown",LeasingPlanSource.Manual,null,Guid.NewGuid());var unknownPlan=(await Details(a1)).Plans.Single(x=>x.Id==unknownId);
-        await Reject(()=>admin.ActivatePaymentPlanAsync(account,unknownId,unknownPlan.Revision,"Reviewed",true,Guid.NewGuid()),"PaymentUnknownAmounts");
+        var unknownId=await payOwner.SavePaymentPlanAsync(account,a1,plan,unknown,"Unknown",LeasingPlanSource.Manual,null,Guid.NewGuid());var unknownPlan=(await Details(a1)).Plans.Single(x=>x.Id==unknownId);
+        await Reject(()=>payAdmin.ActivatePaymentPlanAsync(account,unknownId,unknownPlan.Revision,"Reviewed",true,Guid.NewGuid()),"PaymentUnknownAmounts");
         var residual=Clone(terms);residual[0].Type=LeasingPaymentType.ResidualObligation;
-        await Reject(()=>owner.SavePaymentPlanAsync(account,a1,plan,residual,"No obligation document",LeasingPlanSource.Manual,null,Guid.NewGuid()),"PaymentResidualDocumentation");
+        await Reject(()=>payOwner.SavePaymentPlanAsync(account,a1,plan,residual,"No obligation document",LeasingPlanSource.Manual,null,Guid.NewGuid()),"PaymentResidualDocumentation");
         var components=Clone(terms);components[0].ComponentsComplete=true;components[0].CapitalComponent=50;components[0].InterestComponent=10;components[0].FeeComponent=0;
-        await Reject(()=>owner.SavePaymentPlanAsync(account,a1,plan,components,"Wrong components",LeasingPlanSource.Manual,null,Guid.NewGuid()),"PaymentComponentsMismatch");
+        await Reject(()=>payOwner.SavePaymentPlanAsync(account,a1,plan,components,"Wrong components",LeasingPlanSource.Manual,null,Guid.NewGuid()),"PaymentComponentsMismatch");
         var outside=Clone(terms);outside[0].PeriodFrom=new(2027,12,1);outside[0].FinancingRevisionId=null;
-        var outsideId=await owner.SavePaymentPlanAsync(account,a1,plan,outside,"Outside period",LeasingPlanSource.Manual,null,Guid.NewGuid());var outsidePlan=(await Details(a1)).Plans.Single(x=>x.Id==outsideId);
-        await Reject(()=>admin.ActivatePaymentPlanAsync(account,outsideId,outsidePlan.Revision,"Checked",false,Guid.NewGuid()),"PaymentReviewRequired");
+        var outsideId=await payOwner.SavePaymentPlanAsync(account,a1,plan,outside,"Outside period",LeasingPlanSource.Manual,null,Guid.NewGuid());var outsidePlan=(await Details(a1)).Plans.Single(x=>x.Id==outsideId);
+        await Reject(()=>payAdmin.ActivatePaymentPlanAsync(account,outsideId,outsidePlan.Revision,"Checked",false,Guid.NewGuid()),"PaymentReviewRequired");
         await Deny(()=>outsider.ReadPaymentPlanSourceAsync(account,a2,imported.Document));
         var uploadedBytes=Encoding.UTF8.GetBytes("<Invoice>rental source</Invoice>");
-        var upload=await owner.UploadRentalInvoiceAsync(account,"rental.xml",new MemoryStream(uploadedBytes));
-        Check(await owner.UploadRentalInvoiceAsync(account,"same.xml",new MemoryStream(uploadedBytes))==upload,"rental document reupload is idempotent");
-        var processor=new LeasingInvoiceProcessor(factory,new PaymentInterpreter(),new Clock());
-        for(var attempt=0;attempt<50&&(await owner.GetRentalInvoiceAsync(account,upload)).Invoice.Processing==LeasingInvoiceProcessing.Uploaded;attempt++)await processor.ProcessOneAsync();
-        var parsed=await owner.GetRentalInvoiceAsync(account,upload);
+        var upload=await rentOwner.UploadRentalInvoiceAsync(account,"rental.xml",new MemoryStream(uploadedBytes));
+        Check(await rentOwner.UploadRentalInvoiceAsync(account,"same.xml",new MemoryStream(uploadedBytes))==upload,"rental document reupload is idempotent");
+        var processor=new LeasingInvoiceJob(new LeasingInvoiceJobData(factory), new PaymentInterpreter(), new Clock(), new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.LeasingInvoices));
+        for(var attempt=0;attempt<50&&(await rentOwner.GetRentalInvoiceAsync(account,upload)).Invoice.Processing==LeasingInvoiceProcessing.Uploaded;attempt++)await processor.ProcessOneAsync();
+        var parsed=await rentOwner.GetRentalInvoiceAsync(account,upload);
         Check(parsed.Interpretations.Count==1&&parsed.Review.Data.Number=="RENTAL-PARSED"&&parsed.Invoice.AcquisitionId==null&&parsed.Invoice.Status==LeasingInvoiceStatus.Review,"shared worker interprets rental source into separate editable review without equipment effects");
-        await owner.DeleteRentalInvoiceAsync(account, upload, parsed.Invoice.Revision);
+        await rentOwner.DeleteRentalInvoiceAsync(account, upload, parsed.Invoice.Revision);
         await using (var db = await factory.CreateDbContextAsync())
         {
             Check(!await db.LeasingInvoices.AnyAsync(x => x.AccountId == account && x.Id == upload) &&
@@ -85,63 +104,77 @@ static class PaymentChecks
             Check(await db.LeasingPaymentEvents.AnyAsync(x => x.AccountId == account && x.Action == "RentalDeleted" && x.Reason == upload.ToString()), "draft deletion retains audit trail");
         }
         Check(!storage.Contains(parsed.Invoice.StorageKey), "draft deletion removes original file");
-        await Deny(() => owner.GetRentalInvoiceAsync(account, upload));
-        var deletable = await owner.NewRentalInvoiceAsync(account, Guid.NewGuid());
-        var deletionDraft = await owner.GetRentalInvoiceAsync(account, deletable);
-        await Deny(() => outsider.DeleteRentalInvoiceAsync(account, deletable, deletionDraft.Invoice.Revision));
-        await Deny(() => owner.DeleteRentalInvoiceAsync(foreignAccount, deletable, deletionDraft.Invoice.Revision));
-        await Reject(() => owner.DeleteRentalInvoiceAsync(account, deletable, Guid.NewGuid()), "LeasingConcurrency");
-        await admin.DeleteRentalInvoiceAsync(account, deletable, deletionDraft.Invoice.Revision);
-        Check(!(await admin.ListRentalInvoicesAsync(account)).Any(x => x.Invoice.Id == deletable), "account admin can delete a manual draft");
+        await Deny(() => rentOwner.GetRentalInvoiceAsync(account, upload));
+        var deletable = await rentOwner.NewRentalInvoiceAsync(account, Guid.NewGuid());
+        var deletionDraft = await rentOwner.GetRentalInvoiceAsync(account, deletable);
+        await Deny(() => rentOutsider.DeleteRentalInvoiceAsync(account, deletable, deletionDraft.Invoice.Revision));
+        await Deny(() => rentOwner.DeleteRentalInvoiceAsync(foreignAccount, deletable, deletionDraft.Invoice.Revision));
+        await Reject(() => rentOwner.DeleteRentalInvoiceAsync(account, deletable, Guid.NewGuid()), "LeasingConcurrency");
+        await rentAdmin.DeleteRentalInvoiceAsync(account, deletable, deletionDraft.Invoice.Revision);
+        Check(!(await rentAdmin.ListRentalInvoicesAsync(account)).Any(x => x.Invoice.Id == deletable), "account admin can delete a manual draft");
         var d1=await Details(a1);Check(d1.Terms.Count==3&&d1.Terms.Sum(x=>x.Term.Gross)==375,"advance rent, fees and residual are never auto-added; special first and last amounts retained");
         var ids=d1.Terms.Select(x=>x.Installment.Id).ToArray();
-        async Task<Guid> Active(Guid a){var ds=await Details(a);var t=new LeasingPlanTerm{Reference="1",PeriodFrom=new(2028,1,1),PeriodTo=new(2028,1,31),DueDate=new(2028,2,5),Net=100,Vat=25,Gross=125,FinancingRevisionId=ds.Financing.Single(x=>x.EffectiveFrom.HasValue).Id};var id=await owner.SavePaymentPlanAsync(account,a,null,[t],"",LeasingPlanSource.Manual,null,Guid.NewGuid());var pp=(await Details(a)).Plans.Single(x=>x.Id==id);await admin.ActivatePaymentPlanAsync(account,id,pp.Revision,"Checked",false,Guid.NewGuid());return (await Details(a)).Terms.Single().Installment.Id;}
+        async Task<Guid> Active(Guid a){var ds=await Details(a);var t=new LeasingPlanTerm{Reference="1",PeriodFrom=new(2028,1,1),PeriodTo=new(2028,1,31),DueDate=new(2028,2,5),Net=100,Vat=25,Gross=125,FinancingRevisionId=ds.Financing.Single(x=>x.EffectiveFrom.HasValue).Id};var id=await payOwner.SavePaymentPlanAsync(account,a,null,[t],"",LeasingPlanSource.Manual,null,Guid.NewGuid());var pp=(await Details(a)).Plans.Single(x=>x.Id==id);await payAdmin.ActivatePaymentPlanAsync(account,id,pp.Revision,"Checked",false,Guid.NewGuid());return (await Details(a)).Terms.Single().Installment.Id;}
         var id2=await Active(a2);var eurId=await Active(eur);var wrongPartyId=await Active(wrongParty);
-        async Task<Guid> DraftInvoice(decimal net,List<RentalAllocationInput> allocations,bool credit=false,Guid? original=null,string currency="NOK",Guid? finance=null){var id=await owner.NewRentalInvoiceAsync(account,Guid.NewGuid());var r=new RentalInvoiceReview{FinanceOrganizationId=finance??party,OriginalInvoiceId=original,ContentConfirmed=true,AgreementReference="LEASE-A",Data=new(){Kind=credit?LeasingInvoiceKind.CreditNote:LeasingInvoiceKind.Invoice,Number=id.ToString(),Date=new(2028,1,15),DueDate=new(2028,2,10),Currency=currency,Net=net,Vat=InvoiceCalculator.Money(net*.25m),Gross=net+InvoiceCalculator.Money(net*.25m),Lines=[new(){SourceId="1",Description="Rental",Quantity=1,Price=net,Net=net,VatPercent=25,VatCategory="S"}]},Allocations=allocations};var inv=await owner.GetRentalInvoiceAsync(account,id);await owner.SaveRentalReviewAsync(account,id,inv.Invoice.Revision,r);return id;}
-        async Task Approve(Guid id){var d=await admin.GetRentalInvoiceAsync(account,id);await admin.ApproveRentalInvoiceAsync(account,id,d.Invoice.Revision);}
+        async Task<Guid> DraftInvoice(decimal net,List<RentalAllocationInput> allocations,bool credit=false,Guid? original=null,string currency="NOK",Guid? finance=null){var id=await rentOwner.NewRentalInvoiceAsync(account,Guid.NewGuid());var r=new RentalInvoiceReview{FinanceOrganizationId=finance??party,OriginalInvoiceId=original,ContentConfirmed=true,AgreementReference="LEASE-A",Data=new(){Kind=credit?LeasingInvoiceKind.CreditNote:LeasingInvoiceKind.Invoice,Number=id.ToString(),Date=new(2028,1,15),DueDate=new(2028,2,10),Currency=currency,Net=net,Vat=InvoiceCalculator.Money(net*.25m),Gross=net+InvoiceCalculator.Money(net*.25m),Lines=[new(){SourceId="1",Description="Rental",Quantity=1,Price=net,Net=net,VatPercent=25,VatCategory="S"}]},Allocations=allocations};var inv=await rentOwner.GetRentalInvoiceAsync(account,id);await rentOwner.SaveRentalReviewAsync(account,id,inv.Invoice.Revision,r);return id;}
+        async Task Approve(Guid id){var d=await rentAdmin.GetRentalInvoiceAsync(account,id);await rentAdmin.ApproveRentalInvoiceAsync(account,id,d.Invoice.Revision);}
         var inv=await DraftInvoice(200,[new(){InstallmentId=ids[0],Net=40,Vat=10},new(){InstallmentId=ids[1],Net=50,Vat=12.5m},new(){InstallmentId=id2,Net=60,Vat=15}]);
-        await Deny(()=>owner.ApproveRentalInvoiceAsync(account,inv,(owner.GetRentalInvoiceAsync(account,inv).Result).Invoice.Revision));
-        var beforeApproval=(await admin.GetRentalInvoiceAsync(account,inv)).Invoice.Revision;
-        await Task.WhenAll(admin.ApproveRentalInvoiceAsync(account,inv,beforeApproval),Service(adminId).ApproveRentalInvoiceAsync(account,inv,beforeApproval));
-        var approved=await admin.GetRentalInvoiceAsync(account,inv);Check(approved.Allocations.Count==3&&approved.Allocations.Sum(x=>x.Net)==150,"concurrent approval creates allocations once across terms and acquisitions with unallocated remainder");
-        await Reject(() => admin.DeleteRentalInvoiceAsync(account, inv, approved.Invoice.Revision), "RentalDeleteOnlyDraft");
+        await Deny(()=>rentOwner.ApproveRentalInvoiceAsync(account,inv,(rentOwner.GetRentalInvoiceAsync(account,inv).Result).Invoice.Revision));
+        var beforeApproval=(await rentAdmin.GetRentalInvoiceAsync(account,inv)).Invoice.Revision;
+        await Task.WhenAll(rentAdmin.ApproveRentalInvoiceAsync(account,inv,beforeApproval),Service(adminId).ApproveRentalInvoiceAsync(account,inv,beforeApproval));
+        var approved=await rentAdmin.GetRentalInvoiceAsync(account,inv);Check(approved.Allocations.Count==3&&approved.Allocations.Sum(x=>x.Net)==150,"concurrent approval creates allocations once across terms and acquisitions with unallocated remainder");
+        await Reject(() => rentAdmin.DeleteRentalInvoiceAsync(account, inv, approved.Invoice.Revision), "RentalDeleteOnlyDraft");
         await Deny(()=>admin.GetInvoiceAsync(account,inv));Check(!(await admin.ListInvoicesAsync(account)).Any(x=>x.Id==inv),"rental documents never enter equipment invoice path");
         Check((await Details(a1)).Terms.First().Status==LeasingBillingStatus.Partial,"partial invoicing is not final variance");
         var second=await DraftInvoice(40,[new(){InstallmentId=ids[0],Net=40,Vat=10}]);await Approve(second);
-        var term=(await Details(a1)).Terms.First();await admin.ReviewPaymentTermAsync(account,ids[0],term.Installment.Revision,true,false,false,"All invoices received",Guid.NewGuid());Check((await Details(a1)).Terms.First().Status==LeasingBillingStatus.Reconciled,"multiple invoices reconcile one completed instalment");
-        term=(await Details(a1)).Terms[1];await admin.ReviewPaymentTermAsync(account,ids[1],term.Installment.Revision,true,false,false,"Final invoice",Guid.NewGuid());term=(await Details(a1)).Terms[1];Check(term.Status==LeasingBillingStatus.Variance,"underbilling becomes variance only after explicit completion");await admin.ReviewPaymentTermAsync(account,ids[1],term.Installment.Revision,true,true,false,"Documented agreed discount",Guid.NewGuid());term=(await Details(a1)).Terms[1];Check(term.Status==LeasingBillingStatus.Accepted&&term.Term.Net==100,"variance acceptance retains expected amount");
+        var term=(await Details(a1)).Terms.First();await payAdmin.ReviewPaymentTermAsync(account,ids[0],term.Installment.Revision,true,false,false,"All invoices received",Guid.NewGuid());Check((await Details(a1)).Terms.First().Status==LeasingBillingStatus.Reconciled,"multiple invoices reconcile one completed instalment");
+        term=(await Details(a1)).Terms[1];await payAdmin.ReviewPaymentTermAsync(account,ids[1],term.Installment.Revision,true,false,false,"Final invoice",Guid.NewGuid());term=(await Details(a1)).Terms[1];Check(term.Status==LeasingBillingStatus.Variance,"underbilling becomes variance only after explicit completion");await payAdmin.ReviewPaymentTermAsync(account,ids[1],term.Installment.Revision,true,true,false,"Documented agreed discount",Guid.NewGuid());term=(await Details(a1)).Terms[1];Check(term.Status==LeasingBillingStatus.Accepted&&term.Term.Net==100,"variance acceptance retains expected amount");
         await Revision(a1,new(2028,2,1),5);d1=await Details(a1);Check(d1.Terms[0].Term.NeedsReview==false&&d1.Terms.Skip(1).All(x=>x.Term.NeedsReview)&&d1.Terms.Sum(x=>x.Term.Net)==300,"future rate revision marks affected terms without recomputation");Check(LeasingService.FinancingAt(d1.Financing,new(2028,1,31))!.Id==initial.Id&&LeasingService.FinancingAt(d1.Financing,new(2028,2,1))!.Id!=initial.Id,"dated terms use unambiguous half-open periods");
         var changed=Clone(d1.Plans.Single(x=>x.Status==LeasingPlanStatus.Active).Terms);changed[0].Net=90;changed[0].Vat=22.5m;changed[0].Gross=112.5m;foreach(var t in changed){t.FinancingRevisionId=LeasingService.FinancingAt(d1.Financing,t.PeriodFrom)?.Id;t.ReviewReason="Checked revised agreement";}
-        var revisionPlan=await owner.SavePaymentPlanAsync(account,a1,plan,changed,"Revised",LeasingPlanSource.Manual,null,Guid.NewGuid());p=(await Details(a1)).Plans.Single(x=>x.Id==revisionPlan);
-        await Reject(()=>admin.ActivatePaymentPlanAsync(account,p.Id,p.Revision,"Reviewed",false,Guid.NewGuid()),"PaymentConfirmInvoicedChange");await admin.ActivatePaymentPlanAsync(account,p.Id,p.Revision,"Explicitly reviewed invoiced changes",true,Guid.NewGuid());d1=await Details(a1);Check(d1.Plans.Count(x=>x.Status==LeasingPlanStatus.Active)==1&&d1.Plans.Single(x=>x.Id==plan).Status==LeasingPlanStatus.Replaced&&d1.Terms.First().Installment.Id==ids[0]&&d1.Terms.First().InvoicedNet==80,"plan replacement preserves stable allocation identity and a single active expectation");
-        var removed=Clone(d1.Plans.First(x=>x.Status==LeasingPlanStatus.Active).Terms);removed.RemoveAll(x=>x.InstallmentId==ids[0]);var removal=await owner.SavePaymentPlanAsync(account,a1,revisionPlan,removed,"Remove",LeasingPlanSource.Manual,null,Guid.NewGuid());p=(await Details(a1)).Plans.Single(x=>x.Id==removal);await Reject(()=>admin.ActivatePaymentPlanAsync(account,p.Id,p.Revision,"Remove",true,Guid.NewGuid()),"PaymentAllocatedRemoval");
-        var over=await DraftInvoice(10,[new(){InstallmentId=ids[0],Net=11,Vat=2.5m}]);await Reject(()=>Approve(over),"PaymentOverAllocation");Check((await admin.GetRentalInvoiceAsync(account,over)).Invoice.Status==LeasingInvoiceStatus.Review,"over-allocation approval rolls back atomically");
+        var revisionPlan=await payOwner.SavePaymentPlanAsync(account,a1,plan,changed,"Revised",LeasingPlanSource.Manual,null,Guid.NewGuid());p=(await Details(a1)).Plans.Single(x=>x.Id==revisionPlan);
+        await Reject(()=>payAdmin.ActivatePaymentPlanAsync(account,p.Id,p.Revision,"Reviewed",false,Guid.NewGuid()),"PaymentConfirmInvoicedChange");await payAdmin.ActivatePaymentPlanAsync(account,p.Id,p.Revision,"Explicitly reviewed invoiced changes",true,Guid.NewGuid());d1=await Details(a1);Check(d1.Plans.Count(x=>x.Status==LeasingPlanStatus.Active)==1&&d1.Plans.Single(x=>x.Id==plan).Status==LeasingPlanStatus.Replaced&&d1.Terms.First().Installment.Id==ids[0]&&d1.Terms.First().InvoicedNet==80,"plan replacement preserves stable allocation identity and a single active expectation");
+        var removed=Clone(d1.Plans.First(x=>x.Status==LeasingPlanStatus.Active).Terms);removed.RemoveAll(x=>x.InstallmentId==ids[0]);var removal=await payOwner.SavePaymentPlanAsync(account,a1,revisionPlan,removed,"Remove",LeasingPlanSource.Manual,null,Guid.NewGuid());p=(await Details(a1)).Plans.Single(x=>x.Id==removal);await Reject(()=>payAdmin.ActivatePaymentPlanAsync(account,p.Id,p.Revision,"Remove",true,Guid.NewGuid()),"PaymentAllocatedRemoval");
+        var over=await DraftInvoice(10,[new(){InstallmentId=ids[0],Net=11,Vat=2.5m}]);await Reject(()=>Approve(over),"PaymentOverAllocation");Check((await rentAdmin.GetRentalInvoiceAsync(account,over)).Invoice.Status==LeasingInvoiceStatus.Review,"over-allocation approval rolls back atomically");
         var foreignCurrency=await DraftInvoice(10,[new(){InstallmentId=eurId,Net=10,Vat=2.5m}]);await Reject(()=>Approve(foreignCurrency),"PaymentMatchPartyCurrency");var foreignParty=await DraftInvoice(10,[new(){InstallmentId=wrongPartyId,Net=10,Vat=2.5m}],currency:"EUR");await Reject(()=>Approve(foreignParty),"PaymentMatchPartyCurrency");
         var originalLink=approved.Allocations.Single(x=>x.InstallmentId==ids[0]);var credit=await DraftInvoice(20,[new(){InstallmentId=ids[0],Net=20,Vat=5,CreditedAllocationId=originalLink.Id}],true,inv);await Approve(credit);Check((await Details(a1)).Terms.First().InvoicedNet==60,"partial credit reduces only invoiced amounts");
         var overCredit=await DraftInvoice(25,[new(){InstallmentId=ids[0],Net=25,Vat=6.25m,CreditedAllocationId=originalLink.Id}],true,inv);await Reject(()=>Approve(overCredit),"InvoiceOverCredit");
-        approved=await admin.GetRentalInvoiceAsync(account,inv);await Reject(()=>admin.ReverseRentalInvoiceAsync(account,inv,approved.Invoice.Revision,"Wrong",Guid.NewGuid()),"InvoiceReverseDependencies");
-        var cr=(await admin.GetRentalInvoiceAsync(account,credit)).Invoice;await admin.ReverseRentalInvoiceAsync(account,credit,cr.Revision,"Incorrect credit",Guid.NewGuid());
-        approved=await admin.GetRentalInvoiceAsync(account,inv);var matchRequest=Guid.NewGuid();var corrected=new List<RentalAllocationInput>{new(){InstallmentId=ids[0],Net=50,Vat=12.5m},new(){InstallmentId=id2,Net=100,Vat=25}};await admin.CorrectRentalAllocationsAsync(account,inv,approved.Invoice.Revision,corrected,"Correct source split",matchRequest);await admin.CorrectRentalAllocationsAsync(account,inv,approved.Invoice.Revision,corrected,"Retry",matchRequest);approved=await admin.GetRentalInvoiceAsync(account,inv);Check(approved.Allocations.Count(x=>x.Reversed)==3&&approved.Allocations.Count(x=>!x.Reversed)==2,"allocation correction retains reversed history and is idempotent");
+        approved=await rentAdmin.GetRentalInvoiceAsync(account,inv);await Reject(()=>rentAdmin.ReverseRentalInvoiceAsync(account,inv,approved.Invoice.Revision,"Wrong",Guid.NewGuid()),"InvoiceReverseDependencies");
+        var cr=(await rentAdmin.GetRentalInvoiceAsync(account,credit)).Invoice;await rentAdmin.ReverseRentalInvoiceAsync(account,credit,cr.Revision,"Incorrect credit",Guid.NewGuid());
+        approved=await rentAdmin.GetRentalInvoiceAsync(account,inv);var matchRequest=Guid.NewGuid();var corrected=new List<RentalAllocationInput>{new(){InstallmentId=ids[0],Net=50,Vat=12.5m},new(){InstallmentId=id2,Net=100,Vat=25}};await rentAdmin.CorrectRentalAllocationsAsync(account,inv,approved.Invoice.Revision,corrected,"Correct source split",matchRequest);await rentAdmin.CorrectRentalAllocationsAsync(account,inv,approved.Invoice.Revision,corrected,"Retry",matchRequest);approved=await rentAdmin.GetRentalInvoiceAsync(account,inv);Check(approved.Allocations.Count(x=>x.Reversed)==3&&approved.Allocations.Count(x=>!x.Reversed)==2,"allocation correction retains reversed history and is idempotent");
         // Two competing corrections cannot both spend the same revision.
         var rev=approved.Invoice.Revision;async Task<bool> Correct(){try{await Service(adminId).CorrectRentalAllocationsAsync(account,inv,rev,corrected,"Concurrent correction",Guid.NewGuid());return true;}catch(LeasingValidationException e)when(e.Message=="LeasingConcurrency"){return false;}}
         Check((await Task.WhenAll(Correct(),Correct())).Count(x=>x)==1,"concurrent allocation corrections serialize and reject stale revision");
-        approved=await admin.GetRentalInvoiceAsync(account,inv);await admin.ReverseRentalInvoiceAsync(account,inv,approved.Invoice.Revision,"Wrong document",Guid.NewGuid());Check((await Details(a1)).Terms.First().InvoicedNet==40,"reversal removes economic effect but retains documents and allocations");
+        approved=await rentAdmin.GetRentalInvoiceAsync(account,inv);await rentAdmin.ReverseRentalInvoiceAsync(account,inv,approved.Invoice.Revision,"Wrong document",Guid.NewGuid());Check((await Details(a1)).Terms.First().InvoicedNet==40,"reversal removes economic effect but retains documents and allocations");
         var after=await admin.GetAsync(account,frame,true);Check(after.Used==capacity.Used&&after.Reserved==capacity.Reserved,"all payment operations preserve purchased value, framework use and active reservations");foreach(var a in new[]{a1,a2}){var actual=(await admin.GetAsync(account,a,false)).Acquisition!;Check(actual.Items.Single().UnitPrice==1000&&actual.FinancedAmount==600,"purchase lines and original financed amount remain intact");}
         await using(var db=factory.CreateDbContext())
         {
             var foreignAcquisition=await db.LeasingAcquisitions.AsNoTracking().FirstAsync(x=>x.AccountId!=account);
             db.LeasingInstallments.Add(new(){Id=Guid.NewGuid(),AccountId=foreignAcquisition.AccountId,AcquisitionId=foreignAcquisition.Id,Reference="FOREIGN-TEST",Revision=Guid.NewGuid()});await db.SaveChangesAsync();
             var foreignTerm=await db.LeasingInstallments.AsNoTracking().FirstAsync(x=>x.AccountId!=account);
-            var ownDraft=await owner.NewRentalInvoiceAsync(account,Guid.NewGuid());var ownReview=await owner.GetRentalInvoiceAsync(account,ownDraft);
+            var ownDraft=await rentOwner.NewRentalInvoiceAsync(account,Guid.NewGuid());var ownReview=await rentOwner.GetRentalInvoiceAsync(account,ownDraft);
             ownReview.Review.Allocations=[new(){InstallmentId=foreignTerm.Id,Net=1}];
-            await Deny(()=>owner.SaveRentalReviewAsync(account,ownDraft,ownReview.Invoice.Revision,ownReview.Review));
+            await Deny(()=>rentOwner.SaveRentalReviewAsync(account,ownDraft,ownReview.Invoice.Revision,ownReview.Review));
         }
-        var reversedInvoice = await admin.GetRentalInvoiceAsync(account, inv);
-        await Reject(() => admin.DeleteRentalInvoiceAsync(account, inv, reversedInvoice.Invoice.Revision), "RentalDeleteOnlyDraft");
+        var reversedInvoice = await rentAdmin.GetRentalInvoiceAsync(account, inv);
+        await Reject(() => rentAdmin.DeleteRentalInvoiceAsync(account, inv, reversedInvoice.Invoice.Revision), "RentalDeleteOnlyDraft");
+        var pureRental=Rental(ownerId,new Factory(guardedOptions));
+        Check(await pureRental.CanRegisterRentalInvoiceAsync(account),"direct rental registration checks have no writes");
+        var rows=await pureRental.ListRentalInvoicesAsync(account);var shown=rows.First();var sanitized=await pureRental.GetRentalInvoiceAsync(account,shown.Invoice.Id);
+        Check(rows.All(x=>x.Invoice.StorageKey==""&&x.Invoice.ProcessingToken is null)&&sanitized.CreditSources.All(x=>x.StorageKey==""),"direct rental readers mask storage and processing metadata without writes");
+        await Deny(()=>rentOwner.GetRentalInvoiceAsync(account,Guid.NewGuid()));
+        await Deny(()=>rentOwner.CorrectRentalAllocationsAsync(account,shown.Invoice.Id,shown.Invoice.Revision,[],"No invoice approval role",Guid.NewGuid()));
+        await Deny(()=>rentOwner.ReverseRentalInvoiceAsync(account,shown.Invoice.Id,shown.Invoice.Revision,"No invoice approval role",Guid.NewGuid()));
         // Dedicated roles can inspect options and act only in their own approval domain.
         await using(var db=factory.CreateDbContext()){var m=await db.UserAccounts.SingleAsync(x=>x.AccountId==account&&x.UserId==outsiderId);db.UserAccountRoles.Add(new(){Id=Guid.NewGuid(),UserAccountId=m.Id,Role=UserRole.LeasingPlanApprover});await db.SaveChangesAsync();}
-        Check((await outsider.GetPaymentsAsync(account,a1)).Permissions.CanActivate&&!(await outsider.GetPaymentsAsync(account,a1)).Permissions.CanApproveInvoices,"plan approval role is separate from invoice and variance approval");await outsider.OptionsAsync(account);await Deny(()=>outsider.NewRentalInvoiceAsync(account,Guid.NewGuid()));
+        Check((await payOutsider.GetPaymentsAsync(account,a1)).Permissions.CanActivate&&!(await payOutsider.GetPaymentsAsync(account,a1)).Permissions.CanApproveInvoices,"plan approval role is separate from invoice and variance approval");await outsider.OptionsAsync(account);await Deny(()=>rentOutsider.NewRentalInvoiceAsync(account,Guid.NewGuid()));
         await PaymentComponentChecks.Run(admin,account,adminId,a1,second);
+        await using(var db=factory.CreateDbContext()){var membership=await db.UserAccounts.SingleAsync(x=>x.AccountId==account&&x.UserId==outsiderId);db.UserAccountRoles.RemoveRange(await db.UserAccountRoles.Where(x=>x.UserAccountId==membership.Id).ToListAsync());await db.SaveChangesAsync();}
+        await Deny(()=>payOutsider.GetPaymentsAsync(account,a1));
+        await Deny(()=>payOutsider.ActivatePaymentPlanAsync(account,plan,Guid.NewGuid(),"Revoked retry",false,Guid.NewGuid()));
+        await using(var db=factory.CreateDbContext()){db.UserAccounts.Remove(await db.UserAccounts.SingleAsync(x=>x.AccountId==account&&x.UserId==ownerId));await db.SaveChangesAsync();}
+        await Deny(()=>rentOwner.NewRentalInvoiceAsync(account,shown.Invoice.Id));
+        await Deny(()=>rentOwner.ListRentalInvoicesAsync(account));
+        await Deny(()=>payOwner.SavePaymentPlanAsync(account,a1,null,terms,"Revoked retry",LeasingPlanSource.Manual,null,draftRequest));
         Console.WriteLine("All phase-five payment checks passed.");
     }
     static void ImportAndDates(){
@@ -163,6 +196,11 @@ static class PaymentChecks
         public Task DiscardUncommittedAsync(string key){files.Remove(key);return Task.CompletedTask;}
     }
     sealed class PaymentInterpreter:IInvoiceDocumentInterpreter {public Task<InvoiceInterpretationResult> InterpretAsync(LeasingInvoice invoice,CancellationToken ct)=>Task.FromResult(new InvoiceInterpretationResult(new(){Number="RENTAL-PARSED",Currency="NOK"},"test-rental","Original evidence",[]));}
+    sealed class DirectActor(Guid user,Guid account):TenantPlatform.Application.Security.ICurrentActor {public TenantPlatform.Application.Security.ActorSnapshot GetSnapshot()=>new(true,user,account);}
+    sealed class PaymentSaveGuard:Microsoft.EntityFrameworkCore.Diagnostics.SaveChangesInterceptor
+    {
+        public override ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int>> SavingChangesAsync(Microsoft.EntityFrameworkCore.Diagnostics.DbContextEventData e,Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int> result,CancellationToken ct=default)=>throw new Exception("Payment reader attempted a write");
+    }
     static T Clone<T>(T value)=>JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value))!;
     static void Check(bool condition,string message){if(!condition)throw new Exception("FAIL payment: "+message);Console.WriteLine("PASS payment: "+message);}
     static async Task Reject(Func<Task> action,string key){try{await action();throw new Exception("Expected "+key);}catch(LeasingValidationException e)when(e.Message==key){Console.WriteLine("PASS payment rejection: "+key);}}

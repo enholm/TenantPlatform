@@ -1,10 +1,9 @@
-@using Microsoft.EntityFrameworkCore
-@using TenantPlatform.Infrastructure.Persistence
+@using TenantPlatform.Application.Security
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Core.Localization
 
 @inject ICurrentUserContextService UserContext
-@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
+@inject AccountContextReader Accounts
 
 @if (UserContext.Current.IsAuthenticated)
 {
@@ -205,10 +204,7 @@
         {
             return;
         }
-        await using var dbContext =
-            await DbContextFactory.CreateDbContextAsync();
-        var userId = UserContext.Current.UserId;
-        accountCount = await dbContext.UserAccounts
-            .CountAsync(x => x.UserId == userId);
+        try { accountCount = (await Accounts.ReadAsync()).Count; }
+        catch (UnauthorizedAccessException) { accountCount = 0; }
     }
 }

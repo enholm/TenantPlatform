@@ -1,3 +1,4 @@
+@using TenantPlatform.Web.Services.ServiceCatalog
 @page "/portal/services/{Id:guid}"
 @attribute [Authorize]
 
@@ -5,8 +6,8 @@
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Web.Components.Pages.ServiceCatalog
 @using TenantPlatform.Web.Security.CurrentUserContext
-@using TenantPlatform.Web.Services.ServiceCatalog
-@using TenantPlatform.Web.Services.ServiceRequests
+@using TenantPlatform.Application.ServiceCatalog
+@using TenantPlatform.Application.ServiceRequests
 @using TenantPlatform.Web.Security.Authorization
 
 @inject IServiceCatalogService ServiceCatalogService
@@ -158,9 +159,7 @@ else if (Model is not null)
 
         locations =
             await ServiceCatalogService
-                .GetAvailableRequestLocationsAsync(
-                    accountId.Value,
-                    UserContext.Current.UserId);
+                .GetAvailableRequestLocationsAsync(accountId.Value);
 
         if (Model is null)
         {
@@ -246,7 +245,6 @@ else if (Model is not null)
                 await ServiceRequestService
                     .CreateServiceRequestAsync(
                         accountId.Value,
-                        UserContext.Current.UserId,
                         new CreateServiceRequestRequest
                         {
                             ServiceDefinitionId = service.Id,

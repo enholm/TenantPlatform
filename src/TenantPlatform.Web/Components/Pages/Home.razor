@@ -3,18 +3,17 @@
 @rendermode InteractiveServer
 
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.EntityFrameworkCore
+@using TenantPlatform.Application.Dashboard
 @using TenantPlatform.Web.Components.Pages.Dashboard
 @using TenantPlatform.Core.Identity
 
-@using TenantPlatform.Infrastructure.Persistence
 @using TenantPlatform.Web.Security.CurrentUserContext
 @using TenantPlatform.Web.Security.Authorization
 
 @inject ITenantAuthorizationService AuthorizationService
 
 @inject NavigationManager Navigation
-@inject IDbContextFactory<TenantPlatformDbContext> DbContextFactory
+@inject HomeReader Overview
 @inject ICurrentUserContextService UserContext
 
 <PageTitle>Dashboard</PageTitle>
@@ -133,7 +132,7 @@
     private int unitCount;
     private int openRequestCount;
 
-    private List<RecentRequest> recentRequests = [];
+    private IReadOnlyList<RecentServiceRequest> recentRequests = [];
     private bool canShowHome;
    protected override async Task OnInitializedAsync()
 {
@@ -156,68 +155,16 @@
 
     try
     {
-    await using var dbContext =
-        await DbContextFactory.CreateDbContextAsync();
-
-    var accountId = currentAccountId.Value;
-
-    accountName = await dbContext.Accounts
-        .Where(x => x.Id == accountId)
-        .Select(x => x.Name)
-        .SingleOrDefaultAsync();
-
-    // Match the administrative building/request overview's account and building scopes.
-    var roles = await dbContext.UserAccountRoles.AsNoTracking()
-        .Where(x => x.UserAccount.AccountId == accountId && x.UserAccount.UserId == UserContext.Current.UserId)
-        .Select(x => new { x.Role, x.BuildingId }).ToListAsync();
-    var isAccountAdmin = roles.Any(x => x.Role == UserRole.AccountAdmin);
-    var buildingIds = roles.Where(x => x.Role == UserRole.PropertyAdmin && x.BuildingId.HasValue)
-        .Select(x => x.BuildingId!.Value).ToList();
-    buildingCount = await dbContext.Buildings
-        .CountAsync(x => x.AccountId == accountId && (isAccountAdmin || buildingIds.Contains(x.Id)));
-
-    organizationCount = await dbContext.Organizations
-        .CountAsync(x => x.AccountId == accountId);
-
-    unitCount = await dbContext.Units
-        .CountAsync(x => x.AccountId == accountId && (isAccountAdmin || buildingIds.Contains(x.BuildingId)));
-
-    openRequestCount = await dbContext.ServiceRequests
-        .CountAsync(x =>
-            x.AccountId == accountId &&
-            (isAccountAdmin || buildingIds.Contains(x.BuildingId)) &&
-            x.Status != Core.Services.ServiceRequestStatus.Completed &&
-            x.Status != Core.Services.ServiceRequestStatus.Cancelled &&
-            x.Status != Core.Services.ServiceRequestStatus.Rejected &&
-            x.Status != Core.Services.ServiceRequestStatus.Failed);
-
-    recentRequests = await dbContext.ServiceRequests
-        .Where(x => x.AccountId == accountId && (isAccountAdmin || buildingIds.Contains(x.BuildingId)))
-        .OrderByDescending(x => x.CreatedAt)
-        .Take(10)
-        .Join(
-            dbContext.Users,
-            request => request.RequesterUserId,
-            user => user.Id,
-            (request, user) => new RecentRequest
-            {
-                CreatedAt = request.CreatedAt,
-                Status = request.Status.ToString(),
-                RequesterName =
-                    user.FirstName + " " + user.LastName
-            })
-        .ToListAsync();
+        var overview = await Overview.ReadAsync(currentAccountId.Value);
+        accountName = overview.AccountName;
+        buildingCount = overview.BuildingCount;
+        organizationCount = overview.OrganizationCount;
+        unitCount = overview.UnitCount;
+        openRequestCount = overview.OpenRequestCount;
+        recentRequests = overview.RecentRequests;
 
     }
     catch (Exception) { overviewError = true; }
     finally { isLoading = false; }
 }
-    private class RecentRequest
-    {
-        public DateTimeOffset CreatedAt { get; set; }
-
-        public string Status { get; set; } = string.Empty;
-
-        public string RequesterName { get; set; } = string.Empty;
-    }
 }

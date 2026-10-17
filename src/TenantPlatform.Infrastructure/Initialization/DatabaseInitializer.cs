@@ -1,17 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using TenantPlatform.Infrastructure.Authentication;
 using TenantPlatform.Infrastructure.Persistence;
 
 namespace TenantPlatform.Infrastructure.Initialization;
 
 public static class DatabaseInitializer
 {
-public static async Task InitializeAsync(
+public static async Task MigrateSchemaAsync(
     TenantPlatformDbContext dbContext,
     ILogger logger,
-    PasswordService passwordService,
-    bool includeDemoData,
     CancellationToken cancellationToken = default)
 {
     try
@@ -36,26 +33,6 @@ public static async Task InitializeAsync(
             await dbContext.Database.MigrateAsync(cancellationToken);
 
             logger.LogInformation("Database migrations completed.");
-        }
-
-        logger.LogInformation("Initializing platform data.");
-
-        await PlatformDataInitializer.InitializeAsync(
-            dbContext,
-            cancellationToken);
-
-        logger.LogInformation("Platform data initialization completed.");
-
-        if (includeDemoData)
-        {
-            logger.LogInformation("Initializing demo data.");
-
-            await DemoDataInitializer.InitializeAsync(
-                dbContext,
-                passwordService,
-                cancellationToken);
-
-            logger.LogInformation("Demo data initialization completed.");
         }
 
         logger.LogInformation("Database initialization completed successfully.");

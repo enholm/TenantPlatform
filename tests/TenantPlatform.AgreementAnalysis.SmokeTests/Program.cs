@@ -1,3 +1,4 @@
+using TenantPlatform.Application.Agreements;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -12,9 +13,6 @@ using TenantPlatform.Core.Organizations;
 using TenantPlatform.Infrastructure.Agreements;
 using TenantPlatform.Infrastructure.Auditing;
 using TenantPlatform.Infrastructure.Persistence;
-using TenantPlatform.Web.Security.Authorization;
-using TenantPlatform.Web.Security.CurrentUserContext;
-using TenantPlatform.Web.Services.Agreements;
 
 var connection = Environment.GetEnvironmentVariable("AGREEMENT_TEST_CONNECTION")
     ?? throw new InvalidOperationException("Set AGREEMENT_TEST_CONNECTION to disposable PostgreSQL database tenant_agreement_tests.");
@@ -25,8 +23,9 @@ await using var setup = new NpgsqlConnection(connection);
 await setup.OpenAsync();
 await using (var command = new NpgsqlCommand($"CREATE SCHEMA \"{schema}\"", setup)) await command.ExecuteNonQueryAsync();
 cs.SearchPath = schema;
+var readGuard = new AnalysisReadGuard();
 var factory = new TestFactory(new DbContextOptionsBuilder<TenantPlatformDbContext>().UseNpgsql(cs.ConnectionString)
-    .AddInterceptors(new AuditSaveChangesInterceptor(new TestAuditContext())).Options);
+    .AddInterceptors(new AuditSaveChangesInterceptor(new TestAuditContext()), readGuard).Options);
 var root = Path.Combine(Path.GetTempPath(), schema);
 var storage = new TestStorage(new LocalAgreementDocumentStorage(Options.Create(new AgreementDocumentStorageOptions { RootPath = root, MaxFileSizeBytes = 1024 * 1024 })));
 var handler = new MockOpenAi();
@@ -66,8 +65,11 @@ try
     await Expect<UnauthorizedAccessException>(() => owner.AnalyzeAsync(account, draft.Id), "other user cannot analyze draft");
     await Expect<UnauthorizedAccessException>(() => foreign.DownloadAnalysisFileAsync(otherAccount, draft.Id, draft.Files[0].Id), "foreign draft download denied");
     await Expect<UnauthorizedAccessException>(() => admin.DownloadAnalysisFileAsync(account, draft.Id, Guid.NewGuid()), "foreign file ID denied");
+    await Expect<UnauthorizedAccessException>(() => owner.DownloadAnalysisFileAsync(account, draft.Id, draft.Files[0].Id), "same-account noncreator cannot download another draft");
+    readGuard.Protect = true;
     using (var file = (await admin.DownloadAnalysisFileAsync(account, draft.Id, draft.Files[0].Id)).Content)
         Assert(file.Length > 0, "draft source is readable by owner");
+    readGuard.Protect = false;
     draft = await admin.AnalyzeAsync(account, draft.Id);
     Assert(handler.LastFileCount == 3 && handler.OwnBusiness == "Our Business AS", "all files and actual account identity sent together");
     Assert(handler.ValidRequest, "strict schema, inline PDF, store:false, no tools, server authorization");
@@ -77,18 +79,24 @@ try
     var calls = handler.Calls;
     await admin.AnalyzeAsync(account, draft.Id);
     Assert(handler.Calls == calls, "repeated analyze on ready result avoids repeat cost");
+    readGuard.Protect = true;
     var matches = await admin.FindAnalysisOrganizationsAsync(account, draft.Id, "wrong name", "123456789");
     Assert(matches.Single().Id == organizationId, "organisation number matched first with formatting normalization");
     Assert((await admin.FindAnalysisOrganizationsAsync(account, draft.Id, " supplier   as ", "")).Single().Id == organizationId, "exact normalized legal name matched");
     Assert((await admin.FindAnalysisOrganizationsAsync(account, draft.Id, "Supplier A", "")).Count == 0, "fuzzy names not matched");
     Assert((await admin.FindAnalysisOrganizationsAsync(account, draft.Id, "Foreign only", "999999999")).Count == 0, "organization matching tenant isolated");
+    readGuard.Protect = false;
     var approval = Approval(draft, organizationId);
     approval.Findings[1].Value = "User corrected liability summary";
     approval.Findings[1].Status = AgreementFindingStatus.Unclear;
     await Expect<UnauthorizedAccessException>(() => admin.ApproveAnalysisAsync(account, draft.Id, Approval(draft, foreignOrg)), "foreign organization denied on approval");
     var agreementId = await admin.ApproveAnalysisAsync(account, draft.Id, approval);
     Assert(await admin.ApproveAnalysisAsync(account, draft.Id, approval) == agreementId, "repeat approval returns same agreement");
-    var history = await admin.GetAnalysesAsync(account, agreementId);
+    readGuard.Protect = true;
+    List<AgreementAnalysis> history;
+    try { history = await admin.GetAnalysesAsync(account, agreementId); }
+    finally { readGuard.Protect = false; }
+    Assert(history.All(x => x.AttemptId is null && x.LeaseUntilUtc is null && x.Files.All(f => f.StorageKey == "")), "Application approved history strips storage and lease identifiers without writing");
     var saved = history.Single();
     Assert(saved.Files.Count == 3 && saved.Files.All(x => x.AgreementDocumentId.HasValue), "all documents promoted to archive");
     var corrected = saved.Findings.Single(x => x.Position == 1);
@@ -99,6 +107,9 @@ try
     var details = await admin.GetAsync(account, agreementId);
     await admin.SetAccessAsync(account, agreementId, readerId, AgreementAccessLevel.Read, details.Revision);
     var reader = Service(readerId, account);
+    await using (var db = factory.CreateDbContext()) await db.Users.Where(x => x.Id == readerId).ExecuteUpdateAsync(x => x.SetProperty(u => u.IsPlatformAdmin, true));
+    await Expect<UnauthorizedAccessException>(() => reader.StartAnalysisDraftAsync(account, null), "global PlatformAdmin cannot create account analysis without ordinary authority");
+    await using (var db = factory.CreateDbContext()) await db.Users.Where(x => x.Id == readerId).ExecuteUpdateAsync(x => x.SetProperty(u => u.IsPlatformAdmin, false));
     Assert((await reader.GetAnalysesAsync(account, agreementId)).Count == 1, "read grant can view findings");
     await Expect<UnauthorizedAccessException>(() => reader.StartAnalysisDraftAsync(account, agreementId), "read grant cannot analyze");
 
@@ -223,17 +234,35 @@ try
     storage.FailDeletes = true;
     await Expect<IOException>(() => admin.DiscardAnalysisAsync(account, pending.Id), "file deletion failure surfaces and is retryable");
     storage.FailDeletes = false;
-    await new AgreementAnalysisCleanup(factory, storage, clock).RunAsync(default);
+    await new AgreementAnalysisCleanupService(new AgreementAnalysisCleanupData(factory, root), storage, clock, new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.AgreementAnalysisCleanup)).RunAsync(default);
     await using (var db = factory.CreateDbContext()) Assert(!await db.AgreementAnalyses.AnyAsync(x => x.Id == pending.Id), "worker retries interrupted file cleanup");
+    var uploadRevoked = await admin.StartAnalysisDraftAsync(account, null);
+    var binaryCount = Directory.GetFiles(root).Length;
+    storage.AfterStore = async () => { await using var db = factory.CreateDbContext(); await db.Users.Where(x => x.Id == adminId).ExecuteUpdateAsync(x => x.SetProperty(u => u.IsActive, false)); };
+    await Expect<UnauthorizedAccessException>(() => admin.AddAnalysisFileAsync(account, uploadRevoked.Id, "revoked.pdf", Pdf(), AgreementDocumentCategory.Contract), "upload revalidates after streaming");
+    storage.AfterStore = null;
+    await using (var db = factory.CreateDbContext())
+    {
+        Assert(!await db.AgreementAnalysisFiles.AnyAsync(x => x.AnalysisId == uploadRevoked.Id) && Directory.GetFiles(root).Length == binaryCount, "revoked upload leaves neither metadata nor uncommitted binary");
+        await db.Users.Where(x => x.Id == adminId).ExecuteUpdateAsync(x => x.SetProperty(u => u.IsActive, true));
+    }
+    await admin.DiscardAnalysisAsync(account, uploadRevoked.Id);
     var expiring = await DraftAsync();
     clock.Advance(TimeSpan.FromHours(25));
-    var cleanup = new AgreementAnalysisCleanup(factory, storage, clock);
+    foreach (var work in new TenantPlatform.Application.Security.SystemWorkKind?[] { null, TenantPlatform.Application.Security.SystemWorkKind.EmailOutbox })
+        await Expect<UnauthorizedAccessException>(() => new AgreementAnalysisCleanupService(new AgreementAnalysisCleanupData(factory, root), storage, clock,
+            new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(work)).RunAsync(default), "cleanup rejects missing or unrelated system authority");
+    var cleanup = new AgreementAnalysisCleanupService(new AgreementAnalysisCleanupData(factory, root), storage, clock, new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.AgreementAnalysisCleanup));
     await cleanup.RunAsync(default);
     await using (var db = factory.CreateDbContext()) Assert(!await db.AgreementAnalyses.AnyAsync(x => x.Id == expiring.Id) && await db.AgreementAnalyses.AnyAsync(x => x.Id == saved.Id), "expiry cleans abandoned drafts and retains approved history");
     var orphan = Guid.NewGuid().ToString("N"); await File.WriteAllTextAsync(Path.Combine(root, orphan), "synthetic orphan");
     File.SetLastWriteTimeUtc(Path.Combine(root, orphan), clock.GetUtcNow().AddDays(-3).UtcDateTime);
-    await cleanup.CleanOrphansAsync(root, default);
-    Assert(!File.Exists(Path.Combine(root, orphan)) && saved.Files.All(x => File.Exists(Path.Combine(root, x.StorageKey))), "orphan recovery protects archive files");
+    await cleanup.CleanOrphansAsync(default);
+    await using (var db = factory.CreateDbContext())
+    {
+        var archiveKeys = await db.AgreementAnalysisFiles.Where(x => x.AccountId == account && x.AnalysisId == saved.Id).Select(x => x.StorageKey).ToListAsync();
+        Assert(!File.Exists(Path.Combine(root, orphan)) && archiveKeys.All(x => File.Exists(Path.Combine(root, x))), "orphan recovery protects archive files");
+    }
     Console.WriteLine("All contract analysis smoke tests passed.");
 }
 finally
@@ -243,12 +272,15 @@ finally
     await drop.ExecuteNonQueryAsync();
     if (Directory.Exists(root)) Directory.Delete(root, true);
 }
-AgreementService Service(Guid user, Guid tenant)
+AnalysisTestService Service(Guid user, Guid tenant)
 {
-    var context = new TestUserContext(user, tenant);
-    return new(factory, context, new TenantAuthorizationService(factory, context), storage, NullLogger<AgreementService>.Instance, clock, analysisClient: client);
+    var actor = new AnalysisActor(new(true, user, tenant));
+    var auth = new TenantPlatform.Application.Security.AuthorizationService(actor, new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory), clock);
+    var management = new AgreementManagementService(auth, new AgreementManagementData(factory), clock);
+    var cleanup = new AgreementAnalysisCleanupService(new AgreementAnalysisCleanupData(factory, root), storage, clock, new TenantPlatform.Infrastructure.Authorization.HostSystemWorkContext(TenantPlatform.Application.Security.SystemWorkKind.AgreementAnalysisCleanup));
+    return new(new AgreementAnalysisService(auth, new AgreementAnalysisData(factory), storage, management, cleanup, clock, client), management, new AgreementDetailsReader(auth, new AgreementDetailsData(factory)));
 }
-async Task<AnalysisDraftDto> DraftAsync(int attachments = 0, Guid? agreementId = null, AgreementService? service = null)
+async Task<AnalysisDraftDto> DraftAsync(int attachments = 0, Guid? agreementId = null, AnalysisTestService? service = null)
 {
     service ??= Service(adminId, account);
     var d = await service.StartAnalysisDraftAsync(account, agreementId);
@@ -277,8 +309,6 @@ static async Task Expect<T>(Func<Task> action, string message) where T : Excepti
 }
 sealed class TestFactory(DbContextOptions<TenantPlatformDbContext> options) : IDbContextFactory<TenantPlatformDbContext>
 { public TenantPlatformDbContext CreateDbContext() => new(options); }
-sealed class TestUserContext(Guid user, Guid account) : ICurrentUserContextService
-{ public CurrentUserContext Current => new() { IsAuthenticated = true, UserId = user, CurrentAccountId = account }; }
 sealed class TestClock : TimeProvider
 {
     private DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -294,8 +324,10 @@ sealed class TestAuditContext : IAuditUserContext
 sealed class TestStorage(IAgreementDocumentStorage inner) : IAgreementDocumentStorage
 {
     public bool FailDeletes { get; set; }
+    public Func<Task>? AfterStore { get; set; }
     public long MaxFileSizeBytes => inner.MaxFileSizeBytes;
-    public Task<StoredAgreementFile> StoreAsync(Stream source, string name, CancellationToken ct = default) => inner.StoreAsync(source, name, ct);
+    public async Task<StoredAgreementFile> StoreAsync(Stream source, string name, CancellationToken ct = default)
+    { var stored = await inner.StoreAsync(source, name, ct); if (AfterStore is not null) await AfterStore(); return stored; }
     public Task<Stream> OpenReadAsync(string key, CancellationToken ct = default) => inner.OpenReadAsync(key, ct);
     public Task DiscardUncommittedAsync(string key) => FailDeletes ? throw new IOException("Synthetic deletion failure") : inner.DiscardUncommittedAsync(key);
 }
@@ -337,4 +369,28 @@ sealed class MockOpenAi : HttpMessageHandler
             usage = new { input_tokens = 123, input_tokens_details = new { cached_tokens = 23 }, output_tokens = 45 }
         }), Encoding.UTF8, "application/json") };
     }
+}
+
+sealed class AnalysisActor(TenantPlatform.Application.Security.ActorSnapshot snapshot) : TenantPlatform.Application.Security.ICurrentActor
+{ public TenantPlatform.Application.Security.ActorSnapshot GetSnapshot() => snapshot; }
+sealed class AnalysisReadGuard : Microsoft.EntityFrameworkCore.Diagnostics.SaveChangesInterceptor
+{
+    public bool Protect;
+    public override ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int>> SavingChangesAsync(Microsoft.EntityFrameworkCore.Diagnostics.DbContextEventData eventData, Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int> result, CancellationToken cancellationToken = default)
+    { if (Protect) throw new Exception("Read-only Application analysis operation tried SaveChanges."); return ValueTask.FromResult(result); }
+}
+sealed class AnalysisTestService(AgreementAnalysisService analysis, AgreementManagementService management, AgreementDetailsReader details)
+{
+    public Task<AgreementDetailsDto> GetAsync(Guid account, Guid id) => details.ReadAsync(account, id);
+    public Task SetAccessAsync(Guid account, Guid id, Guid user, AgreementAccessLevel? level, Guid revision) => management.SetAccessAsync(account, id, user, level, revision);
+    public Task UpdateAsync(Guid account, Guid id, SaveAgreementRequest request) => management.UpdateAsync(account, id, request);
+    public Task<AnalysisDraftDto> StartAnalysisDraftAsync(Guid accountId, Guid? agreementId, CancellationToken ct = default) => analysis.StartAnalysisDraftAsync(accountId, agreementId, ct);
+    public Task<AnalysisDraftDto> AddAnalysisFileAsync(Guid accountId, Guid draftId, string fileName, Stream content, AgreementDocumentCategory category, CancellationToken ct = default) => analysis.AddAnalysisFileAsync(accountId, draftId, fileName, content, category, ct);
+    public Task<AnalysisDraftDto> RemoveAnalysisFileAsync(Guid accountId, Guid draftId, Guid fileId, CancellationToken ct = default) => analysis.RemoveAnalysisFileAsync(accountId, draftId, fileId, ct);
+    public Task<AnalysisDraftDto> AnalyzeAsync(Guid accountId, Guid draftId, CancellationToken ct = default) => analysis.AnalyzeAsync(accountId, draftId, ct);
+    public Task<List<AnalysisOrganizationDto>> FindAnalysisOrganizationsAsync(Guid accountId, Guid draftId, string name, string number, CancellationToken ct = default) => analysis.FindAnalysisOrganizationsAsync(accountId, draftId, name, number, ct);
+    public Task<Guid> ApproveAnalysisAsync(Guid accountId, Guid draftId, ApproveAnalysisRequest request, CancellationToken ct = default) => analysis.ApproveAnalysisAsync(accountId, draftId, request, ct);
+    public Task<AgreementDownload> DownloadAnalysisFileAsync(Guid accountId, Guid draftId, Guid fileId, CancellationToken ct = default) => analysis.DownloadAnalysisFileAsync(accountId, draftId, fileId, ct);
+    public Task<List<AgreementAnalysis>> GetAnalysesAsync(Guid accountId, Guid agreementId, CancellationToken ct = default) => analysis.GetAnalysesAsync(accountId, agreementId, ct);
+    public Task DiscardAnalysisAsync(Guid accountId, Guid draftId, CancellationToken ct = default) => analysis.DiscardAnalysisAsync(accountId, draftId, ct);
 }

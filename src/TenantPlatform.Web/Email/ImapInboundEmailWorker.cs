@@ -1,3 +1,4 @@
+using TenantPlatform.Application.ServiceRequests;
 using MailKit;
 using MailKit.Net.Imap;
 using MailKit.Search;

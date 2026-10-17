@@ -1,3 +1,4 @@
+using TenantPlatform.Application.Agreements;
 using TenantPlatform.Core.Agreements;
 
 namespace TenantPlatform.Web.Services.Agreements;

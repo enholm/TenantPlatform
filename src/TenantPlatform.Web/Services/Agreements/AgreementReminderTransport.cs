@@ -1,3 +1,5 @@
+using TenantPlatform.Application.ServiceRequests;
+using TenantPlatform.Application.Agreements;
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.Extensions.Localization;
@@ -15,13 +17,6 @@ public class AgreementReminderOptions
     public string ApplicationBaseUrl { get; set; } = "";
     public string CapturePath { get; set; } = "App_Data/agreement-reminders";
 }
-public record AgreementReminderMessage(Guid QueueId, Guid AccountId, Guid AgreementId, string Recipient,
-    string Language, string AgreementTitle, AgreementDeadlineKind Kind, DateOnly DueDate);
-public interface IAgreementReminderTransport
-{
-    Task<string?> SendAsync(AgreementReminderMessage message, CancellationToken ct);
-}
-
 // The queue is dedicated to agreements; the existing service-request outbox is not suitable
 // because it requires a ServiceRequestId and writes service-request message history.
 public class AgreementReminderTransport(IOptions<AgreementReminderOptions> options, IHostEnvironment environment,

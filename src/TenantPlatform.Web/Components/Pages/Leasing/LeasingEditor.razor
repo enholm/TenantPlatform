@@ -43,7 +43,7 @@
                 <option value="@Guid.Empty">@L["LeasingChoose"]</option>@foreach (var option in options.Owners) { <option value="@option.Id">@option.Name</option> }
             </InputSelect></div>
             <div class="col-md-3"><label for="lease-currency" class="form-label">@L["LeasingCurrency"]</label><InputSelect id="lease-currency" class="form-select" @bind-Value="Currency" disabled="@(!framework && a.FrameworkId.HasValue)">
-                @foreach (var currencyCode in TenantPlatform.Web.Services.Agreements.AgreementPeriodCalculator.Currencies) { <option value="@currencyCode">@currencyCode</option> }
+                @foreach (var currencyCode in TenantPlatform.Application.Agreements.AgreementPeriodCalculator.Currencies) { <option value="@currencyCode">@currencyCode</option> }
             </InputSelect></div>
             @if (framework)
             {

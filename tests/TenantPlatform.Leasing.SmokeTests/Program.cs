@@ -1,3 +1,9 @@
+using TenantPlatform.Application.Leasing;
+using TenantPlatform.Application.Leasing.Invoices;
+using TenantPlatform.Infrastructure.Leasing.Invoices;
+using TenantPlatform.Application.Agreements;
+using DimensionService = TenantPlatform.Web.Services.Dimensions.DimensionService;
+using TenantPlatform.Application.Dimensions;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -50,7 +56,7 @@ try
         await db.SaveChangesAsync();
     }
     var storage = new MemoryStorage();
-    LeasingService Service(Guid user) { var context = new Context(user, account); return new(factory, context, new TenantAuthorizationService(factory, context), storage, new Clock(), NullLogger<LeasingService>.Instance); }
+    LeasingService Service(Guid user) { var context = new Context(user, account); return LeasingUserComposition.Create(factory, context, storage, new Clock()); }
     var admin = Service(adminId); var owner = Service(ownerId); var outsider = Service(outsiderId);
     LeasingFramework Frame(decimal limit = 100, bool vat = false) => new()
     {
@@ -182,8 +188,8 @@ try
     Check(migrated.CreditNetTotal == 0 && migrated.ReversedNetTotal == 0 && migrated.ReleasedNetTotal == 0 && migrated.Items.All(x => x.InvoiceNetAdjustment == 0 && x.InvoiceVatAdjustment == 0) && (await admin.GetAsync(account, framework, true)).Framework!.CreditNotesReleaseLimit == null,
         "phase-three migration preserves financial totals and leaves credit policy explicitly undecided");
     var dimensionContext = new Context(adminId, account);
-    var dimensions = new TenantPlatform.Web.Services.Dimensions.DimensionService(factory, dimensionContext, new TenantAuthorizationService(factory, dimensionContext), new Clock());
-    async Task DimensionReject(Func<Task> action, string key) { try { await action(); throw new Exception("Expected " + key); } catch (TenantPlatform.Web.Services.Dimensions.DimensionValidationException ex) when (ex.Message == key) { Check(true, key); } }
+    var dimensions = new TenantPlatform.Web.Services.Dimensions.DimensionService(new TenantPlatform.Application.Dimensions.DimensionService(new TenantPlatform.Web.Security.Application.CurrentActorAdapter(dimensionContext), new TenantPlatform.Application.Security.AuthorizationService(new TenantPlatform.Web.Security.Application.CurrentActorAdapter(dimensionContext), new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory), new Clock()), new TenantPlatform.Infrastructure.AccountSettings.DimensionData(factory), new Clock()));
+    async Task DimensionReject(Func<Task> action, string key) { try { await action(); throw new Exception("Expected " + key); } catch (TenantPlatform.Application.Dimensions.DimensionValidationException ex) when (ex.Message == key) { Check(true, key); } }
     var department = await dimensions.SaveDimensionAsync(null, new() { Name = "Department", Code = "DEP" });
     var location = await dimensions.SaveDimensionAsync(null, new() { Name = "Location", Code = "LOC" });
     var tags = await dimensions.SaveDimensionAsync(null, new() { Name = "Tags", Code = "TAG", AllowMultiple = true });
@@ -249,7 +255,7 @@ try
     await Deny(() => outsider.ClassificationCatalogAsync(account));
     await Deny(() => owner.SaveDimensionRuleAsync(account, new() { DimensionId = department }));
     var ownerContext = new Context(ownerId, account);
-    var ownerDimensions = new TenantPlatform.Web.Services.Dimensions.DimensionService(factory, ownerContext, new TenantAuthorizationService(factory, ownerContext), new Clock());
+    var ownerDimensions = new TenantPlatform.Web.Services.Dimensions.DimensionService(new TenantPlatform.Application.Dimensions.DimensionService(new TenantPlatform.Web.Security.Application.CurrentActorAdapter(ownerContext), new TenantPlatform.Application.Security.AuthorizationService(new TenantPlatform.Web.Security.Application.CurrentActorAdapter(ownerContext), new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory), new Clock()), new TenantPlatform.Infrastructure.AccountSettings.DimensionData(factory), new Clock()));
     await Deny(() => ownerDimensions.GetAsync());
     var foreignDimension = Guid.NewGuid(); var foreignValue = Guid.NewGuid();
     await using (var db = factory.CreateDbContext()) { db.Dimensions.Add(new() { Id = foreignDimension, AccountId = foreignAccount, Name = "Foreign", Code = "FOREIGN" }); db.DimensionValues.Add(new() { Id = foreignValue, AccountId = foreignAccount, DimensionId = foreignDimension, Name = "Foreign", Code = "FOREIGN" }); await db.SaveChangesAsync(); }
@@ -319,6 +325,8 @@ try
     await OrderChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
     await PaymentChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
     await LifecycleChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
+    await LeasingApplicationChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
+    await AcquisitionApplicationChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
     Console.WriteLine("All leasing PostgreSQL smoke checks passed.");
 }
 finally

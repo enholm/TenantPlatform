@@ -170,7 +170,7 @@
             await Service.UploadAsync(account, Id, framework, data.Framework?.Revision ?? data.Acquisition!.Revision, args.File.Name, stream);
             await Load();
         }
-        catch (TenantPlatform.Infrastructure.Agreements.AgreementFileException ex) { error = ex.Message; }
+        catch (TenantPlatform.Application.Agreements.AgreementFileException ex) { error = ex.Message; }
         catch (LeasingValidationException ex) { error = ex.Message; }
         catch (IOException) { error = "LeasingUploadFailed"; }
         catch (Exception) { error = "LeasingFailed"; }

@@ -9,7 +9,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Core.Services
 @using TenantPlatform.Web.Security.CurrentUserContext
-@using TenantPlatform.Web.Services.ServiceRequests
+@using TenantPlatform.Application.ServiceRequests
 @using TenantPlatform.Web.Security.Authorization
 
 @inject IServiceRequestService ServiceRequestService
@@ -641,7 +641,6 @@ else
                     accountId.Value,
                     Id,
                     replyingToMessageId.Value,
-                    UserContext.Current.UserId,
                     replyText);
 
             replyingToMessageId =
@@ -682,8 +681,7 @@ else
             await ServiceRequestService
                 .ApproveRequestAsync(
                     accountId.Value,
-                    Id,
-                    UserContext.Current.UserId);
+                    Id);
 
             await ReloadAsync();
         }
@@ -715,8 +713,7 @@ else
             await ServiceRequestService
                 .StartWorkAsync(
                     accountId.Value,
-                    Id,
-                    UserContext.Current.UserId);
+                    Id);
 
             await ReloadAsync();
         }
@@ -748,8 +745,7 @@ else
             await ServiceRequestService
                 .CompleteRequestAsync(
                     accountId.Value,
-                    Id,
-                    UserContext.Current.UserId);
+                    Id);
 
             await ReloadAsync();
         }
@@ -783,7 +779,6 @@ else
                 .AddCommentAsync(
                     accountId.Value,
                     Id,
-                    UserContext.Current.UserId,
                     commentText);
 
             commentText =
@@ -931,7 +926,6 @@ else
                 .GetRequestAsync(
                     accountId.Value,
                     Id,
-                    UserContext.Current.UserId,
                     CultureInfo.CurrentUICulture.Name);
 
         if (request is null)

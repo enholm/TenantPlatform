@@ -1,3 +1,5 @@
+using TenantPlatform.Application.Leasing;
+using TenantPlatform.Application.Leasing.Invoices;
 using TenantPlatform.Web.Security.CurrentUserContext;
 
 namespace TenantPlatform.Web.Services.Leasing;
@@ -6,7 +8,7 @@ public static class LeasingEndpoints
 {
     public static void MapLeasingEndpoints(this WebApplication app)
     {
-        app.MapGet("/leasing/reports/export", async (int kind,string filter,string format,ICurrentUserContextService user,LeasingService service,Microsoft.Extensions.Localization.IStringLocalizer<TenantPlatform.Web.TenantPlatformResources> l,HttpContext http,CancellationToken ct) =>
+        app.MapGet("/leasing/reports/export", async (int kind,string filter,string format,ICurrentUserContextService user,LeasingReportService service,Microsoft.Extensions.Localization.IStringLocalizer<TenantPlatform.Web.TenantPlatformResources> l,HttpContext http,CancellationToken ct) =>
         {
             if(user.Current.CurrentAccountId is not Guid account)return Results.NotFound();
             try

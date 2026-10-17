@@ -3,7 +3,7 @@ using TenantPlatform.Core.Identity;
 
 namespace TenantPlatform.Infrastructure.Authentication;
 
-public class PasswordService
+public class PasswordService : TenantPlatform.Application.UserAdministration.IUserPasswordHasher
 {
     private readonly PasswordHasher<LoginAccount> _passwordHasher = new();
 

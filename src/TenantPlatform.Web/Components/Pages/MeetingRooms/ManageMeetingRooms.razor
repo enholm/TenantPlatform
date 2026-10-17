@@ -1,10 +1,11 @@
+@using TenantPlatform.Application.Buildings
 @page "/admin/meeting-rooms"
 @attribute [Authorize]
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Authorization
 @using TenantPlatform.Web.Security.Authorization
 @using TenantPlatform.Web.Security.CurrentUserContext
-@using TenantPlatform.Web.Services.MeetingRooms
+@using TenantPlatform.Application.MeetingRooms
 @using TenantPlatform.Web.Services.Buildings
 @inject IMeetingRoomService RoomService
 @inject ICalendarIntegrationService IntegrationService

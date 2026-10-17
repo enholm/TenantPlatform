@@ -1,3 +1,6 @@
+using TenantPlatform.Application.Leasing;
+using TenantPlatform.Application.Leasing.Invoices;
+using TenantPlatform.Infrastructure.Leasing.Invoices;
 using System.Net;
 
 // Opt-in, test-only snapshots of actual Razor output; no application database or login required.

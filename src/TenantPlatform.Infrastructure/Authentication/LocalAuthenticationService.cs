@@ -1,3 +1,4 @@
+using TenantPlatform.Application.Authentication;
 using Microsoft.EntityFrameworkCore;
 using TenantPlatform.Infrastructure.Persistence;
 
@@ -9,14 +10,14 @@ public class LocalAuthenticationService : ILocalAuthenticationService
     private static readonly TimeSpan LockoutDuration =
         TimeSpan.FromMinutes(15);
 
-    private readonly TenantPlatformDbContext _dbContext;
+    private readonly IDbContextFactory<TenantPlatformDbContext> _factory;
     private readonly PasswordService _passwordService;
 
     public LocalAuthenticationService(
-        TenantPlatformDbContext dbContext,
+        IDbContextFactory<TenantPlatformDbContext> factory,
         PasswordService passwordService)
     {
-        _dbContext = dbContext;
+        _factory = factory;
         _passwordService = passwordService;
     }
 
@@ -26,6 +27,7 @@ public class LocalAuthenticationService : ILocalAuthenticationService
         CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
+        await using var _dbContext = await _factory.CreateDbContextAsync(cancellationToken);
 
         var loginAccount = await _dbContext.LoginAccounts
             .Include(x => x.User)

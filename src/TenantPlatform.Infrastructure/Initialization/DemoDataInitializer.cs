@@ -16,7 +16,7 @@ namespace TenantPlatform.Infrastructure.Initialization;
 
 // TODO: fikse så det blir en upsert og ikke bare insert av seed data. Se SeedBuildingsAsync for eksempel på upsert
 
-public static class DemoDataInitializer
+internal static class DemoDataInitializer
 {
 
     public static async Task InitializeAsync(
