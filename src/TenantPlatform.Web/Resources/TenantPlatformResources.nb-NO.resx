@@ -3320,4 +3320,47 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="McpAvailabilityConfirmationRequired" xml:space="preserve"><value>Tilgjengelige verktøy krever brukerbekreftelse. Automatisk lesing er sperret.</value></data>
   <data name="McpAvailabilityAccessDenied" xml:space="preserve"><value>Du har ikke bruksadgang til denne tilkoblingen. Administrasjon gir ikke automatisk bruksadgang.</value></data>
   <data name="McpPolicyClassificationRequired" xml:space="preserve"><value>Velg og lagre en bruksklasse før du godkjenner denne metadataversjonen.</value></data>
+  <data name="AgentTitle" xml:space="preserve"><value>Leseassistent</value></data>
+  <data name="AgentDisclosure" xml:space="preserve"><value>Spørsmålet, verktøybeskrivelser og hentede data sendes til OpenAI for behandling. Bruk bare data du kan dele med denne leverandøren.</value></data>
+  <data name="AgentAcceptDisclosure" xml:space="preserve"><value>Jeg forstår og godtar denne datadelingen for samtalen.</value></data>
+  <data name="AgentAccount" xml:space="preserve"><value>Valgt konto</value></data>
+  <data name="AgentConnection" xml:space="preserve"><value>Én valgt tilkobling</value></data>
+  <data name="AgentSelectConnection" xml:space="preserve"><value>Velg tilkobling</value></data>
+  <data name="AgentFreshMessage" xml:space="preserve"><value>Hver melding henter data på nytt. Tidligere spørsmål og svar sendes ikke videre. Samtalen utløper etter 30 minutter.</value></data>
+  <data name="AgentNoConnections" xml:space="preserve"><value>Ingen tilgjengelige automatiske leseverktøy. Koble til personlig, og be administrator kontrollere tilgang, katalog og godkjenning.</value></data>
+  <data name="AgentQuestion" xml:space="preserve"><value>Spørsmål</value></data>
+  <data name="AgentSend" xml:space="preserve"><value>Send</value></data>
+  <data name="AgentCancel" xml:space="preserve"><value>Avbryt</value></data>
+  <data name="AgentNew" xml:space="preserve"><value>Ny samtale</value></data>
+  <data name="AgentSources" xml:space="preserve"><value>Faktisk brukte kilder og verktøy</value></data>
+  <data name="AgentRunning" xml:space="preserve"><value>Henter og leser. Dette kan kreve flere modell- og verktøykall.</value></data>
+  <data name="AgentDone" xml:space="preserve"><value>Svar klart. Kontroller kilder og begrensninger.</value></data>
+  <data name="AgentNoticeNoSources" xml:space="preserve"><value>Ingen forretningsdata ble hentet. Svaret har ingen verktøykilder.</value></data>
+  <data name="AgentNoticeExternalCompleteness" xml:space="preserve"><value>Ekstern kilde: fullstendighet og paginering følger kildens kontrakt; svaret er ikke dokumentasjon på et komplett datagrunnlag.</value></data>
+  <data name="AgentNoticePaging" xml:space="preserve"><value>Avtalelisten hentes i sider på 25. Ikke alle treff er nødvendigvis hentet. Se svarets sideinformasjon og be om videre henting. Flere kall er ikke ett konsistent øyeblikksbilde.</value></data>
+  <data name="AgentNoticeOverlapping" xml:space="preserve"><value>Attention-kategoriene overlapper. Ikke summer dem som et unikt antall avtaler.</value></data>
+  <data name="AgentErrorDisabled" xml:space="preserve"><value>Leseassistenten er ikke aktivert eller mangler gyldig serverkonfigurasjon. Vanlig GUI kan fortsatt brukes.</value></data>
+  <data name="AgentErrorAccessChanged" xml:space="preserve"><value>Tilgang eller bruker-/kontokontekst er endret. Samtalen er tømt. Last siden på nytt.</value></data>
+  <data name="AgentErrorUnavailable" xml:space="preserve"><value>Kjøringen kunne ikke fullføres. Ingen konklusjon om antall treff kan trekkes. Prøv igjen eller bruk GUI.</value></data>
+  <data name="AgentErrorSourceUnavailable" xml:space="preserve"><value>En kilde er utilgjengelig eller krever ny autorisering/godkjenning. Ingen ufullstendig konklusjon vises som et ferdig svar. Kontroller MCP-registeret.</value></data>
+  <data name="AgentErrorCancelled" xml:space="preserve"><value>Kjøringen er avbrutt og samtalen tømt.</value></data>
+  <data name="AgentErrorCancelledOrTimedOut" xml:space="preserve"><value>Kjøringen ble avbrutt eller tidsbudsjettet ble brukt opp. Intet ferdig svar.</value></data>
+  <data name="AgentErrorBusy" xml:space="preserve"><value>En kjøring pågår allerede, eller kapasiteten er brukt opp. Avbryt eller prøv senere.</value></data>
+  <data name="AgentErrorConsentRequired" xml:space="preserve"><value>Velg konto/tilkobling og godta datadelingen før bruk.</value></data>
+  <data name="AgentErrorConnectionUnavailable" xml:space="preserve"><value>Ingen tilgjengelige leseverktøy på valgt tilkobling. Kontroller personlig autorisering, tilgang og godkjenning i registeret.</value></data>
+  <data name="AgentErrorSchemaUnsupported" xml:space="preserve"><value>Et godkjent verktøyskjema støttes ikke av denne agentversjonen. Skjemaet er ikke endret, og verktøyet ble ikke kalt.</value></data>
+  <data name="AgentErrorInvalidTool" xml:space="preserve"><value>Modellen ba om et verktøy som ikke er tillatt i denne kjøringen. Kjøringen er stoppet.</value></data>
+  <data name="AgentErrorInvalidArguments" xml:space="preserve"><value>Modellens argumenter oppfylte ikke verktøykontrakten. Ingen videre henting.</value></data>
+  <data name="AgentErrorAccountOverride" xml:space="preserve"><value>Modellen forsøkte å bruke en annen konto. Kjøringen er stoppet.</value></data>
+  <data name="AgentErrorModelUnavailable" xml:space="preserve"><value>Modellsvaret kunne ikke hentes eller brukes. Ingen alternativ datavei ble brukt.</value></data>
+  <data name="AgentErrorModelIncomplete" xml:space="preserve"><value>Modellen leverte ikke et fullført svar. Intet delvis svar presenteres som ferdig.</value></data>
+  <data name="AgentErrorPromptLimit" xml:space="preserve"><value>Kjøringen nådde en konfigurert grense. Avgrens spørsmålet eller verktøyutvalget; data er ikke trunkert til et tilsynelatende komplett svar.</value></data>
+  <data name="AgentErrorToolLimit" xml:space="preserve"><value>Kjøringen nådde en konfigurert grense. Avgrens spørsmålet eller verktøyutvalget; data er ikke trunkert til et tilsynelatende komplett svar.</value></data>
+  <data name="AgentErrorContextLimit" xml:space="preserve"><value>Kjøringen nådde en konfigurert grense. Avgrens spørsmålet eller verktøyutvalget; data er ikke trunkert til et tilsynelatende komplett svar.</value></data>
+  <data name="AgentErrorAnswerLimit" xml:space="preserve"><value>Kjøringen nådde en konfigurert grense. Avgrens spørsmålet eller verktøyutvalget; data er ikke trunkert til et tilsynelatende komplett svar.</value></data>
+  <data name="AgentErrorCallLimit" xml:space="preserve"><value>Kjøringen nådde en konfigurert grense. Avgrens spørsmålet eller verktøyutvalget; data er ikke trunkert til et tilsynelatende komplett svar.</value></data>
+  <data name="AgentErrorResultLimit" xml:space="preserve"><value>Kjøringen nådde en konfigurert grense. Avgrens spørsmålet eller verktøyutvalget; data er ikke trunkert til et tilsynelatende komplett svar.</value></data>
+  <data name="AgentErrorRoundLimit" xml:space="preserve"><value>Kjøringen nådde en konfigurert grense. Avgrens spørsmålet eller verktøyutvalget; data er ikke trunkert til et tilsynelatende komplett svar.</value></data>
+  <data name="AgentPageFacts" xml:space="preserve"><value>Side {0} (forespurt {1}): {2} av {3} treff, sidestørrelse {4}. Flere: {5}. Neste side: {6}. Komplett: {7}. Konsistent øyeblikksbilde: {8}. Sidegrense nådd: {9}.</value></data>
+  <data name="AgentAttentionFacts" xml:space="preserve"><value>Kontodato {0}: oppsigelse {1}, fornyelse {2}, utløpt {3}. Horisont {4} dager. Kategoriene overlapper.</value></data>
 </root>

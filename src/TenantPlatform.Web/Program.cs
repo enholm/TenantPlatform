@@ -1,3 +1,4 @@
+using TenantPlatform.Web.Agent;
 using TenantPlatform.Application.Agreements;
 using ServiceRequestService = TenantPlatform.Web.Services.ServiceRequests.ServiceRequestService;
 using TenantPlatform.Application.Authentication;
@@ -167,6 +168,7 @@ builder.Services.AddOptions<AgreementDocumentStorageOptions>()
     .ValidateOnStart();
 builder.Services.AddSingleton<IAgreementDocumentStorage, LocalAgreementDocumentStorage>();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddReadAgent(builder.Configuration);
 builder.Services.AddOptions<TenantPlatform.Infrastructure.Agreements.AgreementAnalysisOptions>().Bind(builder.Configuration.GetSection("AgreementAnalysis"));
 builder.Services.AddHttpClient<TenantPlatform.Application.Agreements.IContractAnalysisClient, TenantPlatform.Infrastructure.Agreements.OpenAiContractAnalysisClient>(client => client.Timeout = TimeSpan.FromMinutes(5));
 builder.Services.AddScoped<TenantPlatform.Application.Agreements.IAgreementAnalysisService>(sp => sp.GetRequiredService<AgreementService>());
@@ -402,6 +404,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 app.MapTenantOAuth(oauthOptions);
+app.MapReadAgent();
 TenantPlatform.Web.Security.McpClient.InternalMcpClientEndpoints.MapInternalMcpClient(app);
 TenantPlatform.Web.Security.McpClient.McpRegistryEndpoints.MapMcpRegistry(app);
 
@@ -424,6 +427,8 @@ app.MapTenantLogin(oauthOptions);
 // ---------------
 app.MapPost("/auth/logout", async (HttpContext httpContext) =>
 {
+    httpContext.RequestServices.GetRequiredService<TenantPlatform.Application.Agent.ReadAgentSessions>().ClearUser(
+        Guid.TryParse(httpContext.User.FindFirst(TenantPlatformClaimTypes.UserId)?.Value, out var agentUser) ? agentUser : Guid.Empty);
     await httpContext.SignOutAsync(
         CookieAuthenticationDefaults.AuthenticationScheme);
 

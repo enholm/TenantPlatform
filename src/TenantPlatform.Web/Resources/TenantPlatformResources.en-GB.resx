@@ -3284,4 +3284,47 @@ This is a reminder, not a termination or renewal.</value>
   <data name="McpAvailabilityConfirmationRequired" xml:space="preserve"><value>Available tools require user confirmation. Automatic reading is blocked.</value></data>
   <data name="McpAvailabilityAccessDenied" xml:space="preserve"><value>You do not have use access to this connection. Management does not automatically grant use access.</value></data>
   <data name="McpPolicyClassificationRequired" xml:space="preserve"><value>Choose and save a usage class before approving this metadata version.</value></data>
+  <data name="AgentTitle" xml:space="preserve"><value>Read assistant</value></data>
+  <data name="AgentDisclosure" xml:space="preserve"><value>Your question, tool descriptions and retrieved data are sent to OpenAI for processing. Use only data you may share with this provider.</value></data>
+  <data name="AgentAcceptDisclosure" xml:space="preserve"><value>I understand and accept this data sharing for the conversation.</value></data>
+  <data name="AgentAccount" xml:space="preserve"><value>Selected account</value></data>
+  <data name="AgentConnection" xml:space="preserve"><value>One selected connection</value></data>
+  <data name="AgentSelectConnection" xml:space="preserve"><value>Select a connection</value></data>
+  <data name="AgentFreshMessage" xml:space="preserve"><value>Each message retrieves fresh data. Previous questions and answers are not forwarded. The conversation expires after 30 minutes.</value></data>
+  <data name="AgentNoConnections" xml:space="preserve"><value>No automatic read tools are available. Connect personally and ask an administrator to check access, discovery and approval.</value></data>
+  <data name="AgentQuestion" xml:space="preserve"><value>Question</value></data>
+  <data name="AgentSend" xml:space="preserve"><value>Send</value></data>
+  <data name="AgentCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="AgentNew" xml:space="preserve"><value>New conversation</value></data>
+  <data name="AgentSources" xml:space="preserve"><value>Sources and tools actually used</value></data>
+  <data name="AgentRunning" xml:space="preserve"><value>Retrieving and reading. This may require several model and tool calls.</value></data>
+  <data name="AgentDone" xml:space="preserve"><value>Answer ready. Check sources and limitations.</value></data>
+  <data name="AgentNoticeNoSources" xml:space="preserve"><value>No business data was retrieved. This answer has no tool sources.</value></data>
+  <data name="AgentNoticeExternalCompleteness" xml:space="preserve"><value>External source: completeness and paging follow its contract; this answer is not proof of a complete dataset.</value></data>
+  <data name="AgentNoticePaging" xml:space="preserve"><value>Agreements are retrieved in pages of 25. All matches may not have been retrieved. Check page information and request further retrieval. Multiple calls are not one consistent snapshot.</value></data>
+  <data name="AgentNoticeOverlapping" xml:space="preserve"><value>Attention categories overlap. Do not sum them as a unique agreement count.</value></data>
+  <data name="AgentErrorDisabled" xml:space="preserve"><value>The read assistant is disabled or lacks valid server configuration. The normal GUI remains available.</value></data>
+  <data name="AgentErrorAccessChanged" xml:space="preserve"><value>Access or user/account context has changed. The conversation was cleared. Reload this page.</value></data>
+  <data name="AgentErrorUnavailable" xml:space="preserve"><value>The run could not complete. No conclusion about the number of matches can be drawn. Retry or use the GUI.</value></data>
+  <data name="AgentErrorSourceUnavailable" xml:space="preserve"><value>A source is unavailable or needs renewed authorization/approval. An incomplete conclusion is not shown as a finished answer. Check the MCP registry.</value></data>
+  <data name="AgentErrorCancelled" xml:space="preserve"><value>The run was cancelled and the conversation cleared.</value></data>
+  <data name="AgentErrorCancelledOrTimedOut" xml:space="preserve"><value>The run was cancelled or its time budget expired. No completed answer.</value></data>
+  <data name="AgentErrorBusy" xml:space="preserve"><value>A run is already active or capacity is exhausted. Cancel or retry later.</value></data>
+  <data name="AgentErrorConsentRequired" xml:space="preserve"><value>Select account/connection and accept data sharing before use.</value></data>
+  <data name="AgentErrorConnectionUnavailable" xml:space="preserve"><value>No read tools are available on the selected connection. Check personal authorization, access and approval in the registry.</value></data>
+  <data name="AgentErrorSchemaUnsupported" xml:space="preserve"><value>An approved tool schema is unsupported by this agent version. The schema was not changed and the tool was not called.</value></data>
+  <data name="AgentErrorInvalidTool" xml:space="preserve"><value>The model requested a tool that is not allowed in this run. The run was stopped.</value></data>
+  <data name="AgentErrorInvalidArguments" xml:space="preserve"><value>The model arguments did not satisfy the tool contract. No further retrieval.</value></data>
+  <data name="AgentErrorAccountOverride" xml:space="preserve"><value>The model attempted to use another account. The run was stopped.</value></data>
+  <data name="AgentErrorModelUnavailable" xml:space="preserve"><value>The model response could not be retrieved or used. No alternative data path was used.</value></data>
+  <data name="AgentErrorModelIncomplete" xml:space="preserve"><value>The model did not provide a completed response. A partial response is not presented as finished.</value></data>
+  <data name="AgentErrorPromptLimit" xml:space="preserve"><value>The run reached a configured limit. Narrow the question or tool selection; data was not truncated into an apparently complete answer.</value></data>
+  <data name="AgentErrorToolLimit" xml:space="preserve"><value>The run reached a configured limit. Narrow the question or tool selection; data was not truncated into an apparently complete answer.</value></data>
+  <data name="AgentErrorContextLimit" xml:space="preserve"><value>The run reached a configured limit. Narrow the question or tool selection; data was not truncated into an apparently complete answer.</value></data>
+  <data name="AgentErrorAnswerLimit" xml:space="preserve"><value>The run reached a configured limit. Narrow the question or tool selection; data was not truncated into an apparently complete answer.</value></data>
+  <data name="AgentErrorCallLimit" xml:space="preserve"><value>The run reached a configured limit. Narrow the question or tool selection; data was not truncated into an apparently complete answer.</value></data>
+  <data name="AgentErrorResultLimit" xml:space="preserve"><value>The run reached a configured limit. Narrow the question or tool selection; data was not truncated into an apparently complete answer.</value></data>
+  <data name="AgentErrorRoundLimit" xml:space="preserve"><value>The run reached a configured limit. Narrow the question or tool selection; data was not truncated into an apparently complete answer.</value></data>
+  <data name="AgentPageFacts" xml:space="preserve"><value>Page {0} (requested {1}): {2} of {3} matches, page size {4}. More: {5}. Next page: {6}. Complete: {7}. Consistent snapshot: {8}. Page limit reached: {9}.</value></data>
+  <data name="AgentAttentionFacts" xml:space="preserve"><value>Account date {0}: notice {1}, renewal {2}, expired {3}. Horizon {4} days. Categories overlap.</value></data>
 </root>
