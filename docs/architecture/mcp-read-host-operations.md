@@ -1,6 +1,6 @@
 # MCP-lesehost: oppsett og verifikasjon (5B2)
 
-TenantPlatform.Mcp er en separat .NET 10-resource-server. Den refererer Application og Infrastructure, aldri Web. Web er OAuth-utstederen fra [5B1](oauth-issuer-operations.md). Ingen intern OAuth-klient, agent eller rapportmotor inngår. Ingen bakgrunnsjobber, migrering, seed eller initialisering registreres/startes av MCP.
+TenantPlatform.Mcp er en separat .NET 10-resource-server. Den refererer Application og Infrastructure, aldri Web. Web er OAuth-utstederen fra [5B1](oauth-issuer-operations.md). Ingen intern OAuth-klient, agent eller rapportmotor inngår i selve 5B2-hosten. Den interne delegerte Web-klienten er senere implementert i [5B3](internal-mcp-client-operations.md), uten nye MCP-verktøy eller Web-referanse fra MCP-produksjonsprosjektet. Agent og rapportmotor er fortsatt utsatt. Ingen bakgrunnsjobber, migrering, seed eller initialisering registreres/startes av MCP.
 
 ## Konfigurasjon og oppstart
 

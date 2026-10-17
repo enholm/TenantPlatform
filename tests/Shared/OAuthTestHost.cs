@@ -37,7 +37,7 @@ using TenantPlatform.Web.Security.OAuth;
 // Shared TEST-ONLY issuer harness. Never compiled into either production host.
 internal static class OAuthTestHost
 {
-public static async Task<WebApplication> Start(OAuthIssuerOptions settings, Factory factory, AdjustableClock clock, LogCapture logs)
+public static async Task<WebApplication> Start(OAuthIssuerOptions settings, Factory factory, AdjustableClock clock, LogCapture logs, Action<WebApplicationBuilder>? configure = null, Action<WebApplication>? map = null)
 {
     var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Testing", ApplicationName = typeof(OAuthEndpoints).Assembly.FullName });
     builder.WebHost.UseTestServer();
@@ -67,8 +67,12 @@ public static async Task<WebApplication> Start(OAuthIssuerOptions settings, Fact
                 }
                 return ValueTask.CompletedTask;
             })));
-    var app = builder.Build(); app.UseAuthentication(); app.UseAuthorization(); app.UseAntiforgery();
+    configure?.Invoke(builder);
+    var app = builder.Build();
+    TenantPlatform.Web.Security.McpClient.InternalMcpClientBoundary.UseInternalMcpClientBoundary(app);
+    app.UseAuthentication(); app.UseAuthorization(); app.UseAntiforgery();
     app.MapTenantOAuth(settings); app.MapTenantLogin(settings);
+    map?.Invoke(app);
     app.MapGet("/login", (HttpContext context, IAntiforgery antiforgery) =>
     {
         antiforgery.GetAndStoreTokens(context);

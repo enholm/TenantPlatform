@@ -3262,4 +3262,23 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="OAuthExpiresLabel" xml:space="preserve"><value>Upphör</value></data>
   <data name="OAuthRevoke" xml:space="preserve"><value>Återkalla</value></data>
   <data name="OAuthHome" xml:space="preserve"><value>Till startsidan</value></data>
+  <data name="McpClientTitle" xml:space="preserve"><value>TenantPlatforms MCP-anslutning</value></data>
+  <data name="McpClientDescription" xml:space="preserve"><value>Anslut för att läsa dina egna konton och avtal via MCP.</value></data>
+  <data name="McpClientUnavailable" xml:space="preserve"><value>MCP-klienten är inte konfigurerad eller är avaktiverad.</value></data>
+  <data name="McpClientConnected" xml:space="preserve"><value>Ansluten med din delegerade åtkomst.</value></data>
+  <data name="McpClientReconnect" xml:space="preserve"><value>Ingen aktiv anslutning. Anslut igen när åtkomsten har löpt ut eller återkallats.</value></data>
+  <data name="McpClientConnect" xml:space="preserve"><value>Anslut</value></data>
+  <data name="McpClientDisconnect" xml:space="preserve"><value>Koppla från</value></data>
+  <data name="McpClientDisconnected" xml:space="preserve"><value>Lokalt frånkopplad. Redan utfärdade åtkomsttoken kan fungera till utgångstiden.</value></data>
+  <data name="McpClientRevocationUnconfirmed" xml:space="preserve"><value>Lokalt frånkopplad. Utfärdarens återkallning kunde inte bekräftas; kontrollera anslutningarna hos utfärdaren.</value></data>
+  <data name="McpClientRejected" xml:space="preserve"><value>Anslutningen nekades eller kunde inte verifieras. Börja om med samma användare.</value></data>
+  <data name="McpClientFailed" xml:space="preserve"><value>MCP-anropet kunde inte slutföras. Kontrollera åtkomsten och anslut igen vid behov.</value></data>
+  <data name="McpClientAccount" xml:space="preserve"><value>Konto</value></data>
+  <data name="McpClientOwnAccounts" xml:space="preserve"><value>Hämta egna konton</value></data>
+  <data name="McpClientProbe" xml:space="preserve"><value>Testa läsåtkomst</value></data>
+  <data name="McpClientDate" xml:space="preserve"><value>Kontodatum</value></data>
+  <data name="McpClientNotice" xml:space="preserve"><value>Uppsägningsfrist</value></data>
+  <data name="McpClientRenewal" xml:space="preserve"><value>Förnyelse</value></data>
+  <data name="McpClientExpired" xml:space="preserve"><value>Utgånget</value></data>
+  <data name="McpClientOverlap" xml:space="preserve"><value>Kategorierna kan överlappa och ska inte summeras till antalet unika avtal.</value></data>
 </root>

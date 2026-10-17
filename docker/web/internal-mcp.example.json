@@ -1,0 +1,10 @@
+{
+  "InternalMcp": {
+    "Enabled": false,
+    "ClientId": "tenantplatform-web-mcp",
+    "ClientSecret": "",
+    "Issuer": "https://app.example.no/",
+    "Resource": "https://mcp.example.no/mcp",
+    "Callback": "https://app.example.no/mcp-client/callback"
+  }
+}

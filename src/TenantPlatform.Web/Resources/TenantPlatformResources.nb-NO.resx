@@ -3261,4 +3261,23 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="OAuthExpiresLabel" xml:space="preserve"><value>Utløper</value></data>
   <data name="OAuthRevoke" xml:space="preserve"><value>Tilbakekall</value></data>
   <data name="OAuthHome" xml:space="preserve"><value>Til startsiden</value></data>
+  <data name="McpClientTitle" xml:space="preserve"><value>TenantPlatforms MCP-tilkobling</value></data>
+  <data name="McpClientDescription" xml:space="preserve"><value>Koble til for å lese dine egne kontoer og avtaler gjennom MCP.</value></data>
+  <data name="McpClientUnavailable" xml:space="preserve"><value>MCP-klienten er ikke konfigurert eller er deaktivert.</value></data>
+  <data name="McpClientConnected" xml:space="preserve"><value>Tilkoblet med din delegerte tilgang.</value></data>
+  <data name="McpClientReconnect" xml:space="preserve"><value>Ingen aktiv tilkobling. Koble til på nytt når tilgangen er utløpt eller tilbakekalt.</value></data>
+  <data name="McpClientConnect" xml:space="preserve"><value>Koble til</value></data>
+  <data name="McpClientDisconnect" xml:space="preserve"><value>Koble fra</value></data>
+  <data name="McpClientDisconnected" xml:space="preserve"><value>Lokalt frakoblet. Allerede utstedte access-tokens kan virke frem til utløp.</value></data>
+  <data name="McpClientRevocationUnconfirmed" xml:space="preserve"><value>Lokalt frakoblet. Utstederens revokering kunne ikke bekreftes; kontroller tilkoblingene hos utstederen.</value></data>
+  <data name="McpClientRejected" xml:space="preserve"><value>Tilkoblingen ble avslått eller kunne ikke bekreftes. Start på nytt med samme bruker.</value></data>
+  <data name="McpClientFailed" xml:space="preserve"><value>MCP-kallet kunne ikke gjennomføres. Kontroller tilgangen og prøv en ny tilkobling ved behov.</value></data>
+  <data name="McpClientAccount" xml:space="preserve"><value>Konto</value></data>
+  <data name="McpClientOwnAccounts" xml:space="preserve"><value>Hent egne kontoer</value></data>
+  <data name="McpClientProbe" xml:space="preserve"><value>Test lesetilgang</value></data>
+  <data name="McpClientDate" xml:space="preserve"><value>Kontodato</value></data>
+  <data name="McpClientNotice" xml:space="preserve"><value>Oppsigelsesfrist</value></data>
+  <data name="McpClientRenewal" xml:space="preserve"><value>Fornyelse</value></data>
+  <data name="McpClientExpired" xml:space="preserve"><value>Utløpt</value></data>
+  <data name="McpClientOverlap" xml:space="preserve"><value>Kategoriene kan overlappe og skal ikke summeres til antall unike avtaler.</value></data>
 </root>

@@ -3225,4 +3225,23 @@ This is a reminder, not a termination or renewal.</value>
   <data name="OAuthExpiresLabel" xml:space="preserve"><value>Expires</value></data>
   <data name="OAuthRevoke" xml:space="preserve"><value>Revoke</value></data>
   <data name="OAuthHome" xml:space="preserve"><value>Home</value></data>
+  <data name="McpClientTitle" xml:space="preserve"><value>TenantPlatform MCP connection</value></data>
+  <data name="McpClientDescription" xml:space="preserve"><value>Connect to read your own accounts and agreements through MCP.</value></data>
+  <data name="McpClientUnavailable" xml:space="preserve"><value>The MCP client is not configured or is disabled.</value></data>
+  <data name="McpClientConnected" xml:space="preserve"><value>Connected using your delegated access.</value></data>
+  <data name="McpClientReconnect" xml:space="preserve"><value>No active connection. Reconnect when access has expired or been revoked.</value></data>
+  <data name="McpClientConnect" xml:space="preserve"><value>Connect</value></data>
+  <data name="McpClientDisconnect" xml:space="preserve"><value>Disconnect</value></data>
+  <data name="McpClientDisconnected" xml:space="preserve"><value>Disconnected locally. Already issued access tokens may work until expiry.</value></data>
+  <data name="McpClientRevocationUnconfirmed" xml:space="preserve"><value>Disconnected locally. Issuer revocation could not be confirmed; check the issuer connections.</value></data>
+  <data name="McpClientRejected" xml:space="preserve"><value>The connection was declined or could not be verified. Start again with the same user.</value></data>
+  <data name="McpClientFailed" xml:space="preserve"><value>The MCP call could not complete. Check your access and reconnect if needed.</value></data>
+  <data name="McpClientAccount" xml:space="preserve"><value>Account</value></data>
+  <data name="McpClientOwnAccounts" xml:space="preserve"><value>Read own accounts</value></data>
+  <data name="McpClientProbe" xml:space="preserve"><value>Test read access</value></data>
+  <data name="McpClientDate" xml:space="preserve"><value>Account date</value></data>
+  <data name="McpClientNotice" xml:space="preserve"><value>Notice deadline</value></data>
+  <data name="McpClientRenewal" xml:space="preserve"><value>Renewal</value></data>
+  <data name="McpClientExpired" xml:space="preserve"><value>Expired</value></data>
+  <data name="McpClientOverlap" xml:space="preserve"><value>Categories may overlap and must not be summed as unique agreements.</value></data>
 </root>

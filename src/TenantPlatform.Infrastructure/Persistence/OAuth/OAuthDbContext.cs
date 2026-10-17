@@ -10,6 +10,7 @@ public sealed class OAuthDbContext(DbContextOptions<OAuthDbContext> options) : D
         base.OnModelCreating(builder);
         builder.HasDefaultSchema("oauth");
         builder.UseOpenIddict();
+        McpClientCredentialConfiguration.Configure(builder.Entity<TenantPlatform.Core.Identity.McpClientCredential>());
     }
 }
 

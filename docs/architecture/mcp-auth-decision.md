@@ -2,6 +2,8 @@
 
 Dato: 17. oktober 2026. **Arkitekturgrunnlaget er vedtatt gjennom implementeringsoppdraget 5B1.** OpenIddict i Web, eksisterende lokal innlogging, code+PKCE S256, én resource/lesescope, fem minutters signert JWT og uttrykkelig refresh med absolutt åtte timers grense er nå implementert og protokolltestet mot isolert PostgreSQL. Se [5B1-status](modernization-plan.md#22-steg-5b1-oauth-utsteder-i-web) og [driftsveiledningen](oauth-issuer-operations.md). OAuth er deaktivert som standard; ingen ekstern publisering, utviklings-/produksjonsmigrering eller intern OAuth-klient inngår i 5B1. Separat MCP-lesehost er senere implementert i 5B2; se [status](modernization-plan.md#23-steg-5b2-separat-autentisert-mcp-lesehost) og [MCP-drift](mcp-read-host-operations.md). Sammenligningen nedenfor er beslutningsgrunnlaget, ikke en ny implementeringsbestilling.
 
+**Oppdatert ved 5B3:** den interne delegerte Web-klienten er implementert med samme bruker/konto, kryptert serverlager og databasekoordinert refresh. Se [driftsveiledningen](internal-mcp-client-operations.md) og [status](modernization-plan.md#24-steg-5b3-intern-delegert-oauth-mcp-klient). Dette bygger videre på beslutningen; ingen agent, rapportmotor eller generell ekstern serverregistrering er bygget.
+
 ## 1. Kort anbefaling
 
 **Velg OpenIddict som OAuth/OIDC-komponent i eksisterende TenantPlatform.Web, og behold TenantPlatform.Mcp som separat, skrivefri resource server.** Bruk dagens User/LoginAccount og passordvalidering. Nettleseren logger inn på TenantPlatforms vanlige origin; en gyldig GUI-cookie kan brukes lokalt der for å godkjenne OAuth-tilkoblingen. Cookie sendes aldri til MCP eller brukes som API-token.

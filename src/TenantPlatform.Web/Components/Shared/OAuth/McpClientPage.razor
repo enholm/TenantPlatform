@@ -1,0 +1,53 @@
+@using TenantPlatform.Application.Mcp
+<!DOCTYPE html>
+<html><head><meta charset="utf-8" /><title>@L["McpClientTitle"]</title><link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" /></head>
+<body><main class="container py-4">
+<h1>@L["McpClientTitle"]</h1>
+<p>@L["McpClientDescription"]</p>
+@if (!Available) { <p class="alert alert-secondary">@L["McpClientUnavailable"]</p> }
+else
+{
+    <p>@L[Status?.Connected == true ? "McpClientConnected" : "McpClientReconnect"]</p>
+    @if (Status?.ExpiresUtc is { } expires) { <p>@L["OAuthExpiresLabel"]: @expires.ToLocalTime().ToString("g")</p> }
+    @if (Message is not null) { <p class="alert alert-info" role="status">@L[Message switch {
+        "DISCONNECTED" => "McpClientDisconnected", "REVOCATION_UNCONFIRMED" => "McpClientRevocationUnconfirmed",
+        "RECONNECT_REQUIRED" => "McpClientReconnect", "CONNECTION_REJECTED" => "McpClientRejected", _ => "McpClientFailed" }]</p> }
+    @if (Status?.Connected != true)
+    {
+        <form method="post" action="/mcp-client/connect" class="mb-3">
+            <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" />
+            <button type="submit" class="btn btn-primary">@L["McpClientConnect"]</button>
+        </form>
+    }
+    <form method="post" action="/mcp-client/disconnect" class="mb-3">
+        <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" />
+        <button type="submit" class="btn btn-outline-danger">@L["McpClientDisconnect"]</button>
+    </form>
+    <form method="post" action="/mcp-client/probe" class="mb-3">
+        <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" />
+        <label for="mcp-account">@L["McpClientAccount"]</label>
+        <select id="mcp-account" name="accountId" class="form-select mb-2">
+            <option value="">@L["McpClientOwnAccounts"]</option>
+            @foreach (var account in Accounts?.Accounts ?? []) { <option value="@account.Id" selected="@(Attention?.AccountId == account.Id)">@account.Name</option> }
+        </select>
+        <button type="submit" class="btn btn-secondary">@L["McpClientProbe"]</button>
+    </form>
+    @if (Accounts is not null)
+    { <ul>@foreach (var account in Accounts.Accounts) { <li>@account.Name</li> }</ul> }
+    @if (Attention is not null)
+    {
+        <p>@L["McpClientDate"]: @Attention.Today.ToString("yyyy-MM-dd")</p>
+        <dl><dt>@L["McpClientNotice"]</dt><dd>@Attention.Notice</dd><dt>@L["McpClientRenewal"]</dt><dd>@Attention.Renewal</dd><dt>@L["McpClientExpired"]</dt><dd>@Attention.Expired</dd></dl>
+        <p>@L["McpClientOverlap"]</p>
+    }
+}
+<a href="/oauth/connections">@L["OAuthConnectionsTitle"]</a> · <a href="/">@L["OAuthHome"]</a>
+</main></body></html>
+@code {
+    [Parameter] public bool Available { get; set; }
+    [Parameter] public McpClientStatus? Status { get; set; }
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public McpClientAccounts? Accounts { get; set; }
+    [Parameter] public McpClientAttention? Attention { get; set; }
+    [Parameter] public string VerificationToken { get; set; } = "";
+}

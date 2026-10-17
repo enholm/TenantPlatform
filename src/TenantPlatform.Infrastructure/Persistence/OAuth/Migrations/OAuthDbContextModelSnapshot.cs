@@ -231,6 +231,51 @@ namespace TenantPlatform.Infrastructure.Persistence.OAuth.Migrations
                     b.ToTable("OpenIddictTokens", "oauth");
                 });
 
+            modelBuilder.Entity("TenantPlatform.Core.Identity.McpClientCredential", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AccessExpiresUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("GrantExpiresUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GrantId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Issuer")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<DateTimeOffset?>("PendingExpiresUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PendingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProtectedTokens")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Resource")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("mcp_client_credentials", "oauth");
+                });
+
             modelBuilder.Entity("OpenIddict.EntityFrameworkCore.Models.OpenIddictEntityFrameworkCoreAuthorization", b =>
                 {
                     b.HasOne("OpenIddict.EntityFrameworkCore.Models.OpenIddictEntityFrameworkCoreApplication", "Application")

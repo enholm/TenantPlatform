@@ -26,7 +26,7 @@ fi
 for project in "${projects[@]}"; do
     case "$project" in
         TenantPlatform.AgreementList.SmokeTests|TenantPlatform.Agreements.SmokeTests|TenantPlatform.Dashboard.SmokeTests|\
-        TenantPlatform.AccountRegisters.SmokeTests|TenantPlatform.MeetingRooms.SmokeTests|TenantPlatform.Leasing.SmokeTests|TenantPlatform.OAuth.SmokeTests|TenantPlatform.Mcp.SmokeTests|\
+        TenantPlatform.AccountRegisters.SmokeTests|TenantPlatform.MeetingRooms.SmokeTests|TenantPlatform.Leasing.SmokeTests|TenantPlatform.OAuth.SmokeTests|TenantPlatform.Mcp.SmokeTests|TenantPlatform.McpClient.SmokeTests|\
         TenantPlatform.AgreementAnalysis.SmokeTests|TenantPlatform.AgreementFollowup.SmokeTests|TenantPlatform.AgreementNotice.SmokeTests|\
         TenantPlatform.AgreementPeriods.SmokeTests|TenantPlatform.AgreementProcessing.SmokeTests) ;;
         *) echo "Unsupported project for this isolated test runner: $project" >&2; exit 1 ;;
@@ -67,6 +67,7 @@ for project in "${projects[@]}"; do
         TenantPlatform.AccountRegisters.SmokeTests) database=tenant_account_register_tests; connection_variable=ACCOUNT_REGISTER_TEST_CONNECTION ;;
         TenantPlatform.MeetingRooms.SmokeTests) database=tenant_meeting_tests; connection_variable=MEETING_ROOM_TEST_CONNECTION ;;
         TenantPlatform.Leasing.SmokeTests) database=tenant_leasing_tests; connection_variable=LEASING_TEST_CONNECTION ;;
+        TenantPlatform.McpClient.SmokeTests) database=tenant_mcp_client_tests; connection_variable=MCP_CLIENT_TEST_CONNECTION ;;
         TenantPlatform.Mcp.SmokeTests) database=tenant_mcp_tests; connection_variable=MCP_TEST_CONNECTION ;;
         TenantPlatform.OAuth.SmokeTests) database=tenant_oauth_tests; connection_variable=OAUTH_TEST_CONNECTION ;;
         *) database=tenant_agreement_tests; connection_variable=AGREEMENT_TEST_CONNECTION ;;

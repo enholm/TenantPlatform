@@ -57,6 +57,8 @@ var oauthMigrate = args.Contains("--oauth-migrate", StringComparer.Ordinal);
 var builder = WebApplication.CreateBuilder(args.Where(x => x is not "--oauth-register-clients" and not "--oauth-migrate").ToArray());
 var oauthOptions = builder.Configuration.GetSection("OAuth").Get<OAuthIssuerOptions>() ?? new();
 builder.Services.AddTenantOAuth(oauthOptions);
+var internalMcpOptions = builder.Configuration.GetSection("InternalMcp").Get<TenantPlatform.Web.Security.McpClient.InternalMcpClientOptions>() ?? new();
+TenantPlatform.Web.Security.McpClient.InternalMcpClientComposition.AddInternalMcpClient(builder.Services, internalMcpOptions, oauthOptions);
 builder.Logging.AddFilter("OpenIddict", LogLevel.Warning);
 
 var connectionString =
@@ -395,10 +397,12 @@ app.UseHttpsRedirection();
 
 app.MapStaticAssets();
 app.UseStaticFiles();
+TenantPlatform.Web.Security.McpClient.InternalMcpClientBoundary.UseInternalMcpClientBoundary(app);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 app.MapTenantOAuth(oauthOptions);
+TenantPlatform.Web.Security.McpClient.InternalMcpClientEndpoints.MapInternalMcpClient(app);
 
 
 app.MapRazorComponents<App>()
