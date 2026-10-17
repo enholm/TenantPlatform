@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../Shared/OAuthTestHost.cs" Link="OAuthTestHost.cs" />
     <ProjectReference Include="../../src/TenantPlatform.Web/TenantPlatform.Web.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.11" />
   </ItemGroup>

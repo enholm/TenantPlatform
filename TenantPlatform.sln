@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Serga.Website", "src\Serga.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TenantPlatform.Application", "src\TenantPlatform.Application\TenantPlatform.Application.csproj", "{46903315-99C8-4889-9CD0-5D7C2F9BAA52}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TenantPlatform.Mcp", "src\TenantPlatform.Mcp\TenantPlatform.Mcp.csproj", "{06AA9735-28A3-462E-BE74-CF484374A58D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,6 +26,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{06AA9735-28A3-462E-BE74-CF484374A58D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06AA9735-28A3-462E-BE74-CF484374A58D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06AA9735-28A3-462E-BE74-CF484374A58D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06AA9735-28A3-462E-BE74-CF484374A58D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BAAD81F9-2C6F-43E3-960D-7C079930260A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BAAD81F9-2C6F-43E3-960D-7C079930260A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAAD81F9-2C6F-43E3-960D-7C079930260A}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -46,6 +52,7 @@ Global
 		{46903315-99C8-4889-9CD0-5D7C2F9BAA52}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{06AA9735-28A3-462E-BE74-CF484374A58D} = {D4E0476A-389B-4805-B6B6-1E8959834BDB}
 		{BAAD81F9-2C6F-43E3-960D-7C079930260A} = {D4E0476A-389B-4805-B6B6-1E8959834BDB}
 		{53221ECA-1148-42AB-AF74-16A0EDA61202} = {D4E0476A-389B-4805-B6B6-1E8959834BDB}
 		{7510161C-F24C-4C13-ABE4-00462018C5F8} = {D4E0476A-389B-4805-B6B6-1E8959834BDB}

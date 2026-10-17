@@ -1,6 +1,6 @@
 # Autentisering for MCP: anbefaling for egen drift
 
-Dato: 17. oktober 2026. **Arkitekturgrunnlaget er vedtatt gjennom implementeringsoppdraget 5B1.** OpenIddict i Web, eksisterende lokal innlogging, code+PKCE S256, én resource/lesescope, fem minutters signert JWT og uttrykkelig refresh med absolutt åtte timers grense er nå implementert og protokolltestet mot isolert PostgreSQL. Se [5B1-status](modernization-plan.md#22-steg-5b1-oauth-utsteder-i-web) og [driftsveiledningen](oauth-issuer-operations.md). OAuth er deaktivert som standard; ingen ekstern publisering, utviklings-/produksjonsmigrering, MCP-host eller intern OAuth-klient inngår. Sammenligningen nedenfor er beslutningsgrunnlaget, ikke en ny implementeringsbestilling.
+Dato: 17. oktober 2026. **Arkitekturgrunnlaget er vedtatt gjennom implementeringsoppdraget 5B1.** OpenIddict i Web, eksisterende lokal innlogging, code+PKCE S256, én resource/lesescope, fem minutters signert JWT og uttrykkelig refresh med absolutt åtte timers grense er nå implementert og protokolltestet mot isolert PostgreSQL. Se [5B1-status](modernization-plan.md#22-steg-5b1-oauth-utsteder-i-web) og [driftsveiledningen](oauth-issuer-operations.md). OAuth er deaktivert som standard; ingen ekstern publisering, utviklings-/produksjonsmigrering eller intern OAuth-klient inngår i 5B1. Separat MCP-lesehost er senere implementert i 5B2; se [status](modernization-plan.md#23-steg-5b2-separat-autentisert-mcp-lesehost) og [MCP-drift](mcp-read-host-operations.md). Sammenligningen nedenfor er beslutningsgrunnlaget, ikke en ny implementeringsbestilling.
 
 ## 1. Kort anbefaling
 
@@ -11,6 +11,8 @@ Dette gir minst samlet kompleksitet for denne løsningen: ett brukerlager, samme
 Anbefalt første profil er forhåndsregistrerte klienter, authorization code med PKCE S256, én MCP-resource og ett lesescope, signerte JWT-access-tokens på fem minutter og lokal tokenvalidering. OAuth-grant kan tilbakekalles straks hos utsteder; et allerede utstedt access-token kan fortsatt virke frem til utløp, maksimalt fem minutter pluss 30 sekunders klokkeavvik. Application kontrollerer lokale brukerrettigheter ferskt uavhengig av dette. Kortvarig, rotert refresh anbefales for brukbar tilkobling gjennom en arbeidsøkt; se avsnitt 5.
 
 ## 2. Hva dagens kode faktisk tilbyr
+
+Tabellen beskriver utgangspunktet før 5B1. Implementert OAuth-lagring/loginretur og senere MCP-host står i moderniseringsplanens avsnitt 22–23; historiske mangler her er ikke en ny restantliste.
 
 | Kontrollert kode | Betydning for valget |
 |---|---|
