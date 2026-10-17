@@ -3213,4 +3213,16 @@ This is a reminder, not a termination or renewal.</value>
 <data name="AgreementResults" xml:space="preserve"><value>Results</value></data>
 <data name="AgreementPlacement" xml:space="preserve"><value>Location</value></data>
 <data name="AgreementActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="OAuthConsentTitle" xml:space="preserve"><value>Approve connection</value></data>
+  <data name="OAuthClientLabel" xml:space="preserve"><value>Client</value></data>
+  <data name="OAuthReadAccess" xml:space="preserve"><value>The client can read agreement data available to you in your current member accounts. The account is selected and checked on each call. This grants no new permissions.</value></data>
+  <data name="OAuthDuration" xml:space="preserve"><value>Permission lasts for up to eight hours.</value></data>
+  <data name="OAuthRefreshConsent" xml:space="preserve"><value>By approving, you allow automatic token renewal within these eight hours.</value></data>
+  <data name="OAuthApprove" xml:space="preserve"><value>Approve</value></data>
+  <data name="OAuthDeny" xml:space="preserve"><value>Deny</value></data>
+  <data name="OAuthConnectionsTitle" xml:space="preserve"><value>My connections</value></data>
+  <data name="OAuthRevocationNotice" xml:space="preserve"><value>Revocation stops further token renewal. An issued token may remain valid for up to five minutes plus 30 seconds of clock tolerance. Normal sign-out does not revoke these connections.</value></data>
+  <data name="OAuthExpiresLabel" xml:space="preserve"><value>Expires</value></data>
+  <data name="OAuthRevoke" xml:space="preserve"><value>Revoke</value></data>
+  <data name="OAuthHome" xml:space="preserve"><value>Home</value></data>
 </root>

@@ -1,0 +1,23 @@
+@using TenantPlatform.Application.Authentication
+<!DOCTYPE html>
+<html><head><meta charset="utf-8" /><title>@L["OAuthConnectionsTitle"]</title><link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" /></head>
+<body><main class="container py-4">
+    <h1>@L["OAuthConnectionsTitle"]</h1>
+    <p>@L["OAuthRevocationNotice"]</p>
+    @foreach (var connection in Connections)
+    {
+        <section class="card p-3 mb-3"><h2>@connection.ClientName</h2>
+            <p>@L["OAuthExpiresLabel"]: @connection.ExpiresUtc.ToLocalTime().ToString("g")</p>
+            <form method="post" action="/oauth/connections/revoke">
+                <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" />
+                <input type="hidden" name="connection" value="@connection.Id" />
+                <button class="btn btn-danger" type="submit">@L["OAuthRevoke"]</button>
+            </form>
+        </section>
+    }
+    <a href="/">@L["OAuthHome"]</a>
+</main></body></html>
+@code {
+    [Parameter] public IReadOnlyList<OAuthConnection> Connections { get; set; } = [];
+    [Parameter] public string VerificationToken { get; set; } = "";
+}

@@ -3250,4 +3250,16 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
 <data name="AgreementResults" xml:space="preserve"><value>Resultat</value></data>
 <data name="AgreementPlacement" xml:space="preserve"><value>Placering</value></data>
 <data name="AgreementActions" xml:space="preserve"><value>Åtgärder</value></data>
+  <data name="OAuthConsentTitle" xml:space="preserve"><value>Godkänn anslutning</value></data>
+  <data name="OAuthClientLabel" xml:space="preserve"><value>Klient</value></data>
+  <data name="OAuthReadAccess" xml:space="preserve"><value>Klienten kan läsa avtalsdata du har tillgång till i dina nuvarande medlemskonton. Kontot väljs och kontrolleras vid varje anrop. Detta ger inga nya rättigheter.</value></data>
+  <data name="OAuthDuration" xml:space="preserve"><value>Tillståndet gäller i högst åtta timmar.</value></data>
+  <data name="OAuthRefreshConsent" xml:space="preserve"><value>Genom att godkänna tillåter du automatisk tokenförnyelse inom dessa åtta timmar.</value></data>
+  <data name="OAuthApprove" xml:space="preserve"><value>Godkänn</value></data>
+  <data name="OAuthDeny" xml:space="preserve"><value>Avvisa</value></data>
+  <data name="OAuthConnectionsTitle" xml:space="preserve"><value>Mina anslutningar</value></data>
+  <data name="OAuthRevocationNotice" xml:space="preserve"><value>Återkallande stoppar fortsatt tokenförnyelse. Ett utfärdat token kan fortfarande gälla i upp till fem minuter plus 30 sekunders klocktolerans. Vanlig utloggning återkallar inte dessa anslutningar.</value></data>
+  <data name="OAuthExpiresLabel" xml:space="preserve"><value>Upphör</value></data>
+  <data name="OAuthRevoke" xml:space="preserve"><value>Återkalla</value></data>
+  <data name="OAuthHome" xml:space="preserve"><value>Till startsidan</value></data>
 </root>

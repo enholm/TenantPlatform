@@ -4,6 +4,7 @@
 
 @inject ICurrentUserContextService UserContext
 @inject AccountContextReader Accounts
+@inject Microsoft.Extensions.Options.IOptions<TenantPlatform.Web.Security.OAuth.OAuthIssuerOptions> OAuthOptions
 
 @if (UserContext.Current.IsAuthenticated)
 {
@@ -21,6 +22,10 @@
         </button>
 
         <ul class="dropdown-menu dropdown-menu-end shadow-sm user-menu">
+            @if (OAuthOptions.Value.Enabled)
+            {
+                <li><a class="dropdown-item" href="/oauth/connections">@L["OAuthConnectionsTitle"]</a></li>
+            }
 
             <li>
                 <div class="dropdown-item-text py-2">

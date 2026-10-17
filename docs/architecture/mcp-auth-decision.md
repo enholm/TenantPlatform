@@ -1,6 +1,6 @@
 # Autentisering for MCP: anbefaling for egen drift
 
-Dato: 17. oktober 2026. **Beslutningsforslag, ikke godkjent eller implementert.** Vurderingen bygger på AGENTS.md, [MCP-planen](mcp-read-host-plan.md), [moderniseringsplanens sluttstatus 19.35 og 5A](modernization-plan.md#1935-steg-4-implementert-og-sluttkontrollert), relevant produksjonskode og offisielle kilder åpnet denne datoen. Ingen tjenester, pakker, konfigurasjon eller databaser er endret. Ingen MCP-/OAuth-integrasjon er kjørt.
+Dato: 17. oktober 2026. **Arkitekturgrunnlaget er vedtatt gjennom implementeringsoppdraget 5B1.** OpenIddict i Web, eksisterende lokal innlogging, code+PKCE S256, én resource/lesescope, fem minutters signert JWT og uttrykkelig refresh med absolutt åtte timers grense er nå implementert og protokolltestet mot isolert PostgreSQL. Se [5B1-status](modernization-plan.md#22-steg-5b1-oauth-utsteder-i-web) og [driftsveiledningen](oauth-issuer-operations.md). OAuth er deaktivert som standard; ingen ekstern publisering, utviklings-/produksjonsmigrering, MCP-host eller intern OAuth-klient inngår. Sammenligningen nedenfor er beslutningsgrunnlaget, ikke en ny implementeringsbestilling.
 
 ## 1. Kort anbefaling
 
@@ -174,19 +174,19 @@ Autentiseringstester skal kjøre den faktiske OpenIddict-/valideringskjeden i en
 
 DCR/CIMD, ekstern IdP/federation, separat auth-container, generell SSO-omlegging av GUI, bred klientportal, token exchange, ubetjent langtidsrapportering og MCP-writes kan vente. MFA/passkeys kan behandles i et eget identitetsspor, men må vurderes før ekstern bruk dersom virksomhetens sikkerhetspolicy krever det. Detalj-/oppfølgingsmetadata og større rapportkontrakter er fortsatt utenfor første verktøyutvalg.
 
-| Beslutning før avhengig implementering | Anbefaling / konsekvens |
+| Vedtatt profil / gjenstående driftsvalg | Status / konsekvens |
 |---|---|
-| Plassering og vedlikeholdsansvar | OpenIddict i Web; utpek eier av protokollintegrasjon, sikkerhetsoppdateringer og nøkkeldrift. Det er mindre drift enn Keycloak her, men mer egen UI-/integrasjonskode. Web-deploy og AS-tilgjengelighet blir koblet. |
-| Revokering og brukeropplevelse | Godta fem minutter + 30 sekunder ved OAuth-grantrevokering, samt absolutt åtte timers refresh-grant. Hyppigere ny tilkobling er prisen for kort grant; lengre varighet krever ny vurdering. Hvis restlevetiden ikke kan godtas, velg online validering før implementering. |
-| Kontosamtykke | Egne nåværende medlemskontoer, konto per kall. Et fast kontoutvalg krever ekstra grantmodell/-håndheving og tester. |
+| Plassering og vedlikeholdsansvar | Vedtatt og implementert: OpenIddict i Web; utpek eier av protokollintegrasjon, sikkerhetsoppdateringer og nøkkeldrift. Det er mindre drift enn Keycloak her, men mer egen UI-/integrasjonskode. Web-deploy og AS-tilgjengelighet blir koblet. |
+| Revokering og brukeropplevelse | Vedtatt profil i 5B1: fem minutter + 30 sekunder ved OAuth-grantrevokering, samt absolutt åtte timers refresh-grant. Hyppigere ny tilkobling er prisen for kort grant; lengre varighet krever ny vurdering. Hvis restlevetiden ikke kan godtas, velg online validering før implementering. |
+| Kontosamtykke | Vedtatt samtykke: egne nåværende medlemskontoer, konto per senere MCP-kall. Et fast kontoutvalg krever ekstra grantmodell/-håndheving og tester. |
 | Ekstern pilot | Velg HTTPS-domener, mål-ChatGPT-workspace, navngitte klienter/brukere og ansvar for ekstern databehandling. Dokumentert støtte gir ingen garanti for den konkrete workspacepolicyen. |
-| Lagring, login og operasjonell beredskap | Godta nye OAuth-tabeller/migreringer og vedvarende nøkler, minimal loginretur og samtykke-UI. Avklar hvem som registrerer klienter, håndterer tapte nøkler og tilbakekaller tilkoblinger. |
+| Lagring, login og operasjonell beredskap | Tabeller/migrering, nøkkelkonfigurasjon, loginretur og samtykke er implementert; faktisk driftskonfigurasjon og produksjonsmigrering er ikke utført. Avklar hvem som registrerer klienter, håndterer tapte nøkler og tilbakekaller tilkoblinger. |
 
-To kodeoppgaver fra vurderingen er fulgt opp separat, 17. oktober 2026; se [moderniseringsplanens verifikasjon](modernization-plan.md#21-restfunn-etter-steg-4-eiermetadata-og-web-restore). Dette endrer ikke autentiseringsforslagets godkjennings-/implementeringsstatus:
+To kodeoppgaver fra vurderingen er fulgt opp separat, 17. oktober 2026; se [moderniseringsplanens verifikasjon](modernization-plan.md#21-restfunn-etter-steg-4-eiermetadata-og-web-restore). Funnene er fortsatt lukket i dette omfanget; etterfølgende OAuth-implementering er dokumentert i 5B1:
 
 - **Eiermetadata lukket:** OwnerName/Owners er avgrenset gjennom medlemskap i aktuell konto, uten å fjerne avtaler ved manglende etikett. Direkte Application-tester med SaveChanges-vakt bestod i InMemory og isolert PostgreSQL. Første MCP-utvalg beholder feltutelatelsene.
 - **Restore-input rettet, containerbygg fortsatt åpent:** Application-prosjektfilen kopieres før Web-restore, og alle fire prosjektfiler samt eksisterende build-/NuGet-input er kontrollert. Restore fra en separat mappe med bare Dockerfilens restore-input bestod. Faktisk `docker build` stoppet ved utilgjengelig daemon; Web-/AS-containeren er ikke verifisert eller deployet.
 
 Interaktiv GUI-kontroll fra steg 4, separate produkt-/legacyrollevalg og generell Web-cookie-/sesjonsrevokering gjenstår i sine egne spor. De er ikke en grunn til å innføre en parallell rettighetsmodell i AS eller MCP.
 
-**Anbefalingen er alternativ 2: OpenIddict i eksisterende Web-host, med samme lokale brukerkonto og separat MCP-resource-server.** For TenantPlatforms nåværende brukerlager og lille leseutvalg veier gjenbruk av innlogging og fravær av federation/migrering tyngre enn Keycloaks ferdige administrasjonssider. Dette er et forslag til neste implementeringsvedtak; ingen host eller autentiseringsløsning er implementert eller testet her.
+**Anbefalingen er alternativ 2: OpenIddict i eksisterende Web-host, med samme lokale brukerkonto og separat MCP-resource-server.** For TenantPlatforms nåværende brukerlager og lille leseutvalg veier gjenbruk av innlogging og fravær av federation/migrering tyngre enn Keycloaks ferdige administrasjonssider. Dette hovedvalget er implementert i 5B1; gjenstående ekstern konfigurasjon, manuell GUI-/driftskontroll og MCP-/klientdelsteg er avgrenset i driftsveiledningen.

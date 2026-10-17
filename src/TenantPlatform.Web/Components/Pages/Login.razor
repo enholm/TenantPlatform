@@ -19,6 +19,10 @@
 
         <form method="post" action="/auth/login">
             <AntiforgeryToken />
+            @if (!string.IsNullOrEmpty(OAuthInteraction))
+            {
+                <input type="hidden" name="oauth" value="@OAuthInteraction" />
+            }
 
             <div class="mb-3">
                 <label for="email" class="form-label">
@@ -68,6 +72,8 @@
 </div>
 
 @code {
+    [Parameter, SupplyParameterFromQuery(Name = "oauth")]
+    public string? OAuthInteraction { get; set; }
     [SupplyParameterFromQuery]
     public string? Error { get; set; }
 

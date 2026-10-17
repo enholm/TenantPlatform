@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8" /><title>@L["OAuthConsentTitle"]</title><link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" /></head>
+<body><main class="container py-4">
+    <h1>@L["OAuthConsentTitle"]</h1>
+    <p>@L["OAuthClientLabel"]: <strong>@ClientName</strong></p>
+    <p>@L["OAuthReadAccess"]</p>
+    <p>@L["OAuthDuration"]</p>
+    @if (RefreshAllowed) { <p>@L["OAuthRefreshConsent"]</p> }
+    <form method="post" action="/connect/authorize">
+        @foreach (var parameter in Parameters) { <input type="hidden" name="@parameter.Key" value="@parameter.Value" /> }
+        <input type="hidden" name="interaction" value="@Interaction" />
+        <input type="hidden" name="__RequestVerificationToken" value="@VerificationToken" />
+        <button class="btn btn-primary" type="submit" name="decision" value="approve">@L["OAuthApprove"]</button>
+        <button class="btn btn-secondary" type="submit" name="decision" value="deny">@L["OAuthDeny"]</button>
+    </form>
+</main></body></html>
+@code {
+    [Parameter] public string ClientName { get; set; } = "";
+    [Parameter] public string Interaction { get; set; } = "";
+    [Parameter] public Dictionary<string, string> Parameters { get; set; } = [];
+    [Parameter] public bool RefreshAllowed { get; set; }
+    [Parameter] public string VerificationToken { get; set; } = "";
+}

@@ -49,9 +49,15 @@ using TenantPlatform.Application.UserAdministration;
 using UserAdministrationService = TenantPlatform.Web.Services.UserAdministration.UserAdministrationService;
 using TenantPlatform.Web.Services.Agreements;
 using TenantPlatform.Infrastructure.Agreements;
+using TenantPlatform.Web.Security.OAuth;
 
 
-var builder = WebApplication.CreateBuilder(args);
+var oauthRegister = args.Contains("--oauth-register-clients", StringComparer.Ordinal);
+var oauthMigrate = args.Contains("--oauth-migrate", StringComparer.Ordinal);
+var builder = WebApplication.CreateBuilder(args.Where(x => x is not "--oauth-register-clients" and not "--oauth-migrate").ToArray());
+var oauthOptions = builder.Configuration.GetSection("OAuth").Get<OAuthIssuerOptions>() ?? new();
+builder.Services.AddTenantOAuth(oauthOptions);
+builder.Logging.AddFilter("OpenIddict", LogLevel.Warning);
 
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
@@ -346,6 +352,17 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
+if (oauthRegister || oauthMigrate)
+{
+    if (!oauthOptions.Enabled || oauthRegister && oauthMigrate) throw new InvalidOperationException("Select exactly one enabled OAuth operator command.");
+    if (oauthMigrate)
+    {
+        await using var oauthScope = app.Services.CreateAsyncScope();
+        await oauthScope.ServiceProvider.GetRequiredService<TenantPlatform.Infrastructure.Persistence.OAuth.OAuthDbContext>().Database.MigrateAsync();
+    }
+    else await OAuthComposition.RegisterClientsAsync(app.Services, oauthOptions);
+    return;
+}
 
 var localizationOptions = app.Services
     .GetRequiredService<
@@ -381,6 +398,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+app.MapTenantOAuth(oauthOptions);
 
 
 app.MapRazorComponents<App>()
@@ -394,19 +412,7 @@ app.MapRazorComponents<App>()
 //---------------
 // Endpoint login
 // --------------
-app.MapPost("/auth/login", async (HttpContext httpContext, AuthenticationSessionService sessions,
-    AuthenticationCookieService cookies, ITenantAuthorizationService navigation, IFormCollection form, CancellationToken ct) =>
-{
-    AuthenticationSession session;
-    try { session = await sessions.LoginAsync(form["email"].ToString(), form["password"].ToString(), ct); }
-    catch (UnauthorizedAccessException) { return Results.Redirect("/login?error=invalid-login"); }
-    if (session.User is null) return Results.Redirect(session.Error == "no-account-access" ? "/login?error=no-account-access" : "/login?error=invalid-login");
-    var remember = string.Equals(form["rememberMe"].ToString(), "true", StringComparison.OrdinalIgnoreCase);
-    await cookies.SignInAsync(httpContext, session.User, session.AccountId, remember);
-    cookies.SetCulture(httpContext, session.User.PreferredLanguage);
-    if (!session.AccountId.HasValue) return Results.Redirect(session.SelectAccountRequired ? "/select-account" : "/accounts");
-    return Results.Redirect(navigation.GetStartPage(session.User.IsPlatformAdmin, session.Roles));
-});
+app.MapTenantLogin(oauthOptions);
 
 //----------------
 // Endpoint logout

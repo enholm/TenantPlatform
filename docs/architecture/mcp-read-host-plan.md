@@ -6,7 +6,11 @@ Planen bygger på [moderniseringsplanens avsnitt 18](modernization-plan.md#18-st
 
 ## 0. Ny vurdering: egen drift og gjenbruk av innlogging
 
-[Autentiseringsvurderingen for MCP](mcp-auth-decision.md) sammenligner Keycloak og OpenIddict mot dagens kode og offisielle kilder. **Ny hovedanbefaling er OpenIddict i eksisterende Web-host og separat TenantPlatform.Mcp**, med samme lokale brukere og GUI-innlogging. Dette er et beslutningsforslag, ikke et godkjent eller implementert valg.
+**Oppdatert ved 5B1, 17. oktober 2026:** Brukeren har vedtatt arkitekturgrunnlaget og bestilt utstederen separat. OpenIddict-utsteder i Web er implementert med separat auth-schema/migreringshistorikk, eksisterende passord/cookie, beskyttet loginretur, samtykke, egne tilkoblinger og lokal Application-adgang. Fem minutters signert JWT, ressursbinding og absolutt åtte timers rotert refresh er protokolltestet i isolert PostgreSQL. OAuth er deaktivert som standard; drift må konfigurere issuer/resource, klienter, vedvarende nøkler og key ring eksplisitt. Se [driftsveiledningen](oauth-issuer-operations.md) og [moderniseringsplanens 5B1-status](modernization-plan.md#22-steg-5b1-oauth-utsteder-i-web).
+
+**Neste avgrensning, 5B2:** egen MCP-resource-server med de tre planlagte lesetools, lokal JWT-validering fra denne utstederen, verifisert konto/fersk Application-autorisasjon, SELECT-rolle og MCP-/PostgreSQL-transporttester. Intern OAuth-klient, agent og rapportmotor er fortsatt senere delsteg. Ingen MCP-host, transport eller ChatGPT-kompatibilitet er implementert/testet i 5B1. Tidligere beskrivelse av samlet 5B i avsnitt 7 er videreplan; den er ikke en påstand om levert funksjonalitet.
+
+[Autentiseringsvurderingen for MCP](mcp-auth-decision.md) sammenligner Keycloak og OpenIddict mot dagens kode og offisielle kilder. **Ny hovedanbefaling er OpenIddict i eksisterende Web-host og separat TenantPlatform.Mcp**, med samme lokale brukere og GUI-innlogging. Dette hovedvalget er vedtatt for og implementert i 5B1; opprinnelig sammenligning er bevart som beslutningsgrunnlag.
 
 Følgende deler av det opprinnelige 5A-forslaget nedenfor foreslås erstattet. De beholdes som historisk alternativ, og skal ikke behandles som låste implementeringskrav ved siden av den nye anbefalingen. Ved vedtak om 5B brukes én sammenhengende profil fra beslutningsdokumentet, med akseptansekriterier tilpasset den valgte profilen.
 

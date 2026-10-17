@@ -3249,4 +3249,16 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
 <data name="AgreementResults" xml:space="preserve"><value>Resultater</value></data>
 <data name="AgreementPlacement" xml:space="preserve"><value>Plassering</value></data>
 <data name="AgreementActions" xml:space="preserve"><value>Handlinger</value></data>
+  <data name="OAuthConsentTitle" xml:space="preserve"><value>Godkjenn tilkobling</value></data>
+  <data name="OAuthClientLabel" xml:space="preserve"><value>Klient</value></data>
+  <data name="OAuthReadAccess" xml:space="preserve"><value>Klienten kan lese avtaledata du har tilgang til i dine nåværende medlemskontoer. Konto velges og kontrolleres ved hvert kall. Dette gir ingen nye rettigheter.</value></data>
+  <data name="OAuthDuration" xml:space="preserve"><value>Tillatelsen varer i opptil åtte timer.</value></data>
+  <data name="OAuthRefreshConsent" xml:space="preserve"><value>Ved godkjenning tillater du automatisk tokenfornyelse innenfor disse åtte timene.</value></data>
+  <data name="OAuthApprove" xml:space="preserve"><value>Godkjenn</value></data>
+  <data name="OAuthDeny" xml:space="preserve"><value>Avslå</value></data>
+  <data name="OAuthConnectionsTitle" xml:space="preserve"><value>Mine tilkoblinger</value></data>
+  <data name="OAuthRevocationNotice" xml:space="preserve"><value>Tilbakekalling stopper videre tokenfornyelse. Et utstedt token kan fortsatt virke i opptil fem minutter pluss 30 sekunders klokkeavvik. Vanlig utlogging tilbakekaller ikke disse tilkoblingene.</value></data>
+  <data name="OAuthExpiresLabel" xml:space="preserve"><value>Utløper</value></data>
+  <data name="OAuthRevoke" xml:space="preserve"><value>Tilbakekall</value></data>
+  <data name="OAuthHome" xml:space="preserve"><value>Til startsiden</value></data>
 </root>
