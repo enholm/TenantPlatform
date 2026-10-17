@@ -910,6 +910,8 @@ Interaktiv GUI er ikke testet. Vanlig Web er ikke startet mot en ukontrollert da
 
 ### 18.6 MCP-grunnlag og avgrenset videreplan
 
+Oppdatert videregrunnlag etter steg 4: [Steg 5A – autentisert MCP-lesehost](mcp-read-host-plan.md). Dette er et dokumentert implementeringsgrunnlag; ingen MCP-host er implementert eller testet. Restomtalen nedenfor beskriver status ved 4E; senere migrering er dokumentert i avsnitt 19.
+
 Seks skrivefrie, transportuavhengige Application-operasjoner er nå grunnlag for senere MCP-lesing: liste, Attention, prioriterte avtaler, innsikt, detaljreader og oppfølgingsreader. Alle har betrodd aktør og fersk felles autorisasjon; nye SQL-porter er testet mot isolert PostgreSQL. Dette er ikke en implementert eller autentisert MCP-host. Web-fasadene, kontofristlisten, transportkøen og øvrige tjenester blir ikke MCP-klare gjennom disse uttrekkene.
 
 **Nødvendig før en første autentisert MCP-lesehost:**
@@ -1318,3 +1320,29 @@ Sluttkontrollen gikk også utenfor leasing: alle offentlige asynkrone Web-tjenes
 **Separate spor:** PropertyAdmin-produktregler, harmonisering av dokumenterte legacy kandidat-/bakgrunnsroller, større sesjons-/initialiseringsarkitektur og generell sesjonsrevokering er ikke utvidet eller erklært løst. Nye Application-kall revaliderer aktivstatus/medlemskap/grants/roller; det innfører ikke en ny global økt-/cookie-revokeringsgaranti. De separate sporene endrer ikke at steg 4s migrering og sluttkontroll nå er gjennomført.
 
 Steg 5 er ikke startet. Ingen MCP-host, agent, nye roller, deploy, commit eller push er gjort. Denne leveransen gir ikke i seg selv autorisasjon til å starte steg 5.
+
+## 20. Steg 5A: grunnlag for første autentiserte MCP-lesehost
+
+[Implementeringsgrunnlaget for MCP-lesehosten](mcp-read-host-plan.md) er utarbeidet mot dagens kode og offisiell MCP-, C# SDK- og OpenAI-dokumentasjon, kontrollert 17. oktober 2026. Anbefalingen er egen TenantPlatform.Mcp med stateless Streamable HTTP, etablert separat OAuth/OIDC-tjeneste, delegert brukeridentitet, verifisert konto per kall og fersk Application-autorisasjon. Interne agent-/rapportkonsumenter skal også bruke MCP; vanlig GUI kan fortsatt bruke Application direkte.
+
+Foreslått 5B-utvalg er agreements_list uten eiermetadata og agreements_attention, samt skrivefritt accounts_list for kontovalg. Planen angir konkrete kontrakter, svar-/paginggrenser, DI/deployment, token-/revokeringsprofil, produkteierbeslutninger og transport-/PostgreSQL-akseptanse. Detalj/oppfølging og leveringsmetadata utsettes. Nyere protokolls discovery og eldre initialize-håndtrykk skal prøves hver for seg; dokumentasjonsstøtte er ikke kjørt ChatGPT-kompatibilitet.
+
+Kodekontrollen fant separat oppfølging fra steg 4: listeportens eiernavn/Owners mangler detaljreaderens medlemskapsavgrensning, og Web-Dockerfilens restore-lag mangler eksplisitt Application.csproj. MCP-kontrakten utelater eierfeltene; en egen MCP-container må ha korrekt restore-lag. Ingen av funnene er rettet i dette dokumentasjonssteget. GUI-kontroll, produkt-/legacyrollevalg og generell sesjonsrevokering er fortsatt egne spor; se planen for avgrensning og hva som må håndteres før en senere utvidelse.
+
+**5A-leveranse: bare dokumentasjon.** Ingen prosjekt-/pakke-/applikasjons-/konfigurasjons-/databaseendring, leverandørtilkobling, MCP-oppstart/test, commit eller push er gjort. Steg 5B er ikke startet. Leverandør, identitetskobling, klient-/kontosamtykke, revokering, intern grantlagring og ekstern driftsadresse må velges før den avhengige implementeringen.
+
+## 21. Restfunn etter steg 4: eiermetadata og Web-restore
+
+Separat kodeoppfølging 17. oktober 2026, før OAuth/MCP-implementering. Eksisterende endringer i arbeidskopien og dokumentasjonsgrunnlaget er bevart. [MCP-planen](mcp-read-host-plan.md) og [autentiseringsvurderingen](mcp-auth-decision.md) har oppdatert funnstatus; autentiseringsanbefalingen er fortsatt et forslag.
+
+**Eiermetadata: rettet og automatisert verifisert.** AgreementListData avgrenser eieroppslag gjennom UserAccounts i valgt konto, som detaljreaderen. Inaktive medlemmer beholder etiketten. Owners-alternativene inneholder bare eiere fra autoriserte avtaler som har medlemskap i denne kontoen. Radenes LEFT JOIN gir tom OwnerName ved manglende/fremmed medlemskap, uten å endre OwnerUserId, eierskap eller grants. Eksisterende konto-/avtaletilgang, filtre, telling, Title/Id-sortering, sideklamping og sidestørrelse 25 beholdes. Owners beregnes fortsatt før ordinære søke-/status-/type-/eierfiltre, etter eventuelt Attention-utvalg. GUI-et renderer allerede OwnerName direkte i listecellen og på detaljsiden; tom etikett følger eksisterende mønster uten ny tekst eller klientbeslutning. Kontofristlistens ansvarlig-/Owners-oppslag ble kontrollert og bruker allerede kontoavgrensede medlemsoppslag; ingen endring var nødvendig der.
+
+Nye OwnerMetadataChecks kaller Application direkte i InMemory og PostgreSQL. De dekker aktivt/inaktivt medlem, medlemskap bare i annen konto, fjerning av eiermedlemskap mellom kall, Read/Edit-grants og administrator, uendrede rader/OwnerUserId/TotalCount, tomme etiketter, Owners uten fremmede navn, eierfilter også uten etikett, kombinerte filtre, arkiv, sidegrenser og sortering. Alle lesekall har både synkron og asynkron SaveChanges-vakt med produksjonens auditinterceptor; lagrede avtaler/revisjoner/grants/settings/frister sammenlignes før/etter lesing. Ingen eierskaps-/grantreparasjon eller initialisering inngår.
+
+**Web-restore: inputfeilen rettet, faktisk containerbygg gjenstår.** Dockerfilen kopierer nå Application.csproj før restore. Den transitive prosjektgrafen er kontrollert: Web, Infrastructure, Application og Core kopieres, sammen med solution. Repoet har ingen Directory.Build/Directory.Packages props/targets, NuGet.config, global.json eller packages.lock.json som må med i dette laget. En ny midlertidig mappe med bare Dockerfilens restore-input bestod faktisk `dotnet restore src/TenantPlatform.Web/TenantPlatform.Web.csproj`. Dette er lokal restoreverifikasjon, ikke et Linux-/containerbygg. Docker-klienten finnes, men både daemon-kontrollen og forsøkt `docker build --file docker/web/Dockerfile --tag tenantplatform-web:step4-restfindings .` feilet med «Cannot connect to the Docker daemon». Containerverifikasjon står derfor åpen. Runtime-image, port, startkommando og deploymentoppførsel er beholdt; Serga og VM er ikke endret.
+
+**Verifikasjon etter kodeendringene:**
+
+- Solution og berørt AgreementList-testprosjekt bygget uten feil. Avtale-/dashboardprosjektene bygget også gjennom runnerens `dotnet run`. Eksisterende NU1902/NU1903 for System.Security.Cryptography.Pkcs består; ingen pakkeversjoner er endret.
+- `bash scripts/test-agreements-postgres.sh TenantPlatform.AgreementList.SmokeTests TenantPlatform.Agreements.SmokeTests TenantPlatform.Dashboard.SmokeTests`: exitkode 0. Alle tre suiter bestod, inklusive de nye eiermetadatatestene og eksisterende liste-/Attention-/prioriterings-/innsikts-/detalj-/oppfølgingsregresjoner. AgreementList og Agreements kjørte databasekontroller mot isolert PostgreSQL; Dashboard brukte sitt eksisterende InMemory-/SQL-/komponentoppsett. Den midlertidige klyngen ble stoppet og fjernet.
+- Ingen utviklings-/produksjonsdatabase, vanlig appstart, ekte utsendinger eller modellkall. Ingen OAuth/MCP, pakkeoppgradering, skjemaendring, deploy, commit eller push. Interaktiv GUI er ikke testet; source-/komponentkontroll erstatter ikke manuell nettleserverifikasjon. Faktisk Web-containerbygg er eneste uutførte byggkontroll i dette oppdraget.

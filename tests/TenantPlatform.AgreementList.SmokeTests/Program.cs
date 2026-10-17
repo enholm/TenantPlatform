@@ -107,6 +107,7 @@ static async Task Run(Factory factory, ReadOnlyGuard guard, string provider)
         await db.SaveChangesAsync();
     }
     await AuthorizationChecks.Run(factory, a, b, user, membershipIds[user], admin, platform, partyA, own.Id, read.Id, edit.Id, hidden.Id, foreignAgreement.Id, archived.Id, provider);
+    await OwnerMetadataChecks.Run(factory, guard, provider);
     await AttentionChecks.Run(factory, guard, a, b, user, admin, platform, membershipIds[user], read.Id, partyA, provider);
     await DashboardChecks.Run(factory, guard, provider);
     await InsightsChecks.Run(factory, guard, provider);
@@ -216,6 +217,8 @@ sealed class AuditActor : IAuditUserContext { public Guid? UserId => null; publi
 sealed class ReadOnlyGuard : SaveChangesInterceptor
 {
     public bool Protect;
+    public override InterceptionResult<int> SavingChanges(DbContextEventData data, InterceptionResult<int> result)
+    { if (Protect) throw new Exception("Read attempted SaveChanges"); return result; }
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData data, InterceptionResult<int> result, CancellationToken ct = default)
     { if (Protect) throw new Exception("Read attempted SaveChanges"); return ValueTask.FromResult(result); }
 }

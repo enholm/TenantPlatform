@@ -10,6 +10,9 @@ COPY src/TenantPlatform.Web/TenantPlatform.Web.csproj \
 COPY src/TenantPlatform.Core/TenantPlatform.Core.csproj \
      src/TenantPlatform.Core/
 
+COPY src/TenantPlatform.Application/TenantPlatform.Application.csproj \
+     src/TenantPlatform.Application/
+
 COPY src/TenantPlatform.Infrastructure/TenantPlatform.Infrastructure.csproj \
      src/TenantPlatform.Infrastructure/
 

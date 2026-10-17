@@ -18,15 +18,17 @@ public sealed class AgreementListData(IDbContextFactory<TenantPlatformDbContext>
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         var visible = AgreementReadQueries.Visible(db, scope);
         if (attention is not null) visible = AgreementListQueries.Attention(visible, attention);
-        var owners = await (from a in visible join u in db.Users on a.OwnerUserId equals u.Id
+        var members = db.Users.AsNoTracking().Where(u => db.UserAccounts.Any(m => m.AccountId == scope.AccountId && m.UserId == u.Id));
+        var owners = await (from a in visible join u in members on a.OwnerUserId equals u.Id
                             select new { u.Id, Name = u.FirstName + " " + u.LastName })
             .Distinct().OrderBy(x => x.Name)
             .Select(x => new AgreementOptionDto(x.Id, x.Name, null)).ToListAsync(cancellationToken);
         var query = from a in visible
                     join org in db.Organizations on a.CounterpartyOrganizationId equals org.Id
-                    join owner in db.Users on a.OwnerUserId equals owner.Id
+                    join ownerRow in members on a.OwnerUserId equals ownerRow.Id into ownerMembers
+                    from owner in ownerMembers.DefaultIfEmpty()
                     where org.AccountId == scope.AccountId
-                    select new { Agreement = a, Counterparty = org.Name, Owner = owner.FirstName + " " + owner.LastName };
+                    select new { Agreement = a, Counterparty = org.Name, Owner = owner == null ? "" : owner.FirstName + " " + owner.LastName };
         if (!string.IsNullOrWhiteSpace(queryFilter.Search))
         {
             var search = queryFilter.Search.Trim().ToLowerInvariant();
