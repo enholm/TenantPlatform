@@ -3321,7 +3321,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="McpAvailabilityAccessDenied" xml:space="preserve"><value>Du har ikke bruksadgang til denne tilkoblingen. Administrasjon gir ikke automatisk bruksadgang.</value></data>
   <data name="McpPolicyClassificationRequired" xml:space="preserve"><value>Velg og lagre en bruksklasse før du godkjenner denne metadataversjonen.</value></data>
   <data name="AgentTitle" xml:space="preserve"><value>Leseassistent</value></data>
-  <data name="AgentDisclosure" xml:space="preserve"><value>Spørsmålet, verktøybeskrivelser og hentede data sendes til OpenAI for behandling. Bruk bare data du kan dele med denne leverandøren.</value></data>
+  <data name="AgentDisclosure" xml:space="preserve"><value>Spørsmål, midlertidig samtalehistorikk, verktøybeskrivelser og nyhentede data sendes til OpenAI for behandling. Bruk bare data du kan dele med denne leverandøren.</value></data>
   <data name="AgentAcceptDisclosure" xml:space="preserve"><value>Jeg forstår og godtar denne datadelingen for samtalen.</value></data>
   <data name="AgentAccount" xml:space="preserve"><value>Valgt konto</value></data>
   <data name="AgentConnection" xml:space="preserve"><value>Én valgt tilkobling</value></data>
@@ -3363,4 +3363,15 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AgentErrorRoundLimit" xml:space="preserve"><value>Kjøringen nådde en konfigurert grense. Avgrens spørsmålet eller verktøyutvalget; data er ikke trunkert til et tilsynelatende komplett svar.</value></data>
   <data name="AgentPageFacts" xml:space="preserve"><value>Side {0} (forespurt {1}): {2} av {3} treff, sidestørrelse {4}. Flere: {5}. Neste side: {6}. Komplett: {7}. Konsistent øyeblikksbilde: {8}. Sidegrense nådd: {9}.</value></data>
   <data name="AgentAttentionFacts" xml:space="preserve"><value>Kontodato {0}: oppsigelse {1}, fornyelse {2}, utløpt {3}. Horisont {4} dager. Kategoriene overlapper.</value></data>
+  <data name="AgentTemporaryContext" xml:space="preserve"><value>Samtalen har midlertidig kontekst på denne serveren. Tidligere kilder hentes på nytt før svar gjenbrukes. Ny samtale, kontobytte, 30 minutters utløp, restart eller ny sidelasting mister konteksten. Avbryt stopper bare aktiv melding.</value></data>
+  <data name="AgentAnswerLabel" xml:space="preserve"><value>Svar</value></data>
+  <data name="AgentSourceRevalidated" xml:space="preserve"><value>Tidligere kilde, hentet og kontrollert på nytt</value></data>
+  <data name="AgentSourceNew" xml:space="preserve"><value>Nytt kall</value></data>
+  <data name="AgentHistoryPending" xml:space="preserve"><value>Tidligere kildeavhengig svar er skjult til det er kontrollert på nytt, eller er fjernet fra konteksten.</value></data>
+  <data name="AgentMessageCancelled" xml:space="preserve"><value>Aktiv melding er avbrutt. Fullførte turer beholdes; kildene kontrolleres før neste svar.</value></data>
+  <data name="AgentNoticeHistoryInvalidated" xml:space="preserve"><value>Tidligere kilder eller godkjenninger er endret. Tidligere svar og kildeinnhold er fjernet; spørsmålene er beholdt som intensjon. Be om ny henting eller presiser spørsmålet.</value></data>
+  <data name="AgentNoticeHistoryTrimmed" xml:space="preserve"><value>Eldre hele samtaleturer er utelatt på grunn av historikk-/minnegrensen. Det kan være nødvendig å gjenta kontekst.</value></data>
+  <data name="AgentNoticeHistoryNotRetained" xml:space="preserve"><value>Dette svaret kunne ikke beholdes innen minnegrensen. Neste melding har ikke denne turen som kontekst.</value></data>
+  <data name="AgentErrorHistoryUnavailable" xml:space="preserve"><value>Tidligere kildeinnhold kunne ikke kontrolleres sikkert og er fjernet sammen med avledede svar. Ingen ny konklusjon vises. Prøv igjen eller start ny samtale.</value></data>
+  <data name="AgentSessionExpired" xml:space="preserve"><value>Samtalen er utløpt og innholdet er fjernet. Start en ny samtale.</value></data>
 </root>

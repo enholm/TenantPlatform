@@ -85,7 +85,9 @@ static partial class RegistryChecks
             await Approve(a, a2); await Approve(a, a3); await Approve(b, b1);
             Check((await Call(a, a2)).StatusCode == HttpStatusCode.OK, "external non-Guid identity works through actual OAuth and MCP libraries");
             Check((await Call(m, a2)).StatusCode == HttpStatusCode.OK, "member uses only own personally authorized credentials");
+            await Connect(m, a1);
             await RunAgent(web, factory, adminA, member, accountA, accountB, a1, a2, a3, clock, agentProtocol, () => remoteCalls, a);
+            await Post(m, "disconnect", new() { ["id"] = a1.ToString() });
             await RunPolicies(web, factory, adminA, adminB, member, accountA, accountB, a1, a2, a3, clock, () => remoteCalls, a, m);
             Check((await Post(m, "disconnect", new() { ["id"] = a2.ToString() })).StatusCode == HttpStatusCode.Redirect &&
                 (await Call(a, a2)).IsSuccessStatusCode && !(await Credentials()).Any(x => x.ConnectionId == a2 && x.UserId == member), "disconnect erases only the initiating user's credentials");

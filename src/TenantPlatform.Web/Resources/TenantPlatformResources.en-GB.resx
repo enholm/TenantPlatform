@@ -3285,7 +3285,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="McpAvailabilityAccessDenied" xml:space="preserve"><value>You do not have use access to this connection. Management does not automatically grant use access.</value></data>
   <data name="McpPolicyClassificationRequired" xml:space="preserve"><value>Choose and save a usage class before approving this metadata version.</value></data>
   <data name="AgentTitle" xml:space="preserve"><value>Read assistant</value></data>
-  <data name="AgentDisclosure" xml:space="preserve"><value>Your question, tool descriptions and retrieved data are sent to OpenAI for processing. Use only data you may share with this provider.</value></data>
+  <data name="AgentDisclosure" xml:space="preserve"><value>Your questions, temporary conversation history, tool descriptions and freshly retrieved data are sent to OpenAI for processing. Use only data you may share with this provider.</value></data>
   <data name="AgentAcceptDisclosure" xml:space="preserve"><value>I understand and accept this data sharing for the conversation.</value></data>
   <data name="AgentAccount" xml:space="preserve"><value>Selected account</value></data>
   <data name="AgentConnection" xml:space="preserve"><value>One selected connection</value></data>
@@ -3327,4 +3327,15 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AgentErrorRoundLimit" xml:space="preserve"><value>The run reached a configured limit. Narrow the question or tool selection; data was not truncated into an apparently complete answer.</value></data>
   <data name="AgentPageFacts" xml:space="preserve"><value>Page {0} (requested {1}): {2} of {3} matches, page size {4}. More: {5}. Next page: {6}. Complete: {7}. Consistent snapshot: {8}. Page limit reached: {9}.</value></data>
   <data name="AgentAttentionFacts" xml:space="preserve"><value>Account date {0}: notice {1}, renewal {2}, expired {3}. Horizon {4} days. Categories overlap.</value></data>
+  <data name="AgentTemporaryContext" xml:space="preserve"><value>This conversation has temporary context on this server. Previous sources are fetched again before answers are reused. New conversation, account change, 30-minute expiry, restart or page reload loses context. Cancel only stops the active message.</value></data>
+  <data name="AgentAnswerLabel" xml:space="preserve"><value>Answer</value></data>
+  <data name="AgentSourceRevalidated" xml:space="preserve"><value>Previous source, fetched and checked again</value></data>
+  <data name="AgentSourceNew" xml:space="preserve"><value>New call</value></data>
+  <data name="AgentHistoryPending" xml:space="preserve"><value>The previous source-dependent answer is hidden pending revalidation, or has been removed from context.</value></data>
+  <data name="AgentMessageCancelled" xml:space="preserve"><value>The active message was cancelled. Completed turns are retained; sources are checked before the next answer.</value></data>
+  <data name="AgentNoticeHistoryInvalidated" xml:space="preserve"><value>Previous sources or approvals have changed. Previous answers and source content were removed; questions remain as intent. Request fresh retrieval or clarify the question.</value></data>
+  <data name="AgentNoticeHistoryTrimmed" xml:space="preserve"><value>Older whole conversation turns were omitted due to the history/memory limit. You may need to repeat context.</value></data>
+  <data name="AgentNoticeHistoryNotRetained" xml:space="preserve"><value>This answer could not be retained within the memory limit. The next message will not have this turn as context.</value></data>
+  <data name="AgentErrorHistoryUnavailable" xml:space="preserve"><value>Previous source content could not be safely revalidated and was removed together with derived answers. No new conclusion is shown. Retry or start a new conversation.</value></data>
+  <data name="AgentSessionExpired" xml:space="preserve"><value>The conversation expired and its content was cleared. Start a new conversation.</value></data>
 </root>

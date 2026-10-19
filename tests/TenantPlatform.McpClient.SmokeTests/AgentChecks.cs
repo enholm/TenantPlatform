@@ -43,7 +43,7 @@ static partial class RegistryChecks
         Check(protocol.Payloads.Last().Contains("synthetic-encrypted-reasoning") && !reasoning.Text.Contains("synthetic-encrypted-reasoning"), "stateless reasoning continuity stays backend-only and bounded");
         var start = protocol.Payloads.Count;
         await Agent(s => s.AskAsync(conversation, "normal"));
-        using (var fresh = JsonDocument.Parse(protocol.Payloads[start])) Check(fresh.RootElement.GetProperty("input").GetArrayLength() == 1, "next message sends neither old tool data nor previous answer/prompt");
+        using (var fresh = JsonDocument.Parse(protocol.Payloads[start])) Check(fresh.RootElement.GetProperty("input").GetArrayLength() > 1 && fresh.RootElement.GetProperty("input").ToString().Contains("untrustedPreviousAnswer"), "follow-up reuses previous intent and answer only with fresh MCP evidence");
         foreach (var (prompt, code) in new[] { ("builtin", "InvalidTool"), ("unknown", "InvalidTool"), ("cross", "InvalidTool"), ("invalid", "InvalidArguments"), ("model-error", "ModelUnavailable"), ("incomplete", "ModelIncomplete"), ("oversize-response", "ContextLimit"), ("long-answer", "AnswerLimit") })
         {
             var id = await Begin(external); var prior = remoteCalls();
@@ -146,7 +146,98 @@ static partial class RegistryChecks
         var ownAnswer = await Agent(s => s.AskAsync(ownConversation, "own-list"));
         Check(ownAnswer.Sources.Single().Tool == "agreements_list" && ownAnswer.Notices.Contains("Paging") && ownAnswer.Sources.Single().Page is { PageSize: 25, SnapshotConsistent: false }, "own account data actually comes through MCP with visible paging caveat");
         var attention = await Agent(s => s.AskAsync(ownConversation, "normal"));
-        Check(attention.Notices.Contains("Overlapping") && attention.Sources.Single().Tool == "agreements_attention", "attention overlap warning established by backend, not model");
+        Check(attention.Notices.Contains("Overlapping") && attention.Sources.Last().Tool == "agreements_attention", "attention overlap warning established by backend, not model");
+        // The tool remains authorized while an individual agreement's Read grant is revoked.
+        var businessGrant = Guid.NewGuid();
+        await using (var db = factory.CreateDbContext())
+        {
+            var agreement = await db.Agreements.SingleAsync(a => a.AccountId == account);
+            db.AgreementAccess.Add(new TenantPlatform.Core.Agreements.AgreementAccess { Id = businessGrant, AccountId = account,
+                AgreementId = agreement.Id, UserId = member, Level = TenantPlatform.Core.Agreements.AgreementAccessLevel.Read });
+            await db.SaveChangesAsync();
+        }
+        var protectedConversation = await Begin(own, member);
+        var protectedAnswer = await Agent(s => s.AskAsync(protectedConversation, "protected"), user: member);
+        Check(protectedAnswer.Text.Contains("PROTECTED_DERIVED_MARKER"), "resource-scoped history starts with authorized MCP agreement data");
+        await using (var db = factory.CreateDbContext()) { db.Remove(await db.AgreementAccess.SingleAsync(a => a.Id == businessGrant)); await db.SaveChangesAsync(); }
+        var firstPayload = protocol.Payloads.Count;
+        var afterRevocation = await Agent(s => s.AskAsync(protectedConversation, "followup"), user: member);
+        Check(afterRevocation.ContextInvalidated && afterRevocation.Notices.Contains("HistoryInvalidated") &&
+            protocol.Payloads.Skip(firstPayload).All(p => !p.Contains("PROTECTED_DERIVED_MARKER") && !p.Contains("Delegated agreement")),
+            "fresh resource-scoped MCP re-fetch removes both old agreement data and derived answer before follow-up model call");
+        await using (var db = factory.CreateDbContext())
+        {
+            var agreement = await db.Agreements.SingleAsync(a => a.AccountId == account);
+            db.AgreementAccess.Add(new TenantPlatform.Core.Agreements.AgreementAccess { Id = businessGrant, AccountId = account,
+                AgreementId = agreement.Id, UserId = member, Level = TenantPlatform.Core.Agreements.AgreementAccessLevel.Read });
+            await db.SaveChangesAsync();
+        }
+        var finalRevocation = await Begin(own, member);
+        await Agent(s => s.AskAsync(finalRevocation, "protected"), user: member);
+        protocol.BeforeReply = async () => {
+            await using var db = factory.CreateDbContext(); db.Remove(await db.AgreementAccess.SingleAsync(a => a.Id == businessGrant)); await db.SaveChangesAsync();
+        };
+        Check(await Fails(() => Agent(s => s.AskAsync(finalRevocation, "history-only"), user: member), "HistoryUnavailable"),
+            "resource grant removed during final model response prevents answer delivery and commit");
+        var afterFinalFailure = protocol.Payloads.Count;
+        Check((await Agent(s => s.AskAsync(finalRevocation, "followup"), user: member)).ContextInvalidated &&
+            protocol.Payloads.Skip(afterFinalFailure).All(p => !p.Contains("PROTECTED_DERIVED_MARKER") && !p.Contains("history-only")),
+            "failed final response and invalidated derived content never become later context");
+        var continued = await Begin(external);
+        await Agent(s => s.AskAsync(continued, "normal"));
+        await Agent(async s => { await s.CancelAsync(continued); return true; });
+        var afterCancel = await Agent(s => s.AskAsync(continued, "followup"));
+        Check(afterCancel.Sources.Any(s => s.Revalidated) && afterCancel.RetainedTurns == 2, "cancel preserves completed turns and follow-up provenance");
+        await Agent(async s => { await s.DeleteAsync(continued); return true; });
+        Check(await DeniedAgent(() => Agent(s => s.AskAsync(continued, "followup"))), "new conversation deletion removes old context and rejects its ID");
+        var changed = await Begin(external);
+        await Agent(s => s.AskAsync(changed, "normal"));
+        var savedVersion = (await Registry(s => s.ToolsAsync(external))).Single().Version;
+        await ToolUpdate(external, t => t.SetProperty(x => x.Version, "changed-historical-contract"));
+        var changedAnswer = await Agent(s => s.AskAsync(changed, "followup"));
+        Check(changedAnswer.ContextInvalidated && !changedAnswer.Sources.Any(s => s.Revalidated), "changed approved version invalidates prior answers instead of replaying stale calls");
+        await ToolUpdate(external, t => t.SetProperty(x => x.Version, savedVersion));
+        var failed = await Begin(external);
+        Check(await Fails(() => Agent(s => s.AskAsync(failed, "model-error")), "ModelUnavailable"), "failed run cannot become a completed context turn");
+        var recovered = await Agent(s => s.AskAsync(failed, "normal"));
+        Check(recovered.RetainedTurns == 1, "only successful answer is committed after failure");
+        var interruptedSource = await Begin(external);
+        await Agent(s => s.AskAsync(interruptedSource, "normal"));
+        var payloadCount = protocol.Payloads.Count; protocol.McpUnavailable = true;
+        Check(await Fails(() => Agent(s => s.AskAsync(interruptedSource, "followup")), "HistoryUnavailable") && protocol.Payloads.Count == payloadCount,
+            "unavailable old source removes derived context without calling the model");
+        protocol.McpUnavailable = false;
+        Check((await Agent(s => s.AskAsync(interruptedSource, "followup"))).ContextInvalidated, "invalidation survives failure until next successful response informs GUI");
+        var approvalHistory = await Begin(external);
+        await Agent(s => s.AskAsync(approvalHistory, "normal"));
+        await ToolUpdate(external, t => t.SetProperty(x => x.Approved, false));
+        payloadCount = protocol.Payloads.Count;
+        Check(await Fails(() => Agent(s => s.AskAsync(approvalHistory, "followup")), "ConnectionUnavailable") && protocol.Payloads.Count == payloadCount,
+            "revoked historical tool approval prevents all old context use");
+        await ToolUpdate(external, t => t.SetProperty(x => x.Approved, true));
+        Check((await Agent(s => s.AskAsync(approvalHistory, "followup"))).ContextInvalidated, "restoring tool approval does not resurrect removed answers");
+        var boundedHistory = await Begin(external);
+        await Agent(s => s.AskAsync(boundedHistory, "first"));
+        var bounded = await Agent(s => s.AskAsync(boundedHistory, "followup"), limits: defaults with { HistoryTurns = 1 });
+        Check(bounded.RetainedTurns == 1 && bounded.Notices.Contains("HistoryTrimmed"), "Application reports whole-turn history eviction");
+        payloadCount = protocol.Payloads.Count;
+        Check(await Fails(() => Agent(s => s.AskAsync(boundedHistory, "another"), limits: defaults with { TotalModelBytes = 8192 }), "ContextLimit") && protocol.Payloads.Count == payloadCount,
+            "retransmitted historical context counts against model-input budget before network");
+        var tiny = await Begin(external);
+        var notRetained = await Agent(s => s.AskAsync(tiny, "normal"), limits: defaults with { HistoryBytes = 1024 });
+        Check(!notRetained.CurrentTurnRetained && notRetained.RetainedTurns == 0 && notRetained.Notices.Contains("HistoryNotRetained"), "history byte overflow omits the whole oversized turn explicitly");
+        var injectedHistory = await Begin(external);
+        await Agent(s => s.AskAsync(injectedHistory, "normal"));
+        Check(await Fails(() => Agent(s => s.AskAsync(injectedHistory, "cross")), "InvalidTool"), "injection in replayed evidence cannot add a second connection's tool");
+        var reasoningHistory = await Begin(external);
+        await Agent(s => s.AskAsync(reasoningHistory, "reasoning"));
+        using (var lease = sessions.Start(reasoningHistory, new(true, admin, account), defaults, default))
+        {
+            var saved = JsonSerializer.Serialize(lease.History);
+            Check(!saved.Contains("synthetic-encrypted-reasoning") && !saved.Contains("synthetic-agent-key") && !saved.Contains("ProtectedTokens"),
+                "completed history retains neither hidden reasoning nor credentials");
+        }
+        CheckMemory();
         var page = await (await browser.Get("/agent")).Content.ReadAsStringAsync();
         Check(page.Contains("data-read-agent") && page.Contains("OpenAI") && page.Contains("data-consent") && !page.Contains("synthetic-agent-key") && !page.Contains("<script>alert"), "SSR chat panel discloses provider, requires selection/acceptance, contains no key or model HTML");
         var csrf = WebUtility.HtmlDecode(Regex.Match(page, "data-csrf=\"([^\"]+)\"").Groups[1].Value);
@@ -161,6 +252,43 @@ static partial class RegistryChecks
         Check(protocol.Payloads.All(p => !p.Contains("synthetic-agent-key") && !p.Contains("ProtectedTokens") && !p.Contains("private-provider-error")), "all captured model inputs exclude backend credentials and provider errors");
         Console.WriteLine("Agent synthetic-model / real OAuth-MCP-PostgreSQL checks passed.");
 
+        void CheckMemory()
+        {
+            var memoryClock = new AdjustableClock(); using var memory = new ReadAgentSessions(memoryClock);
+            var owner = new ActorSnapshot(true, admin, account); var other = new ActorSnapshot(true, member, account);
+            var budget = defaults with { HistoryTurns = 2, HistoryBytes = 16384, ServerHistoryBytes = 16384 };
+            var id = memory.Create(owner, external);
+            for (var n = 1; n <= 3; n++)
+            {
+                using var lease = memory.Start(id, owner, budget, default); var turn = new AgentTurn("q" + n, new("a", [], []), []);
+                lease.Commit(turn);
+                if (n == 1) Check(Throws(() => lease.Commit(turn)), "one lease cannot create duplicate completed turns");
+            }
+            using (var lease = memory.Start(id, owner, budget, default))
+                Check(lease.History.Select(t => t.Question).SequenceEqual(new[] { "q2", "q3" }), "history evicts whole oldest turn pairs deterministically");
+            using (var lease = memory.Start(id, owner, budget, default))
+            {
+                memory.Cancel(id, owner); Check(Throws(() => lease.Commit(new("late-cancelled", new("a", [], []), []))), "cancelled late reply cannot commit");
+            }
+            using (var lease = memory.Start(id, owner, budget, default))
+            {
+                memory.Delete(id, owner); Check(Throws(() => lease.Commit(new("late-deleted", new("a", [], []), []))), "deleted conversation cannot be resurrected by late completion");
+                var replacement = memory.Create(owner, external);
+                Check(Throws(() => memory.Start(replacement, owner, budget, default)), "deletion does not release a still-running lease's concurrency quota early");
+                memory.Delete(replacement, owner);
+            }
+            budget = budget with { HistoryBytes = 8192, ServerHistoryBytes = 8192 };
+            id = memory.Create(owner, external);
+            using (var lease = memory.Start(id, owner, budget, default)) lease.Commit(new("large", new(new string('x', 900), [], []), []));
+            var secondId = memory.Create(other, second);
+            using (var lease = memory.Start(secondId, other, budget, default)) lease.Commit(new("large2", new(new string('y', 900), [], []), []));
+            using (var lease = memory.Start(id, owner, budget, default)) Check(lease.History.Count == 0 && lease.Trimmed, "global charged-memory bound evicts whole idle history with notice");
+            using (var lease = memory.Start(secondId, other, budget, default))
+            {
+                memoryClock.Advance(TimeSpan.FromMinutes(31));
+                Check(Throws(() => memory.Verify(secondId, other)) && lease.Token.IsCancellationRequested && Throws(() => lease.Commit(new("expired", new("a", [], []), []))), "expiry clears context, cancels work and rejects late commit");
+            }
+        }
         async Task<HttpResponseMessage> Http(string action, object body, bool token = true)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "https://tenant.test/agent/" + action) { Content = JsonContent.Create(body) };

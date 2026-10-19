@@ -49,11 +49,12 @@ public static class ReadAgentEndpoints
                 var agent = http.RequestServices.GetRequiredService<ReadAgentService>();
                 switch (action)
                 {
-                    case "begin": return Results.Json(new { conversation = await agent.BeginAsync(command.Connection, command.Account, command.SharingAccepted, ct) });
+                    case "begin": return Results.Json(new { conversation = await agent.BeginAsync(command.Connection, command.Account, command.SharingAccepted, ct), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds });
                     case "ask":
                         var answer = await agent.AskAsync(command.Conversation, command.Prompt ?? "", ct);
                         var l = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
-                        return Results.Json(new { answer.Text, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: Json);
+                        return Results.Json(new { answer.Text, answer.RetainedTurns, answer.CurrentTurnRetained, answer.ContextInvalidated, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, s.Revalidated, s.EvidenceId, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: Json);
+                    case "delete": await agent.DeleteAsync(command.Conversation, ct); return Results.NoContent();
                     case "cancel": await agent.CancelAsync(command.Conversation, ct); return Results.NoContent();
                     default: return Results.NotFound();
                 }
@@ -75,7 +76,11 @@ public static class ReadAgentEndpoints
         var who = actor.GetSnapshot();
         if (who.AccountId is not Guid account) return null;
         var auth = new AuthorizationService(actor, http.RequestServices.GetRequiredService<IAuthorizationData>(), http.RequestServices.GetRequiredService<TimeProvider>());
-        if (!await auth.CanAsync(Permissions.McpConnections.Use, new(ResourceKind.Account, AccountId: account), ct)) return null;
+        if (!await auth.CanAsync(Permissions.McpConnections.Use, new(ResourceKind.Account, AccountId: account), ct))
+        {
+            http.RequestServices.GetService<ReadAgentSessions>()?.ClearUser(who.UserId);
+            return null;
+        }
         return (account, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(who.UserId + ":" + account))));
     }
     private static string? Summary(AgentSource source, IStringLocalizer<TenantPlatformResources> l)
