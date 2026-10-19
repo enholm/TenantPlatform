@@ -62,7 +62,7 @@ public static class OAuthEndpoints
         var request = http.GetOpenIddictServerRequest()!;
         if (request.GetParameters().Any(x => !AuthorizationParameters.Contains(x.Key)) ||
             !ValidResource(request, options) || !request.HasScope(OAuthIssuerOptions.ReadScope) ||
-            request.GetScopes().Any(x => x != OAuthIssuerOptions.ReadScope && x != Scopes.OfflineAccess)) return Error(Errors.InvalidRequest);
+            request.GetScopes().Any(x => x != OAuthIssuerOptions.ReadScope && x != Scopes.OfflineAccess && x != TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage)) return Error(Errors.InvalidRequest);
         var cookie = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         if (!cookie.Succeeded)
         {
@@ -80,6 +80,7 @@ public static class OAuthEndpoints
             {
                 ClientName = (await clients.GetDisplayNameAsync(client!, ct)) ?? request.ClientId!,
                 Interaction = interactions.Create(request, user), Parameters = request.GetParameters().ToDictionary(x => x.Key, x => x.Value.ToString()),
+                PagesAllowed = request.HasScope(TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage),
                 RefreshAllowed = request.HasScope(Scopes.OfflineAccess), VerificationToken = antiforgery.GetAndStoreTokens(http).RequestToken
             });
         }
@@ -90,7 +91,7 @@ public static class OAuthEndpoints
         if (interaction?.UserId != user || !interactions.Matches(interaction, request)) return Results.BadRequest();
         if (form["decision"] != "approve") return Error(Errors.AccessDenied);
         OAuthConnection grant;
-        try { grant = await access.ApproveAsync(request.ClientId!, request.HasScope(Scopes.OfflineAccess), ct); }
+        try { grant = await access.ApproveAsync(request.ClientId!, request.HasScope(Scopes.OfflineAccess), ct, request.HasScope(TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage)); }
         catch (UnauthorizedAccessException) { return Error(Errors.AccessDenied); }
         var principal = new ClaimsPrincipal(new ClaimsIdentity("TenantPlatform.OAuth"));
         principal.SetClaim(Claims.Subject, user.ToString("D"));

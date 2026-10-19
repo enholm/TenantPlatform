@@ -118,7 +118,11 @@ public sealed class DelegatedMcpGateway(IHttpContextAccessor http, OpenIddictCli
             using var backend = Backend(); await using var client = await Connect(accessToken, backend, budget.Token);
             var args = JsonSerializer.Deserialize<Dictionary<string, object?>>(arguments)!;
             var result = await client.CallToolAsync(name, args, cancellationToken: budget.Token);
-            if (result.IsError == true) throw new McpClientException("MCP_UNAVAILABLE");
+            if (result.IsError == true)
+            {
+                var code = result.Content.OfType<TextContentBlock>().SingleOrDefault()?.Text;
+                throw new McpClientException(code is "RESULT_TOO_LARGE" or "RESOURCE_UNAVAILABLE" or "INVALID_ARGUMENT" or "CANCELLED" ? code : "MCP_UNAVAILABLE");
+            }
             var output = JsonSerializer.Serialize(result);
             if (System.Text.Encoding.UTF8.GetByteCount(output) > 64 * 1024) throw new McpClientException("RESULT_TOO_LARGE");
             return output;

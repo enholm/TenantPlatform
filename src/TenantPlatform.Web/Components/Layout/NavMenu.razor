@@ -8,6 +8,7 @@
 
 @if (UserContext.Current.IsAuthenticated)
 {
+    <NavLink href="/my-pages" class="sidebar-link"><i class="bi bi-file-bar-graph"></i><span>@L["MyPages"]</span></NavLink>
     @if (permissions.CanSeeAgreements)
     {
         <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "RRM")">

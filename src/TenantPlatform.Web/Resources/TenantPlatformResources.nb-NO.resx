@@ -3375,4 +3375,55 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AgentErrorHistoryUnavailable" xml:space="preserve"><value>Tidligere kildeinnhold kunne ikke kontrolleres sikkert og er fjernet sammen med avledede svar. Ingen ny konklusjon vises. Prøv igjen eller start ny samtale.</value></data>
   <data name="AgentSessionExpired" xml:space="preserve"><value>Samtalen er utløpt og innholdet er fjernet. Start en ny samtale.</value></data>
   <data name="AgentAggregateFacts" xml:space="preserve"><value>Gruppering: {0}; {1} unike avtaler i {2} grupper. Fullstendig: {3}; overlapp: {4}; konsistent snapshot: {5}.</value></data>
+  <data name="MyPages" xml:space="preserve"><value>Mine sider</value></data>
+  <data name="PagesCreate" xml:space="preserve"><value>Opprett rapportside</value></data>
+  <data name="PagesEdit" xml:space="preserve"><value>Rediger rapportside</value></data>
+  <data name="PagesPeriod" xml:space="preserve"><value>Datoperiode</value></data>
+  <data name="PagesNextMonths" xml:space="preserve"><value>Neste N kalendermåneder</value></data>
+  <data name="PagesFixed" xml:space="preserve"><value>Faste inklusive datoer</value></data>
+  <data name="PagesMonths" xml:space="preserve"><value>Antall måneder</value></data>
+  <data name="PagesFrom" xml:space="preserve"><value>Fra og med</value></data>
+  <data name="PagesTo" xml:space="preserve"><value>Til og med</value></data>
+  <data name="PagesAll" xml:space="preserve"><value>Alle</value></data>
+  <data name="PagesArchive" xml:space="preserve"><value>Arkiv</value></data>
+  <data name="PagesArchiveInclude" xml:space="preserve"><value>Ta med arkiverte</value></data>
+  <data name="PagesArchiveExclude" xml:space="preserve"><value>Utelat arkiverte</value></data>
+  <data name="PagesArchiveOnly" xml:space="preserve"><value>Bare arkiverte</value></data>
+  <data name="PagesBuildingId" xml:space="preserve"><value>Bygg-ID (valgfritt)</value></data>
+  <data name="PagesMissingOnly" xml:space="preserve"><value>Bare uten gyldig byggtilknytning</value></data>
+  <data name="PagesComponentMetric" xml:space="preserve"><value>Rekkefølge: nøkkeltall</value></data>
+  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Rekkefølge: byggdiagram</value></data>
+  <data name="PagesComponentAgreementTable" xml:space="preserve"><value>Rekkefølge: avtaletabell</value></data>
+  <data name="PagesPreview" xml:space="preserve"><value>Forhåndsvis</value></data>
+  <data name="PagesRefresh" xml:space="preserve"><value>Hent ferske data</value></data>
+  <data name="PagesDeleteConfirm" xml:space="preserve"><value>Slette denne personlige rapportsiden?</value></data>
+  <data name="PagesUp" xml:space="preserve"><value>Flytt opp</value></data>
+  <data name="PagesDown" xml:space="preserve"><value>Flytt ned</value></data>
+  <data name="PagesLoading" xml:space="preserve"><value>Henter autoriserte MCP-data …</value></data>
+  <data name="PagesSaved" xml:space="preserve"><value>Siden er lagret.</value></data>
+  <data name="PagesEmpty" xml:space="preserve"><value>Ingen autoriserte treff.</value></data>
+  <data name="PagesMissing" xml:space="preserve"><value>Mangler byggtilknytning</value></data>
+  <data name="PagesTotal" xml:space="preserve"><value>Unike autoriserte avtaler</value></data>
+  <data name="PagesDate" xml:space="preserve"><value>Periode og hentetidspunkt</value></data>
+  <data name="PagesCount" xml:space="preserve"><value>Antall</value></data>
+  <data name="PagesPage" xml:space="preserve"><value>Side</value></data>
+  <data name="PagesSnapshot" xml:space="preserve"><value>Liste og aggregat hentes separat uten et atomisk snapshot. Tallene kan derfor variere mellom kall.</value></data>
+  <data name="PagesErrorInvalid" xml:space="preserve"><value>Ugyldig sidedefinisjon eller filter. Kontroller feltene og komponentrekkefølgen.</value></data>
+  <data name="PagesErrorConflict" xml:space="preserve"><value>Siden eller rekkefølgen er endret i en annen fane. Last siden på nytt før du lagrer.</value></data>
+  <data name="PagesErrorSourceChanged" xml:space="preserve"><value>Kilden eller godkjenningen er endret. Velg en aktuell godkjent tilkobling og lagre eksplisitt på nytt.</value></data>
+  <data name="PagesErrorSourceUnavailable" xml:space="preserve"><value>MCP-kilden krever tilkobling eller er utilgjengelig. Ingen nulltall er beregnet.</value></data>
+  <data name="PagesErrorContract" xml:space="preserve"><value>MCP-kontrakten er endret eller ugyldig. Rapporten må oppdateres eksplisitt.</value></data>
+  <data name="PagesErrorLimit" xml:space="preserve"><value>En grense for sider, grupper eller svarstørrelse er overskredet. Snevr inn utvalget.</value></data>
+  <data name="PagesErrorAccess" xml:space="preserve"><value>Siden eller kontoen er ikke tilgjengelig.</value></data>
+  <data name="PagesErrorBusy" xml:space="preserve"><value>En rapportkjøring er allerede aktiv. Avbryt den eller vent.</value></data>
+  <data name="PagesErrorCancelled" xml:space="preserve"><value>Lastingen ble avbrutt eller tidsgrensen ble nådd.</value></data>
+  <data name="PagesErrorUnavailable" xml:space="preserve"><value>Rapporten er utilgjengelig. Ingen gamle eller ufullstendige tall vises som ferske.</value></data>
+  <data name="PagesOAuthConsent" xml:space="preserve"><value>Du gir klienten rett til å opprette, endre, omorganisere og slette dine egne rapportsider. Dette er skrivetilgang.</value></data>
+  <data name="PagesErrorAuthorization" xml:space="preserve"><value>Koble til personlig på nytt i MCP-registeret. Ingen rapportdata er hentet.</value></data>
+  <data name="PagesUnitId" xml:space="preserve"><value>Enhets-ID (valgfritt)</value></data>
+  <data name="PagesOrganizationId" xml:space="preserve"><value>Organisasjonsenhet-ID (valgfritt)</value></data>
+  <data name="PagesGeographyId" xml:space="preserve"><value>Geografisk område-ID (valgfritt)</value></data>
+  <data name="PagesComplete" xml:space="preserve"><value>Hele utvalget på denne siden</value></data>
+  <data name="PagesMore" xml:space="preserve"><value>Flere treff på senere sider</value></data>
+  <data name="PagesLimitReached" xml:space="preserve"><value>Sidegrensen er nådd</value></data>
 </root>

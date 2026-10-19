@@ -27,5 +27,5 @@ public interface IMcpRegistryData
 public interface IMcpRegisteredClientFactory
 {
     Task ForgetAsync(Guid user, Guid connection, CancellationToken ct);
-    InternalMcpClientService Create(McpAuthProfile profile, Guid connection, IMcpConnectionAccess access);
+    InternalMcpClientService Create(McpAuthProfile profile, Guid connection, IMcpConnectionAccess access, TenantPlatform.Application.Security.ICurrentActor actor);
 }

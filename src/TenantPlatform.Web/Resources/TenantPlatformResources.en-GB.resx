@@ -3339,4 +3339,55 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AgentErrorHistoryUnavailable" xml:space="preserve"><value>Previous source content could not be safely revalidated and was removed together with derived answers. No new conclusion is shown. Retry or start a new conversation.</value></data>
   <data name="AgentSessionExpired" xml:space="preserve"><value>The conversation expired and its content was cleared. Start a new conversation.</value></data>
   <data name="AgentAggregateFacts" xml:space="preserve"><value>Grouping: {0}; {1} unique agreements in {2} groups. Complete: {3}; overlap: {4}; consistent snapshot: {5}.</value></data>
+  <data name="MyPages" xml:space="preserve"><value>My pages</value></data>
+  <data name="PagesCreate" xml:space="preserve"><value>Create report page</value></data>
+  <data name="PagesEdit" xml:space="preserve"><value>Edit report page</value></data>
+  <data name="PagesPeriod" xml:space="preserve"><value>Date period</value></data>
+  <data name="PagesNextMonths" xml:space="preserve"><value>Next N calendar months</value></data>
+  <data name="PagesFixed" xml:space="preserve"><value>Fixed inclusive dates</value></data>
+  <data name="PagesMonths" xml:space="preserve"><value>Number of months</value></data>
+  <data name="PagesFrom" xml:space="preserve"><value>From, inclusive</value></data>
+  <data name="PagesTo" xml:space="preserve"><value>To, inclusive</value></data>
+  <data name="PagesAll" xml:space="preserve"><value>All</value></data>
+  <data name="PagesArchive" xml:space="preserve"><value>Archive</value></data>
+  <data name="PagesArchiveInclude" xml:space="preserve"><value>Include archived</value></data>
+  <data name="PagesArchiveExclude" xml:space="preserve"><value>Exclude archived</value></data>
+  <data name="PagesArchiveOnly" xml:space="preserve"><value>Archived only</value></data>
+  <data name="PagesBuildingId" xml:space="preserve"><value>Building ID (optional)</value></data>
+  <data name="PagesMissingOnly" xml:space="preserve"><value>Only without a valid building</value></data>
+  <data name="PagesComponentMetric" xml:space="preserve"><value>Order: key metric</value></data>
+  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Order: building chart</value></data>
+  <data name="PagesComponentAgreementTable" xml:space="preserve"><value>Order: agreement table</value></data>
+  <data name="PagesPreview" xml:space="preserve"><value>Preview</value></data>
+  <data name="PagesRefresh" xml:space="preserve"><value>Refresh data</value></data>
+  <data name="PagesDeleteConfirm" xml:space="preserve"><value>Delete this personal report page?</value></data>
+  <data name="PagesUp" xml:space="preserve"><value>Move up</value></data>
+  <data name="PagesDown" xml:space="preserve"><value>Move down</value></data>
+  <data name="PagesLoading" xml:space="preserve"><value>Fetching authorized MCP data …</value></data>
+  <data name="PagesSaved" xml:space="preserve"><value>Page saved.</value></data>
+  <data name="PagesEmpty" xml:space="preserve"><value>No authorized matches.</value></data>
+  <data name="PagesMissing" xml:space="preserve"><value>No building assigned</value></data>
+  <data name="PagesTotal" xml:space="preserve"><value>Unique authorized agreements</value></data>
+  <data name="PagesDate" xml:space="preserve"><value>Period and retrieval time</value></data>
+  <data name="PagesCount" xml:space="preserve"><value>Count</value></data>
+  <data name="PagesPage" xml:space="preserve"><value>Page</value></data>
+  <data name="PagesSnapshot" xml:space="preserve"><value>List and aggregate are fetched separately without an atomic snapshot. Counts may differ between calls.</value></data>
+  <data name="PagesErrorInvalid" xml:space="preserve"><value>Invalid page definition or filter. Check the fields and component order.</value></data>
+  <data name="PagesErrorConflict" xml:space="preserve"><value>Page or order changed in another tab. Reload before saving.</value></data>
+  <data name="PagesErrorSourceChanged" xml:space="preserve"><value>Source or approval changed. Select a current approved connection and explicitly save again.</value></data>
+  <data name="PagesErrorSourceUnavailable" xml:space="preserve"><value>MCP source needs authorization or is unavailable. No zero counts have been inferred.</value></data>
+  <data name="PagesErrorContract" xml:space="preserve"><value>MCP contract changed or is invalid. The report requires an explicit update.</value></data>
+  <data name="PagesErrorLimit" xml:space="preserve"><value>A page, group or response limit was exceeded. Narrow the selection.</value></data>
+  <data name="PagesErrorAccess" xml:space="preserve"><value>Page or account is unavailable.</value></data>
+  <data name="PagesErrorBusy" xml:space="preserve"><value>A report is already running. Cancel it or wait.</value></data>
+  <data name="PagesErrorCancelled" xml:space="preserve"><value>Loading was cancelled or timed out.</value></data>
+  <data name="PagesErrorUnavailable" xml:space="preserve"><value>Report unavailable. Old or incomplete counts are not shown as fresh.</value></data>
+  <data name="PagesOAuthConsent" xml:space="preserve"><value>You allow this client to create, edit, reorder and delete your personal report pages. This is write access.</value></data>
+  <data name="PagesErrorAuthorization" xml:space="preserve"><value>Reconnect personally in the MCP registry. No report data was retrieved.</value></data>
+  <data name="PagesUnitId" xml:space="preserve"><value>Unit ID (optional)</value></data>
+  <data name="PagesOrganizationId" xml:space="preserve"><value>Organisation element ID (optional)</value></data>
+  <data name="PagesGeographyId" xml:space="preserve"><value>Geographic area ID (optional)</value></data>
+  <data name="PagesComplete" xml:space="preserve"><value>Entire selection on this page</value></data>
+  <data name="PagesMore" xml:space="preserve"><value>More matches on later pages</value></data>
+  <data name="PagesLimitReached" xml:space="preserve"><value>Page limit reached</value></data>
 </root>

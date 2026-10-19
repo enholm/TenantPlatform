@@ -46,16 +46,24 @@ public sealed class AgreementReportingReader(IAuthorizationService authorization
     private async Task<(AgreementListScope, AgreementReportSelection)> Select(Guid account, AgreementReportFilter filter, CancellationToken ct)
     {
         var instant = clock.GetUtcNow();
+        AgreementReportFilterRules.Validate(filter);
+        var scope = await authorization.GetAgreementListScopeAsync(account, ct);
+        var today = AgreementReminderSchedule.Today(instant, await data.TimeZoneAsync(account, ct));
+        var normalized = filter with { Search = filter.Search?.Trim(), EndDateFrom = filter.EndsWithinMonths.HasValue ? today : filter.EndDateFrom,
+            EndDateTo = filter.EndsWithinMonths is { } months ? today.AddMonths(months) : filter.EndDateTo, EndsWithinMonths = null };
+        return (scope, new(normalized, today));
+    }
+}
+
+public static class AgreementReportFilterRules
+{
+    public static void Validate(AgreementReportFilter filter)
+    {
         if (!Enum.IsDefined(filter.Archive) || filter.Status is { } status && !Enum.IsDefined(status) || filter.Type is { } type && !Enum.IsDefined(type) ||
             filter.Search is { } text && (text.EnumerateRunes().Count() > 200 || text.Any(char.IsControl)) ||
             new[] { filter.BuildingId, filter.OrganizationElementId, filter.GeographicAreaId, filter.UnitId }.Any(x => x == Guid.Empty) ||
             filter.MissingBuilding && filter.BuildingId.HasValue || filter.EndDateFrom > filter.EndDateTo ||
             filter.EndsWithinMonths is < 1 or > 12 || filter.EndsWithinMonths.HasValue && (filter.EndDateFrom.HasValue || filter.EndDateTo.HasValue))
             throw new ArgumentException("Invalid agreement filter.");
-        var scope = await authorization.GetAgreementListScopeAsync(account, ct);
-        var today = AgreementReminderSchedule.Today(instant, await data.TimeZoneAsync(account, ct));
-        var normalized = filter with { Search = filter.Search?.Trim(), EndDateFrom = filter.EndsWithinMonths.HasValue ? today : filter.EndDateFrom,
-            EndDateTo = filter.EndsWithinMonths is { } months ? today.AddMonths(months) : filter.EndDateTo, EndsWithinMonths = null };
-        return (scope, new(normalized, today));
     }
 }

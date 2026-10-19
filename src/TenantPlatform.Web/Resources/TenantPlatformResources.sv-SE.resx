@@ -3376,4 +3376,55 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="AgentErrorHistoryUnavailable" xml:space="preserve"><value>Tidigare källinnehåll kunde inte kontrolleras säkert och togs bort tillsammans med härledda svar. Ingen ny slutsats visas. Försök igen eller starta ett nytt samtal.</value></data>
   <data name="AgentSessionExpired" xml:space="preserve"><value>Samtalet har löpt ut och innehållet har raderats. Starta ett nytt samtal.</value></data>
   <data name="AgentAggregateFacts" xml:space="preserve"><value>Gruppering: {0}; {1} unika avtal i {2} grupper. Fullständigt: {3}; överlapp: {4}; konsekvent ögonblicksbild: {5}.</value></data>
+  <data name="MyPages" xml:space="preserve"><value>Mina sidor</value></data>
+  <data name="PagesCreate" xml:space="preserve"><value>Skapa rapportsida</value></data>
+  <data name="PagesEdit" xml:space="preserve"><value>Redigera rapportsida</value></data>
+  <data name="PagesPeriod" xml:space="preserve"><value>Datumperiod</value></data>
+  <data name="PagesNextMonths" xml:space="preserve"><value>Nästa N kalendermånader</value></data>
+  <data name="PagesFixed" xml:space="preserve"><value>Fasta inklusive datum</value></data>
+  <data name="PagesMonths" xml:space="preserve"><value>Antal månader</value></data>
+  <data name="PagesFrom" xml:space="preserve"><value>Från och med</value></data>
+  <data name="PagesTo" xml:space="preserve"><value>Till och med</value></data>
+  <data name="PagesAll" xml:space="preserve"><value>Alla</value></data>
+  <data name="PagesArchive" xml:space="preserve"><value>Arkiv</value></data>
+  <data name="PagesArchiveInclude" xml:space="preserve"><value>Inkludera arkiverade</value></data>
+  <data name="PagesArchiveExclude" xml:space="preserve"><value>Uteslut arkiverade</value></data>
+  <data name="PagesArchiveOnly" xml:space="preserve"><value>Bara arkiverade</value></data>
+  <data name="PagesBuildingId" xml:space="preserve"><value>Byggnads-ID (valfritt)</value></data>
+  <data name="PagesMissingOnly" xml:space="preserve"><value>Bara utan giltig byggnad</value></data>
+  <data name="PagesComponentMetric" xml:space="preserve"><value>Ordning: nyckeltal</value></data>
+  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Ordning: byggnadsdiagram</value></data>
+  <data name="PagesComponentAgreementTable" xml:space="preserve"><value>Ordning: avtalstabell</value></data>
+  <data name="PagesPreview" xml:space="preserve"><value>Förhandsvisa</value></data>
+  <data name="PagesRefresh" xml:space="preserve"><value>Hämta aktuella data</value></data>
+  <data name="PagesDeleteConfirm" xml:space="preserve"><value>Ta bort denna personliga rapportsida?</value></data>
+  <data name="PagesUp" xml:space="preserve"><value>Flytta upp</value></data>
+  <data name="PagesDown" xml:space="preserve"><value>Flytta ned</value></data>
+  <data name="PagesLoading" xml:space="preserve"><value>Hämtar behöriga MCP-data …</value></data>
+  <data name="PagesSaved" xml:space="preserve"><value>Sidan har sparats.</value></data>
+  <data name="PagesEmpty" xml:space="preserve"><value>Inga behöriga träffar.</value></data>
+  <data name="PagesMissing" xml:space="preserve"><value>Saknar byggnad</value></data>
+  <data name="PagesTotal" xml:space="preserve"><value>Unika behöriga avtal</value></data>
+  <data name="PagesDate" xml:space="preserve"><value>Period och hämtningstid</value></data>
+  <data name="PagesCount" xml:space="preserve"><value>Antal</value></data>
+  <data name="PagesPage" xml:space="preserve"><value>Sida</value></data>
+  <data name="PagesSnapshot" xml:space="preserve"><value>Lista och aggregat hämtas separat utan en atomisk ögonblicksbild. Antal kan skilja sig mellan anrop.</value></data>
+  <data name="PagesErrorInvalid" xml:space="preserve"><value>Ogiltig siddefinition eller filter. Kontrollera fälten och komponentordningen.</value></data>
+  <data name="PagesErrorConflict" xml:space="preserve"><value>Sidan eller ordningen ändrades i en annan flik. Ladda om innan du sparar.</value></data>
+  <data name="PagesErrorSourceChanged" xml:space="preserve"><value>Källan eller godkännandet ändrades. Välj en aktuell godkänd anslutning och spara uttryckligen igen.</value></data>
+  <data name="PagesErrorSourceUnavailable" xml:space="preserve"><value>MCP-källan kräver anslutning eller är otillgänglig. Inga nollvärden har beräknats.</value></data>
+  <data name="PagesErrorContract" xml:space="preserve"><value>MCP-kontraktet ändrades eller är ogiltigt. Rapporten måste uppdateras uttryckligen.</value></data>
+  <data name="PagesErrorLimit" xml:space="preserve"><value>En gräns för sidor, grupper eller svar överskreds. Begränsa urvalet.</value></data>
+  <data name="PagesErrorAccess" xml:space="preserve"><value>Sidan eller kontot är inte tillgängligt.</value></data>
+  <data name="PagesErrorBusy" xml:space="preserve"><value>En rapport körs redan. Avbryt den eller vänta.</value></data>
+  <data name="PagesErrorCancelled" xml:space="preserve"><value>Laddningen avbröts eller tidsgränsen nåddes.</value></data>
+  <data name="PagesErrorUnavailable" xml:space="preserve"><value>Rapporten är otillgänglig. Gamla eller ofullständiga tal visas inte som aktuella.</value></data>
+  <data name="PagesOAuthConsent" xml:space="preserve"><value>Du ger klienten rätt att skapa, ändra, ordna och ta bort dina personliga rapportsidor. Detta är skrivåtkomst.</value></data>
+  <data name="PagesErrorAuthorization" xml:space="preserve"><value>Anslut personligen igen i MCP-registret. Inga rapportdata har hämtats.</value></data>
+  <data name="PagesUnitId" xml:space="preserve"><value>Enhets-ID (valfritt)</value></data>
+  <data name="PagesOrganizationId" xml:space="preserve"><value>Organisationsenhets-ID (valfritt)</value></data>
+  <data name="PagesGeographyId" xml:space="preserve"><value>Geografiskt områdes-ID (valfritt)</value></data>
+  <data name="PagesComplete" xml:space="preserve"><value>Hela urvalet på denna sida</value></data>
+  <data name="PagesMore" xml:space="preserve"><value>Fler träffar på senare sidor</value></data>
+  <data name="PagesLimitReached" xml:space="preserve"><value>Sidgränsen har nåtts</value></data>
 </root>

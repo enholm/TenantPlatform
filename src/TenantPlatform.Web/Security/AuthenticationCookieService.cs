@@ -19,7 +19,10 @@ public class AuthenticationCookieService
         var previous = httpContext.User;
         if (Guid.TryParse(previous.FindFirst(TenantPlatformClaimTypes.UserId)?.Value, out var oldUser) &&
             (oldUser != user.Id || previous.FindFirst(TenantPlatformClaimTypes.CurrentAccountId)?.Value != currentAccountId?.ToString()))
+        {
             httpContext.RequestServices.GetService<TenantPlatform.Application.Agent.ReadAgentSessions>()?.ClearUser(oldUser);
+            httpContext.RequestServices.GetService<TenantPlatform.Application.PersonalPages.PersonalPageRuns>()?.CancelUser(oldUser);
+        }
         var claims = new List<Claim>
         {
             new(

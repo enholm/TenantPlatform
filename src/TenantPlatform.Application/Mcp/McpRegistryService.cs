@@ -69,7 +69,7 @@ public sealed class McpRegistryService(ICurrentActor actor, IAuthorizationServic
                 !(await data.ToolsAsync(account, connection, token)).Any(x => x.Name == expectedTool.Name && x.Version == expectedTool.Version && x.Approved && x.UseClass == McpToolUse.AutomaticRead && McpAccessPolicy.Tool(x.Audience, x.AccessGrants, currentSubject))))
                 throw new McpClientException("TOOL_NOT_APPROVED");
         });
-        return clients.Create(profile with { Binding = profile.Binding with { ProfileVersion = profile.Version + ":" + row.CredentialEpoch.ToString("N") } }, connection, guard);
+        return clients.Create(profile with { Binding = profile.Binding with { ProfileVersion = profile.Version + ":" + row.CredentialEpoch.ToString("N") } }, connection, guard, actor);
     }
     public async Task<bool> DisconnectAsync(Guid connection, CancellationToken ct = default)
     {

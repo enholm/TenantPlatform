@@ -29,7 +29,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
     {
         var page = await registry.ListAsync(ct);
         var tools = await registry.AvailableToolsAsync(ct);
-        return tools.Where(t => t.UseClass == McpToolUse.AutomaticRead &&
+        return tools.Where(t => !t.Name.StartsWith("personal_pages_", StringComparison.Ordinal) && t.UseClass == McpToolUse.AutomaticRead &&
             (External(t.ConnectionId, page) || t.Name is "agreements_list" or "agreements_attention" or "agreements_query" or "agreements_aggregate" or "agreements_details")).ToArray();
     }
     private static bool External(Guid connection, McpRegistryPage page)

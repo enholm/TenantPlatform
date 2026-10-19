@@ -17,7 +17,7 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -4113,6 +4113,28 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.HasIndex("AccountId", "OrganizationNumber");
 
                     b.ToTable("organizations", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.PersonalPages.PersonalPageSet", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DefinitionsJson")
+                        .IsRequired()
+                        .HasMaxLength(524288)
+                        .HasColumnType("character varying(524288)");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("AccountId", "OwnerUserId");
+
+                    b.ToTable("personal_page_sets", (string)null);
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Properties.Building", b =>

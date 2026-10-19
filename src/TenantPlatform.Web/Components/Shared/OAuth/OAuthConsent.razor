@@ -4,6 +4,7 @@
     <h1>@L["OAuthConsentTitle"]</h1>
     <p>@L["OAuthClientLabel"]: <strong>@ClientName</strong></p>
     <p>@L["OAuthReadAccess"]</p>
+    @if (PagesAllowed) { <p class="alert alert-warning">@L["PagesOAuthConsent"]</p> }
     <p>@L["OAuthDuration"]</p>
     @if (RefreshAllowed) { <p>@L["OAuthRefreshConsent"]</p> }
     <form method="post" action="/connect/authorize">
@@ -18,6 +19,7 @@
     [Parameter] public string ClientName { get; set; } = "";
     [Parameter] public string Interaction { get; set; } = "";
     [Parameter] public Dictionary<string, string> Parameters { get; set; } = [];
+    [Parameter] public bool PagesAllowed { get; set; }
     [Parameter] public bool RefreshAllowed { get; set; }
     [Parameter] public string VerificationToken { get; set; } = "";
 }

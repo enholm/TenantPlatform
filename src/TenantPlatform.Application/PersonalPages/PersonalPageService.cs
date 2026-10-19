@@ -1,0 +1,78 @@
+using System.Text.Json;
+using TenantPlatform.Application.Agreements;
+using TenantPlatform.Application.Mcp;
+using TenantPlatform.Application.Security;
+namespace TenantPlatform.Application.PersonalPages;
+
+public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationService authorization, IPersonalPageData data, McpRegistryService? registry)
+{
+    public const int MaxPages = 20;
+    public async Task<ActorSnapshot> RequireAsync(CancellationToken ct)
+    {
+        var who = actor.GetSnapshot();
+        if (!who.IsAuthenticated || who.AccountId is not Guid account || !await authorization.CanAsync(Permissions.McpConnections.Use, new(ResourceKind.Account, AccountId: account), ct)) throw new UnauthorizedAccessException();
+        return who;
+    }
+    public async Task<PersonalPageCollection> ListAsync(CancellationToken ct = default)
+    {
+        var who = await RequireAsync(ct); return await data.ReadAsync(who.AccountId!.Value, who.UserId, ct);
+    }
+    public async Task<PersonalPage> ReadAsync(Guid id, CancellationToken ct = default) =>
+        (await ListAsync(ct)).Pages.SingleOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException();
+    public async Task<PageSource[]> SourcesAsync(CancellationToken ct = default)
+    {
+        await RequireAsync(ct);
+        if (registry is null) return [];
+        var page = await registry.ListAsync(ct); var available = (await registry.AvailableToolsAsync(ct)).Where(t => t.UseClass == TenantPlatform.Core.Identity.McpToolUse.AutomaticRead).ToArray();
+        return page.Servers.Where(s => page.Profiles.Any(p => p.Id == s.ProfileId && p.Version == s.ProfileVersion && !p.Binding.External))
+            .Select(s => { var q = available.SingleOrDefault(t => t.ConnectionId == s.Id && t.Name == "agreements_query"); var a = available.SingleOrDefault(t => t.ConnectionId == s.Id && t.Name == "agreements_aggregate");
+                return q is null || a is null ? null : new PageSource(s.Id, s.Name, q.Version, a.Version, s.ProfileVersion); }).OfType<PageSource>().ToArray();
+    }
+    public static void Validate(PageDefinition d)
+    {
+        if (d.Version != 1 || string.IsNullOrWhiteSpace(d.Title) || d.Title.Length > 100 || d.Title.Any(char.IsControl) || d.ConnectionId == Guid.Empty ||
+            d.ProfileVersion.Length is < 1 or > 200 || d.QueryVersion.Length is < 1 or > 200 || d.AggregateVersion.Length is < 1 or > 200 || d.Layout != "Stacked" ||
+            d.Components.Length != 3 || d.Components.Distinct().Count() != 3 || d.Components.Any(x => !Enum.IsDefined(x)) ||
+            JsonSerializer.SerializeToUtf8Bytes(d).Length > 16384) throw new PersonalPageException("Invalid");
+        try { AgreementReportFilterRules.Validate(d.Filter); } catch (ArgumentException) { throw new PersonalPageException("Invalid"); }
+        if (d.Filter.EndDateFrom.HasValue || d.Filter.EndDateTo.HasValue || d.Filter.EndsWithinMonths.HasValue || !Enum.IsDefined(d.Period.Kind) ||
+            (d.Period.Kind == PagePeriodKind.NextMonths ? d.Period.Months is not (>= 1 and <= 12) || d.Period.From.HasValue || d.Period.To.HasValue :
+                d.Period.Months.HasValue || !d.Period.From.HasValue || !d.Period.To.HasValue || d.Period.From > d.Period.To)) throw new PersonalPageException("Invalid");
+    }
+    public async Task ValidateSourceAsync(PageDefinition d, CancellationToken ct)
+    {
+        Validate(d);
+        if (!(await SourcesAsync(ct)).Any(s => s.ConnectionId == d.ConnectionId && s.QueryVersion == d.QueryVersion && s.AggregateVersion == d.AggregateVersion && s.ProfileVersion == d.ProfileVersion))
+        {
+            if (registry is null) throw new PersonalPageException("SourceUnavailable");
+            var state = await registry.DescribeAsync(d.ConnectionId, ct);
+            throw new PersonalPageException(state.Reason == McpAvailability.AuthorizationRequired ? "Authorization" : state.Reason == McpAvailability.AccessDenied ? "Access" : "SourceChanged");
+        }
+    }
+    public async Task<PersonalPageCollection> SaveAsync(Guid? id, Guid revision, PageDefinition definition, CancellationToken ct = default)
+    {
+        var who = await RequireAsync(ct); Validate(definition);
+        var current = await data.ReadAsync(who.AccountId!.Value, who.UserId, ct);
+        if (id.HasValue && !current.Pages.Any(p => p.Id == id)) throw new UnauthorizedAccessException();
+        if (current.Revision != revision) throw new PersonalPageException("Conflict");
+        await ValidateSourceAsync(definition, ct);
+        if (!id.HasValue && current.Pages.Length >= MaxPages) throw new PersonalPageException("Limit");
+        var row = new PersonalPage(id ?? Guid.NewGuid(), who.AccountId.Value, who.UserId, definition with { Title = definition.Title.Trim() });
+        var pages = id.HasValue ? current.Pages.Select(p => p.Id == id ? row : p).ToArray() : [..current.Pages, row];
+        var next = new PersonalPageCollection(Guid.NewGuid(), pages);
+        if (await RequireAsync(ct) != who) throw new UnauthorizedAccessException();
+        await data.SaveAsync(who.AccountId.Value, who.UserId, revision, next, ct); return next;
+    }
+    public async Task<PersonalPageCollection> ChangeAsync(Guid id, Guid revision, int? move, CancellationToken ct = default)
+    {
+        var who = await RequireAsync(ct); var current = await ListAsync(ct);
+        var index = Array.FindIndex(current.Pages, p => p.Id == id); if (index < 0) throw new UnauthorizedAccessException();
+        if (current.Revision != revision) throw new PersonalPageException("Conflict");
+        var rows = current.Pages.ToList();
+        if (move is null) rows.RemoveAt(index);
+        else { if (move is not (-1 or 1) || index + move < 0 || index + move >= rows.Count) throw new PersonalPageException("Invalid"); (rows[index], rows[index + move.Value]) = (rows[index + move.Value], rows[index]); }
+        var next = new PersonalPageCollection(Guid.NewGuid(), rows.ToArray());
+        if (await RequireAsync(ct) != who) throw new UnauthorizedAccessException();
+        await data.SaveAsync(who.AccountId!.Value, who.UserId, revision, next, ct); return next;
+    }
+}

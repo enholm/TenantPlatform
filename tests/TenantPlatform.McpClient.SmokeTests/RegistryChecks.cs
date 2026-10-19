@@ -1,3 +1,4 @@
+using TenantPlatform.Web.PersonalPages;
 using TenantPlatform.Web.Agent;
 using System.Net;
 using System.Security.Claims;
@@ -59,7 +60,16 @@ static partial class RegistryChecks
         var remoteRefreshes = 0; var remoteCalls = 0; var failRefresh = false; var callsBeforeFailure = 0; var changedSchema = false; var hugeCatalogue = false; var redirectMcp = false; var bearerRequests = 0;
         var remoteTokens = new System.Collections.Concurrent.ConcurrentBag<string>();
         await using var remote = await StartRemote();
+        var writerRole = new NpgsqlConnectionStringBuilder(connection) { Username = "personal_pages_writer" }.ConnectionString;
+        await using (var admin = new NpgsqlConnection(connection))
+        {
+            await admin.OpenAsync();
+            await using var command = new NpgsqlCommand("CREATE ROLE personal_pages_writer LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT; GRANT CONNECT ON DATABASE tenant_mcp_client_tests TO personal_pages_writer; GRANT USAGE ON SCHEMA public TO personal_pages_writer; GRANT SELECT,INSERT,UPDATE ON personal_page_sets TO personal_pages_writer", admin);
+            await command.ExecuteNonQueryAsync();
+        }
+        issuer.Clients.Single(c => c.ClientId == own.ClientId).AllowPersonalPages = true;
         web = await StartWeb();
+        await OAuthComposition.RegisterClientsAsync(web.Services, issuer);
         try
         {
             Check((await remote.GetTestClient().GetAsync("https://external.test/.well-known/openid-configuration")).StatusCode == HttpStatusCode.NotFound, "external fixture exposes OAuth metadata without OpenID discovery");
@@ -87,6 +97,7 @@ static partial class RegistryChecks
             Check((await Call(m, a2)).StatusCode == HttpStatusCode.OK, "member uses only own personally authorized credentials");
             await Connect(m, a1);
             await RunAgent(web, factory, adminA, member, accountA, accountB, a1, a2, a3, clock, agentProtocol, () => remoteCalls, a);
+            await RunPersonalPages(web, factory, writerRole, adminA, member, accountA, accountB, a1, a, own, agentProtocol);
             await Post(m, "disconnect", new() { ["id"] = a1.ToString() });
             await RunPolicies(web, factory, adminA, adminB, member, accountA, accountB, a1, a2, a3, clock, () => remoteCalls, a, m);
             Check((await Post(m, "disconnect", new() { ["id"] = a2.ToString() })).StatusCode == HttpStatusCode.Redirect &&
@@ -182,10 +193,17 @@ static partial class RegistryChecks
             builder.Services.AddInternalMcpClient(own, issuer, registryOptions);
             builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["ReadAgent:Enabled"] = "true", ["ReadAgent:Model"] = "synthetic-no-network", ["ReadAgent:ApiKey"] = "synthetic-agent-key" });
             builder.Services.AddReadAgent(builder.Configuration);
+            builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> {
+                ["PersonalPages:Administration:Enabled"] = "true", ["PersonalPages:Administration:ConnectionString"] = writerRole,
+                ["OAuth:Enabled"] = "true", ["InternalMcp:Enabled"] = "true" });
+            builder.Services.AddPersonalPages(builder.Configuration);
             builder.Services.ConfigureAll<HttpClientFactoryOptions>(o => o.HttpMessageHandlerBuilderActions.Add(h => h.AdditionalHandlers.Add(new RegistryRoute(Route))));
         }, app =>
         {
             app.MapInternalMcpClient(); app.MapMcpRegistry(); app.MapReadAgent();
+            app.MapPersonalPages(); app.MapPersonalPagesMcp();
+            app.MapGet("/my-pages", (HttpContext http) => new Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult<TenantPlatform.Web.Components.Pages.PersonalPages.PersonalPages>(new { RequestContext = http }));
+            app.MapGet("/my-pages/{id:guid}", (Guid id, HttpContext http) => new Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult<TenantPlatform.Web.Components.Pages.PersonalPages.PersonalPages>(new { RequestContext = http, Id = (Guid?)id }));
             app.MapGet("/agent", (HttpContext http) => new Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult<TenantPlatform.Web.Components.Shared.Agent.ReadAgentPanel>(new { RequestContext = http }));
             app.MapGet("/fixture/registry/call", async (HttpContext http, CancellationToken ct) =>
             {
@@ -199,6 +217,7 @@ static partial class RegistryChecks
             var uri = request.RequestUri!;
             if (uri.Host == "api.openai.com") return await agentProtocol.Reply(request, ct);
             if (uri.Host == "tenant.test") return await web!.GetTestServer().CreateHandler().SendVia(request, ct);
+            if (uri.Host == "mcp.test") await PagesProtocol.Observe(request, ct);
             if (uri.Host == "mcp.test") return await internalServer.GetTestServer().CreateHandler().SendVia(request, ct);
             if (uri.Host == "blocked.test")
                 return new(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(new {

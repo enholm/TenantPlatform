@@ -14,11 +14,11 @@ public sealed class McpRegisteredClientFactory(IServiceProvider services, McpAut
     public Task ForgetAsync(Guid user, Guid connection, CancellationToken ct) =>
         new McpClientStore(services.GetRequiredService<DbContextOptions<OAuthDbContext>>(), connection)
             .WithUserLockAsync(user, async (slot, token) => { await slot.SaveAsync(null, token); return true; }, ct);
-    public InternalMcpClientService Create(McpAuthProfile profile, Guid connection, IMcpConnectionAccess access)
+    public InternalMcpClientService Create(McpAuthProfile profile, Guid connection, IMcpConnectionAccess access, ICurrentActor actor)
     {
         var runtime = profiles.Loaded.Single(x => x.Public.Id == profile.Id && x.Public.Version == profile.Version);
         var binding = profile.Binding with { ConnectionId = connection };
-        return new(new RegistryCookieActor(services.GetRequiredService<IHttpContextAccessor>()), services.GetRequiredService<IOAuthUserData>(),
+        return new(actor, services.GetRequiredService<IOAuthUserData>(),
             services.GetRequiredService<IOAuthConnectionData>(), new McpClientStore(services.GetRequiredService<DbContextOptions<OAuthDbContext>>(), connection),
             services.GetRequiredService<IMcpClientTokenProtection>(),
             new DelegatedMcpGateway(services.GetRequiredService<IHttpContextAccessor>(), services.GetRequiredService<OpenIddictClientService>(),

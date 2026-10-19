@@ -9,7 +9,7 @@ namespace TenantPlatform.Infrastructure.Authentication;
 public sealed class OAuthConnectionData(IOpenIddictAuthorizationManager grants, IOpenIddictApplicationManager clients,
     IOpenIddictTokenManager tokens) : IOAuthConnectionData
 {
-    public async Task<OAuthConnection> CreateAsync(Guid userId, string clientId, DateTimeOffset now, DateTimeOffset end, bool refresh, CancellationToken ct)
+    public async Task<OAuthConnection> CreateAsync(Guid userId, string clientId, DateTimeOffset now, DateTimeOffset end, bool refresh, CancellationToken ct, bool pages = false)
     {
         var client = await clients.FindByClientIdAsync(clientId, ct) ?? throw new InvalidOperationException("Unknown OAuth client.");
         var descriptor = new OpenIddictAuthorizationDescriptor
@@ -20,6 +20,7 @@ public sealed class OAuthConnectionData(IOpenIddictAuthorizationManager grants, 
         descriptor.Properties["end"] = JsonSerializer.SerializeToElement(end);
         descriptor.Properties["refresh"] = JsonSerializer.SerializeToElement(refresh);
         descriptor.Scopes.Add("tenantplatform.agreements.read");
+        if (pages) descriptor.Scopes.Add(TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage);
         if (refresh) descriptor.Scopes.Add(Scopes.OfflineAccess);
         var grant = await grants.CreateAsync(descriptor, ct);
         return await Map(grant, ct);

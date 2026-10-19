@@ -12,7 +12,7 @@ public interface IOAuthUserData
 }
 public interface IOAuthConnectionData
 {
-    Task<OAuthConnection> CreateAsync(Guid userId, string clientId, DateTimeOffset now, DateTimeOffset end, bool refresh, CancellationToken ct);
+    Task<OAuthConnection> CreateAsync(Guid userId, string clientId, DateTimeOffset now, DateTimeOffset end, bool refresh, CancellationToken ct, bool pages = false);
     Task<IReadOnlyList<OAuthConnection>> ListAsync(Guid userId, CancellationToken ct);
     Task<OAuthConnection?> ReadAsync(string id, CancellationToken ct);
     Task RevokeAsync(Guid userId, string id, CancellationToken ct);
@@ -37,11 +37,11 @@ public sealed class OAuthAccessService(ICurrentActor actor, IOAuthUserData users
             throw new UnauthorizedAccessException();
         return snapshot.UserId;
     }
-    public async Task<OAuthConnection> ApproveAsync(string clientId, bool refresh, CancellationToken ct)
+    public async Task<OAuthConnection> ApproveAsync(string clientId, bool refresh, CancellationToken ct, bool pages = false)
     {
         var user = await RequireUserAsync(ct);
         var now = clock.GetUtcNow();
-        return await connections.CreateAsync(user, clientId, now, now.AddHours(8), refresh, ct);
+        return await connections.CreateAsync(user, clientId, now, now.AddHours(8), refresh, ct, pages);
     }
     public async Task<IReadOnlyList<OAuthConnection>> ListAsync(CancellationToken ct)
     {
