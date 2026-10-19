@@ -3374,4 +3374,5 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AgentNoticeHistoryNotRetained" xml:space="preserve"><value>Dette svaret kunne ikke beholdes innen minnegrensen. Neste melding har ikke denne turen som kontekst.</value></data>
   <data name="AgentErrorHistoryUnavailable" xml:space="preserve"><value>Tidligere kildeinnhold kunne ikke kontrolleres sikkert og er fjernet sammen med avledede svar. Ingen ny konklusjon vises. Prøv igjen eller start ny samtale.</value></data>
   <data name="AgentSessionExpired" xml:space="preserve"><value>Samtalen er utløpt og innholdet er fjernet. Start en ny samtale.</value></data>
+  <data name="AgentAggregateFacts" xml:space="preserve"><value>Gruppering: {0}; {1} unike avtaler i {2} grupper. Fullstendig: {3}; overlapp: {4}; konsistent snapshot: {5}.</value></data>
 </root>

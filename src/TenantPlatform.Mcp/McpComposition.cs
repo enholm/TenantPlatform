@@ -39,6 +39,10 @@ public static class McpComposition
         services.AddScoped<AccountContextReader>();
         services.AddScoped<IAgreementListData, AgreementListData>();
         services.AddScoped<IAgreementListService, AgreementListService>();
+        services.AddScoped<IAgreementReportingData, AgreementReportingData>();
+        services.AddScoped<AgreementReportingReader>();
+        services.AddScoped<IAgreementDetailsData, AgreementDetailsData>();
+        services.AddScoped<IAgreementDetailsReader, AgreementDetailsReader>();
         services.AddScoped<IAgreementAttentionData, AgreementAttentionData>();
         services.AddScoped<IAgreementAttentionService, AgreementAttentionService>();
         services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationMiddlewareResultHandler, McpAuthorizationResultHandler>();

@@ -43,7 +43,8 @@ public interface IAgentSchemaValidator
 public sealed record AgentConnection(Guid Id, string Name, int ToolCount);
 public sealed record AgentPageFacts(int RequestedPage, int Page, int PageSize, int ReturnedCount, int TotalCount, bool HasMore, int? NextPage, bool Complete, bool SnapshotConsistent, bool LimitReached);
 public sealed record AgentAttentionFacts(string Today, int Notice, int Renewal, int Expired, int HorizonDays);
-public sealed record AgentSource(int Number, Guid ConnectionId, string ConnectionName, string Tool, string Version, AgentPageFacts? Page = null, AgentAttentionFacts? Attention = null, bool Revalidated = false, Guid EvidenceId = default);
+public sealed record AgentAggregateFacts(string GroupBy, int TotalCount, int GroupCount, bool Complete, bool GroupsOverlap, bool SnapshotConsistent);
+public sealed record AgentSource(int Number, Guid ConnectionId, string ConnectionName, string Tool, string Version, AgentPageFacts? Page = null, AgentAttentionFacts? Attention = null, bool Revalidated = false, Guid EvidenceId = default, AgentAggregateFacts? Aggregate = null);
 public sealed record AgentAnswer(string Text, IReadOnlyList<AgentSource> Sources, IReadOnlyList<string> Notices, int RetainedTurns = 0, bool CurrentTurnRetained = true, bool ContextInvalidated = false);
 public sealed class ReadAgentException(string code) : Exception(code) { public string Code { get; } = code; }
 

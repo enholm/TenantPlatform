@@ -72,7 +72,7 @@ await using (var db = factory.CreateDbContext())
     db.AgreementAccess.Add(new AgreementAccess { AccountId=a,AgreementId=grantAgreement,UserId=user,Level=AgreementAccessLevel.Read });
     await db.SaveChangesAsync();
 }
-var tables = new[] { "accounts","users","user_accounts","user_account_roles","agreements","agreement_access","organizations","agreement_reminder_settings" };
+var tables = new[] { "accounts","users","user_accounts","user_account_roles","agreements","agreement_access","organizations","agreement_reminder_settings","buildings","units","organization_elements","geographic_areas" };
 await using(var admin = new NpgsqlConnection(connection))
 {
     await admin.OpenAsync();
@@ -112,7 +112,7 @@ try
     {
         await using var client=await Client(token,version);
         var tools=await client.ListToolsAsync();
-        Check(tools.Select(t=>t.Name).Order().SequenceEqual(new[]{"accounts_list","agreements_attention","agreements_list"}),"exact three tools "+version);
+        Check(tools.Select(t=>t.Name).Order().SequenceEqual(new[]{"accounts_list","agreements_aggregate","agreements_attention","agreements_details","agreements_list","agreements_query"}),"exact six tools "+version);
         var schemas=JsonSerializer.Serialize(tools.Select(t=>t.ProtocolTool));
         Check(tools.All(t=>t.ProtocolTool.OutputSchema!.Value.GetProperty("additionalProperties").ValueKind==JsonValueKind.False) && !schemas.Contains("Owner") && schemas.Contains("additionalProperties") && schemas.Contains("outputSchema"),"bounded input/output schemas "+version);
         var accounts=Data(await client.CallToolAsync("accounts_list",new Dictionary<string,object?>()));
@@ -137,6 +137,7 @@ try
         var surfaces=JsonSerializer.Serialize(new[]{list,second,attention,accounts});
         Check(!new[]{"ownerUserId","ownerName","owners","SECRET_OWNER","transportId","recipientAddress","terms","revision","grants"}.Any(surfaces.Contains),"no omitted metadata in complete payload");
     }
+    await ReportingChecks.Run(factory, runtime, password, async subject => { var (access, _) = await Issue(subject); return await Client(access, "2026-07-28"); });
     await using var live=await Client(token,"2026-07-28");
     await using var secondClient=await Client(otherToken,"2026-07-28");
     var parallel=await Task.WhenAll(Enumerable.Range(0,4).Select(async i=> {

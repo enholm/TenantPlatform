@@ -1614,3 +1614,43 @@ Diffkontroll med `git -c core.whitespace=cr-at-eol diff --check`, Node-syntaksko
 **Manuell/driftsmessig rest:** reell modellprøve er ikke utført, og ingen ekte modell-/tredjepartskall eller betalte API-kall inngår. Interaktiv nettleser på alle språk, virkelige flerøktsoverløp, containerbygg og proxy/TLS/egress er ikke verifisert. Docker-daemonen er fortsatt utilgjengelig på `/Users/morten/.docker/run/docker.sock`, kontrollert med `docker info`. Generell Web-cookie-/sesjonsrevokering og tidligere separate produktspørsmål er fortsatt egne spor.
 
 Ingen schemaendring, utviklings-/produksjonsmigrering, driftsdatabase, deploy, commit, push eller Serga-endring. Ingen rapportmotor, skrive-/bekreftelsesverktøy, flerinstansstøtte, varig samtalearkiv eller nye MCP-forretningsoperasjoner.
+
+## 29. Steg 8C: containerbygg og deployment – utsatt
+
+**Beslutning 19. oktober 2026:** Steg 8C hoppes over foreløpig etter brukerens beslutning. Steget omfatter verifikasjon av containerbygg og deployment for Web og MCP-hosten. Status er **utsatt, ikke gjennomført eller verifisert**; de åpne driftskontrollene fra 8A/8B beholdes.
+
+Når 8C tas opp igjen, skal faktiske containerbygg, oppstart i målmiljøet og deploymentoppsettet kontrolleres, inkludert TLS/reverse proxy, nettverk/egress, hemmeligheter, vedvarende nøkler og databaseprivilegier. Én-instansbegrensningen for agenten gjelder fortsatt. Lokal testing med `dotnet watch` dokumenterer ikke containerbygg eller deployment.
+
+Denne beslutningen endrer bare planstatus. Ingen containerbygg eller deploy er utført som del av dokumentasjonsendringen. Øvrige åpne GUI-/sikkerhetskontroller og generell Web-cookie-/sesjonsrevokering beholder sin separate status.
+
+## 30. Steg 8D: avtaleutvalg, dimensjoner, aggregater og detaljlesing
+
+**Status 19. oktober 2026: implementert og automatisert verifisert.** Se [kontrakter, semantikk og aktivering](mcp-agreement-read-contracts.md). Steg 8C er fortsatt utsatt. Brukeren opplyser at reell modellprøve, interaktiv GUI og proxy/TLS er gjennomført før 8D; dette er ikke dokumentasjon på de nye verktøyene, alle språk eller en full drifts-/sikkerhetsmatrise.
+
+### 30.1 Leveranse og domenesemantikk
+
+Tre nye verktøy med egne kontraktnavn og schemaVersion 1: `agreements_query`, `agreements_aggregate` og `agreements_details`. De tre opprinnelige verktøyene og deres kontrakter beholdes, inklusive legacyklientens strenge parsing. Ingen nye MCP-pakker, roller, schemaer eller migreringer.
+
+Application `AgreementReportingReader` eier filtervalidering, tillatte grupperinger, ferskt avtaleomfang og kalenderdatoberegning. `AgreementReportingData` bruker eksisterende `AgreementReadQueries.Visible`, samme filterfunksjon før både liste og SQL-gruppering, kontoavgrensede metadata-joiner og korte contexts. Eksisterende innsiktsreader har ikke det nødvendige felles filteret; en målrettet port unngår å fremstille ufiltrert innsikt som filtrert rapportgrunnlag. MCP har bare parsing, eksplisitte resultater og sikker feilmapping. `IAgreementDetailsReader.ReadSummaryAsync` er en smal, skrivefri variant med samme konkrete avtaleautorisasjon som eksisterende detaljlesing. Den laster ikke GUI-dokument-/grant-/historikkmetadata og kaller ingen initialisering.
+
+Ny liste/detalj returnerer avtalens grunnfelt/datoer og kontobegrensede referanser med ID/navn for motpart, bygg, enhet, organisasjonsenhet og geografisk område. Fremmede/manglende referanser blir null uten å fjerne avtalen. Ingen eieridentitet, grants, dokumentinnhold/-adresser, økonomi, vilkår eller interne revisjoner eksponeres.
+
+Modellen har én nullable byggtilknytning per avtale, ikke flere bygg. Gruppering etter Building eller lagret Status teller derfor unike avtaler i ikke-overlappende grupper; manglende/ugyldig bygg samles i missing/null. Maksimum 100 grupper, ellers feil for hele resultatet. Active betyr lagret status. Utløpsfiltre bruker EndDate med inklusive grenser; null EndDate ekskluderes ved datofilter. EndsWithinMonths bruker ett UTC-referansetidspunkt og kontodato/tidssone til og med AddMonths(n), og normaliseres til gjenbrukbare konkrete datoer. Arkivvalg er eksplisitt, standard Include. Filtre kombineres med AND, dimensjoner gjelder eksakt ID uten rekursiv hierarkiutvidelse. Liste har 25 per side, stabil Title/Id-sortering, synlig paging/fullstendighet og intet snapshotløfte mellom kall.
+
+Agenten kan bruke fem godkjente avtaleverktøy på egenprofilen; accounts_list holdes fortsatt utenfor. Nye verktøy får ingen automatisk godkjenning, bruksklasse eller tilgang. Konto-/bruker-/tilkoblingsbinding, lokal skjemavalidering og 8Bs transitive avhengigheter/ferske gjenhenting beholdes. Aggregatkilder viser egne lokaliserte fakta om gruppering, unik total, grupper, fullstendighet, overlapp og snapshot. Endret liste/aggregat/detalj eller fjernet avtalegrant ugyldiggjør avledet historikk etter etablerte regler.
+
+### 30.2 Verifikasjon etter siste produksjonsendring
+
+- `dotnet build TenantPlatform.sln --no-restore`: exitkode 0, uten nye kompilatorvarsler. Eksisterende NU1902/NU1903 for System.Security.Cryptography.Pkcs består.
+- `bash scripts/test-agreements-postgres.sh TenantPlatform.McpClient.SmokeTests TenantPlatform.Mcp.SmokeTests TenantPlatform.OAuth.SmokeTests TenantPlatform.AgreementList.SmokeTests TenantPlatform.Agreements.SmokeTests TenantPlatform.AccountRegisters.SmokeTests TenantPlatform.Dashboard.SmokeTests`: exitkode 0. Alle sju prosjekter ble bygget og suitene bestod; seks med isolert PostgreSQL, Dashboard i eksisterende InMemory-/SQL-/komponentoppsett. Klyngen ble stoppet og fjernet.
+- Direkte Application-/PostgreSQL-prøver bruker produksjonens SaveChanges-vakt og SELECT-rolle: samsvar mellom filtrert liste og begge grupperinger, eier/Read/Edit/AccountAdmin, fremmed konto, kontobegrenset metadata uten radtap, to bygg/manglende bygg, datogrenser/null/status/arkiv, normaliserte relative filtre, kontodato rundt midnatt/DST-dag, paging/sortering, avviste filtre, kansellering, grant-/medlemskapstilbakekalling og gruppegrense. Revisjoner og manglende initialisering/settings bevares. Faktisk MCP-transport kontrollerer nye kontrakter og sikre feil. Eksisterende tester bevarer rå-SQL-skriveforbud, avvist credential-lesing, oppstartsvern og faktiske transport-/tidsgrenser.
+- Agentprøver bruker syntetiske modellsvar gjennom produksjonens Responses-adapter og faktiske OAuth-/MCP-biblioteker. Alle tre nye verktøy velges gjennom godkjent katalog, og deres kilder gjenhentes i oppfølgingsspørsmål. Endrede data og fjernet avtalegrant ugyldiggjør historikk uten tap av generell verktøyadgang. Aggregatfakta/lokalisert oppsummering er også prøvd gjennom reelle cookie-/antiforgery-beskyttede agentendepunkter.
+- `node --check src/TenantPlatform.Web/wwwroot/js/read-agent.js`, `node --test tests/TenantPlatform.McpClient.SmokeTests/AgentPanelChecks.cjs`, diff-/whitespacekontroll og like/unike språkressurser bestod (55 Agent-nøkler per språk). DOM-kontrollen er syntetisk, ikke interaktiv nettleserverifikasjon.
+
+### 30.3 Aktivering og åpne begrensninger
+
+MCP-leserollen trenger fire nye, målrettede SELECT-rettigheter: buildings, units, organization_elements og geographic_areas, totalt tolv tabeller. Ingen bred schema-/databasefullmakt, OAuth-/credential-/dokument-/audittilgang eller nye skriverettigheter. Operatør må etablere rettighetene separat, oppdatere katalogen og eksplisitt velge tilgang/AutomaticRead/godkjenning for de nye verktøyene. Ingen slike endringer er gjort i tenantplatform_dev eller drift i dette oppdraget.
+
+Før bruk av 8D gjenstår manuell kontroll av de fire eksempelspørsmålene, kilde-/gruppevisning, ny lasting etter fjernet tilgang og forløpet for katalogoppdatering/godkjenning i faktisk nettleser. Ny reell modellprøve inngår ikke i den syntetiske verifikasjonen. Containerbygg/deployment i 8C forblir utsatt og er ikke prøvd her. Én-instansbegrensningen, separate produktspørsmål og generell Web-cookie-/sesjonsrevokering beholdes.
+
+Datagrunnlaget støtter nå utløpsspørsmål med dokumentert EndDate-semantikk, gruppering/telling per bygg eller status og avgrenset avtaledetalj. Deterministisk rapportkonsument, definisjoner/kjøring/lagring, eksport, flere dimensjonsgrupperinger og konsistente snapshots gjenstår. Ingen rapportdesigner, Mine sider, skriveredskaper, dokumentnedlasting, reelle/betalte modellkall, utviklings-/produksjonsdatabaseendringer, deploy, commit, push eller Serga-endring inngår.

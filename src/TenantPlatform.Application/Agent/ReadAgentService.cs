@@ -30,7 +30,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
         var page = await registry.ListAsync(ct);
         var tools = await registry.AvailableToolsAsync(ct);
         return tools.Where(t => t.UseClass == McpToolUse.AutomaticRead &&
-            (External(t.ConnectionId, page) || t.Name is "agreements_list" or "agreements_attention")).ToArray();
+            (External(t.ConnectionId, page) || t.Name is "agreements_list" or "agreements_attention" or "agreements_query" or "agreements_aggregate" or "agreements_details")).ToArray();
     }
     private static bool External(Guid connection, McpRegistryPage page)
     {
@@ -192,19 +192,25 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 var bytes = Bytes(result); resultBytes += bytes;
                 if (bytes > limits.ResultBytes || resultBytes > limits.TotalResultBytes) throw new ReadAgentException("ResultLimit");
                 using var json = JsonDocument.Parse(result);
-                AgentPageFacts? paging = null; AgentAttentionFacts? attention = null;
+                AgentPageFacts? paging = null; AgentAttentionFacts? attention = null; AgentAggregateFacts? aggregate = null;
                 if (external) notices.Add("ExternalCompleteness");
                 else
                 {
                     var data = json.RootElement.GetProperty("structuredContent");
                     if (data.GetProperty("schemaVersion").GetString() != "1" || data.GetProperty("accountId").GetGuid() != who.AccountId) throw new ReadAgentException("SourceUnavailable");
-                    if (tool.Name == "agreements_list")
+                    if (tool.Name is "agreements_list" or "agreements_query")
                     {
                         notices.Add("Paging");
                         paging = new(data.GetProperty("requestedPage").GetInt32(), data.GetProperty("page").GetInt32(), data.GetProperty("pageSize").GetInt32(),
                             data.GetProperty("returnedCount").GetInt32(), data.GetProperty("totalCount").GetInt32(), data.GetProperty("hasMore").GetBoolean(),
                             data.GetProperty("nextPage").ValueKind == JsonValueKind.Null ? null : data.GetProperty("nextPage").GetInt32(),
                             data.GetProperty("complete").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean(), data.GetProperty("limitReached").GetBoolean());
+                    }
+                    if (tool.Name == "agreements_aggregate")
+                    {
+                        aggregate = new(data.GetProperty("groupBy").GetString()!, data.GetProperty("totalCount").GetInt32(),
+                            data.GetProperty("groups").GetArrayLength(), data.GetProperty("complete").GetBoolean(), data.GetProperty("groupsOverlap").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean());
+                        if (!data.GetProperty("countsUniqueAgreements").GetBoolean() || !aggregate.Complete || aggregate.GroupsOverlap) throw new ReadAgentException("SourceUnavailable");
                     }
                     if (tool.Name == "agreements_attention")
                     {
@@ -216,7 +222,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 var fingerprint = Fingerprint(result);
                 var identical = retainedCalls.FirstOrDefault(c => c.Tool == tool.Name && c.Version == tool.Version && c.Arguments == arguments && c.Fingerprint == fingerprint);
                 if (identical is not null) evidenceId = identical.Id;
-                sources.Add(new(sources.Count + 1, connection, tool.ConnectionName, tool.Name, tool.Version, paging, attention, revalidated, evidenceId));
+                sources.Add(new(sources.Count + 1, connection, tool.ConnectionName, tool.Name, tool.Version, paging, attention, revalidated, evidenceId, aggregate));
                 if (identical is null) retainedCalls.Add(new(evidenceId, tool.Name, tool.Version, arguments, fingerprint));
                 return result;
             }

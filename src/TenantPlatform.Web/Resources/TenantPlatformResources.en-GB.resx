@@ -3338,4 +3338,5 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AgentNoticeHistoryNotRetained" xml:space="preserve"><value>This answer could not be retained within the memory limit. The next message will not have this turn as context.</value></data>
   <data name="AgentErrorHistoryUnavailable" xml:space="preserve"><value>Previous source content could not be safely revalidated and was removed together with derived answers. No new conclusion is shown. Retry or start a new conversation.</value></data>
   <data name="AgentSessionExpired" xml:space="preserve"><value>The conversation expired and its content was cleared. Start a new conversation.</value></data>
+  <data name="AgentAggregateFacts" xml:space="preserve"><value>Grouping: {0}; {1} unique agreements in {2} groups. Complete: {3}; overlap: {4}; consistent snapshot: {5}.</value></data>
 </root>

@@ -67,7 +67,7 @@ await using(var db=factory.CreateDbContext())
 }
 await using(var admin=new NpgsqlConnection(connection))
 {
-    await admin.OpenAsync(); await using var command=new NpgsqlCommand("CREATE ROLE internal_mcp_reader LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT; REVOKE CREATE ON SCHEMA public FROM PUBLIC; GRANT CONNECT ON DATABASE tenant_mcp_client_tests TO internal_mcp_reader; GRANT USAGE ON SCHEMA public TO internal_mcp_reader; GRANT SELECT ON accounts,users,user_accounts,user_account_roles,agreements,agreement_access,organizations,agreement_reminder_settings TO internal_mcp_reader",admin); await command.ExecuteNonQueryAsync();
+    await admin.OpenAsync(); await using var command=new NpgsqlCommand("CREATE ROLE internal_mcp_reader LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT; REVOKE CREATE ON SCHEMA public FROM PUBLIC; GRANT CONNECT ON DATABASE tenant_mcp_client_tests TO internal_mcp_reader; GRANT USAGE ON SCHEMA public TO internal_mcp_reader; GRANT SELECT ON accounts,users,user_accounts,user_account_roles,agreements,agreement_access,organizations,agreement_reminder_settings,buildings,units,organization_elements,geographic_areas TO internal_mcp_reader",admin); await command.ExecuteNonQueryAsync();
 }
 var readConnection=new NpgsqlConnectionStringBuilder(connection) { Username="internal_mcp_reader" }.ConnectionString;
 var clock=new AdjustableClock(); var logs=new LogCapture(); var route=new RouteControl();

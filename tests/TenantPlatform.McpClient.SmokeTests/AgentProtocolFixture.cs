@@ -12,6 +12,7 @@ sealed class AgentProtocolFixture
     public readonly TaskCompletionSource McpCancelled = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public string OtherTool = "";
     public Guid ForeignAccount;
+    public Guid ReportAgreement;
     public Guid? ExternalAccountSeen;
     public readonly List<string> Payloads = [];
     public TaskCompletionSource? WhenBlocked;
@@ -37,10 +38,16 @@ sealed class AgentProtocolFixture
         if (mode == "reasoning" && completed == 0) output.Add(new { type = "reasoning", id = "rs_fixture", summary = Array.Empty<object>(), encrypted_content = "synthetic-encrypted-reasoning" });
         if ((completed < (mode == "multi" ? 2 : 1) || mode == "round-limit") && mode != "history-only")
         {
-            var tool = mode is "own-list" or "protected" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _)) : tools[0];
+            var tool = mode is "own-list" or "protected" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _))
+                : mode == "own-query" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _))
+                : mode == "own-aggregate" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("groupBy", out _))
+                : mode == "own-details" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("agreementId", out _))
+                : tools.FirstOrDefault(t => t.GetProperty("parameters").GetProperty("properties").EnumerateObject().Count() == 1, tools[0]);
             var args = new JsonObject();
             if (tool.GetProperty("parameters").TryGetProperty("properties", out var properties) && properties.TryGetProperty("accountId", out var account))
                 args["accountId"] = mode == "override" ? ForeignAccount.ToString() : account.TryGetProperty("const", out var fixedAccount) ? fixedAccount.GetString() : ForeignAccount.ToString();
+            if (mode == "own-aggregate") args["groupBy"] = "Building";
+            if (mode == "own-details") args["agreementId"] = ReportAgreement.ToString();
             if (mode == "invalid") args["unexpected"] = true;
             output.Add(new { type = "function_call", id = "fc_" + completed, call_id = "call_" + completed,
                 name = mode == "unknown" ? "not_available" : mode == "cross" ? OtherTool : tool.GetProperty("name").GetString(), arguments = args.ToJsonString(), status = "completed" });

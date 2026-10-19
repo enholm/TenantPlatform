@@ -136,7 +136,7 @@ static partial class RegistryChecks
         await Agent(async s => { await s.CancelAsync(mcpConversation); return true; });
         Check(await Fails(() => mcpPending, "CancelledOrTimedOut"), "agent cancellation reaches actual MCP HTTP transport");
         await protocol.McpCancelled.Task.WaitAsync(TimeSpan.FromSeconds(5)); protocol.BlockMcp = false;
-        // Approve our two account-bound tools through the actual Application administration entrypoints.
+        // Approve the account-bound tools through the actual Application administration entrypoints.
         foreach (var tool in (await Registry(s => s.ToolsAsync(own))).Where(t => t.Name != "accounts_list"))
         {
             await Registry(async s => { await s.SetToolPolicyAsync(own, tool.Name, tool.Version, McpToolAudience.Inherit, [], McpToolUse.AutomaticRead); await s.ApproveAsync(own, tool.Name, tool.Version, true); return true; });
@@ -147,6 +147,26 @@ static partial class RegistryChecks
         Check(ownAnswer.Sources.Single().Tool == "agreements_list" && ownAnswer.Notices.Contains("Paging") && ownAnswer.Sources.Single().Page is { PageSize: 25, SnapshotConsistent: false }, "own account data actually comes through MCP with visible paging caveat");
         var attention = await Agent(s => s.AskAsync(ownConversation, "normal"));
         Check(attention.Notices.Contains("Overlapping") && attention.Sources.Last().Tool == "agreements_attention", "attention overlap warning established by backend, not model");
+        var reportBuilding = Guid.NewGuid();
+        await using (var db = factory.CreateDbContext())
+        {
+            protocol.ReportAgreement = (await db.Agreements.SingleAsync(a => a.AccountId == account)).Id;
+            db.Buildings.Add(new TenantPlatform.Core.Properties.Building { Id = reportBuilding, AccountId = account, Name = "Report history building" });
+            await db.SaveChangesAsync();
+        }
+        foreach (var (prompt, expected) in new[] { ("own-query", "agreements_query"), ("own-aggregate", "agreements_aggregate"), ("own-details", "agreements_details") })
+        {
+            var reportConversation = await Begin(own);
+            var reportAnswer = await Agent(s => s.AskAsync(reportConversation, prompt));
+            Check(reportAnswer.Sources.Single().Tool == expected, "agent invokes approved new tool through actual MCP: " + expected);
+            var followup = await Agent(s => s.AskAsync(reportConversation, "history-only"));
+            Check(followup.Sources.Single().Revalidated && followup.RetainedTurns == 2, "new source participates in 8B history: " + expected);
+            if (expected == "agreements_aggregate") Check(reportAnswer.Sources.Single().Aggregate is { Complete: true, GroupsOverlap: false, SnapshotConsistent: false }, "aggregate provenance preserves completeness and grouping semantics");
+            await using (var db = factory.CreateDbContext()) { await db.Agreements.Where(a => a.Id == protocol.ReportAgreement).ExecuteUpdateAsync(s => s.SetProperty(a => a.Title, "Changed reporting source " + expected).SetProperty(a => a.BuildingId, expected == "agreements_aggregate" ? (Guid?)null : reportBuilding)); }
+            var firstReportPayload = protocol.Payloads.Count;
+            var changedReport = await Agent(s => s.AskAsync(reportConversation, "history-only"));
+            Check(changedReport.ContextInvalidated && protocol.Payloads.Skip(firstReportPayload).All(p => !p.Contains("untrustedPreviousAnswer")), "changed new source invalidates derived history: " + expected);
+        }
         // The tool remains authorized while an individual agreement's Read grant is revoked.
         var businessGrant = Guid.NewGuid();
         await using (var db = factory.CreateDbContext())
@@ -155,6 +175,19 @@ static partial class RegistryChecks
             db.AgreementAccess.Add(new TenantPlatform.Core.Agreements.AgreementAccess { Id = businessGrant, AccountId = account,
                 AgreementId = agreement.Id, UserId = member, Level = TenantPlatform.Core.Agreements.AgreementAccessLevel.Read });
             await db.SaveChangesAsync();
+        }
+        foreach (var prompt in new[] { "own-query", "own-aggregate", "own-details" })
+        {
+            var scopedReport = await Begin(own, member);
+            await Agent(s => s.AskAsync(scopedReport, prompt), user: member);
+            await using (var db = factory.CreateDbContext()) { db.Remove(await db.AgreementAccess.SingleAsync(a => a.Id == businessGrant)); await db.SaveChangesAsync(); }
+            if (prompt == "own-details") Check(await Fails(() => Agent(s => s.AskAsync(scopedReport, "history-only"), user: member), "HistoryUnavailable"), "revoked detail cannot re-enter conversation history");
+            else Check((await Agent(s => s.AskAsync(scopedReport, "history-only"), user: member)).ContextInvalidated, "revoked agreement changes new list/aggregate and invalidates derived history: " + prompt);
+            await using (var db = factory.CreateDbContext())
+            {
+                db.AgreementAccess.Add(new TenantPlatform.Core.Agreements.AgreementAccess { Id = businessGrant, AccountId = account, AgreementId = protocol.ReportAgreement, UserId = member, Level = TenantPlatform.Core.Agreements.AgreementAccessLevel.Read });
+                await db.SaveChangesAsync();
+            }
         }
         var protectedConversation = await Begin(own, member);
         var protectedAnswer = await Agent(s => s.AskAsync(protectedConversation, "protected"), user: member);
@@ -249,6 +282,14 @@ static partial class RegistryChecks
         Check(response.IsSuccessStatusCode && !body.Contains("<script>") && body.Contains("sources") && !body.Contains("private-provider-error"), "HTTP answer safely JSON-encodes model HTML and sends actual sources");
         Check((await Http("ask", new { conversation = conversationHttp, prompt = "normal", userId = member })).StatusCode == HttpStatusCode.BadRequest, "HTTP rejects client identity injection");
         Check((await Http("ask", new { conversation = conversationHttp, prompt = "normal" }, token: false)).StatusCode == HttpStatusCode.BadRequest, "chat POST requires antiforgery");
+        var reportHttp = await Http("begin", new { connection = own, account, sharingAccepted = true });
+        using var reportBegun = JsonDocument.Parse(await reportHttp.Content.ReadAsStringAsync());
+        var reportResponse = await Http("ask", new { conversation = reportBegun.RootElement.GetProperty("conversation").GetGuid(), prompt = "own-aggregate" });
+        Check(reportResponse.IsSuccessStatusCode, "aggregate source reaches real cookie-protected agent HTTP endpoint");
+        using var reportJson = JsonDocument.Parse(await reportResponse.Content.ReadAsStringAsync());
+        var reportSource = reportJson.RootElement.GetProperty("sources")[0];
+        Check(reportSource.GetProperty("aggregate").GetProperty("complete").GetBoolean() && !reportSource.GetProperty("aggregate").GetProperty("groupsOverlap").GetBoolean() &&
+            reportSource.GetProperty("summary").GetString() is { Length: > 20 } summary && !summary.Contains("AgentAggregateFacts"), "HTTP aggregate completeness is rendered with localized source summary");
         Check(protocol.Payloads.All(p => !p.Contains("synthetic-agent-key") && !p.Contains("ProtectedTokens") && !p.Contains("private-provider-error")), "all captured model inputs exclude backend credentials and provider errors");
         Console.WriteLine("Agent synthetic-model / real OAuth-MCP-PostgreSQL checks passed.");
 

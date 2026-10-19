@@ -3375,4 +3375,5 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="AgentNoticeHistoryNotRetained" xml:space="preserve"><value>Detta svar kunde inte behållas inom minnesgränsen. Nästa meddelande har inte denna tur som kontext.</value></data>
   <data name="AgentErrorHistoryUnavailable" xml:space="preserve"><value>Tidigare källinnehåll kunde inte kontrolleras säkert och togs bort tillsammans med härledda svar. Ingen ny slutsats visas. Försök igen eller starta ett nytt samtal.</value></data>
   <data name="AgentSessionExpired" xml:space="preserve"><value>Samtalet har löpt ut och innehållet har raderats. Starta ett nytt samtal.</value></data>
+  <data name="AgentAggregateFacts" xml:space="preserve"><value>Gruppering: {0}; {1} unika avtal i {2} grupper. Fullständigt: {3}; överlapp: {4}; konsekvent ögonblicksbild: {5}.</value></data>
 </root>

@@ -53,7 +53,7 @@ public static class ReadAgentEndpoints
                     case "ask":
                         var answer = await agent.AskAsync(command.Conversation, command.Prompt ?? "", ct);
                         var l = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
-                        return Results.Json(new { answer.Text, answer.RetainedTurns, answer.CurrentTurnRetained, answer.ContextInvalidated, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, s.Revalidated, s.EvidenceId, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: Json);
+                        return Results.Json(new { answer.Text, answer.RetainedTurns, answer.CurrentTurnRetained, answer.ContextInvalidated, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, s.Aggregate, s.Revalidated, s.EvidenceId, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: Json);
                     case "delete": await agent.DeleteAsync(command.Conversation, ct); return Results.NoContent();
                     case "cancel": await agent.CancelAsync(command.Conversation, ct); return Results.NoContent();
                     default: return Results.NotFound();
@@ -88,6 +88,7 @@ public static class ReadAgentEndpoints
         string Flag(bool value) => l[value ? "Yes" : "No"].Value;
         if (source.Page is { } p) return l["AgentPageFacts", p.Page, p.RequestedPage, p.ReturnedCount, p.TotalCount, p.PageSize,
             Flag(p.HasMore), p.NextPage?.ToString() ?? "—", Flag(p.Complete), Flag(p.SnapshotConsistent), Flag(p.LimitReached)].Value;
+        if (source.Aggregate is { } g) return l["AgentAggregateFacts", l[g.GroupBy].Value, g.TotalCount, g.GroupCount, Flag(g.Complete), Flag(g.GroupsOverlap), Flag(g.SnapshotConsistent)].Value;
         if (source.Attention is { } a) return l["AgentAttentionFacts", a.Today, a.Notice, a.Renewal, a.Expired, a.HorizonDays].Value;
         return null;
     }

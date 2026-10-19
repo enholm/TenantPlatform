@@ -197,12 +197,14 @@ static class DetailsChecks
 }
 sealed class DetailsProbe : IAgreementDetailsReader
 {
+    public Task<AgreementReportRow> ReadSummaryAsync(Guid a, Guid id, CancellationToken ct = default) => throw new NotSupportedException();
     public Guid Account; public Guid Id; public CancellationToken Token;
     public AgreementDetailsDto Result = new() { DeadlinesInitialized = true };
     public Task<AgreementDetailsDto> ReadAsync(Guid accountId, Guid agreementId, CancellationToken ct = default) { Account = accountId; Id = agreementId; Token = ct; return Task.FromResult(Result); }
 }
 sealed class DetailsGate : IAuthorizationData, IAgreementDetailsData
 {
+    public Task<AgreementReportRow> ReadSummaryAsync(AgreementReadScope scope, CancellationToken ct) => throw new NotSupportedException();
     public TaskCompletionSource<AuthorizationSubject> Membership = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public AgreementReadScope? Scope; public CancellationToken Token;
     public Task<AuthorizationSubject> GetSubjectAsync(Guid u, Guid? a, CancellationToken ct) => Membership.Task;

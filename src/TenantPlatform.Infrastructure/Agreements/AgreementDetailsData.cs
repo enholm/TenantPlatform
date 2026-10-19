@@ -9,6 +9,8 @@ namespace TenantPlatform.Infrastructure.Agreements;
 
 public sealed class AgreementDetailsData(IDbContextFactory<TenantPlatformDbContext> factory) : IAgreementDetailsData
 {
+    public Task<AgreementReportRow> ReadSummaryAsync(AgreementReadScope scope, CancellationToken ct) =>
+        new AgreementReportingData(factory).DetailsAsync(scope, ct);
     public async Task<AgreementDetailsDto> ReadAsync(AgreementReadScope scope, CancellationToken cancellationToken)
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);

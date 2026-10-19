@@ -1,8 +1,8 @@
 # MCP-lesehost: oppsett og verifikasjon (5B2)
 
-[6A-registeret i Web](mcp-connection-registry-operations.md) kan koble personlige brukere til denne og andre MCP-servere. Det endrer ikke denne hostens tre verktøy, leserolle, tokenprofil eller prosjektavhengigheter. Registerets nye OAuth-tabeller skal ikke gjøres tilgjengelige for MCP-leserollen.
+[6A-registeret i Web](mcp-connection-registry-operations.md) kan koble personlige brukere til denne og andre MCP-servere. 8D utvider hosten til seks verktøy og tolv SELECT-tabeller; se [avtalekontraktene](mcp-agreement-read-contracts.md). Tokenprofil og prosjektavhengigheter beholdes. Registerets nye OAuth-tabeller skal ikke gjøres tilgjengelige for MCP-leserollen.
 
-TenantPlatform.Mcp er en separat .NET 10-resource-server. Den refererer Application og Infrastructure, aldri Web. Web er OAuth-utstederen fra [5B1](oauth-issuer-operations.md). Ingen intern OAuth-klient, agent eller rapportmotor inngår i selve 5B2-hosten. Den interne delegerte Web-klienten er senere implementert i [5B3](internal-mcp-client-operations.md), uten nye MCP-verktøy eller Web-referanse fra MCP-produksjonsprosjektet. Agent og rapportmotor er fortsatt utsatt. Ingen bakgrunnsjobber, migrering, seed eller initialisering registreres/startes av MCP.
+TenantPlatform.Mcp er en separat .NET 10-resource-server. Den refererer Application og Infrastructure, aldri Web. Web er OAuth-utstederen fra [5B1](oauth-issuer-operations.md). Ingen intern OAuth-klient, agent eller rapportmotor inngår i selve 5B2-hosten. Den interne delegerte Web-klienten er senere implementert i [5B3](internal-mcp-client-operations.md), uten nye MCP-verktøy eller Web-referanse fra MCP-produksjonsprosjektet. Leseagenten er senere implementert i Web (8A/8B/8D); rapportmotor er fortsatt utsatt. Ingen bakgrunnsjobber, migrering, seed eller initialisering registreres/startes av MCP.
 
 ## Konfigurasjon og oppstart
 
@@ -17,11 +17,11 @@ Bruk [malen](../../docker/mcp/appsettings.example.json) som oppsettreferanse. Mo
 
 ## Leserolle og database
 
-Drift må separat opprette en dedikert LOGIN uten superuser, createdb, createrole, replication, bypassrls, eierskap eller arvede skriveroller. Den må ha CONNECT til domenedatabasen, USAGE på public og **bare SELECT på disse åtte tabellene**:
+Drift må separat opprette en dedikert LOGIN uten superuser, createdb, createrole, replication, bypassrls, eierskap eller arvede skriveroller. Den må ha CONNECT til domenedatabasen, USAGE på public og **bare SELECT på disse tolv tabellene**:
 
-`accounts`, `users`, `user_accounts`, `user_account_roles`, `agreements`, `agreement_access`, `organizations`, `agreement_reminder_settings`.
+`accounts`, `users`, `user_accounts`, `user_account_roles`, `agreements`, `agreement_access`, `organizations`, `agreement_reminder_settings`, `buildings`, `units`, `organization_elements`, `geographic_areas`.
 
-Listen er kontrollert mot AccountContextData, AuthorizationData og AgreementList-/AttentionData med isolerte PostgreSQL-kall. Autorisasjonsadapteren er felles og har flere metoder; MCP-komposisjonen eksponerer bare de tre readerne, og rollen får ingen rettigheter til de øvrige tabellene. Ingen tilgang til `login_accounts`, OAuth-schema, frister, historikk, dokumenter, audit eller leasing er nødvendig. Ingen sekvensrettigheter eller DEFAULT PRIVILEGES for fremtidige tabeller. Sørg for at PUBLIC ikke gir CREATE på public eller skriverettigheter på tabeller. Brukeren skal heller ikke eie databasen/schemaet, ha schemaoppretting eller privilegerte funksjoner som omgår leserollen.
+Listen er kontrollert mot AccountContextData, AuthorizationData, AgreementList-/AttentionData og AgreementReportingData med isolerte PostgreSQL-kall. Autorisasjonsadapteren er felles og har flere metoder; MCP-komposisjonen eksponerer bare de avgrensede leseoperasjonene, og rollen får ingen rettigheter til de øvrige tabellene. Ingen tilgang til `login_accounts`, OAuth-schema, frister, historikk, dokumenter, audit eller leasing er nødvendig. Ingen sekvensrettigheter eller DEFAULT PRIVILEGES for fremtidige tabeller. Sørg for at PUBLIC ikke gir CREATE på public eller skriverettigheter på tabeller. Brukeren skal heller ikke eie databasen/schemaet, ha schemaoppretting eller privilegerte funksjoner som omgår leserollen.
 
 Runtime har i tillegg en SaveChangesInterceptor som avviser både synkron og asynkron SaveChanges, også tomme kall. Den erstatter ikke DB-rettigheter: rå SQL/ExecuteUpdate må også nektes av PostgreSQL. Eksisterende Application-autorisasjon, ikke SQL-rollen, bestemmer tenant-/ressursinnsyn. Ingen nye RLS-/rollemodeller eller schemaendringer er innført.
 
@@ -35,7 +35,7 @@ OAuth-revokering stopper kode-/refresh-kjeden hos Web. Allerede utstedt JWT kan 
 
 ## Verktøy, grenser og feil
 
-Bare `accounts_list`, `agreements_list`, `agreements_attention` er registrert. Kontrakter og felt er i [MCP-planens avsnitt 4](mcp-read-host-plan.md#4-første-verktøyutvalg-og-nøyaktige-kontrakter). Alle bruker eksplisitte DTO-er; OwnerUserId/OwnerName/Owners, grants, dokumenter, økonomi, vilkår og transportmetadata eksponeres aldri automatisk. Returnert tekst er ubetrodd data, ikke instruksjoner.
+Registrert utvalg: `accounts_list`, `agreements_list`, `agreements_attention`, `agreements_query`, `agreements_aggregate` og `agreements_details`. De tre nye kontraktene, filtrene og grupperingsreglene er dokumentert i [8D](mcp-agreement-read-contracts.md). Kontrakter og felt er i [MCP-planens avsnitt 4](mcp-read-host-plan.md#4-første-verktøyutvalg-og-nøyaktige-kontrakter). Alle bruker eksplisitte DTO-er; OwnerUserId/OwnerName/Owners, grants, dokumenter, økonomi, vilkår og transportmetadata eksponeres aldri automatisk. Returnert tekst er ubetrodd data, ikke instruksjoner.
 
 Hvert verktøykall oppretter et eget DI-scope, binder ett frosset aktørsnapshot fra SDK-ens validerte principal og foreslått konto, og lar Application verifisere medlemskap/omfang. Ingen delt muterbar konto mellom parallelle kall eller RPC-ID-basert identitet.
 
