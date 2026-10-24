@@ -1,4 +1,6 @@
-# Innebygd MCP-leseassistent (8A/8B/8D/9B/9C)
+# Innebygd MCP-leseassistent (8A/8B/8D/9B/9C/9D)
+
+9D gir valgfrie rapportkomponenter, Building/Status-diagram og ordnede tabellkolonner i nye og eksisterende utkast. [Gjeldende v2-kontrakt, kompatibilitet og minimal MCP-plan](personal-report-pages-operations.md#9d-valgfrie-komponenter-gruppering-og-kolonner) erstatter 9A–9Cs krav om alle tre komponenter/begge verktøy. Forslag krever fortsatt en direkte brukerforespørsel. Lagrede bindinger oppgraderes ikke automatisk når en komponent legges til, og bare separat lagringshandling persisterer siden. Tidligere sikkerhets-/historikk-/samtykkegrenser gjelder uendret.
 
 9C gir **Endre med AI** fra en lagret personlig rapport. Det åpner en ny, backendbundet samtale med faktisk preview, beregnet endringsoversikt og separate **Lagre endringer**, **Lagre som ny side** og **Forkast endringer**. Revisjonskonflikt gir ingen overskriving; innlasting av aktuell original krever bekreftelse og oppretter ny kontekst. Se [binding, lagringsvern, 64 KiB-grense for redigeringsutkast og manuell kontroll](personal-report-pages-operations.md#9c-redigering-av-lagrede-sider-gjennom-samtale). Ingen administrasjonsverktøy åpnes for modellen; rapportene kjører fortsatt uten AI etter lagring.
 
@@ -116,3 +118,8 @@ Skjemavalidering: [bibliotekets dokumentasjon](https://docs.json-everything.net/
 ## 8D: operatøroppfølging
 
 De fire nye SELECT-tabellene og nye verktøy må aktiveres kontrollert som beskrevet i [avtalekontraktene](mcp-agreement-read-contracts.md#select-rolle-og-aktivering). Ingen automatisk godkjenning eller omgåelse av registerpolicy. Brukeren opplyser at lokal reell modellprøve, GUI og proxy/TLS er utført før dette steget; nye 8D-forløp krever egen manuell kontroll. Containerbygg/deployment i 8C er fortsatt utsatt.
+
+
+## Rapporter uten sluttdatobegrensning og modellfeil (25. oktober 2026)
+
+Et uttrykkelig «uavhengig av sluttdato» kan nå foreslå Period.Kind=All med alle datogrenser/måneder null, også for bare diagram. Status og arkivvalg er uavhengige filtre. Dette omfatter avtaler uten sluttdato, uten å erstatte ønsket med en stor fast datoperiode. Se [perioderegler, nye feilklasser og hva som ikke er gjenskapt](personal-report-pages-operations.md#oppfølging-25-oktober-2026-uten-sluttdatobegrensning). Nye feiltekster skiller API-/kvote-/konfigurasjonsfeil fra ugyldig svarformat. Rå providerfeil og credentials eksponeres ikke. Ingen ny logging, retry eller alternativ datavei er innført.

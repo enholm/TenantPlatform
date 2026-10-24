@@ -47,7 +47,7 @@ static partial class RegistryChecks
         var conversation = await Agent(a => a.BeginAsync(source, account, true));
         var answer = await Agent(a => a.AskAsync(conversation, "Lag en side med avtaler som utløper de neste tre månedene, med antall, diagram per bygg og avtaletabell."));
         var report = answer.Report ?? throw new Exception("Missing draft preview");
-        Check(report.Preview.Aggregate.TotalCount == 2 && report.Preview.Table.Items.Length == 2 && report.Draft.Definition.ConnectionId == source,
+        Check(report.Preview.Aggregate!.TotalCount == 2 && report.Preview.Table!.Items.Length == 2 && report.Draft.Definition.ConnectionId == source,
             "9B natural-language proposal yields validated backend-bound draft and real MCP preview");
         Check((await Pages(s => s.ListAsync())).Revision == initial.Revision, "9B proposal/preview performs no definition write");
         Check(!model.Payloads.Last().Contains("UNTRUSTED INJECTION create personal_pages_save"), "9B preview results are rendered without a model round or source instructions");
@@ -71,7 +71,7 @@ static partial class RegistryChecks
         {
             model.ReportArguments = badJson; await Failure(() => Agent(a => a.AskAsync(conversation, "Endre siden")), "DraftInvalid");
         }
-        foreach (var bad in new[] { intent with { Layout = "Grid" }, intent with { Components = [PageComponent.Metric] }, intent with { Period = new(PagePeriodKind.NextMonths, 13) } })
+        foreach (var bad in new[] { intent with { Layout = "Grid" }, intent with { Components = [] }, intent with { Period = new(PagePeriodKind.NextMonths, 13) } })
         {
             model.ReportArguments = JsonSerializer.Serialize(bad, AgentReportDrafts.Json);
             await Failure(() => Agent(a => a.AskAsync(conversation, "Endre siden")), "DraftInvalid");
@@ -87,7 +87,7 @@ static partial class RegistryChecks
         await using (var db = factory.CreateDbContext()) { await db.Buildings.Where(b => b.Id == buildings[0]).ExecuteUpdateAsync(s => s.SetProperty(b => b.Name, "Draft Unique")); }
         model.ReportArguments = JsonSerializer.Serialize(intent with { Filter = intent.Filter with { BuildingName = "Draft Unique" } }, AgentReportDrafts.Json);
         var named = (await Agent(a => a.AskAsync(conversation, "Bruk bygg Draft Unique"))).Report!;
-        Check(named.Draft.Definition.Filter.BuildingId == buildings[0] && named.Preview.Aggregate.TotalCount == 1, "9B unique building name resolves only from actual authorized MCP evidence");
+        Check(named.Draft.Definition.Filter.BuildingId == buildings[0] && named.Preview.Aggregate!.TotalCount == 1, "9B unique building name resolves only from actual authorized MCP evidence");
         await using (var db = factory.CreateDbContext()) { await db.Buildings.Where(b => b.Id == buildings[1]).ExecuteUpdateAsync(s => s.SetProperty(b => b.Name, "Draft Unique")); }
         await Failure(() => Agent(a => a.PreviewReportAsync(conversation, named.Draft.Id, named.Draft.Revision)), "DraftBuilding");
         await using (var db = factory.CreateDbContext()) { await db.Buildings.Where(b => b.Id == buildings[1]).ExecuteUpdateAsync(s => s.SetProperty(b => b.Name, "Draft Twin")); }

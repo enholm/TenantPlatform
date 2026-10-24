@@ -3392,7 +3392,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="PagesBuildingId" xml:space="preserve"><value>Bygg-ID (valgfritt)</value></data>
   <data name="PagesMissingOnly" xml:space="preserve"><value>Bare uten gyldig byggtilknytning</value></data>
   <data name="PagesComponentMetric" xml:space="preserve"><value>Rekkefølge: nøkkeltall</value></data>
-  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Rekkefølge: byggdiagram</value></data>
+  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Rekkefølge: diagram</value></data>
   <data name="PagesComponentAgreementTable" xml:space="preserve"><value>Rekkefølge: avtaletabell</value></data>
   <data name="PagesPreview" xml:space="preserve"><value>Forhåndsvis</value></data>
   <data name="PagesRefresh" xml:space="preserve"><value>Hent ferske data</value></data>
@@ -3435,7 +3435,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="DraftSummary" xml:space="preserve"><value>Periode / status / type / arkiv / bygg / søk</value></data>
   <data name="DraftMonths" xml:space="preserve"><value>Neste {0} kalendermåneder</value></data>
   <data name="DraftNew" xml:space="preserve"><value>Nytt rapportutkast er klart. Ingenting er lagret.</value></data>
-  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>Forslaget er ikke en støttet sidedefinisjon. Siste gyldige utkast er beholdt. Bruk nøkkeltall, byggdiagram og avtaletabell med fast periode eller 1–12 måneder.</value></data>
+  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>Forslaget er ikke en støttet sidedefinisjon. Siste gyldige utkast er beholdt. Velg minst én støttet komponent og gyldig periode, eventuelt uavhengig av sluttdato.</value></data>
   <data name="AgentErrorDraftBuilding" xml:space="preserve"><value>Byggnavnet ga ikke ett entydig treff i autoriserte data. Oppgi et entydig navn eller velg rapport uten byggfilter. Utkastet ble ikke endret.</value></data>
   <data name="AgentErrorDraftConflict" xml:space="preserve"><value>Utkastet eller Mine sider er endret. Hent et oppdatert utkast før lagring; ingen automatisk overskriving er utført.</value></data>
   <data name="AgentErrorDraftLimit" xml:space="preserve"><value>Grensen for utkast, sider eller resultat er nådd. Snevr inn utvalget eller start en ny samtale.</value></data>
@@ -3466,4 +3466,28 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="DraftChangeComponents" xml:space="preserve"><value>Komponentrekkefølge</value></data>
   <data name="DraftUpdated" xml:space="preserve"><value>Endringene er lagret i originalen.</value></data>
   <data name="DraftCopied" xml:space="preserve"><value>En ny personlig side er lagret. Originalen er uendret.</value></data>
+  <data name="PagesGrouping" xml:space="preserve"><value>Diagramgruppering</value></data>
+  <data name="PagesColumns" xml:space="preserve"><value>Tabellkolonner og rekkefølge</value></data>
+  <data name="PagesColumnTitle" xml:space="preserve"><value>Tittel</value></data>
+  <data name="PagesColumnType" xml:space="preserve"><value>Type</value></data>
+  <data name="PagesColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="PagesColumnBuilding" xml:space="preserve"><value>Bygg</value></data>
+  <data name="PagesColumnStartDate" xml:space="preserve"><value>Startdato</value></data>
+  <data name="PagesColumnEndDate" xml:space="preserve"><value>Sluttdato</value></data>
+  <data name="PagesColumnNoticeDeadline" xml:space="preserve"><value>Oppsigelsesfrist</value></data>
+  <data name="PagesColumnRenewalDate" xml:space="preserve"><value>Fornyelsesdato</value></data>
+  <data name="DraftChangeGroupBy" xml:space="preserve"><value>Diagramgruppering</value></data>
+  <data name="DraftChangeColumns" xml:space="preserve"><value>Tabellkolonner og rekkefølge</value></data>
+  <data name="PagesErrorVersion" xml:space="preserve"><value>Denne rapportversjonen støttes ikke. Oppdater applikasjonen for å åpne siden.</value></data>
+  <data name="AgentErrorDraftVersion" xml:space="preserve"><value>Denne rapportversjonen støttes ikke.</value></data>
+  <data name="PagesCurrentBinding" xml:space="preserve"><value>Gjeldende godkjente binding (velg eksplisitt)</value></data>
+  <data name="PagesStoredBinding" xml:space="preserve"><value>Lagret binding</value></data>
+  <data name="PagesAllDates" xml:space="preserve"><value>Uavhengig av sluttdato</value></data>
+  <data name="AgentErrorModelRequestRejected" xml:space="preserve"><value>Modelltilbyderen avviste forespørselen (HTTP 400/422). Kontroller modell og verktøyskjema. Ingen rapport er lagret.</value></data>
+  <data name="AgentErrorModelAuthentication" xml:space="preserve"><value>Modelltilbyderen avviste API-legitimasjonen (HTTP 401). Kontroller ReadAgent-konfigurasjonen.</value></data>
+  <data name="AgentErrorModelForbidden" xml:space="preserve"><value>Modelltilbyderen avviste tilgangen (HTTP 403). Kontroller modell- og prosjekttilgang.</value></data>
+  <data name="AgentErrorModelNotFound" xml:space="preserve"><value>Modelltilbyderen fant ikke den forespurte ressursen (HTTP 404). Kontroller modellnavnet og tilgangen.</value></data>
+  <data name="AgentErrorModelRateLimited" xml:space="preserve"><value>Modelltilbyderen avviste kallet på grunn av kvote eller frekvensgrense (HTTP 429). Ingen automatisk gjentakelse er utført.</value></data>
+  <data name="AgentErrorModelConnectionFailed" xml:space="preserve"><value>Kunne ikke opprette eller fullføre forbindelsen til modelltilbyderen. Kontroller nettverk og prøv igjen.</value></data>
+  <data name="AgentErrorModelResponseInvalid" xml:space="preserve"><value>Modelltilbyderen returnerte et svar i et uventet format. Ingen rapport er lagret.</value></data>
 </root>

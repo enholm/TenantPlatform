@@ -15,7 +15,14 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
     }
     public async Task<PersonalPageCollection> ListAsync(CancellationToken ct = default)
     {
-        var who = await RequireAsync(ct); return await data.ReadAsync(who.AccountId!.Value, who.UserId, ct);
+        var who = await RequireAsync(ct); var collection = await data.ReadAsync(who.AccountId!.Value, who.UserId, ct);
+        RequireSupportedVersions(collection); return collection;
+    }
+    // The collection is persisted as one JSON document. Never round-trip an unknown future
+    // definition through today's model, including when an operation changes another page.
+    private static void RequireSupportedVersions(PersonalPageCollection collection)
+    {
+        if (collection.Pages.Any(p => p.Definition.Version is not (1 or 2))) throw new PersonalPageException("Version");
     }
     public async Task<PersonalPage> ReadAsync(Guid id, CancellationToken ct = default) =>
         (await ListAsync(ct)).Pages.SingleOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException();
@@ -26,23 +33,30 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
         var page = await registry.ListAsync(ct); var available = (await registry.AvailableToolsAsync(ct)).Where(t => t.UseClass == TenantPlatform.Core.Identity.McpToolUse.AutomaticRead).ToArray();
         return page.Servers.Where(s => page.Profiles.Any(p => p.Id == s.ProfileId && p.Version == s.ProfileVersion && !p.Binding.External))
             .Select(s => { var q = available.SingleOrDefault(t => t.ConnectionId == s.Id && t.Name == "agreements_query"); var a = available.SingleOrDefault(t => t.ConnectionId == s.Id && t.Name == "agreements_aggregate");
-                return q is null || a is null ? null : new PageSource(s.Id, s.Name, q.Version, a.Version, s.ProfileVersion); }).OfType<PageSource>().ToArray();
+                return q is null && a is null ? null : new PageSource(s.Id, s.Name, q?.Version ?? "", a?.Version ?? "", s.ProfileVersion); }).OfType<PageSource>().ToArray();
     }
     public static void Validate(PageDefinition d)
     {
-        if (d.Version != 1 || string.IsNullOrWhiteSpace(d.Title) || d.Title.Length > 100 || d.Title.Any(char.IsControl) || d.ConnectionId == Guid.Empty ||
-            d.ProfileVersion.Length is < 1 or > 200 || d.QueryVersion.Length is < 1 or > 200 || d.AggregateVersion.Length is < 1 or > 200 || d.Layout != "Stacked" ||
-            d.Components.Length != 3 || d.Components.Distinct().Count() != 3 || d.Components.Any(x => !Enum.IsDefined(x)) ||
+        if (d.Version is not (1 or 2)) throw new PersonalPageException("Version");
+        if (string.IsNullOrWhiteSpace(d.Title) || d.Title.Length > 100 || d.Title.Any(char.IsControl) || d.ConnectionId == Guid.Empty ||
+            d.ProfileVersion.Length is < 1 or > 200 || d.QueryVersion.Length > 200 || d.AggregateVersion.Length > 200 ||
+            PageDefinitions.NeedsQuery(d) && d.QueryVersion.Length == 0 || PageDefinitions.NeedsAggregate(d) && d.AggregateVersion.Length == 0 || d.Layout != "Stacked" ||
+            d.Components.Length is < 1 or > 3 || d.Components.Distinct().Count() != d.Components.Length || d.Components.Any(x => !Enum.IsDefined(x)) ||
             JsonSerializer.SerializeToUtf8Bytes(d).Length > 16384) throw new PersonalPageException("Invalid");
+        if (!Enum.IsDefined(d.GroupBy) ||
+            (d.Version == 1 ? d.Components.Length != 3 || d.GroupBy != AgreementReportGrouping.Building || d.Columns is not null :
+                d.Columns is null || d.Columns.Length > 8 || d.Columns.Distinct().Count() != d.Columns.Length || d.Columns.Any(c => !Enum.IsDefined(c)) ||
+                PageDefinitions.NeedsQuery(d) && d.Columns.Length == 0)) throw new PersonalPageException("Invalid");
         try { AgreementReportFilterRules.Validate(d.Filter); } catch (ArgumentException) { throw new PersonalPageException("Invalid"); }
         if (d.Filter.EndDateFrom.HasValue || d.Filter.EndDateTo.HasValue || d.Filter.EndsWithinMonths.HasValue || !Enum.IsDefined(d.Period.Kind) ||
-            (d.Period.Kind == PagePeriodKind.NextMonths ? d.Period.Months is not (>= 1 and <= 12) || d.Period.From.HasValue || d.Period.To.HasValue :
+            (d.Period.Kind == PagePeriodKind.All ? d.Version < 2 || d.Period.Months.HasValue || d.Period.From.HasValue || d.Period.To.HasValue :
+             d.Period.Kind == PagePeriodKind.NextMonths ? d.Period.Months is not (>= 1 and <= 12) || d.Period.From.HasValue || d.Period.To.HasValue :
                 d.Period.Months.HasValue || !d.Period.From.HasValue || !d.Period.To.HasValue || d.Period.From > d.Period.To)) throw new PersonalPageException("Invalid");
     }
     public async Task ValidateSourceAsync(PageDefinition d, CancellationToken ct)
     {
         Validate(d);
-        if (!(await SourcesAsync(ct)).Any(s => s.ConnectionId == d.ConnectionId && s.QueryVersion == d.QueryVersion && s.AggregateVersion == d.AggregateVersion && s.ProfileVersion == d.ProfileVersion))
+        if (!(await SourcesAsync(ct)).Any(s => s.ConnectionId == d.ConnectionId && (!PageDefinitions.NeedsQuery(d) || s.QueryVersion == d.QueryVersion) && (!PageDefinitions.NeedsAggregate(d) || s.AggregateVersion == d.AggregateVersion) && s.ProfileVersion == d.ProfileVersion))
         {
             if (registry is null) throw new PersonalPageException("SourceUnavailable");
             var state = await registry.DescribeAsync(d.ConnectionId, ct);
@@ -54,6 +68,7 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
     // Stable creation ID is generated by the server-side draft store, never supplied as caller identity or ownership.
     public async Task<Guid> CreateFromDraftAsync(Guid creationId, Guid revision, PageDefinition definition, CancellationToken ct = default)
     {
+        definition = PageDefinitions.Current(definition);
         if (creationId == Guid.Empty) throw new PersonalPageException("Invalid");
         var current = await ListAsync(ct);
         await ValidateSourceAsync(definition, ct); // Idempotent retries still require current authority.
@@ -68,6 +83,7 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
     // The draft store supplies a stable commit revision. It proves a lost-response retry without accepting an unrelated identical edit.
     public async Task<Guid> UpdateFromDraftAsync(Guid id, Guid revision, Guid commitRevision, PageDefinition original, PageDefinition definition, CancellationToken ct = default)
     {
+        definition = PageDefinitions.Current(definition);
         if (id == Guid.Empty || commitRevision == Guid.Empty || commitRevision == revision) throw new PersonalPageException("Invalid");
         var who = await RequireAsync(ct);
         var current = await ListAsync(ct);
@@ -82,8 +98,9 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
     private static bool Same(PageDefinition a, PageDefinition b) => JsonSerializer.Serialize(a) == JsonSerializer.Serialize(b with { Title = b.Title.Trim() });
     private async Task<PersonalPageCollection> PersistAsync(Guid? id, Guid revision, PageDefinition definition, Guid? creationId, CancellationToken ct, Guid? commitRevision = null)
     {
-        var who = await RequireAsync(ct); Validate(definition);
+        var who = await RequireAsync(ct); definition = PageDefinitions.Current(definition);
         var current = await data.ReadAsync(who.AccountId!.Value, who.UserId, ct);
+        RequireSupportedVersions(current);
         if (id.HasValue && !current.Pages.Any(p => p.Id == id)) throw new UnauthorizedAccessException();
         if (current.Revision != revision) throw new PersonalPageException("Conflict");
         await ValidateSourceAsync(definition, ct);

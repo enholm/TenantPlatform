@@ -185,7 +185,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 }
             }
             var proposalAllowed = drafts is not null && !external && AgentReportDrafts.Requested(prompt, run.Draft is not null) &&
-                (run.Draft?.SavedPageId is null || AgentReportDrafts.Requested(prompt, false)) && selected.Any(t => t.Name == "agreements_query") && selected.Any(t => t.Name == "agreements_aggregate");
+                (run.Draft?.SavedPageId is null || AgentReportDrafts.Requested(prompt, false)) && selected.Any(t => t.Name is "agreements_query" or "agreements_aggregate");
             if (run.Draft is { } currentDraft)
             {
                 if (drafts is null) throw new ReadAgentException("DraftInvalid");

@@ -3356,7 +3356,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="PagesBuildingId" xml:space="preserve"><value>Building ID (optional)</value></data>
   <data name="PagesMissingOnly" xml:space="preserve"><value>Only without a valid building</value></data>
   <data name="PagesComponentMetric" xml:space="preserve"><value>Order: key metric</value></data>
-  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Order: building chart</value></data>
+  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Order: chart</value></data>
   <data name="PagesComponentAgreementTable" xml:space="preserve"><value>Order: agreement table</value></data>
   <data name="PagesPreview" xml:space="preserve"><value>Preview</value></data>
   <data name="PagesRefresh" xml:space="preserve"><value>Refresh data</value></data>
@@ -3399,7 +3399,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="DraftSummary" xml:space="preserve"><value>Period / status / type / archive / building / search</value></data>
   <data name="DraftMonths" xml:space="preserve"><value>Next {0} calendar months</value></data>
   <data name="DraftNew" xml:space="preserve"><value>A new report draft is ready. Nothing is saved.</value></data>
-  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>The proposal is not a supported page definition. The last valid draft is kept. Use a metric, building chart and agreement table with fixed dates or 1–12 months.</value></data>
+  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>The proposal is not a supported page definition. The last valid draft is kept. Select at least one supported component and a valid period, optionally any end date.</value></data>
   <data name="AgentErrorDraftBuilding" xml:space="preserve"><value>The building name did not uniquely match authorised data. Provide an unambiguous name or use no building filter. The draft was not changed.</value></data>
   <data name="AgentErrorDraftConflict" xml:space="preserve"><value>The draft or My pages has changed. Obtain an updated draft before saving; nothing was overwritten automatically.</value></data>
   <data name="AgentErrorDraftLimit" xml:space="preserve"><value>A draft, page or result limit was reached. Narrow the selection or start a new conversation.</value></data>
@@ -3430,4 +3430,28 @@ This is a reminder, not a termination or renewal.</value>
   <data name="DraftChangeComponents" xml:space="preserve"><value>Component order</value></data>
   <data name="DraftUpdated" xml:space="preserve"><value>Changes saved to the original.</value></data>
   <data name="DraftCopied" xml:space="preserve"><value>A new personal page has been saved. The original is unchanged.</value></data>
+  <data name="PagesGrouping" xml:space="preserve"><value>Chart grouping</value></data>
+  <data name="PagesColumns" xml:space="preserve"><value>Table columns and order</value></data>
+  <data name="PagesColumnTitle" xml:space="preserve"><value>Title</value></data>
+  <data name="PagesColumnType" xml:space="preserve"><value>Type</value></data>
+  <data name="PagesColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="PagesColumnBuilding" xml:space="preserve"><value>Building</value></data>
+  <data name="PagesColumnStartDate" xml:space="preserve"><value>Start date</value></data>
+  <data name="PagesColumnEndDate" xml:space="preserve"><value>End date</value></data>
+  <data name="PagesColumnNoticeDeadline" xml:space="preserve"><value>Notice deadline</value></data>
+  <data name="PagesColumnRenewalDate" xml:space="preserve"><value>Renewal date</value></data>
+  <data name="DraftChangeGroupBy" xml:space="preserve"><value>Chart grouping</value></data>
+  <data name="DraftChangeColumns" xml:space="preserve"><value>Table columns and order</value></data>
+  <data name="PagesErrorVersion" xml:space="preserve"><value>This report version is unsupported. Update the application to open this page.</value></data>
+  <data name="AgentErrorDraftVersion" xml:space="preserve"><value>This report version is unsupported.</value></data>
+  <data name="PagesCurrentBinding" xml:space="preserve"><value>Current approved binding (select explicitly)</value></data>
+  <data name="PagesStoredBinding" xml:space="preserve"><value>Stored binding</value></data>
+  <data name="PagesAllDates" xml:space="preserve"><value>Any end date</value></data>
+  <data name="AgentErrorModelRequestRejected" xml:space="preserve"><value>The model provider rejected the request (HTTP 400/422). Check the model and tool schema. No report was saved.</value></data>
+  <data name="AgentErrorModelAuthentication" xml:space="preserve"><value>The model provider rejected the API credentials (HTTP 401). Check ReadAgent configuration.</value></data>
+  <data name="AgentErrorModelForbidden" xml:space="preserve"><value>The model provider denied access (HTTP 403). Check model and project access.</value></data>
+  <data name="AgentErrorModelNotFound" xml:space="preserve"><value>The model provider could not find the requested resource (HTTP 404). Check model name and access.</value></data>
+  <data name="AgentErrorModelRateLimited" xml:space="preserve"><value>The model provider rejected the call because of quota or rate limits (HTTP 429). No automatic retry was made.</value></data>
+  <data name="AgentErrorModelConnectionFailed" xml:space="preserve"><value>Could not establish or complete the connection to the model provider. Check the network and try again.</value></data>
+  <data name="AgentErrorModelResponseInvalid" xml:space="preserve"><value>The model provider returned an unexpected response format. No report was saved.</value></data>
 </root>

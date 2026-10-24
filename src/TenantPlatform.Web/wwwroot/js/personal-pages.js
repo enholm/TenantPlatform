@@ -22,11 +22,14 @@
             }
             function definition() {
                 const option = field('connection').selectedOptions[0];
-                const positions = ['Metric', 'BuildingChart', 'AgreementTable'].map(c => [Number(field(c).value), c]);
-                if (new Set(positions.map(p => p[0])).size !== 3) throw new Error(panel.dataset.error);
+                const positions = ['Metric', 'BuildingChart', 'AgreementTable'].filter(c => field('show' + c).checked).map(c => [Number(field(c).value), c]);
+                if (new Set(positions.map(p => p[0])).size !== positions.length || !positions.length) throw new Error(panel.dataset.error);
                 const fixed = field('period').value === 'Fixed';
-                return { version: 1, title: field('title').value, connectionId: field('connection').value, profileVersion: option?.dataset.profile || '', queryVersion: option?.dataset.query || '', aggregateVersion: option?.dataset.aggregate || '',
-                    period: { kind: fixed ? 'Fixed' : 'NextMonths', months: fixed ? null : Number(field('months').value), from: fixed ? field('from').value : null, to: fixed ? field('to').value : null },
+                const columnPositions = ['Title', 'Type', 'Status', 'Building', 'StartDate', 'EndDate', 'NoticeDeadline', 'RenewalDate']
+                    .filter(c => field('showColumn' + c).checked).map(c => [Number(field('column' + c).value), c]);
+                if (new Set(columnPositions.map(p => p[0])).size !== columnPositions.length) throw new Error(panel.dataset.error);
+                return { version: 2, groupBy: field('groupBy').value, columns: columnPositions.sort((a, b) => a[0] - b[0]).map(p => p[1]), title: field('title').value, connectionId: field('connection').value, profileVersion: option?.dataset.profile || '', queryVersion: option?.dataset.query || '', aggregateVersion: option?.dataset.aggregate || '',
+                    period: { kind: field('period').value, months: field('period').value === 'NextMonths' ? Number(field('months').value) : null, from: fixed ? field('from').value : null, to: fixed ? field('to').value : null },
                     filter: { search: field('search').value || null, status: field('status').value || null, type: field('type').value || null, archive: field('archive').value,
                         unitId: field('unit').value || null, organizationElementId: field('organization').value || null, geographicAreaId: field('geography').value || null, buildingId: field('building').value || null, missingBuilding: field('missing').checked }, components: positions.sort((a, b) => a[0] - b[0]).map(p => p[1]), layout: 'Stacked' };
             }
@@ -38,7 +41,7 @@
                     const draft = preview ? definition() : null;
                     const value = await post(preview ? 'preview' : 'run', { id: preview ? null : panel.dataset.id, revision: panel.dataset.revision, definition: draft, page }, controller.signal);
                     if (version !== generation || !await context() || version !== generation) return;
-                    currentPage = value.table.page;
+                    currentPage = value.table?.page || 1;
                     render(value, preview ? draft.components : JSON.parse(panel.dataset.components), preview); status.textContent = '';
                 } catch (error) { if (version === generation) { output.replaceChildren(); status.textContent = controller.signal.aborted ? panel.dataset.cancelled : error.message; } }
                 finally { if (version === generation) { request = null; panel.querySelector('[data-cancel]').disabled = true; } }

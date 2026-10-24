@@ -18,7 +18,8 @@ sealed class AgentProtocolFixture
                 Enabled = true, Model = "synthetic-model", ApiKey = "synthetic-agent-key" }));
         foreach (var prompt in new[] {
             "Lag en rapport på mine sider som viser en paginert liste med kontrakter. Siden kan hete Mine kontrakter",
-            "Lag en rapport på mine sider som viser avtaler for juli, augist og september 2026." })
+            "Lag en rapport på mine sider som viser avtaler for juli, augist og september 2026.",
+            "Lag bare et diagram med aktive avtaler per bygg de neste tre månedene." })
         {
             if (!AgentReportDrafts.Requested(prompt, false)) throw new Exception("Report request must expose the proposal capability");
             var reply = await model.RespondAsync([AgentReportDrafts.Tool()],
@@ -32,12 +33,34 @@ sealed class AgentProtocolFixture
         if (schema.GetProperty("additionalProperties").GetBoolean() ||
             schema.GetProperty("required").GetArrayLength() != 4 ||
             schema.GetProperty("properties").TryGetProperty("accountId", out _)) throw new Exception("Proposal authority/required-field contract changed");
+        var properties = schema.GetProperty("properties");
+        if (!properties.TryGetProperty("columns", out _) || !properties.TryGetProperty("groupBy", out var grouping) ||
+            !grouping.GetRawText().Contains("\"Building\"") || !grouping.GetRawText().Contains("\"Status\"")) throw new Exception("9D proposal presentation schema missing");
+        foreach (var prompt in new[] { "Fjern avtaletabellen.", "Grupper diagrammet etter status i stedet.", "Flytt nøkkeltallet nederst." })
+            if (!AgentReportDrafts.Requested(prompt, true)) throw new Exception("9D follow-up capability not recognized");
+        foreach (var (status, code) in new[] { (400, "ModelRequestRejected"), (422, "ModelRequestRejected"), (401, "ModelAuthentication"), (403, "ModelForbidden"), (404, "ModelNotFound"), (429, "ModelRateLimited"), (503, "ModelUnavailable") })
+        {
+            fixture.HttpStatus = status;
+            try { await model.RespondAsync([], [JsonSerializer.SerializeToElement(new { role = "user", content = "diagnostic" })], new(), default); throw new Exception("Expected safe HTTP error"); }
+            catch (ReadAgentException e) when(e.Code == code) { if (e.ToString().Contains("private-provider-error")) throw new Exception("Provider body escaped"); }
+        }
+        fixture.HttpStatus = 200; fixture.InvalidJson = true;
+        try { await model.RespondAsync([], [JsonSerializer.SerializeToElement(new { role = "user", content = "diagnostic" })], new(), default); throw new Exception("Expected invalid response"); }
+        catch (ReadAgentException e) when(e.Code == "ModelResponseInvalid") { }
+        fixture.InvalidJson = false;
+        foreach (var (prompt, code) in new[] { ("connection-failed", "ModelConnectionFailed"), ("malformed-shape", "ModelResponseInvalid") })
+        {
+            try { await model.RespondAsync([], [JsonSerializer.SerializeToElement(new { role = "user", content = prompt })], new(), default); throw new Exception("Expected safe adapter error"); }
+            catch (ReadAgentException e) when(e.Code == code) { if (e.ToString().Contains("private-provider-error")) throw new Exception("Transport details escaped"); }
+        }
         Console.WriteLine("Report function schema/Responses transport checks passed (synthetic HTTP, no database or model calls).");
     }
     private sealed class ModelHandler(AgentProtocolFixture fixture) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) => fixture.Reply(request, ct);
     }
+    public int HttpStatus = 200;
+    public bool InvalidJson;
     public Func<Task>? BeforeReply, AfterMcp, BeforeReport;
     public bool McpUnavailable, BlockMcp;
     public readonly TaskCompletionSource McpStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -71,6 +94,10 @@ sealed class AgentProtocolFixture
         var userIndex = Array.FindLastIndex(allInput, i => i.TryGetProperty("role", out var r) && r.GetString() == "user");
         var mode = allInput[userIndex].GetProperty("content").GetString()!;
         if (BeforeReply is { } action) { BeforeReply = null; await action(); }
+        if (HttpStatus != 200) return new((HttpStatusCode)HttpStatus) { Content = new StringContent("private-provider-error synthetic-agent-key") };
+        if (InvalidJson) return new(HttpStatusCode.OK) { Content = new StringContent("not JSON private-provider-error") };
+        if (mode == "connection-failed") throw new HttpRequestException("private-provider-error synthetic-agent-key");
+        if (mode == "malformed-shape") return new(HttpStatusCode.OK) { Content = new StringContent("{\"status\":\"completed\",\"output\":{}}") };
         if (mode == "model-error") return new(HttpStatusCode.ServiceUnavailable) { Content = new StringContent("private-provider-error synthetic-agent-key") };
         if (mode is "cancel" or "timeout") { Blocking.TrySetResult(); WhenBlocked?.TrySetResult(); await Task.Delay(Timeout.InfiniteTimeSpan, ct); }
         if (mode == "oversize-response") return new(HttpStatusCode.OK) { Content = new StringContent(new string('x', 600000)) };

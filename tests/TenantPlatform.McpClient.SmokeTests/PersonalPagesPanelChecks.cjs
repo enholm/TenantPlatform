@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 class Element {
-    constructor() { this.children = []; this.dataset = {}; this.listeners = {}; this.isConnected = true; this.textContent = ''; }
+    constructor() { this.children = []; this.dataset = {}; this.style = {}; this.listeners = {}; this.isConnected = true; this.textContent = ''; }
     append(node) { this.children.push(node); }
     replaceChildren() { this.children = []; }
     addEventListener(event, fn) { this.listeners[event] = fn; }
@@ -15,7 +15,7 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 const response = value => ({ ok: true, json: async () => value });
 test('report adapter clears stale results, preserves safe chart/table output and ignores late account responses', async () => {
     const panel = new Element(); panel.dataset = { id: 'page', revision: 'revision', context: 'current', components: '["Metric","BuildingChart","AgreementTable"]', csrf: 'csrf',
-        total: 'TOTAL', date: 'PERIOD', snapshot: 'NO SNAPSHOT', title: 'TITLE', building: 'BUILDING', end: 'END', count: 'COUNT', page: 'PAGE', missing: 'MISSING', error: 'FAILURE', cancelled: 'CANCELLED', empty: 'EMPTY' };
+        total: 'TOTAL', date: 'PERIOD', allDates: 'ANY END DATE', snapshot: 'NO SNAPSHOT', title: 'TITLE', building: 'BUILDING', end: 'END', count: 'COUNT', page: 'PAGE', missing: 'MISSING', error: 'FAILURE', cancelled: 'CANCELLED', empty: 'EMPTY' };
     const nodes = Object.fromEntries(['editor', 'result', 'status', 'cancel', 'preview', 'refresh', 'delete'].map(n => [n, new Element()]));
     panel.querySelector = selector => nodes[selector.match(/\[data-([^\]]+)\]/)[1]];
     panel.querySelectorAll = () => [];
@@ -52,6 +52,12 @@ test('manual editor emits the bounded declaration and saves without owner or acc
     const fields = Object.fromEntries(['title', 'connection', 'period', 'months', 'from', 'to', 'search', 'status', 'type', 'archive', 'building', 'unit', 'organization', 'geography', 'missing', 'Metric', 'BuildingChart', 'AgreementTable'].map(n => [n, { value: '', checked: false }]));
     Object.assign(fields.title, { value: 'My report' }); Object.assign(fields.connection, { value: 'source', selectedOptions: [{ dataset: { query: 'query-version', aggregate: 'aggregate-version', profile: 'profile-version' } }] });
     fields.period.value = 'NextMonths'; fields.months.value = '3'; fields.archive.value = 'Exclude'; fields.Metric.value = '0'; fields.BuildingChart.value = '1'; fields.AgreementTable.value = '2';
+    for (const name of ['Metric', 'BuildingChart', 'AgreementTable']) fields['show' + name] = { checked: true };
+    fields.groupBy = { value: 'Status' };
+    for (const [index, name] of ['Title', 'Type', 'Status', 'Building', 'StartDate', 'EndDate', 'NoticeDeadline', 'RenewalDate'].entries()) {
+        fields['showColumn' + name] = { checked: ['Title', 'Status', 'EndDate'].includes(name) };
+        fields['column' + name] = { value: String(index) };
+    }
     nodes.editor.elements = { namedItem: name => fields[name] }; panel.querySelector = selector => nodes[selector.match(/\[data-([^\]]+)\]/)[1]]; panel.querySelectorAll = () => [];
     let sent, target;
     vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/report-renderer.js', 'utf8') + '\n' + fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/personal-pages.js', 'utf8'), {
@@ -60,8 +66,70 @@ test('manual editor emits the bounded declaration and saves without owner or acc
         AbortController, setInterval() {}, clearInterval() {}, confirm: () => true, location: { assign: path => target = path }
     });
     nodes.editor.listeners.submit({ preventDefault() {} }); await tick(); await tick();
+    assert.equal(sent.definition.version, 2); assert.equal(sent.definition.groupBy, 'Status');
+    assert.deepEqual(sent.definition.columns, ['Title', 'Status', 'EndDate']);
     assert.equal(sent.definition.period.kind, 'NextMonths'); assert.equal(sent.definition.period.months, 3);
     assert.equal(sent.definition.period.from, null); assert.equal(sent.definition.profileVersion, 'profile-version');
     assert.deepEqual(sent.definition.components, ['Metric', 'BuildingChart', 'AgreementTable']);
     assert(!('accountId' in sent.definition)); assert(!('ownerUserId' in sent.definition)); assert.equal(target, '/my-pages/new-page');
+    fields.period.value = 'All';
+    fields.showMetric.checked = false; fields.showAgreementTable.checked = false;
+    for (const key of Object.keys(fields).filter(k => k.startsWith('showColumn'))) fields[key].checked = false;
+    nodes.editor.listeners.submit({ preventDefault() {} }); await tick(); await tick();
+    assert.equal(sent.definition.period.kind, 'All'); assert.equal(sent.definition.period.months, null); assert.equal(sent.definition.period.from, null); assert.equal(sent.definition.period.to, null);
+    assert.deepEqual(sent.definition.components, ['BuildingChart']); assert.deepEqual(sent.definition.columns, []);
+    fields.showBuildingChart.checked = false; sent = null;
+    nodes.editor.listeners.submit({ preventDefault() {} }); await tick(); await tick();
+    assert.equal(sent, null); assert.equal(nodes.status.textContent, 'FAIL');
+});
+
+test('renderer honors optional components, Status labels and ordered allowlisted columns without hidden rows', () => {
+    const window = {}, output = new Element();
+    vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/report-renderer.js', 'utf8'), {
+        document: { createElement: () => new Element() }, window
+    });
+    const labels = { allDates: 'ANY END DATE', status: 'STATUS', statusActive: 'ACTIVE LABEL', title: 'TITLE', building: 'BUILDING', start: 'START', end: 'END', count: 'COUNT', total: 'TOTAL' };
+    const value = { retrievedUtc: 'now', selection: { filter: {} }, groupBy: 'Status', columns: ['Status', 'Title'],
+        aggregate: { totalCount: 27, groups: [{ key: 'Active', name: 'Active', count: 27 }] }, table: null, components: ['BuildingChart', 'Metric'] };
+    // A stale SSR component list must not override the server's current execution plan.
+    window.TenantPlatformReports.render(value, ['Metric', 'AgreementTable', 'BuildingChart'], output, labels, () => {});
+    assert.match(output.text(), /ANY END DATE/); assert(!output.text().includes('null'));
+    assert.equal(output.children.filter(x => x.className?.includes('card')).length, 2);
+    assert.match(output.text(), /ACTIVE LABEL/); assert.match(output.text(), /TOTAL 27/);
+    output.replaceChildren();
+    value.components = ['AgreementTable']; value.aggregate = null; value.table = { page: 1, totalCount: 27, returnedCount: 1, items: [{ status: 'Active', title: '<script>unsafe</script>', building: { name: 'HIDDEN BUILDING' } }] };
+    window.TenantPlatformReports.render(value, ['AgreementTable'], output, labels, () => {});
+    const section = output.children.find(x => x.className?.includes('card'));
+    const table = section.children.find(x => x.className === 'table');
+    assert.deepEqual(table.children[1].children.map(x => x.textContent), ['STATUS', 'TITLE']);
+    assert.deepEqual(table.children[2].children.map(x => x.textContent), ['ACTIVE LABEL', '<script>unsafe</script>']);
+    assert(!output.text().includes('HIDDEN BUILDING')); assert(!output.text().includes('TOTAL'));
+    output.replaceChildren();
+    value.columns = ['RenewalDate', 'NoticeDeadline', 'StartDate', 'Type', 'EndDate', 'Building', 'Title', 'Status'];
+    Object.assign(labels, { renewal: 'RENEWAL', notice: 'NOTICE', type: 'TYPE', typeSoftwareLicense: 'LICENSE LABEL' });
+    Object.assign(value.table.items[0], { renewalDate: '2027-01-01', noticeDeadline: '2026-11-01', startDate: '2025-01-01', type: 'SoftwareLicense', endDate: '2026-12-31' });
+    window.TenantPlatformReports.render(value, ['AgreementTable'], output, labels, () => {});
+    const allTable = output.children.find(x => x.className?.includes('card')).children.find(x => x.className === 'table');
+    assert.deepEqual(allTable.children[1].children.map(x => x.textContent), ['RENEWAL', 'NOTICE', 'START', 'TYPE', 'END', 'BUILDING', 'TITLE', 'STATUS']);
+    assert.deepEqual(allTable.children[2].children.map(x => x.textContent), ['2027-01-01', '2026-11-01', '2025-01-01', 'LICENSE LABEL', '2026-12-31', 'HIDDEN BUILDING', '<script>unsafe</script>', 'ACTIVE LABEL']);
+});
+
+test('chart renders visible proportional bars with a common scale, safe labels and no agreement table', () => {
+    const window = {}, output = new Element();
+    vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/report-renderer.js', 'utf8'), {
+        document: { createElement: () => new Element() }, window
+    });
+    const value = { selection: { filter: {} }, retrievedUtc: 'now', components: ['BuildingChart'], groupBy: 'Status',
+        aggregate: { totalCount: 15, groups: [{ key: 'Active', count: 10 }, { key: 'Draft', count: 5 }, { key: 'Expired', count: 0 }] } };
+    window.TenantPlatformReports.render(value, value.components, output, { allDates: 'All dates', status: 'Status', statusActive: 'Active', statusDraft: 'Draft', statusExpired: 'Expired', count: 'Count' }, () => {});
+    const section = output.children.find(x => x.className?.includes('card'));
+    const chart = section.children.find(x => x.className === 'report-bar-chart');
+    assert(chart); assert.equal(chart.children.length, 3);
+    assert.deepEqual(chart.children.map(x => x.children[1].children[0].style.width), ['100%', '50%', '0%']);
+    assert.deepEqual(chart.children.map(x => x.children[0].textContent), ['Active', 'Draft', 'Expired']);
+    assert.deepEqual(chart.children.map(x => x.children[2].textContent), ['10', '5', '0']);
+    assert(!section.children.some(x => x.className === 'table'));
+    output.replaceChildren(); value.groupBy = 'Building'; value.aggregate.groups = [{ key: 'building', name: '<img src=evil>', count: 10 }];
+    window.TenantPlatformReports.render(value, value.components, output, { building: 'Building' }, () => {});
+    assert.match(output.text(), /<img src=evil>/);
 });

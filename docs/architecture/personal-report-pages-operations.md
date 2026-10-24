@@ -1,4 +1,6 @@
-# Steg 9A: personlige rapportsider
+# Personlige rapportsider (9A–9D)
+
+**Gjeldende kontrakt:** se [9D](#9d-valgfrie-komponenter-gruppering-og-kolonner) nedenfor. Beskrivelsene av v1 og obligatoriske komponenter i 9A–9C er historikk; nye lagringer bruker v2.
 
 «Mine sider» (`/my-pages`) administrerer personlige, kontoavgrensede rapporter. `/my-pages/{id}` åpner en lagret side med ferske data. Oppretting, manuell redigering, forhåndsvisning, lagring, flytt opp/ned og sletting inngår. Tittel er visningstekst; stabil GUID er identitet. Ingen AI, modellnøkkel, deling, eksport, bakgrunnsoppdatering eller rapportresultatlager kreves.
 
@@ -225,3 +227,92 @@ Manuell kontroll etter kontrollert driftsaktivering:
 5. Prøv norsk, engelsk og svensk, tastatur/skjermleser og flere faner. Åpne oppdatert side uten ReadAgent/modellnøkkel. Dette er ikke dekket av syntetisk DOM alene.
 
 Ingen ekte/betalte modellkall, utviklings-/produksjonsdatabase, driftsmigrering, vanlig Web-oppstart, containerbygg, deploy, commit, push eller Serga-endring inngår. Container/deployment i 8C er fortsatt utsatt.
+
+## 9D: valgfrie komponenter, gruppering og kolonner
+
+PageDefinition **v2** støtter ett til tre elementer i Components, uten duplikater: Metric, BuildingChart og AgreementTable. Rekkefølgen er visningsrekkefølgen; Layout er fortsatt Stacked. Navnet BuildingChart beholdes i kontrakten av kompatibilitetshensyn, men GroupBy kan nå være Building eller Status. Alle komponenter deler samme periode og filter. Ingen ny sortering, fri layout, flerkildekombinasjon, økonomi, uttrykk, deling eller eksport inngår.
+
+Columns er en ordnet enumliste uten duplikater eller ukjente verdier, maksimalt åtte. Når AgreementTable er valgt, kreves minst én kolonne. Uten tabell kan listen være tom eller beholde tidligere kolonnevalg til senere redigering. Tillatte kolonner peker på eksisterende felt i agreements_query:
+
+| Kolonne | MCP-felt og betydning |
+|---|---|
+| Title | title, lagret avtaletittel |
+| Type | type, lagret avtaletype; lokaliseres i visningen |
+| Status | status, lagret status; lokaliseres i visningen |
+| Building | building?.name, kontobegrenset byggreferanse; manglende vises med eksisterende mangler-etikett |
+| StartDate | startDate, lagret startdato |
+| EndDate | endDate, lagret sluttdato; fortsatt feltet perioden filtrerer på |
+| NoticeDeadline | noticeDeadline, lagret oppsigelsesfrist |
+| RenewalDate | renewalDate, lagret fornyelsesdato |
+
+Datoene er eksisterende kontraktfelter, uten ny utledning av aktiv-i-periode eller oppfølgingsfrister. Manglende valgfrie datoer vises som «—». MCP-kontraktens faste Title/ID-sortering, sidestørrelse 25 og sidegrense 10000 er uendret. Ingen eier-/personmetadata tilføyes. Renderer bruker en fast feltliste og textContent; ingen vilkårlige objektnøkler, HTML eller kode evalueres.
+
+### Eldre sider og uttrykkelig lagring
+
+PageDefinitions.Current validerer v1 før eksplisitt konvertering i minnet: samme komponentrekkefølge og alle tre komponenter, Building-gruppering, kolonnene Title → Building → EndDate. Filter, periode, kilde og eksakte profil-/verktøyversjoner beholdes. Ukjent definisjonsversjon gir Version-feil med forståelig GUI-tekst, også ved list/read og en mutasjon som gjelder en annen side i samme samling. Hele JSON-samlingen avvises før dagens serializer kan skrive om ukjente fremtidige felt. Ingen databaseoppdatering skjer ved list/read/run eller åpning av en AI-redigering. En eldre JSON-definisjon trenger ikke de nye feltene.
+
+Ved redigering beholdes den rå lagrede originalen separat til revisjonskontroll. Endringsoversikten sammenligner konverterte betydninger, så formatkonverteringen alene lager ingen falsk innholdsendring. Bare eksplisitt manuell lagring, AI-lagringsknappen eller et autorisert administrasjons-save persisterer v2, under samme transaksjon og revisjonsvern. Ingen migrering eller masseskriving trengs. Rekkefølge/sletting av sider omskriver ikke deres definisjonsversjoner. Den separate administrasjons-MCP-flaten annonserer nå v2 i sitt genererte save-skjema og sine beskrivelser; en eventuell registrert administrasjonsklient må håndtere endrede metadata gjennom vanlig eksplisitt oppdagelse/godkjenning. Ingen godkjenning oppgraderes automatisk. Leseverktøyenes metadata/kontrakter er uendret.
+
+### Minimal MCP-plan og tilgang
+
+Application utleder planen fra den validerte definisjonen:
+
+| Komponentsett | Forretningskall per kjøring |
+|---|---|
+| Bare Metric, bare diagram, Metric + diagram | Ett agreements_aggregate |
+| Bare tabell | Ett agreements_query |
+| Tabell + Metric og/eller diagram | Ett agreements_aggregate, deretter ett agreements_query |
+
+Metric og diagram deler det samme komplette aggregatet, med unik total og komplette, ikke-overlappende grupper. Status-grupper bruker eksisterende enum-nøkler; Building beholder missing-gruppen for manglende/ugyldig kontoreferanse. Serverresultatet angir faktisk kjørt Components, GroupBy og Columns; en eldre komponentliste fra SSR i en allerede åpen fane overstyrer ikke den nye kjøringsplanen. Manglende tabell/aggregat returneres som null, aldri konstruerte nulltall. Ingen listesidesummering eller skjult henting av tabellrader gjøres for en ren graf-/nøkkeltallside.
+
+Første faktiske verktøy normaliserer relativ periode etter målserverens kontodato/tidssone. Når to kall brukes, sendes aggregatets konkrete filter/datoer til query. En ren tabell lar query normalisere perioden. Application verifiserer resultatets filter/kontrakt mot hensikten; nettleseren beregner ingen kalender. En kjøring gir fortsatt ingen konsistent snapshotgaranti: snapshotConsistent=false, og forskjeller mellom aggregat og liste er mulige ved samtidige endringer. Paging og complete/hasMore/limitReached vises uendret og ærlig.
+
+Egen profil, personlig OAuth, lokal bruksrett og profilversjon kontrolleres fortsatt. Bare verktøy som planen bruker må være godkjent AutomaticRead og ha nøyaktig lagret versjon. En metric-side kan derfor kjøre uten query-godkjenning, mens en tabellside kan kjøre uten aggregate-godkjenning. Kilden må ha minst ett av disse tilgjengelig. Tidligere bindinger bevares også når verktøyet midlertidig ikke brukes; å legge komponenten tilbake oppgraderer ikke binding eller godkjenning. Manglende/utdatert binding gir feil og krever et eksplisitt kildevalg/lagring gjennom manuell konfigurering. Ingen SQL-/Application-lesefallback innføres.
+
+**Separat navneoppslag i chat:** et foreslått byggnavn trenger i tillegg en godkjent, versjonsbundet Building-aggregate for entydig navneløsning og senere kontroll. Dette gjelder også et tabellutkast med byggnavn. Selve lagrede kjøringsplanen bruker bare de valgte komponentenes verktøy; en allerede lagret bygg-ID trenger ikke nytt navneoppslag. Modellavledede kildeavhengigheter beholder sine egne revalideringskall og budsjetter.
+
+Eksisterende 40-sekunders kjøregrense, samtidighet, 64 KiB per MCP-resultat, 128 KiB GUI-respons, 100 grupper, kontroller av kilde/tilgang før og etter kjøring samt SELECT-rolle/SaveChanges-vakt beholdes. Ingen modellkall, resultatcache eller bakgrunnsoppdatering i lagret rapportkjøring.
+
+### Oppretting og redigering
+
+Manuell konfigurering viser av/på og posisjon for hver komponent, Building/Status-gruppering samt av/på og posisjon for hver tillatt kolonne. Like posisjoner for aktive valg avvises. Dette er visningsrekkefølge, ikke listesortering.
+
+propose_report_page bruker de samme enumene og Application-valideringen. Forslaget er fortsatt bare hensikt; backend eier identiteter, kilde-/verktøybindinger og revisjoner. Et nytt «Lag bare et diagram …» gjenkjennes også uten ordet rapport/side. Modellen får hele gjeldende hensikt og skal bevare valg brukeren ikke endrer. Utelatt/null gruppering og kolonneliste normaliseres til gjeldende utkastvalg, eller Building og eldre standardkolonner for et nytt utkast. En eksplisitt tom kolonneliste godtas bare uten tabell. Ukjente/dupliserte verdier avvises, uten alternativ rapport eller skjult lagring. Funksjonsskjema og Responses strict=false med obligatorisk lokal validering følger fortsatt [offisiell OpenAI-dokumentasjon](https://developers.openai.com/api/docs/guides/function-calling).
+
+Backend beregner endringer i komponenter/rekkefølge, gruppering og kolonner/rekkefølge i tillegg til eksisterende felt. Preview viser den valgte presentasjonen. Lagre, oppdatere original og lagre kopi er fortsatt separate brukerhandlinger; konflikt beholder hensikten og overskriver ikke siden.
+
+### Verifikasjon og manuell kontroll
+
+24. oktober 2026 bestod solution-build, målrettet 9D-suite, hele MCPClient-/MCP-/OAuth-suitene mot isolert PostgreSQL og seks GUI-adapterkontroller etter siste produksjonsendring. Alle sju komponentkombinasjoner, faktiske kallantall, eldre/fremtidige versjoner, prompt→utkast→eksplisitt lagring, konflikt og kjøring med AI deaktivert inngår. Klyngene ble stoppet og fjernet. Eksisterende NU1902/NU1903 består; ingen nye kompilatorvarsler. Se [detaljert verifikasjon](modernization-plan.md#343-verifikasjon-og-manuell-rest). Testene bruker syntetisk Responses-transport, faktiske OAuth-/MCP-biblioteker og isolert PostgreSQL. Ingen ekte eller betalte modellkall, vanlig Web-start eller utviklings-/produksjonsdatabase inngår.
+
+Manuelle prøver som gjenstår:
+
+1. Opprett en diagramrapport med aktiv-status og eksplisitt periode fra chat. Kontroller at bare diagrammet vises og ingenting lagres før klikk.
+2. Åpne en eldre side og rediger med AI: fjern tabellen, bytt til Status, legg til Title/Building/Status/EndDate og flytt Metric nederst. Kontroller preview, endringsoversikt og separat original-/kopilagring.
+3. Gjenta samme valg manuelt, inkludert bare tabell og bare Metric; kontroller kolonnerekkefølge, lokaliserte type-/statusetiketter, datoer og sidebytte.
+4. Endre samme side i en annen fane; bekreft konflikt uten overskriving. Fjern nødvendig verktøygodkjenning/OAuth eller medlemskap; ingen gammel preview eller falske nulltall skal bli stående.
+5. Deaktiver AI og åpne lagrede v1/v2-sider med personlig MCP. Ingen modellnøkkel skal kreves. Konto-/brukerbytte og avbrudd skal fortsatt tømme gamle resultater.
+
+Reell modellforståelse og faktisk nettleser-/TLS-bruk er ikke bevist av syntetiske kontroller. Containerbygg/deployment (8C) er fortsatt utsatt.
+
+
+### Oppfølging 25. oktober 2026: uten sluttdatobegrensning
+
+V2 har nå også Period.Kind=All med Months/From/To=null. Det sender verken endsWithinMonths, endDateFrom eller endDateTo til MCP, og omfatter derfor også avtaler med null sluttdato. All er eksplisitt hensikt, ikke en kunstig bred datoperiode. Status=Active er fortsatt lagret status, og Archive=Exclude er et separat filter. En eldre v1-definisjon kan ikke angi All; dens eksisterende betydning bevares. NextMonths og Fixed beholder tidligere regler. Ingen MCP-/databaseskjemaendring er nødvendig.
+
+Manuell editor tilbyr «Uavhengig av sluttdato», agentens forslagsskjema/instruksjoner støtter All, og preview viser den lokaliserte etiketten. Samme filter brukes ved kombinerte aggregate-/query-kall og ved senere åpning. Original/kopi og eksplisitt lagring følger samme vern som ellers.
+
+Brukerens eksempel «Lag en side som heter Aktive avtaler per bygg … uavhengig av sluttdato … utelat arkiverte … ikke nøkkeltall eller avtaletabell» var ikke representerbart før denne utvidelsen. Det alene fastslår **ikke** hvorfor den konkrete kjøringen gav ModelUnavailable: den gamle meldingen dekket både HTTP-feil og andre problemer. Reelle modellkall er ikke gjenskapt her.
+
+Modelladapteren skiller nå trygt mellom HTTP 400/422 (forespørselen avvist), 401 (API-legitimasjon), 403 (tilgang), 404 (ressurs/modell), 429 (kvote/frekvensgrense), tilkoblingsfeil og uventet svarformat. Øvrige HTTP-feil beholder sikker utilgjengelig-status. Rå providerbody, prompt, tokens og exceptionmeldinger eksponeres/logges ikke; ingen automatisk retry er lagt til. Dette følger [offisiell OpenAI-feildokumentasjon](https://developers.openai.com/api/docs/guides/error-codes). En feilklasse peker på hva som må undersøkes, uten å påstå at alle slike feil er løst ved All.
+
+Etter ny oppstart/rebuild må det konkrete spørsmålet prøves i en **ny samtale**, med eksplisitt preview før lagring. Faktisk modell- og nettleserprøve gjenstår. Solution-build, seks GUI-adapterkontroller, separat syntetisk modellprotokoll og målrettet MCPClient-suite med isolert PostgreSQL bestod 25. oktober. Den konkrete teksten, null/gammel/fremtidig sluttdato, arkiv, eksplisitt lagring, gjenåpning og både kombinert og tabellren All-plan inngår. Testklyngen ble fjernet. Se moderniseringsplanens avsnitt 34.4 for presist omfang; dette er ikke en ny full kjøring av alle suiter.
+
+
+### Oppfølging 25. oktober 2026: synlige stolpediagrammer
+
+Den tidligere chart-rendereren viste grupper i en talltabell med nettleserens native meter-felt. Den er erstattet med et tydelig horisontalt stolpediagram for både Building og Status, felles for chatpreview og lagrede sider. Etikett og eksakt antall står ved hver stolpe; alle rader deler samme kolonnebredder og skala fra null til største gruppetall. Stolpelengde viser antall, ikke prosent av totalen. Null gir null fylt bredde. Chart-komponenten lager ikke lenger en synlig gruppetabell; en separat AgreementTable vises bare dersom den er valgt i definisjonen.
+
+Lokal CSS gir responsive stolper også uten Bootstrap-lastingen. På smale beholdere ligger etiketten over stolpen; tallene forblir synlige. Tekst lages fortsatt med textContent, og dekorative spor skjules for hjelpeteknologi mens etikett/antall er tilgjengelig tekst. Ingen ny pakke, nye datakall, modellkall eller definisjonsendring inngår. Eksisterende sider trenger ingen ny lagring. Last nettlesersiden helt på nytt for å erstatte den gamle JS-/CSS-visningen i en åpen fane.
+
+Solution-build og sju Node-adapterkontroller bestod. Syntetisk headless Chrome-visning er visuelt kontrollert på bred skjerm og med 320 px beholder; geometri bekrefter samme skala for 10/5/0 og synlige tall uten horisontal klipping. Dette er ikke en interaktiv helsideprøve mot Web eller en skjermlesertest. Ingen utviklings-/produksjonsdatabase eller ekstern modell ble brukt.

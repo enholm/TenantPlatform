@@ -104,10 +104,12 @@ public static class ReadAgentEndpoints
         var d = report.Draft;
         string EnumLabel(Enum e, string prefix = "") => l[prefix + e].Value;
         string Period(TenantPlatform.Application.PersonalPages.PagePeriod p) => p.Kind == TenantPlatform.Application.PersonalPages.PagePeriodKind.NextMonths
-            ? l["DraftMonths", p.Months!].Value : $"{p.From:yyyy-MM-dd} – {p.To:yyyy-MM-dd}";
+            ? l["DraftMonths", p.Months!].Value : p.Kind == TenantPlatform.Application.PersonalPages.PagePeriodKind.All ? l["PagesAllDates"].Value : $"{p.From:yyyy-MM-dd} – {p.To:yyyy-MM-dd}";
         string ChangeValue(string field, JsonElement value) => value.ValueKind == JsonValueKind.Null ? l["PagesAll"].Value : field switch {
             "Period" => Period(value.Deserialize<TenantPlatform.Application.PersonalPages.PagePeriod>(AgentReportDrafts.Json)!),
             "Components" => string.Join(" → ", value.EnumerateArray().Select(x => l["PagesComponent" + x.GetString()].Value)),
+            "Columns" => string.Join(" → ", value.EnumerateArray().Select(x => l["PagesColumn" + x.GetString()].Value)),
+            "GroupBy" => l[value.GetString()!].Value,
             "Status" => l["AgreementStatus" + value.GetString()].Value, "Type" => l["AgreementType" + value.GetString()].Value,
             "Archive" => l["PagesArchive" + value.GetString()].Value, "MissingBuilding" => l[value.GetBoolean() ? "Yes" : "No"].Value,
             _ => value.GetString() ?? "" };

@@ -6,7 +6,7 @@
 @inject IServiceProvider Services
 @inject Microsoft.Extensions.Options.IOptions<ReadAgentOptions> Options
 
-<section class="card card-body" data-read-agent data-account="@account" data-context="@context" data-csrf="@verification"
+<section class="card card-body" @attributes="TenantPlatform.Web.PersonalPages.ReportLabels.Attributes(L)" data-read-agent data-account="@account" data-context="@context" data-csrf="@verification"
     data-edit-page="@EditPage" data-edit-connection="@editConnection" data-edit-updated="@L["DraftUpdated"]" data-edit-copied="@L["DraftCopied"]"
     data-editing="@L["DraftEditing"]" data-edit-save="@L["DraftSaveChanges"]" data-edit-copy="@L["DraftSaveCopy"]" data-edit-discard="@L["DraftDiscard"]" data-edit-reload="@L["DraftReload"]" data-edit-reload-confirm="@L["DraftReloadConfirm"]" data-edit-changes="@L["DraftChanges"]" data-edit-no-changes="@L["DraftNoChanges"]"
     data-running="@L["AgentRunning"]" data-done="@L["AgentDone"]" data-failure="@L["AgentErrorUnavailable"]"
@@ -14,7 +14,7 @@
     data-question-label="@L["AgentQuestion"]" data-answer-label="@L["AgentAnswerLabel"]"
     data-revalidated="@L["AgentSourceRevalidated"]" data-new-source="@L["AgentSourceNew"]"
     data-draft-title="@L["DraftTitle"]" data-draft-save="@L["DraftSave"]" data-draft-open="@L["DraftOpen"]" data-draft-saved="@L["DraftSaved"]" data-draft-old="@L["DraftOld"]" data-draft-snapshot="@L["DraftSnapshot"]" data-draft-summary="@L["DraftSummary"]" data-draft-new="@L["DraftNew"]"
-    data-error="@L["PagesErrorUnavailable"]" data-yes="@L["Yes"]" data-no="@L["No"]" data-complete="@L["PagesComplete"]" data-more="@L["PagesMore"]" data-limit="@L["PagesLimitReached"]" data-empty="@L["PagesEmpty"]" data-missing="@L["PagesMissing"]" data-total="@L["PagesTotal"]" data-date="@L["PagesDate"]" data-snapshot="@L["PagesSnapshot"]" data-title="@L["Name"]" data-building="@L["Building"]" data-end="@L["AgreementEndDate"]" data-count="@L["PagesCount"]" data-page="@L["PagesPage"]"
+    data-error="@L["PagesErrorUnavailable"]" data-yes="@L["Yes"]" data-no="@L["No"]" data-complete="@L["PagesComplete"]" data-more="@L["PagesMore"]" data-limit="@L["PagesLimitReached"]" data-empty="@L["PagesEmpty"]" data-missing="@L["PagesMissing"]" data-total="@L["PagesTotal"]" data-all-dates="@L["PagesAllDates"]" data-date="@L["PagesDate"]" data-snapshot="@L["PagesSnapshot"]" data-title="@L["Name"]" data-building="@L["Building"]" data-end="@L["AgreementEndDate"]" data-status="@L["Status"]" data-type="@L["AgreementType"]" data-start="@L["PagesColumnStartDate"]" data-notice="@L["PagesColumnNoticeDeadline"]" data-renewal="@L["PagesColumnRenewalDate"]" data-count="@L["PagesCount"]" data-page="@L["PagesPage"]"
     data-pending-history="@L["AgentHistoryPending"]" data-expired="@L["AgentSessionExpired"]">
     <h1 class="h4">@L["AgentTitle"]</h1>
     <p class="alert alert-warning">@L["AgentDisclosure"]</p>

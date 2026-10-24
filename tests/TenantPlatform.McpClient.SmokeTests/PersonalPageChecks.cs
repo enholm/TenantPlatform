@@ -45,13 +45,13 @@ static partial class RegistryChecks
             new(Search: "Personal report", Archive: AgreementArchiveSelection.Exclude), [PageComponent.Metric, PageComponent.BuildingChart, PageComponent.AgreementTable], ProfileVersion: binding.ProfileVersion);
         var empty = await Scope(s => s.ListAsync());
         var preview = await Run(spec);
-        Check(preview.Aggregate.TotalCount == 27 && preview.Table.ReturnedCount == 25 && preview.Table.HasMore && preview.Aggregate.Groups.Single().Key == "missing", "personal report total/chart use full SQL aggregate while table is paged");
+        Check(preview.Aggregate!.TotalCount == 27 && preview.Table!.ReturnedCount == 25 && preview.Table!.HasMore && preview.Aggregate!.Groups.Single().Key == "missing", "personal report total/chart use full SQL aggregate while table is paged");
         Check((await Scope(s => s.ListAsync())).Pages.Length == 0, "preview persists no result or definition");
         var actualCalls = PagesProtocol.Calls.TakeLast(2).ToArray();
         Check(actualCalls[0].Name == "agreements_aggregate" && actualCalls[1].Name == "agreements_query" && actualCalls[1].Args.GetProperty("endDateFrom").GetString() == preview.Selection.Filter.EndDateFrom!.Value.ToString("yyyy-MM-dd"), "business data actually crosses MCP and query reuses server-normalized dates");
         var saved = await Scope(s => s.SaveAsync(null, empty.Revision, spec)); var id = saved.Pages.Single().Id;
         Check(saved.Pages.Single().OwnerUserId == admin && saved.Pages.Single().AccountId == account && saved.Pages.Single().Definition.Period.Kind == PagePeriodKind.NextMonths, "backend binds owner/account and persists relative intention");
-        Check((await Run(spec, 2, id)).Table.ReturnedCount == 2, "saved report reopens page two without scanning list pages");
+        Check((await Run(spec, 2, id)).Table!.ReturnedCount == 2, "saved report reopens page two without scanning list pages");
         Check((await Scope(s => s.ListAsync(), member)).Pages.Length == 0, "personal lists exclude another user's definitions");
         await Denied(() => Scope(s => s.ReadAsync(id), member)); await Denied(() => Scope(s => s.ReadAsync(id), selected: foreign));
         await FailsPage(() => Scope(s => s.SaveAsync(id, empty.Revision, spec)), "Conflict");
@@ -79,9 +79,9 @@ static partial class RegistryChecks
             "relative intent normalizes afresh across account-date boundary using server time zone");
         await using (var db = factory.CreateDbContext()) { var settings = await db.AgreementReminderSettings.SingleAsync(x => x.AccountId == account); if (settingsWereMissing) db.Remove(settings); else settings.TimeZoneId = previousZone!; await db.SaveChangesAsync(); }
         var noMatches = await Run(spec with { Filter = spec.Filter with { Search = "no-personal-matches" } });
-        Check(noMatches.Aggregate.TotalCount == 0 && noMatches.Table.Items.Length == 0 && noMatches.Aggregate.Complete, "authorized empty report differs from a failed retrieval");
+        Check(noMatches.Aggregate!.TotalCount == 0 && noMatches.Table!.Items.Length == 0 && noMatches.Aggregate!.Complete, "authorized empty report differs from a failed retrieval");
         foreach (var bad in new[] { spec with { Version = 99 }, spec with { Components = [PageComponent.Metric, PageComponent.Metric, PageComponent.AgreementTable] }, spec with { Layout = "<script>" }, spec with { Period = new(PagePeriodKind.NextMonths, 13) } })
-            await FailsPage(() => Scope(s => s.SaveAsync(null, deleted.Revision, bad)), "Invalid");
+            await FailsPage(() => Scope(s => s.SaveAsync(null, deleted.Revision, bad)), bad.Version == 99 ? "Version" : "Invalid");
         var grantId = Guid.NewGuid(); Guid visibleAgreement;
         await using (var db = factory.CreateDbContext())
         {
@@ -90,9 +90,9 @@ static partial class RegistryChecks
         }
         var memberCollection = await Scope(p => p.ListAsync(), member);
         var memberPage = (await Scope(p => p.SaveAsync(null, memberCollection.Revision, spec), member)).Pages.Single();
-        Check((await Run(spec, user: member)).Aggregate.TotalCount == 1, "report respects member's single agreement grant");
+        Check((await Run(spec, user: member)).Aggregate!.TotalCount == 1, "report respects member's single agreement grant");
         await using (var db = factory.CreateDbContext()) { db.Remove(await db.AgreementAccess.SingleAsync(g => g.Id == grantId)); await db.SaveChangesAsync(); }
-        Check((await Run(spec, user: member)).Aggregate.TotalCount == 0, "revoked agreement grant changes fresh report without losing tool access");
+        Check((await Run(spec, user: member)).Aggregate!.TotalCount == 0, "revoked agreement grant changes fresh report without losing tool access");
         await web.Services.GetRequiredService<DbContextOptions<OAuthDbContext>>().WithDb(async db => { var t = await db.Set<TenantPlatform.Core.Identity.McpDiscoveredTool>().SingleAsync(t => t.ConnectionId == source && t.Name == "agreements_query"); t.Approved = false; await db.SaveChangesAsync(); return true; });
         await FailsPage(() => Run(spec), "SourceChanged");
         await web.Services.GetRequiredService<DbContextOptions<OAuthDbContext>>().WithDb(async db => { var t = await db.Set<TenantPlatform.Core.Identity.McpDiscoveredTool>().SingleAsync(t => t.ConnectionId == source && t.Name == "agreements_query"); t.Approved = true; await db.SaveChangesAsync(); return true; });
@@ -104,7 +104,7 @@ static partial class RegistryChecks
             var tool = await db.Set<TenantPlatform.Core.Identity.McpDiscoveredTool>().SingleAsync(t => t.ConnectionId == source && t.Name == "agreements_query"); var original = tool.Version; tool.Version = "changed-contract"; await db.SaveChangesAsync(); return original; });
         await FailsPage(() => Run(kept.Definition, savedId: kept.Id), "SourceChanged");
         await web.Services.GetRequiredService<DbContextOptions<OAuthDbContext>>().WithDb(async db => { var t = await db.Set<TenantPlatform.Core.Identity.McpDiscoveredTool>().SingleAsync(t => t.ConnectionId == source && t.Name == "agreements_query"); t.Version = changed; await db.SaveChangesAsync(); return true; });
-        Check((await Run(kept.Definition, savedId: kept.Id)).Aggregate.TotalCount == 27, "explicit unchanged binding recovers without stale result cache");
+        Check((await Run(kept.Definition, savedId: kept.Id)).Aggregate!.TotalCount == 27, "explicit unchanged binding recovers without stale result cache");
         PagesProtocol.Block = true;
         var pending = Run(kept.Definition); await PagesProtocol.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
         await FailsPage(() => Run(kept.Definition), "Busy");

@@ -3393,7 +3393,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="PagesBuildingId" xml:space="preserve"><value>Byggnads-ID (valfritt)</value></data>
   <data name="PagesMissingOnly" xml:space="preserve"><value>Bara utan giltig byggnad</value></data>
   <data name="PagesComponentMetric" xml:space="preserve"><value>Ordning: nyckeltal</value></data>
-  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Ordning: byggnadsdiagram</value></data>
+  <data name="PagesComponentBuildingChart" xml:space="preserve"><value>Ordning: diagram</value></data>
   <data name="PagesComponentAgreementTable" xml:space="preserve"><value>Ordning: avtalstabell</value></data>
   <data name="PagesPreview" xml:space="preserve"><value>Förhandsvisa</value></data>
   <data name="PagesRefresh" xml:space="preserve"><value>Hämta aktuella data</value></data>
@@ -3436,7 +3436,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="DraftSummary" xml:space="preserve"><value>Period / status / typ / arkiv / byggnad / sökning</value></data>
   <data name="DraftMonths" xml:space="preserve"><value>Nästa {0} kalendermånader</value></data>
   <data name="DraftNew" xml:space="preserve"><value>Ett nytt rapportutkast är klart. Ingenting är sparat.</value></data>
-  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>Förslaget är inte en stödd siddefinition. Det senaste giltiga utkastet finns kvar. Använd nyckeltal, byggnadsdiagram och avtalstabell med fasta datum eller 1–12 månader.</value></data>
+  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>Förslaget är inte en stödd siddefinition. Det senaste giltiga utkastet finns kvar. Välj minst en komponent som stöds och en giltig period, eventuellt oavsett slutdatum.</value></data>
   <data name="AgentErrorDraftBuilding" xml:space="preserve"><value>Byggnadsnamnet gav inte en entydig träff i behöriga data. Ange ett entydigt namn eller använd inget byggnadsfilter. Utkastet ändrades inte.</value></data>
   <data name="AgentErrorDraftConflict" xml:space="preserve"><value>Utkastet eller Mina sidor har ändrats. Hämta ett uppdaterat utkast innan du sparar; ingenting skrevs över automatiskt.</value></data>
   <data name="AgentErrorDraftLimit" xml:space="preserve"><value>En gräns för utkast, sidor eller resultat nåddes. Begränsa urvalet eller starta en ny konversation.</value></data>
@@ -3467,4 +3467,28 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="DraftChangeComponents" xml:space="preserve"><value>Komponentordning</value></data>
   <data name="DraftUpdated" xml:space="preserve"><value>Ändringarna är sparade i originalet.</value></data>
   <data name="DraftCopied" xml:space="preserve"><value>En ny personlig sida har sparats. Originalet är oförändrat.</value></data>
+  <data name="PagesGrouping" xml:space="preserve"><value>Diagramgruppering</value></data>
+  <data name="PagesColumns" xml:space="preserve"><value>Tabellkolumner och ordning</value></data>
+  <data name="PagesColumnTitle" xml:space="preserve"><value>Titel</value></data>
+  <data name="PagesColumnType" xml:space="preserve"><value>Typ</value></data>
+  <data name="PagesColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="PagesColumnBuilding" xml:space="preserve"><value>Byggnad</value></data>
+  <data name="PagesColumnStartDate" xml:space="preserve"><value>Startdatum</value></data>
+  <data name="PagesColumnEndDate" xml:space="preserve"><value>Slutdatum</value></data>
+  <data name="PagesColumnNoticeDeadline" xml:space="preserve"><value>Uppsägningsfrist</value></data>
+  <data name="PagesColumnRenewalDate" xml:space="preserve"><value>Förnyelsedatum</value></data>
+  <data name="DraftChangeGroupBy" xml:space="preserve"><value>Diagramgruppering</value></data>
+  <data name="DraftChangeColumns" xml:space="preserve"><value>Tabellkolumner och ordning</value></data>
+  <data name="PagesErrorVersion" xml:space="preserve"><value>Denna rapportversion stöds inte. Uppdatera applikationen för att öppna sidan.</value></data>
+  <data name="AgentErrorDraftVersion" xml:space="preserve"><value>Denna rapportversion stöds inte.</value></data>
+  <data name="PagesCurrentBinding" xml:space="preserve"><value>Aktuell godkänd bindning (välj uttryckligen)</value></data>
+  <data name="PagesStoredBinding" xml:space="preserve"><value>Sparad bindning</value></data>
+  <data name="PagesAllDates" xml:space="preserve"><value>Oavsett slutdatum</value></data>
+  <data name="AgentErrorModelRequestRejected" xml:space="preserve"><value>Modellleverantören avvisade begäran (HTTP 400/422). Kontrollera modell och verktygsschema. Ingen rapport sparades.</value></data>
+  <data name="AgentErrorModelAuthentication" xml:space="preserve"><value>Modellleverantören avvisade API-uppgifterna (HTTP 401). Kontrollera ReadAgent-konfigurationen.</value></data>
+  <data name="AgentErrorModelForbidden" xml:space="preserve"><value>Modellleverantören nekade åtkomst (HTTP 403). Kontrollera modell- och projektåtkomst.</value></data>
+  <data name="AgentErrorModelNotFound" xml:space="preserve"><value>Modellleverantören hittade inte resursen (HTTP 404). Kontrollera modellnamn och åtkomst.</value></data>
+  <data name="AgentErrorModelRateLimited" xml:space="preserve"><value>Modellleverantören avvisade anropet på grund av kvot eller frekvensgräns (HTTP 429). Ingen automatisk återförsök gjordes.</value></data>
+  <data name="AgentErrorModelConnectionFailed" xml:space="preserve"><value>Kunde inte upprätta eller slutföra anslutningen till modellleverantören. Kontrollera nätverket och försök igen.</value></data>
+  <data name="AgentErrorModelResponseInvalid" xml:space="preserve"><value>Modellleverantören returnerade ett oväntat svarsformat. Ingen rapport sparades.</value></data>
 </root>

@@ -33,7 +33,7 @@ static partial class RegistryChecks
             [PageComponent.Metric, PageComponent.BuildingChart, PageComponent.AgreementTable], ProfileVersion: binding.ProfileVersion);
         var before = await Pages(p => p.ListAsync());
         Check(before.Pages.Length == 0, "9C fixture starts without other personal pages");
-        var saved = await Pages(p => p.SaveAsync(null, before.Revision, original)); var id = saved.Pages.Single().Id;
+        var saved = await Pages(p => p.SaveAsync(null, before.Revision, original)); var id = saved.Pages.Single().Id; original = saved.Pages.Single().Definition;
         var pageHtml = await (await browser.Get("/my-pages/" + id)).Content.ReadAsStringAsync();
         Check(pageHtml.Contains("/agent?editPage=" + id), "9C saved page offers an explicit AI edit link");
         var html = await (await browser.Get("/agent?editPage=" + id)).Content.ReadAsStringAsync();

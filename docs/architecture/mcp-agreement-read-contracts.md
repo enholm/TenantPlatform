@@ -89,3 +89,10 @@ Dette grunnlaget støtter datofiltrerte avtalespørsmål, gruppering etter bygg/
 ## Faktisk verifikasjon 19. oktober 2026
 
 Etter siste produksjonsendring bestod solution-build og de sju berørte suitene McpClient, Mcp, OAuth, AgreementList, Agreements, AccountRegisters og Dashboard. De seks første brukte isolert PostgreSQL; Dashboard brukte eksisterende InMemory-/SQL-/komponentkontroller. Direkte Application-prøver brukte SELECT-rollen og SaveChanges-vakten. Faktisk OAuth-/MCP-transport, metadata/filter-/grupperingsregler, nye detaljer, tilbakekalling, skrivevern og agentens oppfølgingshistorikk er prøvd med syntetisk modelladapter. Cookie-/antiforgery-beskyttet agent-HTTP returnerte lokaliserte aggregatfakta. Node-syntaks/DOM-kontroll og diff-/ressurskontroll bestod. Se moderniseringsplanens avsnitt 30 for kommandoer, avgrensning og manuelle rester.
+
+
+## Rapportkonsument 9D
+
+Personlige rapportsider bruker nå PageDefinition v2, uten å endre disse MCP-verktøyenes skjema eller SQL-semantikk. Bare tabell trenger agreements_query; bare diagram og/eller Metric trenger ett agreements_aggregate; kombinasjonen bruker aggregatets normaliserte datofilter i ett etterfølgende query-kall. Aggregatets GroupBy er Building eller Status. Ingen total beregnes ved å summere listesider.
+
+Kolonnene Title, Type, Status, Building, StartDate, EndDate, NoticeDeadline og RenewalDate viser eksisterende title/type/status/building?.name/startDate/endDate/noticeDeadline/renewalDate. Ingen nye metadata eller felt, sorteringsvalg, SQL-privilegier eller skriverettigheter innføres. Status og Type lokaliseres bare i presentasjonen. Se [v2-kontrakt, eldre sider, navneoppslag og nødvendige godkjenninger](personal-report-pages-operations.md#9d-valgfrie-komponenter-gruppering-og-kolonner).

@@ -97,12 +97,13 @@ static partial class RegistryChecks
             Check((await Call(m, a2)).StatusCode == HttpStatusCode.OK, "member uses only own personally authorized credentials");
             await Connect(m, a1);
             // Test executable only. Uses the same isolated PostgreSQL/OAuth/MCP setup and unchanged production quotas.
-            if (Environment.GetEnvironmentVariable("MCP_CLIENT_TEST_EDIT_ONLY") == "1") {
+            if (Environment.GetEnvironmentVariable("MCP_CLIENT_TEST_EDIT_ONLY") == "1" || Environment.GetEnvironmentVariable("MCP_CLIENT_TEST_COMPONENTS_ONLY") == "1") {
                 foreach (var tool in (await Tools(a1)).Where(t => t.Name is "agreements_query" or "agreements_aggregate")) {
                     await Post(a, "tool-policy", new() { ["id"] = a1.ToString(), ["tool"] = tool.Name, ["version"] = tool.Version, ["audience"] = "1", ["useClass"] = "1" });
                     await Post(a, "approve", new() { ["id"] = a1.ToString(), ["tool"] = tool.Name, ["version"] = tool.Version, ["approved"] = "true" });
                 }
                 await Task.Delay(TimeSpan.FromSeconds(61));
+                if (Environment.GetEnvironmentVariable("MCP_CLIENT_TEST_COMPONENTS_ONLY") == "1") { await RunFlexibleReports(web, factory, adminA, accountA, a1, a, agentProtocol); return; }
                 await RunReportEditing(web, factory, adminA, member, accountA, accountB, a1, a, agentProtocol);
                 return;
             }
@@ -113,6 +114,9 @@ static partial class RegistryChecks
             Console.WriteLine("Isolating saved-page editing quota window.");
             await Task.Delay(TimeSpan.FromSeconds(61));
             await RunReportEditing(web, factory, adminA, member, accountA, accountB, a1, a, agentProtocol);
+            Console.WriteLine("Isolating flexible-report quota window.");
+            await Task.Delay(TimeSpan.FromSeconds(61));
+            await RunFlexibleReports(web, factory, adminA, accountA, a1, a, agentProtocol);
             Console.WriteLine("Isolating manual-page quota window (production limit remains 60/minute).");
             await Task.Delay(TimeSpan.FromSeconds(61));
             await RunPersonalPages(web, factory, writerRole, adminA, member, accountA, accountB, a1, a, own, agentProtocol);
