@@ -3409,4 +3409,25 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AgentErrorDraftContract" xml:space="preserve"><value>The preview received an invalid or changed contract. The draft was not changed.</value></data>
   <data name="AgentErrorDraftCancelled" xml:space="preserve"><value>Preview or saving was cancelled. The last valid draft is kept.</value></data>
   <data name="AgentErrorDraftBusy" xml:space="preserve"><value>A report operation is already active. Wait or cancel before trying again.</value></data>
+  <data name="PagesEditAi" xml:space="preserve"><value>Edit with AI</value></data>
+  <data name="DraftEditing" xml:space="preserve"><value>Editing saved report page</value></data>
+  <data name="DraftSaveChanges" xml:space="preserve"><value>Save changes</value></data>
+  <data name="DraftSaveCopy" xml:space="preserve"><value>Save as new page</value></data>
+  <data name="DraftDiscard" xml:space="preserve"><value>Discard changes</value></data>
+  <data name="DraftReload" xml:space="preserve"><value>Reload current version</value></data>
+  <data name="DraftReloadConfirm" xml:space="preserve"><value>This discards the draft and opens the saved version in a new conversation. Continue?</value></data>
+  <data name="DraftChanges" xml:space="preserve"><value>Changes from original</value></data>
+  <data name="DraftNoChanges" xml:space="preserve"><value>No changes from original.</value></data>
+  <data name="DraftStoredBuilding" xml:space="preserve"><value>Stored building filter (preserved)</value></data>
+  <data name="DraftChangeTitle" xml:space="preserve"><value>Title</value></data>
+  <data name="DraftChangePeriod" xml:space="preserve"><value>Period</value></data>
+  <data name="DraftChangeSearch" xml:space="preserve"><value>Search</value></data>
+  <data name="DraftChangeStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="DraftChangeType" xml:space="preserve"><value>Agreement type</value></data>
+  <data name="DraftChangeArchive" xml:space="preserve"><value>Archive</value></data>
+  <data name="DraftChangeBuilding" xml:space="preserve"><value>Building filter</value></data>
+  <data name="DraftChangeMissingBuilding" xml:space="preserve"><value>Missing building only</value></data>
+  <data name="DraftChangeComponents" xml:space="preserve"><value>Component order</value></data>
+  <data name="DraftUpdated" xml:space="preserve"><value>Changes saved to the original.</value></data>
+  <data name="DraftCopied" xml:space="preserve"><value>A new personal page has been saved. The original is unchanged.</value></data>
 </root>

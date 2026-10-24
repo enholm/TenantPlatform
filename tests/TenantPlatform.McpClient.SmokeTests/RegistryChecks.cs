@@ -96,10 +96,23 @@ static partial class RegistryChecks
             Check((await Call(a, a2)).StatusCode == HttpStatusCode.OK, "external non-Guid identity works through actual OAuth and MCP libraries");
             Check((await Call(m, a2)).StatusCode == HttpStatusCode.OK, "member uses only own personally authorized credentials");
             await Connect(m, a1);
+            // Test executable only. Uses the same isolated PostgreSQL/OAuth/MCP setup and unchanged production quotas.
+            if (Environment.GetEnvironmentVariable("MCP_CLIENT_TEST_EDIT_ONLY") == "1") {
+                foreach (var tool in (await Tools(a1)).Where(t => t.Name is "agreements_query" or "agreements_aggregate")) {
+                    await Post(a, "tool-policy", new() { ["id"] = a1.ToString(), ["tool"] = tool.Name, ["version"] = tool.Version, ["audience"] = "1", ["useClass"] = "1" });
+                    await Post(a, "approve", new() { ["id"] = a1.ToString(), ["tool"] = tool.Name, ["version"] = tool.Version, ["approved"] = "true" });
+                }
+                await Task.Delay(TimeSpan.FromSeconds(61));
+                await RunReportEditing(web, factory, adminA, member, accountA, accountB, a1, a, agentProtocol);
+                return;
+            }
             await RunAgent(web, factory, adminA, member, accountA, accountB, a1, a2, a3, clock, agentProtocol, () => remoteCalls, a);
             Console.WriteLine("Isolating report-draft quota window (production limit remains 60/minute).");
             await Task.Delay(TimeSpan.FromSeconds(61));
             await RunReportDrafts(web, factory, adminA, member, accountA, accountB, a1, a2, a, agentProtocol);
+            Console.WriteLine("Isolating saved-page editing quota window.");
+            await Task.Delay(TimeSpan.FromSeconds(61));
+            await RunReportEditing(web, factory, adminA, member, accountA, accountB, a1, a, agentProtocol);
             Console.WriteLine("Isolating manual-page quota window (production limit remains 60/minute).");
             await Task.Delay(TimeSpan.FromSeconds(61));
             await RunPersonalPages(web, factory, writerRole, adminA, member, accountA, accountB, a1, a, own, agentProtocol);
@@ -209,7 +222,7 @@ static partial class RegistryChecks
             app.MapPersonalPages(); app.MapPersonalPagesMcp();
             app.MapGet("/my-pages", (HttpContext http) => new Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult<TenantPlatform.Web.Components.Pages.PersonalPages.PersonalPages>(new { RequestContext = http }));
             app.MapGet("/my-pages/{id:guid}", (Guid id, HttpContext http) => new Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult<TenantPlatform.Web.Components.Pages.PersonalPages.PersonalPages>(new { RequestContext = http, Id = (Guid?)id }));
-            app.MapGet("/agent", (HttpContext http) => new Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult<TenantPlatform.Web.Components.Shared.Agent.ReadAgentPanel>(new { RequestContext = http }));
+            app.MapGet("/agent", (HttpContext http) => new Microsoft.AspNetCore.Http.HttpResults.RazorComponentResult<TenantPlatform.Web.Components.Shared.Agent.ReadAgentPanel>(new { RequestContext = http, EditPage = Guid.TryParse(http.Request.Query["editPage"], out var editId) ? (Guid?)editId : null }));
             app.MapGet("/fixture/registry/call", async (HttpContext http, CancellationToken ct) =>
             {
                 try { return Results.Text(await http.RequestServices.GetRequiredService<McpRegistryService>().CallAsync(Guid.Parse(http.Request.Query["id"]!), "accounts_list", "{}", ct)); }

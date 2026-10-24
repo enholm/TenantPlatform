@@ -17,7 +17,7 @@ namespace TenantPlatform.Web.Agent;
 
 public static class ReadAgentEndpoints
 {
-    private sealed record Command(Guid Conversation, Guid Connection, Guid Account, bool SharingAccepted, string? Prompt, Guid Draft = default, Guid Revision = default, int Page = 1);
+    private sealed record Command(Guid Conversation, Guid Connection, Guid Account, bool SharingAccepted, string? Prompt, Guid Draft = default, Guid Revision = default, int Page = 1, Guid PageId = default);
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 8 };
     public static void MapReadAgent(this WebApplication app)
     {
@@ -38,7 +38,7 @@ public static class ReadAgentEndpoints
             {
                 if (await Identity(http, ct) is null) return Results.Unauthorized();
                 await csrf.ValidateRequestAsync(http);
-                if ((action is not ("report-save" or "report-preview") && !settings.Ready) || http.RequestServices.GetService<McpRegistryService>() is null)
+                if ((action is not ("report-save" or "report-update" or "report-copy" or "report-discard" or "report-preview") && !settings.Ready) || http.RequestServices.GetService<McpRegistryService>() is null)
                     return Error(http, "Disabled", 503);
                 if (http.Request.ContentLength > 96 * 1024) return Results.StatusCode(413);
                 using var readBudget = CancellationTokenSource.CreateLinkedTokenSource(ct); readBudget.CancelAfter(TimeSpan.FromSeconds(5));
@@ -50,13 +50,22 @@ public static class ReadAgentEndpoints
                 switch (action)
                 {
                     case "begin": return Results.Json(new { conversation = await agent.BeginAsync(command.Connection, command.Account, command.SharingAccepted, ct), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds });
+                    case "report-edit":
+                        var opened = await agent.BeginEditAsync(command.PageId, command.Account, command.SharingAccepted, ct);
+                        return Results.Json(new { opened.Conversation, report = Report(opened.Report, http), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds }, AgentReportDrafts.Json);
+                    case "report-reload":
+                        var reloaded = await agent.ReloadReportAsync(command.Conversation, command.Draft, command.Revision, ct);
+                        return Results.Json(new { reloaded.Conversation, report = Report(reloaded.Report, http), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds }, AgentReportDrafts.Json);
+                    case "report-discard": await agent.DiscardReportAsync(command.Conversation, command.Draft, command.Revision, ct); return Results.NoContent();
                     case "ask":
                         var answer = await agent.AskAsync(command.Conversation, command.Prompt ?? "", ct);
                         var l = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
                         return Results.Json(new { answer.Text, report = answer.Report is null ? null : Report(answer.Report, http), answer.RetainedTurns, answer.CurrentTurnRetained, answer.ContextInvalidated, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, s.Aggregate, s.Revalidated, s.EvidenceId, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: AgentReportDrafts.Json);
                     case "report-preview": return Results.Json(new { report = Report(await agent.PreviewReportAsync(command.Conversation, command.Draft, command.Revision, command.Page, ct), http) }, AgentReportDrafts.Json);
                     case "report-save":
-                        var savedPage = await agent.SaveReportAsync(command.Conversation, command.Draft, command.Revision, ct);
+                    case "report-update":
+                    case "report-copy":
+                        var savedPage = await agent.SaveReportAsync(command.Conversation, command.Draft, command.Revision, ct, copy: action == "report-copy", editing: action != "report-save");
                         return Results.Json(new { pageId = savedPage, url = "/my-pages/" + savedPage });
                     case "delete": await agent.DeleteAsync(command.Conversation, ct); return Results.NoContent();
                     case "cancel": await agent.CancelAsync(command.Conversation, ct); return Results.NoContent();
@@ -64,8 +73,8 @@ public static class ReadAgentEndpoints
                 }
             }
             catch (UnauthorizedAccessException) { return Error(http, "AccessChanged", 403); }
-            catch (ReadAgentException e) { return Error(http, e.Code, e.Code == "Busy" ? 429 : 400); }
-            catch (TenantPlatform.Application.PersonalPages.PersonalPageException e) { return Error(http, "Draft" + e.Code, 400); }
+            catch (ReadAgentException e) { return Error(http, e.Code, e.Code == "Busy" ? 429 : e.Code == "DraftConflict" ? 409 : 400); }
+            catch (TenantPlatform.Application.PersonalPages.PersonalPageException e) { return Error(http, "Draft" + e.Code, e.Code == "Conflict" ? 409 : 400); }
             catch (McpClientException) { return Error(http, "SourceUnavailable", 400); }
             catch (AntiforgeryValidationException) { return Results.BadRequest(); }
             catch (JsonException) { return Results.BadRequest(); }
@@ -94,14 +103,24 @@ public static class ReadAgentEndpoints
         var l = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
         var d = report.Draft;
         string EnumLabel(Enum e, string prefix = "") => l[prefix + e].Value;
+        string Period(TenantPlatform.Application.PersonalPages.PagePeriod p) => p.Kind == TenantPlatform.Application.PersonalPages.PagePeriodKind.NextMonths
+            ? l["DraftMonths", p.Months!].Value : $"{p.From:yyyy-MM-dd} – {p.To:yyyy-MM-dd}";
+        string ChangeValue(string field, JsonElement value) => value.ValueKind == JsonValueKind.Null ? l["PagesAll"].Value : field switch {
+            "Period" => Period(value.Deserialize<TenantPlatform.Application.PersonalPages.PagePeriod>(AgentReportDrafts.Json)!),
+            "Components" => string.Join(" → ", value.EnumerateArray().Select(x => l["PagesComponent" + x.GetString()].Value)),
+            "Status" => l["AgreementStatus" + value.GetString()].Value, "Type" => l["AgreementType" + value.GetString()].Value,
+            "Archive" => l["PagesArchive" + value.GetString()].Value, "MissingBuilding" => l[value.GetBoolean() ? "Yes" : "No"].Value,
+            _ => value.GetString() ?? "" };
         var value = new { d.Version, d.Id, d.Revision, d.SavedPageId, d.SourceName, d.Definition.Title, d.Definition.Components,
+            editingPageId = d.Edit?.PageId, originalTitle = d.Edit?.Original.Title,
+            changes = AgentReportDrafts.Changes(d).Select(c => new { field = l["DraftChange" + c.Field].Value, before = ChangeValue(c.Field, c.Before), after = ChangeValue(c.Field, c.After) }),
             intent = d.Intent, preview = report.Preview,
             summary = new {
-                period = d.Definition.Period.Kind == TenantPlatform.Application.PersonalPages.PagePeriodKind.NextMonths ? l["DraftMonths", d.Definition.Period.Months!].Value : $"{d.Definition.Period.From:yyyy-MM-dd} – {d.Definition.Period.To:yyyy-MM-dd}",
+                period = Period(d.Definition.Period),
                 status = d.Definition.Filter.Status is { } status ? EnumLabel(status, "AgreementStatus") : l["PagesAll"].Value,
                 type = d.Definition.Filter.Type is { } type ? EnumLabel(type, "AgreementType") : l["PagesAll"].Value,
                 archive = EnumLabel(d.Definition.Filter.Archive, "PagesArchive"),
-                building = d.Intent.Filter.BuildingName ?? (d.Definition.Filter.MissingBuilding ? l["PagesMissingOnly"].Value : l["PagesAll"].Value),
+                building = d.Intent.Filter.BuildingName ?? (d.Definition.Filter.MissingBuilding ? l["PagesMissingOnly"].Value : d.Definition.Filter.BuildingId.HasValue ? l["DraftStoredBuilding"].Value : l["PagesAll"].Value),
                 search = d.Definition.Filter.Search ?? "" } };
         if (JsonSerializer.SerializeToUtf8Bytes(value, AgentReportDrafts.Json).Length > 131072) throw new ReadAgentException("DraftLimit");
         return value;

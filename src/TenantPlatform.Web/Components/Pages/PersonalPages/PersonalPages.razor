@@ -8,6 +8,7 @@
 @using Microsoft.AspNetCore.Antiforgery
 @inject PersonalPageService Pages
 @inject IAntiforgery Csrf
+@inject Microsoft.Extensions.Options.IOptions<TenantPlatform.Infrastructure.Agent.ReadAgentOptions> AgentOptions
 <PageTitle>@L["MyPages"]</PageTitle>
 <h1>@L["MyPages"]</h1>
 @if (failed) { <p class="alert alert-warning">@L["PagesErrorUnavailable"]</p> }
@@ -28,7 +29,9 @@ else
     }
     </ol>
 }
-else { <h2>@definition.Title</h2><a href="/my-pages">@L["MyPages"]</a> }
+else { <h2>@definition.Title</h2><a href="/my-pages">@L["MyPages"]</a>
+    @if (AgentOptions.Value.Ready) { <a class="btn btn-outline-primary ms-2" href="@($"/agent?editPage={Id}")">@L["PagesEditAi"]</a> }
+}
 <details open="@(!Id.HasValue)"><summary>@L[Id.HasValue ? "PagesEdit" : "PagesCreate"]</summary>
 <form data-editor class="card card-body mb-3">
 <label class="form-label">@L["Name"]<input class="form-control" name="title" value="@definition.Title" maxlength="100" required /></label>

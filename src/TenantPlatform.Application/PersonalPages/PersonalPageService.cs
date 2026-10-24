@@ -65,7 +65,22 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
         await PersistAsync(null, revision, definition, creationId, ct);
         return creationId;
     }
-    private async Task<PersonalPageCollection> PersistAsync(Guid? id, Guid revision, PageDefinition definition, Guid? creationId, CancellationToken ct)
+    // The draft store supplies a stable commit revision. It proves a lost-response retry without accepting an unrelated identical edit.
+    public async Task<Guid> UpdateFromDraftAsync(Guid id, Guid revision, Guid commitRevision, PageDefinition original, PageDefinition definition, CancellationToken ct = default)
+    {
+        if (id == Guid.Empty || commitRevision == Guid.Empty || commitRevision == revision) throw new PersonalPageException("Invalid");
+        var who = await RequireAsync(ct);
+        var current = await ListAsync(ct);
+        var row = current.Pages.SingleOrDefault(p => p.Id == id) ?? throw new UnauthorizedAccessException();
+        await ValidateSourceAsync(definition, ct); // Even an idempotent retry requires fresh authority.
+        if (await RequireAsync(ct) != who) throw new UnauthorizedAccessException();
+        if (current.Revision == commitRevision && Same(row.Definition, definition)) return id;
+        if (current.Revision != revision || !Same(row.Definition, original)) throw new PersonalPageException("Conflict");
+        await PersistAsync(id, revision, definition, null, ct, commitRevision);
+        return id;
+    }
+    private static bool Same(PageDefinition a, PageDefinition b) => JsonSerializer.Serialize(a) == JsonSerializer.Serialize(b with { Title = b.Title.Trim() });
+    private async Task<PersonalPageCollection> PersistAsync(Guid? id, Guid revision, PageDefinition definition, Guid? creationId, CancellationToken ct, Guid? commitRevision = null)
     {
         var who = await RequireAsync(ct); Validate(definition);
         var current = await data.ReadAsync(who.AccountId!.Value, who.UserId, ct);
@@ -75,7 +90,7 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
         if (!id.HasValue && current.Pages.Length >= MaxPages) throw new PersonalPageException("Limit");
         var row = new PersonalPage(id ?? creationId ?? Guid.NewGuid(), who.AccountId.Value, who.UserId, definition with { Title = definition.Title.Trim() });
         var pages = id.HasValue ? current.Pages.Select(p => p.Id == id ? row : p).ToArray() : [..current.Pages, row];
-        var next = new PersonalPageCollection(Guid.NewGuid(), pages);
+        var next = new PersonalPageCollection(commitRevision ?? Guid.NewGuid(), pages);
         if (await RequireAsync(ct) != who) throw new UnauthorizedAccessException();
         await data.SaveAsync(who.AccountId.Value, who.UserId, revision, next, ct); return next;
     }

@@ -33,7 +33,7 @@ public sealed class ReadAgentSessions : IDisposable
         public bool Trimmed { get; set; }
         public long Bytes { get; set; }
     }
-    public Guid Create(ActorSnapshot owner, Guid connection)
+    public Guid Create(ActorSnapshot owner, Guid connection, Guid? preserve = null)
     {
         lock (gate)
         {
@@ -41,7 +41,7 @@ public sealed class ReadAgentSessions : IDisposable
             var owned = sessions.Where(p => p.Value.Owner.UserId == owner.UserId).ToArray();
             if (owned.Length >= 4)
             {
-                var idle = owned.Where(p => p.Value.Run is null).OrderBy(p => p.Value.End).ThenBy(p => p.Value.Order).FirstOrDefault();
+                var idle = owned.Where(p => p.Key != preserve && p.Value.Run is null).OrderBy(p => p.Value.End).ThenBy(p => p.Value.Order).FirstOrDefault();
                 if (idle.Value is null) throw new ReadAgentException("Busy");
                 sessions.Remove(idle.Key);
             }
@@ -104,7 +104,7 @@ public sealed class ReadAgentSessions : IDisposable
             void ValidateDraft(AgentReportDraft draft)
             {
                 var bytes = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(draft));
-                if (draft.Dependencies?.Count > 2 || bytes > 32768 || DraftBytes() - SizeDraft(session.Draft) + bytes * 4L + 1024 > 4 * 1024 * 1024) throw new ReadAgentException("DraftLimit");
+                if (draft.Dependencies?.Count > 2 || bytes > (draft.Edit is null ? 32768 : 65536) || DraftBytes() - SizeDraft(session.Draft) + bytes * 4L + 1024 > 4 * 1024 * 1024) throw new ReadAgentException("DraftLimit");
             }
         }
     }

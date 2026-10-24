@@ -7,6 +7,8 @@
 @inject Microsoft.Extensions.Options.IOptions<ReadAgentOptions> Options
 
 <section class="card card-body" data-read-agent data-account="@account" data-context="@context" data-csrf="@verification"
+    data-edit-page="@EditPage" data-edit-connection="@editConnection" data-edit-updated="@L["DraftUpdated"]" data-edit-copied="@L["DraftCopied"]"
+    data-editing="@L["DraftEditing"]" data-edit-save="@L["DraftSaveChanges"]" data-edit-copy="@L["DraftSaveCopy"]" data-edit-discard="@L["DraftDiscard"]" data-edit-reload="@L["DraftReload"]" data-edit-reload-confirm="@L["DraftReloadConfirm"]" data-edit-changes="@L["DraftChanges"]" data-edit-no-changes="@L["DraftNoChanges"]"
     data-running="@L["AgentRunning"]" data-done="@L["AgentDone"]" data-failure="@L["AgentErrorUnavailable"]"
     data-changed="@L["AgentErrorAccessChanged"]" data-cancelled="@L["AgentMessageCancelled"]"
     data-question-label="@L["AgentQuestion"]" data-answer-label="@L["AgentAnswerLabel"]"
@@ -25,10 +27,11 @@
         <label class="form-label">@L["AgentConnection"]
             <select class="form-select" data-connection required>
                 <option value="">@L["AgentSelectConnection"]</option>
-                @foreach (var connection in connections) { <option value="@connection.Id">@connection.Name (@connection.ToolCount)</option> }
+                @foreach (var connection in connections) { <option value="@connection.Id" selected="@(editConnection == connection.Id)">@connection.Name (@connection.ToolCount)</option> }
             </select>
         </label>
         <label class="form-check mb-3"><input type="checkbox" class="form-check-input" data-consent /> <span>@L["AgentAcceptDisclosure"]</span></label>
+        @if (EditPage.HasValue) { <p data-edit-intro>@L["DraftEditing"]: @editTitle</p><button class="btn btn-outline-primary" type="button" data-edit-start>@L["PagesEditAi"]</button> }
         <form data-question-form>
             <label class="form-label w-100">@L["AgentQuestion"]<textarea class="form-control" data-prompt rows="3" maxlength="@Options.Value.Limits.PromptCharacters" required></textarea></label>
             <button class="btn btn-primary" type="submit" data-send>@L["AgentSend"]</button>
@@ -44,6 +47,9 @@
     [CascadingParameter] public HttpContext? Http { get; set; }
     // TestServer rendering can explicitly pass the same real authenticated request.
     [Parameter] public HttpContext? RequestContext { get; set; }
+    [Parameter] public Guid? EditPage { get; set; }
+    private Guid? editConnection;
+    private string? editTitle;
     private Guid? account;
     private string? context, verification;
     private bool ready;
@@ -60,7 +66,14 @@
             account = identity.Value.Account; context = identity.Value.Key;
             verification = Services.GetRequiredService<IAntiforgery>().GetAndStoreTokens(http).RequestToken;
             ready = Options.Value.Ready && Services.GetService<McpRegistryService>() is not null;
-            if (ready) connections = await Services.GetRequiredService<ReadAgentService>().ConnectionsAsync(http.RequestAborted);
+            if (ready) {
+                var agent = Services.GetRequiredService<ReadAgentService>();
+                connections = await agent.ConnectionsAsync(http.RequestAborted);
+                if (EditPage is Guid pageId) {
+                    var draft = await agent.EditPageAsync(pageId, http.RequestAborted);
+                    editConnection = draft.Definition.ConnectionId; editTitle = draft.Definition.Title;
+                }
+            }
         }
         catch (Exception) { ready = false; }
     }

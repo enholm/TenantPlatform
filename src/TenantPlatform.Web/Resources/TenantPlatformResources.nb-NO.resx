@@ -3445,4 +3445,25 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AgentErrorDraftContract" xml:space="preserve"><value>Forhåndsvisningen fikk en ugyldig eller endret kontrakt. Utkastet er ikke endret.</value></data>
   <data name="AgentErrorDraftCancelled" xml:space="preserve"><value>Forhåndsvisning eller lagring ble avbrutt. Siste gyldige utkast er beholdt.</value></data>
   <data name="AgentErrorDraftBusy" xml:space="preserve"><value>En rapportoperasjon er allerede aktiv. Vent eller avbryt før du prøver igjen.</value></data>
+  <data name="PagesEditAi" xml:space="preserve"><value>Endre med AI</value></data>
+  <data name="DraftEditing" xml:space="preserve"><value>Redigerer lagret rapportside</value></data>
+  <data name="DraftSaveChanges" xml:space="preserve"><value>Lagre endringer</value></data>
+  <data name="DraftSaveCopy" xml:space="preserve"><value>Lagre som ny side</value></data>
+  <data name="DraftDiscard" xml:space="preserve"><value>Forkast endringer</value></data>
+  <data name="DraftReload" xml:space="preserve"><value>Last inn aktuell versjon på nytt</value></data>
+  <data name="DraftReloadConfirm" xml:space="preserve"><value>Dette forkaster utkastet og åpner den lagrede versjonen i en ny samtale. Fortsette?</value></data>
+  <data name="DraftChanges" xml:space="preserve"><value>Endringer fra originalen</value></data>
+  <data name="DraftNoChanges" xml:space="preserve"><value>Ingen endringer fra originalen.</value></data>
+  <data name="DraftStoredBuilding" xml:space="preserve"><value>Lagret byggfilter (beholdes)</value></data>
+  <data name="DraftChangeTitle" xml:space="preserve"><value>Tittel</value></data>
+  <data name="DraftChangePeriod" xml:space="preserve"><value>Periode</value></data>
+  <data name="DraftChangeSearch" xml:space="preserve"><value>Søk</value></data>
+  <data name="DraftChangeStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="DraftChangeType" xml:space="preserve"><value>Avtaletype</value></data>
+  <data name="DraftChangeArchive" xml:space="preserve"><value>Arkiv</value></data>
+  <data name="DraftChangeBuilding" xml:space="preserve"><value>Byggfilter</value></data>
+  <data name="DraftChangeMissingBuilding" xml:space="preserve"><value>Bare uten bygg</value></data>
+  <data name="DraftChangeComponents" xml:space="preserve"><value>Komponentrekkefølge</value></data>
+  <data name="DraftUpdated" xml:space="preserve"><value>Endringene er lagret i originalen.</value></data>
+  <data name="DraftCopied" xml:space="preserve"><value>En ny personlig side er lagret. Originalen er uendret.</value></data>
 </root>

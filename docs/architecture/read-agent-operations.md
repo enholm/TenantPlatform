@@ -1,4 +1,6 @@
-# Innebygd MCP-leseassistent (8A/8B/8D/9B)
+# Innebygd MCP-leseassistent (8A/8B/8D/9B/9C)
+
+9C gir **Endre med AI** fra en lagret personlig rapport. Det åpner en ny, backendbundet samtale med faktisk preview, beregnet endringsoversikt og separate **Lagre endringer**, **Lagre som ny side** og **Forkast endringer**. Revisjonskonflikt gir ingen overskriving; innlasting av aktuell original krever bekreftelse og oppretter ny kontekst. Se [binding, lagringsvern, 64 KiB-grense for redigeringsutkast og manuell kontroll](personal-report-pages-operations.md#9c-redigering-av-lagrede-sider-gjennom-samtale). Ingen administrasjonsverktøy åpnes for modellen; rapportene kjører fortsatt uten AI etter lagring.
 
 9B utvider chatten med midlertidige, validerte rapportutkast og en separat **Lagre under Mine sider**-knapp. Se [rapportkontrakt, kildeavhengigheter, grenser og eksplisitt lagring](personal-report-pages-operations.md#9b-rapportutkast-fra-chat). Den lokale forslagshandlingen er ikke et MCP-administrasjonsverktøy og lagrer ikke data. Den vanlige lesechatten og 8Bs historikkvern består. Bare den eksplisitte, antiforgery-beskyttede lagringshandlingen skriver den serverlagrede utkastrevisjonen gjennom 9As Application-brukstilfelle. Ingen automatisk modellstyrt lagring eller åpning av personal_pages_-verktøy er innført.
 

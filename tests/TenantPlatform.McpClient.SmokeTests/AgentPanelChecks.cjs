@@ -90,3 +90,61 @@ test('chat draft uses shared real preview, explicit revision-bound save and clea
     await findSave().listeners.click(); assert.equal(root.children.length, 0);
     assert.equal(calls.filter(c => c.url.endsWith('/report-save')).length, 1);
 });
+
+test('saved-page editing uses bound actions, preserves conflicts and requires explicit reload confirmation', async () => {
+    const panel = new Element(); panel.dataset = { account: 'account', context: 'context', csrf: 'csrf', editPage: 'original-page', editConnection: 'own-source',
+        editing: 'EDITING', editSave: 'UPDATE', editCopy: 'COPY', editDiscard: 'DISCARD', editUpdated: 'UPDATED ORIGINAL', editCopied: 'SAVED COPY', editReload: 'RELOAD', editReloadConfirm: 'Discard draft and reload?',
+        editChanges: 'CHANGES', editNoChanges: 'UNCHANGED', draftTitle: 'DRAFT', draftSave: 'SAVE', draftOpen: 'OPEN', draftOld: 'STALE', date: 'REFRESH', total: 'TOTAL' };
+    const nodes = Object.fromEntries(['question-form', 'connection', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns', 'report-draft', 'edit-start', 'edit-intro'].map(k => [k, new Element()]));
+    panel.querySelector = query => nodes[query.match(/\[data-([^\]]+)\]/)[1]];
+    nodes.connection.value = 'own-source'; nodes.consent.checked = true;
+    const report = (changed = false) => ({ id: 'draft', revision: changed ? 'r2' : 'r1', editingPageId: 'original-page', originalTitle: '<script>old</script>',
+        title: changed ? 'New title' : '<script>old</script>', sourceName: 'SOURCE', components: ['Metric'],
+        changes: changed ? [{ field: 'PERIOD', before: '3 months', after: '6 months' }] : [], summary: { period: 'period' },
+        preview: { selection: { filter: { endDateFrom: '2026-10-24', endDateTo: '2027-04-24' } }, retrievedUtc: 'NOW', aggregate: { totalCount: 42, groups: [] }, table: { items: [] } } });
+    const calls = []; let stamp = 'context', confirm = false, failReload = false, pendingReload, failUpdate = true, sequence = 0;
+    const fetch = async (url, options) => {
+        const body = options?.body && JSON.parse(options.body); calls.push({ url, body });
+        if (url.endsWith('/context')) return response({ context: stamp });
+        if (url.endsWith('/report-edit')) return response({ conversation: 'edit-' + ++sequence, expiresInSeconds: 1800, report: report() });
+        if (url.endsWith('/ask')) return response({ ...completed('', 1), report: report(true) });
+        if (url.endsWith('/report-update')) return failUpdate ? { status: 409, ok: false, json: async () => ({ error: 'CONFLICT' }) } : response({ pageId: 'original-page' });
+        if (url.endsWith('/report-copy')) return response({ pageId: 'new-page', url: 'https://untrusted.invalid' });
+        if (url.endsWith('/report-reload')) {
+            if (pendingReload) return pendingReload.promise;
+            if (failReload) return { status: 400, ok: false, json: async () => ({ error: 'RELOAD FAILED' }) };
+            return response({ conversation: 'reloaded', expiresInSeconds: 1800, report: report() });
+        }
+        return { status: 204, ok: true };
+    };
+    const context = { document: { querySelectorAll: () => [panel], createElement: () => new Element(), addEventListener() {} },
+        window: { addEventListener() {}, confirm(message) { assert.equal(message, 'Discard draft and reload?'); return confirm; } },
+        fetch, AbortController, setInterval() {}, clearInterval() {}, setTimeout() {}, clearTimeout() {} };
+    vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/report-renderer.js', 'utf8') + '\n' + fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/read-agent.js', 'utf8'), context);
+    const root = nodes['report-draft']; const button = label => root.children.find(n => n.textContent === label);
+    await nodes['edit-start'].listeners.click();
+    assert.equal(calls.find(c => c.url.endsWith('/report-edit')).body.pageId, 'original-page');
+    assert.match(root.text(), /EDITING: <script>old<\/script>/); assert.match(root.text(), /UNCHANGED/); assert.equal(nodes.connection.disabled, true);
+    nodes.prompt.value = 'Vis seks måneder'; await nodes['question-form'].listeners.submit({ preventDefault() {} });
+    assert.match(root.text(), /PERIOD: 3 months → 6 months/); assert(!calls.some(c => c.url.endsWith('/report-update')));
+    await button('UPDATE').listeners.click(); assert.match(nodes.status.textContent, /CONFLICT/);
+    assert.match(root.text(), /New title/); assert.doesNotMatch(root.text(), /TOTAL 42/); assert.equal(button('UPDATE').disabled, true);
+    assert.deepEqual(calls.find(c => c.url.endsWith('/report-update')).body, { conversation: 'edit-1', draft: 'draft', revision: 'r2', page: 1 });
+    await button('RELOAD').listeners.click(); assert(!calls.some(c => c.url.endsWith('/report-reload')));
+    confirm = true; failReload = true; await button('RELOAD').listeners.click(); assert.match(root.text(), /New title/); assert.match(nodes.status.textContent, /RELOAD FAILED/);
+    failReload = false; await button('RELOAD').listeners.click(); assert.match(root.text(), /UNCHANGED/); assert.doesNotMatch(root.text(), /New title/);
+    await button('COPY').listeners.click();
+    assert.equal(calls.find(c => c.url.endsWith('/report-copy')).body.conversation, 'reloaded');
+    assert.equal(root.children.find(c => c.textContent === 'OPEN').href, '/my-pages/new-page');
+    assert.equal(nodes.status.textContent, 'SAVED COPY');
+    await nodes['edit-start'].listeners.click(); failUpdate = false; await button('UPDATE').listeners.click();
+    assert.equal(nodes.status.textContent, 'UPDATED ORIGINAL'); assert.equal(root.children.find(c => c.textContent === 'OPEN').href, '/my-pages/original-page');
+    await nodes['edit-start'].listeners.click(); await button('DISCARD').listeners.click(); assert.equal(root.children.length, 0);
+    assert(calls.some(c => c.url.endsWith('/report-discard')));
+    await nodes['edit-start'].listeners.click(); pendingReload = deferred(); const late = button('RELOAD').listeners.click(); await tick();
+    await nodes.new.listeners.click(); pendingReload.resolve(response({ conversation: 'late-context', expiresInSeconds: 1800, report: report(true) })); await late; await tick();
+    assert.equal(root.children.length, 0); assert(calls.some(c => c.url.endsWith('/delete') && c.body.conversation === 'late-context'));
+    await nodes['edit-start'].listeners.click(); stamp = 'different-user'; failUpdate = false; const writes = calls.filter(c => c.url.endsWith('/report-update')).length;
+    await button('UPDATE').listeners.click(); assert.equal(root.children.length, 0); assert.equal(nodes['edit-intro'].children.length, 0);
+    assert.equal(calls.filter(c => c.url.endsWith('/report-update')).length, writes);
+});

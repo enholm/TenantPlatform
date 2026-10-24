@@ -93,7 +93,7 @@ Chatten viser tittel, datakilde, faktisk filter/arkivvalg, periodehensikt og en 
 
 ### Modellforslag og binding
 
-Den lokale function-handlingen `propose_report_page` er et strukturert forslag, ikke et administrasjons-MCP-verktøy. Den tilbys bare på egen profil med begge godkjente rapportverktøy og ved en eksplisitt brukerforespørsel om oppretting/revidering. En liten språkport gjenkjenner opprettingsord som «lag/opprett/create/make/build/skapa» sammen med side/rapport og endringsord ved eksisterende utkast. Ved andre formuleringer kan brukeren presisere «Lag en rapportside …». Kildetekst kan ikke aktivere denne handlingen. Modellinstruksjonene krever avklaring eller et uttrykkelig støttet alternativ ved økonomi, andre diagrammer/komponenter/layout/kilder eller redigering av lagrede sider.
+Den lokale function-handlingen `propose_report_page` er et strukturert forslag, ikke et administrasjons-MCP-verktøy. Den tilbys bare på egen profil med begge godkjente rapportverktøy og ved en eksplisitt brukerforespørsel om oppretting/revidering. En liten språkport gjenkjenner opprettingsord som «lag/opprett/create/make/build/skapa» sammen med side/rapport og endringsord ved eksisterende utkast. Ved andre formuleringer kan brukeren presisere «Lag en rapportside …». Kildetekst kan ikke aktivere denne handlingen. Modellinstruksjonene krever avklaring eller et uttrykkelig støttet alternativ ved økonomi, andre diagrammer/komponenter/layout/kilder eller valg av lagret side fra fritekst uten eksplisitt 9C-redigeringskontekst.
 
 Forslaget `ReportPageProposal` er kun hensikt: tittel, PagePeriod, søk/status/type/arkiv, missingBuilding og eventuelt eksakt byggnavn, samt de tre eksisterende komponentene i ønsket rekkefølge og Stacked. Det er ikke en parallell kjørbar sidedefinisjon. Backend konverterer straks til den faktiske PageDefinition v1 og bruker PersonalPageService.Validate. Modell-/nettleserangitt bruker, konto, ConnectionId, profil, kontrakt-/metadataversjon, side-ID eller eierskap godtas ikke som forslag. Disse bindes av backend. Avanserte enhets-/organisasjons-/geografifiltre kan fortsatt settes manuelt i 9A; 9B finner ikke på interne referanser for å oppfylle slike ønsker.
 
@@ -167,3 +167,61 @@ Alle sju testprosjektene ble bygget. De seks første suitene bruker isolert Post
 Node-syntakskontroll av personal-pages.js/read-agent.js og `node --test tests/TenantPlatform.McpClient.SmokeTests/PersonalPagesPanelChecks.cjs tests/TenantPlatform.McpClient.SmokeTests/AgentPanelChecks.cjs` bestod. De tre syntetiske DOM-/transporttestene kjører de faktiske GUI-adapterne, inklusive manuell serialisering/lagring, sikker diagram-/tabelltekst, tømming ved feil/avbrudd og avvisning av sene svar/kontekstbytte. Dette er ikke interaktiv nettleserverifikasjon. De 51 nye side-/samtykkeressursene har like, unike nøkler på alle tre språk. Diff-/whitespacekontroll bestod.
 
 Før bruk i ønsket miljø gjenstår kontrollert migrering og eventuell separat aktivering av administrasjons-MCP. Gjør deretter en faktisk nettleserprøve: opprett tremånedersrapporten, lagre/gjenåpne, bla i tabellen, rediger, flytt og slett; kontroller tastatur/skjermleser og alle språk, endret godkjenning, to faner med revisjonskonflikt og tømming ved konto-/brukerbytte/logout. Ingen vanlig Web-oppstart, utviklings-/produksjonsdatabaseendring, ekte utsending/modellkall, containerbygg, deploy, commit, push eller Serga-endring inngår i denne verifikasjonen.
+
+## 9C: redigering av lagrede sider gjennom samtale
+
+9C viderefører samme modelladapter, AgentReportDraft, PageDefinition v1, PersonalPageService og PersonalPageRunner. Ingen ny migrering, datakilde, automatisk skriveagent eller utvidet rapportkontrakt er innført. Se [samlet implementasjons- og verifikasjonsstatus](modernization-plan.md#33-steg-9c-redigering-av-lagrede-personlige-rapportsider).
+
+### Brukerforløp
+
+1. Åpne en eksisterende personlig side og velg **Endre med AI**. Lenken åpner `/agent?editPage=<id>`. Sidenavnet hentes autorisert på serveren; URL-parameteren er bare et ressursvalg.
+2. Bekreft eksisterende datadelingsopplysning og start redigeringen, eller send første spørsmål. Backend åpner en **ny samtale** med sidens verifiserte datatilkobling og kjører faktisk MCP-preview. Ingen gammel chats data/historikk sendes til en annen forbindelse. GET/SSR oppretter ingen samtale, skriver ingen definisjon og gjør ingen modell-/forretningsdatakall.
+3. Be for eksempel om «Vis de neste seks månedene i stedet for tre», «Ta bare med aktive avtaler», «Endre tittelen til Kommende avtaleutløp» eller «Flytt avtaletabellen over diagrammet». Modellen får samme begrensede hensiktsrepresentasjon som i 9B, med opplysning om at backend har åpnet en redigeringskontekst.
+4. Chatten viser hvilken original som redigeres, backendberegnet før/etter-oversikt og faktisk forhåndsvisning. Tekst fra modellen er ikke bevis på endring eller lagring. Originalen forblir urørt.
+5. **Lagre endringer** oppdaterer originalen. **Lagre som ny side** oppretter én personlig kopi. **Forkast endringer** fjerner hele redigeringssamtalen uten databaseendring. En chatmelding, også «lagre», utfører ingen av disse writes. Etter lagring vises egen status for oppdatering/kopi og lenke basert på backendbekreftet side-ID. Åpning av siden/Mine sider henter aktuell definisjon på nytt. Etter bekreftet lagring åpnes en ny redigeringsøkt via Endre med AI for flere endringer; en fullført utkastrevisjon blir ikke automatisk en ny original.
+
+Vanlig manuell redigering og kjøring fra Mine sider fungerer med ReadAgent deaktivert og uten modellnøkkel. AI-lenken vises når modellen er driftskonfigurert; manglende kilde/verktøy/OAuth hindrer åpning av redigeringskonteksten med en sikker feil. Ingen automatisk oppgradering eller godkjenning skjer.
+
+### Binding, endringer og støttet omfang
+
+AgentReportDraft beholder en AgentReportEdit med opprinnelig side-ID og faktisk originaldefinisjon, i tillegg til verifisert aktør/konto/tilkobling i samtalen, opprinnelig listerevisjon, aktuell utkastrevisjon og separat servergenerert kopi-ID. Følgeforslag beholder **opprinnelig** listerevisjon; en vellykket preview oppdaterer aldri denne til en nyere lagringsrevisjon.
+
+Modellen får ikke side-/kopi-ID, eier, lagringsrevisjon, profil- eller verktøyversjoner som redigerbare felt. Den kan ikke velge en eksisterende side gjennom en fritekst-ID eller et navn; siden må åpnes eksplisitt fra den autoriserte flaten. Tittel, kildeetiketter, gammel modelltekst og lagret hensikt behandles som ubetrodd innhold. personal_pages_save/delete/move er fortsatt utelatt fra automatisk agentkatalog.
+
+Før/etter-oversikten beregnes i Application fra original og foreslått faktisk definisjon: tittel, periode, søk, status, type, arkiv, bygg/manglende bygg og komponentrekkefølge. Web lokaliserer bare presentasjonen. Modellens forklaring påvirker ikke oversikten. Relative måneder beholdes som relativ hensikt, og de faktiske normaliserte datoene vises av samme runner som før.
+
+De tre komponentene Metric, BuildingChart og AgreementTable, Stacked og fast periode/NextMonths 1–12 gjelder fortsatt. «Avtaler for en periode» krever avklaring mellom EndDate og aktive avtaler gjennom perioden; den siste beregningen er ikke implementert. Lagrede enhets-, organisasjons- og geografireferanser beholdes på serveren og sendes ikke som valgbare modell-ID-er. Eksisterende byggreferanse beholdes når forslaget ikke erstatter den med et entydig verifisert byggnavn eller MissingBuilding. Fjerning/endring av øvrige lagrede referansefiltre krever den eksisterende manuelle redigeringen. Modellen instrueres om disse grensene; backend håndhever dem uavhengig av modelltekst.
+
+### Revisjon, idempotens og ny original
+
+`/agent/report-edit`, `report-update`, `report-copy`, `report-discard` og `report-reload` bruker cookieidentitet, fersk Application-autorisasjon og antiforgery. Mutasjoner tar bare samtale-/utkast-ID og presentert utkastrevisjon; original, definisjon og forventet lagringsrevisjon kommer fra serverens kontekst. Oppdatering/kopi må stemme med faktisk konteksttype. Ukjente identitets-/definisjonsfelt i HTTP-body avvises.
+
+Oppdatering går gjennom PersonalPageService.UpdateFromDraftAsync og samme PersistAsync/validering/SQL-transaksjonsport som eksisterende GUI/MCP-administrasjon. Den sjekker original, eier-/kontobundet rad og forventet listerevisjon. Den servergenererte utkastrevisjonen brukes som stabil commit-revisjon i eksisterende samlingsrad. Et forsøk etter tapt svar kan bare gjenkjennes som samme oppdatering dersom **både** denne commit-revisjonen og nøyaktig definisjon stemmer. Et urelatert identisk innhold med en annen revisjon gir konflikt. Ingen ekstra tabell, varig kommandoarkiv, automatisk merge eller blind retry er lagt til.
+
+Kopi bruker samme CreateFromDraftAsync som 9B, stabil server-ID, gjeldende kildeautorisasjon og 9As maksimalt 20 sider. Gjentatte forespørsler oppretter ikke flere kopier. Etter bekreftet lagring kan samme handling bekreftes på nytt med fersk autorisasjon og uendret lagret definisjon; bytte mellom oppdatering og kopi på en ferdig lagret revisjon avvises. En slettet side gjenopprettes ikke fra gammel kontekst.
+
+Endret side **eller annen endring i personlig sidelistens revisjon** gir HTTP 409 ved lagring. Utkastet bevares, men GUI fjerner gamle previewtall. **Last inn aktuell versjon på nytt** krever en synlig bekreftelse om at utkastet forkastes. Backend lager da en ny samtale fra den aktuelle lagrede originalen og erstatter gammel kontekst først etter vellykket fersk preview. Ingen gammel endring anvendes automatisk. Feilet reload beholder serverutkastet; ved tilgangs-/kildeugyldiggjøring tømmes beskyttet GUI-innhold. Endret datatilkobling krever ny åpning fra siden med nytt bekreftet kontekstvalg.
+
+Ved tapt lagringssvar loves ikke suksess i GUI: klienten viser feil inntil en autorisert gjentakelse eller ny innlasting bekrefter resultatet. Samtidige operasjoner bruker eksisterende lease/kvote. Sene svar kan ikke erstatte nyere utkast; sent returnerte nye samtaler fjernes av adapteren.
+
+### Tilgang og grenser
+
+Fersk personlig side-, konto-, medlemskaps-, verktøy-/versjons- og OAuth-tilgang kreves ved åpning, preview og lagring. Eksisterende original er ingen fullmakt til data. De to faktiske forretningskallene går fortsatt bare gjennom McpRegistryService og målserverens Application-lesere. Ingen SQL-/GUI-/legacyfallback for rapportdata. Leseflatens SELECT-rolle, constraints, historikk-/kildeavhengighetsvern og oppstarts-/driftsavgrensning er beholdt.
+
+Eksisterende levetid 30 minutter, fire samtaler per bruker, 1000 samtaler/leases, én aktiv agentoperasjon per bruker og tids-/transport-/modellgrenser gjelder. Et nytt 9B-utkast er fortsatt høyst 32 KiB. Et redigeringsutkast tillates høyst **64 KiB**, fordi originaldefinisjonen også beholdes; hver faktisk definisjon er fortsatt høyst 16 KiB. Det globale konservativt belastede utkastminnet er fortsatt **4 MiB**, inklusive aktive lease-snapshots. Ingen original eller preview legges i varig chathistorikk. Modellrepresentasjonen inneholder bare begrenset hensikt; hele originalen sendes ikke til modellen.
+
+Konto-/brukerbytte, logout, ny samtale, forkasting og utløp fjerner relevant kontekst og kansellerer aktivt arbeid. Manglende side eller lokal tilgang kan ikke levere gammel preview. Feil/avbrudd under forslag bevarer siste gyldige utkast. Dette er fortsatt én-instansdrift uten atomisk tilbakekalling eller konsistent snapshot mellom flere MCP-kall. Generell Web-cookie-/sesjonsrevokering er en separat oppgave.
+
+### Verifikasjon og manuell kontroll
+
+Før 9C ble 9Bs komplette MCP-klientsuite kjørt mot isolert PostgreSQL og alle fire eksisterende DOM-/transportkontroller bestod. 9C testes med syntetiske Responses-svar, faktisk cookie/CSRF, OAuth/MCP og isolert PostgreSQL. Etter siste produksjonsendring bestod solution-build og de komplette MCP-klient-, MCP-server- og OAuth-suitene mot isolert PostgreSQL. En etterfølgende målrettet 9C-kjøring med de siste injeksjonsforsøkene bestod også, uten mellomliggende produksjonsendring. Begge klynger ble stoppet og fjernet. De fem faktiske JS-adapterkontrollene bestod med syntetisk DOM/transport, og 21 nye språkressurser er like/unike på alle tre språk. Eksisterende NU1902/NU1903 består. Dette er ikke faktisk modell-/nettleserprøve. Se moderniseringsplanen for eksakte kommandoer og kontroller.
+
+Manuell kontroll etter kontrollert driftsaktivering:
+
+1. Åpne en lagret side, velg Endre med AI, bekreft datadeling og prøv de fire eksempelendringene. Kontroller originalnavn, komponentrekkefølge og lokaliserte før/etter-verdier mot faktisk preview.
+2. Kontroller at originalen er uendret før knappetrykk. Prøv oppdatering, kopi og forkasting hver for seg. Kontroller Mine sider og faktiske lenker etterpå.
+3. Endre samme side eller en annen personlig side i en annen fane. Lagring skal gi konflikt; utkastet skal ikke anvendes på ny original. Avbryt reloadbekreftelsen, og bekreft den deretter for å åpne fersk original.
+4. Prøv tapt nettverkssvar, dobbelt klikk, avbrudd, sene svar, kontobytte/logout, fjernet side og tilbakekalt tilgang. Ikke vis gamle tall som ferske.
+5. Prøv norsk, engelsk og svensk, tastatur/skjermleser og flere faner. Åpne oppdatert side uten ReadAgent/modellnøkkel. Dette er ikke dekket av syntetisk DOM alene.
+
+Ingen ekte/betalte modellkall, utviklings-/produksjonsdatabase, driftsmigrering, vanlig Web-oppstart, containerbygg, deploy, commit, push eller Serga-endring inngår. Container/deployment i 8C er fortsatt utsatt.

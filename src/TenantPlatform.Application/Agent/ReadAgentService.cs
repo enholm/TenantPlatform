@@ -44,14 +44,61 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
         return (await Catalog(ct)).GroupBy(t => t.ConnectionId).Select(g => new AgentConnection(g.Key, g.First().ConnectionName, g.Count())).ToArray();
     }
     public async Task<Guid> BeginAsync(Guid selectedConnection, Guid expectedAccount, bool sharingAccepted, CancellationToken ct = default)
+        => await BeginCoreAsync(selectedConnection, expectedAccount, sharingAccepted, ct, null);
+    private async Task<Guid> BeginCoreAsync(Guid selectedConnection, Guid expectedAccount, bool sharingAccepted, CancellationToken ct, Guid? preserve)
     {
         var who = await Require(ct);
         if (!Ready) throw new ReadAgentException("Disabled");
         if (who.AccountId != expectedAccount || !sharingAccepted) throw new ReadAgentException("ConsentRequired");
         if (!(await Catalog(ct)).Any(t => t.ConnectionId == selectedConnection)) throw new ReadAgentException("ConnectionUnavailable");
-        return sessions.Create(who, selectedConnection);
+        return sessions.Create(who, selectedConnection, preserve);
     }
     public async Task DeleteAsync(Guid conversation, CancellationToken ct = default) => sessions.Delete(conversation, await Require(ct));
+    // Safe read for SSR; never creates a conversation or fetches model/business data.
+    public async Task<AgentReportDraft> EditPageAsync(Guid pageId, CancellationToken ct = default)
+    {
+        await Require(ct);
+        if (drafts is null || !Ready) throw new ReadAgentException("Disabled");
+        return await drafts.OpenAsync(pageId, ct);
+    }
+    public async Task<AgentReportEditing> BeginEditAsync(Guid pageId, Guid expectedAccount, bool sharingAccepted, CancellationToken ct = default)
+        => await BeginEditCoreAsync(pageId, expectedAccount, sharingAccepted, ct, null);
+    private async Task<AgentReportEditing> BeginEditCoreAsync(Guid pageId, Guid expectedAccount, bool sharingAccepted, CancellationToken ct, Guid? preserve)
+    {
+        var who = await Require(ct);
+        if (who.AccountId != expectedAccount || !sharingAccepted) throw new ReadAgentException("ConsentRequired");
+        var draft = await EditPageAsync(pageId, ct);
+        if (preserve is Guid old && draft.Definition.ConnectionId != sessions.Connection(old, who)) throw new ReadAgentException("DraftSourceChanged");
+        var id = await BeginCoreAsync(draft.Definition.ConnectionId, expectedAccount, sharingAccepted, ct, preserve);
+        try
+        {
+            using var run = sessions.Start(id, who, limits, ct);
+            var report = await drafts!.PreviewAsync(draft, 1, run.Token);
+            if (await Require(run.Token) != who) throw new UnauthorizedAccessException();
+            run.Token.ThrowIfCancellationRequested(); run.CompleteDraft(draft);
+            return new(id, report);
+        }
+        catch { sessions.Delete(id, who); throw; }
+    }
+    public async Task DiscardReportAsync(Guid conversation, Guid draftId, Guid revision, CancellationToken ct = default)
+    {
+        var who = await Require(ct);
+        using var run = sessions.Start(conversation, who, limits, ct);
+        if (run.Draft is not { } d || d.Id != draftId || d.Revision != revision) throw new ReadAgentException("DraftConflict");
+        sessions.Delete(conversation, who);
+    }
+    public async Task<AgentReportEditing> ReloadReportAsync(Guid conversation, Guid draftId, Guid revision, CancellationToken ct = default)
+    {
+        var who = await Require(ct); Guid pageId;
+        using (var run = sessions.Start(conversation, who, limits, ct)) {
+            if (run.Draft is not { Edit: not null } d || d.Id != draftId || d.Revision != revision) throw new ReadAgentException("DraftConflict");
+            pageId = d.Edit.PageId;
+        }
+        // Keep the old draft until a fresh, isolated conversation/preview succeeds. Never rebase an old proposal.
+        var opened = await BeginEditCoreAsync(pageId, who.AccountId!.Value, true, ct, conversation);
+        try { await DiscardReportAsync(conversation, draftId, revision, ct); return opened; }
+        catch { sessions.Delete(opened.Conversation, who); throw; }
+    }
     public async Task CancelAsync(Guid conversation, CancellationToken ct = default) => sessions.Cancel(conversation, await Require(ct));
     public async Task<AgentAnswer> AskAsync(Guid conversation, string prompt, CancellationToken ct = default)
     {
@@ -149,7 +196,9 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 catch (Exception e) when (e is UnauthorizedAccessException or McpClientException || e is ReadAgentException { Code: "HistoryUnavailable" }) { run.ClearDraft(); run.Invalidate(); throw new ReadAgentException("HistoryUnavailable"); }
                 input.Add(JsonSerializer.SerializeToElement(new { role = "assistant", content = JsonSerializer.Serialize(new {
                     untrustedCurrentReportIntent = currentDraft.Intent, saved = currentDraft.SavedPageId.HasValue,
-                    instruction = "Intent only, no retained report data. Revise this whole unsaved declaration only on explicit user request. Saved pages cannot be edited through chat." }, AgentReportDrafts.Json) }));
+                    editingExistingPage = currentDraft.Edit is not null,
+                    storedReferenceFilters = currentDraft.Edit is not null && (currentDraft.Definition.Filter.BuildingId.HasValue || currentDraft.Definition.Filter.UnitId.HasValue || currentDraft.Definition.Filter.OrganizationElementId.HasValue || currentDraft.Definition.Filter.GeographicAreaId.HasValue),
+                    instruction = "Intent only, no retained report data. Revise this whole unsaved declaration only on explicit user request. Backend preserves stored reference filters; new identifiers cannot be chosen. Only an explicitly opened edit session can update an existing page through a separate user button." }, AgentReportDrafts.Json) }));
             }
             if (proposalAllowed) { if (tools.Length + 1 > limits.Tools) throw new ReadAgentException("ToolLimit"); tools = [..tools, AgentReportDrafts.Tool()]; }
             input.Add(JsonSerializer.SerializeToElement(new { role = "user", content = prompt }));
@@ -293,7 +342,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
             }
         }
         catch (OperationCanceledException) { throw new ReadAgentException("CancelledOrTimedOut"); }
-        catch (UnauthorizedAccessException) { run.Invalidate(); throw; }
+        catch (UnauthorizedAccessException) { run.ClearDraft(); run.Invalidate(); throw; }
         catch (ReadAgentException) { throw; }
         catch (TenantPlatform.Application.PersonalPages.PersonalPageException e) { throw new ReadAgentException("Draft" + e.Code); }
         catch (McpClientException) { throw new ReadAgentException("SourceUnavailable"); }
@@ -309,25 +358,28 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
         AgentReportPreview result;
         try { result = await drafts.PreviewAsync(draft, page, run.Token); }
         catch (ReadAgentException e) when (e.Code == "HistoryUnavailable") { run.ClearDraft(); run.Invalidate(); throw; }
+        catch (UnauthorizedAccessException) { run.ClearDraft(); run.Invalidate(); throw; }
         sessions.Verify(conversation, who); run.Token.ThrowIfCancellationRequested();
         return result;
     }
-    public async Task<Guid> SaveReportAsync(Guid conversation, Guid draftId, Guid revision, CancellationToken ct = default)
+    public async Task<Guid> SaveReportAsync(Guid conversation, Guid draftId, Guid revision, CancellationToken ct = default, bool copy = false, bool? editing = null)
     {
         var who = await Require(ct);
         if (drafts is null) throw new ReadAgentException("Disabled");
         using var run = sessions.Start(conversation, who, limits, ct);
         var draft = run.Draft;
         if (draft is null || draft.Id != draftId || draft.Revision != revision || draft.Definition.ConnectionId != sessions.Connection(conversation, who)) throw new ReadAgentException("DraftConflict");
+        if (editing.HasValue && editing.Value != (draft.Edit is not null)) throw new ReadAgentException("DraftConflict");
         try
         {
-            var id = await drafts.SaveAsync(draft, run.Token);
+            var id = await drafts.SaveAsync(draft, run.Token, copy);
             sessions.Verify(conversation, who);
             if (await Require(run.Token) != who) throw new UnauthorizedAccessException();
-            run.Token.ThrowIfCancellationRequested(); run.CompleteDraft(draft with { SavedPageId = id });
+            run.Token.ThrowIfCancellationRequested(); run.CompleteDraft(draft with { SavedPageId = id, SavedAsCopy = copy });
             return id;
         }
         catch (ReadAgentException e) when (e.Code == "HistoryUnavailable") { run.ClearDraft(); run.Invalidate(); throw; }
+        catch (UnauthorizedAccessException) { run.ClearDraft(); run.Invalidate(); throw; }
         catch (TenantPlatform.Application.PersonalPages.PersonalPageException e) { throw new ReadAgentException("Draft" + e.Code); }
         catch (OperationCanceledException) { throw new ReadAgentException("CancelledOrTimedOut"); }
     }

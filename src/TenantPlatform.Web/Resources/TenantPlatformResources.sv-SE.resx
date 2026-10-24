@@ -3446,4 +3446,25 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="AgentErrorDraftContract" xml:space="preserve"><value>Förhandsvisningen fick ett ogiltigt eller ändrat kontrakt. Utkastet ändrades inte.</value></data>
   <data name="AgentErrorDraftCancelled" xml:space="preserve"><value>Förhandsvisningen eller sparandet avbröts. Det senaste giltiga utkastet finns kvar.</value></data>
   <data name="AgentErrorDraftBusy" xml:space="preserve"><value>En rapportåtgärd är redan aktiv. Vänta eller avbryt innan du försöker igen.</value></data>
+  <data name="PagesEditAi" xml:space="preserve"><value>Ändra med AI</value></data>
+  <data name="DraftEditing" xml:space="preserve"><value>Redigerar sparad rapportsida</value></data>
+  <data name="DraftSaveChanges" xml:space="preserve"><value>Spara ändringar</value></data>
+  <data name="DraftSaveCopy" xml:space="preserve"><value>Spara som ny sida</value></data>
+  <data name="DraftDiscard" xml:space="preserve"><value>Kasta ändringar</value></data>
+  <data name="DraftReload" xml:space="preserve"><value>Läs in aktuell version igen</value></data>
+  <data name="DraftReloadConfirm" xml:space="preserve"><value>Detta kastar utkastet och öppnar den sparade versionen i en ny konversation. Fortsätta?</value></data>
+  <data name="DraftChanges" xml:space="preserve"><value>Ändringar från originalet</value></data>
+  <data name="DraftNoChanges" xml:space="preserve"><value>Inga ändringar från originalet.</value></data>
+  <data name="DraftStoredBuilding" xml:space="preserve"><value>Sparat byggfilter (behålls)</value></data>
+  <data name="DraftChangeTitle" xml:space="preserve"><value>Titel</value></data>
+  <data name="DraftChangePeriod" xml:space="preserve"><value>Period</value></data>
+  <data name="DraftChangeSearch" xml:space="preserve"><value>Sökning</value></data>
+  <data name="DraftChangeStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="DraftChangeType" xml:space="preserve"><value>Avtalstyp</value></data>
+  <data name="DraftChangeArchive" xml:space="preserve"><value>Arkiv</value></data>
+  <data name="DraftChangeBuilding" xml:space="preserve"><value>Byggnadsfilter</value></data>
+  <data name="DraftChangeMissingBuilding" xml:space="preserve"><value>Endast utan byggnad</value></data>
+  <data name="DraftChangeComponents" xml:space="preserve"><value>Komponentordning</value></data>
+  <data name="DraftUpdated" xml:space="preserve"><value>Ändringarna är sparade i originalet.</value></data>
+  <data name="DraftCopied" xml:space="preserve"><value>En ny personlig sida har sparats. Originalet är oförändrat.</value></data>
 </root>
