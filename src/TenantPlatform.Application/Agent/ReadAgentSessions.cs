@@ -19,7 +19,7 @@ public sealed class ReadAgentSessions : IDisposable
     private readonly object gate = new();
     private long sequence;
     private readonly Dictionary<Guid, Session> sessions = [];
-    private readonly Dictionary<CancellationTokenSource, (Guid User, long Bytes)> running = [];
+    private readonly Dictionary<CancellationTokenSource, (Guid User, long Bytes, long DraftBytes)> running = [];
     private sealed class Session(ActorSnapshot owner, Guid connection, DateTimeOffset end, long order)
     {
         public ActorSnapshot Owner { get; } = owner;
@@ -28,6 +28,7 @@ public sealed class ReadAgentSessions : IDisposable
         public long Order { get; } = order;
         public CancellationTokenSource? Run { get; set; }
         public List<AgentTurn> History { get; } = [];
+        public AgentReportDraft? Draft { get; set; }
         public bool Invalidated { get; set; }
         public bool Trimmed { get; set; }
         public long Bytes { get; set; }
@@ -65,15 +66,17 @@ public sealed class ReadAgentSessions : IDisposable
                 if (target.History.Count == 0) throw new ReadAgentException("Busy");
                 target.Bytes -= Size(target.History[0]); target.History.RemoveAt(0); target.Trimmed = true;
             }
+            if (DraftBytes() + SizeDraft(session.Draft) > 4 * 1024 * 1024) throw new ReadAgentException("DraftLimit");
             var cts = CancellationTokenSource.CreateLinkedTokenSource(ct); cts.CancelAfter(TimeSpan.FromSeconds(Math.Max(0, Math.Min(limits.Seconds, (session.End - clock.GetUtcNow()).TotalSeconds)))); session.Run = cts;
-            running.Add(cts, (owner.UserId, session.Bytes));
+            running.Add(cts, (owner.UserId, session.Bytes, SizeDraft(session.Draft)));
             var committed = false;
-            return new(cts, session.History.ToArray(), session.Trimmed, session.Invalidated,
-                turn => {
+            return new(cts, session.History.ToArray(), session.Trimmed, session.Invalidated, session.Draft,
+                (turn, draft) => {
                     lock (gate)
                     {
                         if (!sessions.TryGetValue(id, out var current) || current != session || session.Run != cts || committed || cts.IsCancellationRequested || session.End <= clock.GetUtcNow())
                             throw new ReadAgentException("CancelledOrTimedOut");
+                        if (draft is not null) ValidateDraft(draft);
                         session.History.Add(turn); Trim(session, limits);
                         // Deterministic oldest idle session/oldest whole turn. Never evict active conversations.
                         while (TotalBytes() > limits.ServerHistoryBytes)
@@ -87,13 +90,26 @@ public sealed class ReadAgentSessions : IDisposable
                             session.History.Remove(turn); session.Bytes = session.History.Sum(Size);
                             throw new ReadAgentException("CancelledOrTimedOut");
                         }
+                        if (draft is not null) session.Draft = draft;
                         committed = true;
                         var trimmed = session.Trimmed; session.Trimmed = false; session.Invalidated = false; return (trimmed, session.History.Contains(turn), session.History.Count);
                     }
                 }, () => { lock (gate) { if (session.Run == cts) { var questions = session.History.Select(t => new AgentTurn(t.Question, null, [])).ToArray(); session.History.Clear(); session.History.AddRange(questions); session.Invalidated = true; session.Bytes = session.History.Sum(Size); session.Trimmed = false; } } },
+                () => { lock (gate) { if (session.Run == cts) session.Draft = null; } },
+                draft => { lock (gate) {
+                    if (!sessions.TryGetValue(id, out var current) || current != session || session.Run != cts || committed || cts.IsCancellationRequested || session.End <= clock.GetUtcNow()) throw new ReadAgentException("CancelledOrTimedOut");
+                    ValidateDraft(draft); session.Draft = draft; committed = true;
+                } },
                 () => { lock (gate) { if (session.Run == cts) session.Run = null; running.Remove(cts); } });
+            void ValidateDraft(AgentReportDraft draft)
+            {
+                var bytes = Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(draft));
+                if (draft.Dependencies?.Count > 2 || bytes > 32768 || DraftBytes() - SizeDraft(session.Draft) + bytes * 4L + 1024 > 4 * 1024 * 1024) throw new ReadAgentException("DraftLimit");
+            }
         }
     }
+    private static long SizeDraft(AgentReportDraft? draft) => draft is null ? 0 : 1024L + Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(draft)) * 4L;
+    private long DraftBytes() => sessions.Values.Sum(s => SizeDraft(s.Draft)) + running.Values.Sum(r => r.DraftBytes);
     private static long Size(AgentTurn turn) => 1024L + Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(turn)) * 4L;
     private static long Size(Session session) => session.Bytes;
     private long TotalBytes() => sessions.Values.Sum(Size) + running.Values.Sum(r => r.Bytes);
@@ -126,14 +142,17 @@ public sealed class ReadAgentSessions : IDisposable
         return value;
     }
     public sealed class Lease(CancellationTokenSource source, IReadOnlyList<AgentTurn> history, bool trimmed, bool invalidated,
-        Func<AgentTurn, (bool Trimmed, bool Retained, int Count)> commit, Action invalidate, Action release) : IDisposable
+        AgentReportDraft? draft, Func<AgentTurn, AgentReportDraft?, (bool Trimmed, bool Retained, int Count)> commit, Action invalidate, Action clearDraft, Action<AgentReportDraft> completeDraft, Action release) : IDisposable
     {
         public CancellationToken Token => source.Token;
         public IReadOnlyList<AgentTurn> History { get; } = history;
+        public AgentReportDraft? Draft { get; } = draft;
         public bool Trimmed { get; } = trimmed;
         public bool Invalidated { get; } = invalidated;
-        public (bool Trimmed, bool Retained, int Count) Commit(AgentTurn turn) => commit(turn);
+        public (bool Trimmed, bool Retained, int Count) Commit(AgentTurn turn, AgentReportDraft? draft = null) => commit(turn, draft);
+        public void CompleteDraft(AgentReportDraft value) => completeDraft(value);
         public void Invalidate() => invalidate();
+        public void ClearDraft() => clearDraft();
         public void Dispose() { release(); source.Dispose(); }
     }
 }

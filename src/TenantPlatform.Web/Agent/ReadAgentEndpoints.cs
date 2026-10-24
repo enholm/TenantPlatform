@@ -17,7 +17,7 @@ namespace TenantPlatform.Web.Agent;
 
 public static class ReadAgentEndpoints
 {
-    private sealed record Command(Guid Conversation, Guid Connection, Guid Account, bool SharingAccepted, string? Prompt);
+    private sealed record Command(Guid Conversation, Guid Connection, Guid Account, bool SharingAccepted, string? Prompt, Guid Draft = default, Guid Revision = default, int Page = 1);
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 8 };
     public static void MapReadAgent(this WebApplication app)
     {
@@ -38,7 +38,7 @@ public static class ReadAgentEndpoints
             {
                 if (await Identity(http, ct) is null) return Results.Unauthorized();
                 await csrf.ValidateRequestAsync(http);
-                if (!http.RequestServices.GetRequiredService<IOptions<ReadAgentOptions>>().Value.Ready || http.RequestServices.GetService<McpRegistryService>() is null)
+                if ((action is not ("report-save" or "report-preview") && !settings.Ready) || http.RequestServices.GetService<McpRegistryService>() is null)
                     return Error(http, "Disabled", 503);
                 if (http.Request.ContentLength > 96 * 1024) return Results.StatusCode(413);
                 using var readBudget = CancellationTokenSource.CreateLinkedTokenSource(ct); readBudget.CancelAfter(TimeSpan.FromSeconds(5));
@@ -53,7 +53,11 @@ public static class ReadAgentEndpoints
                     case "ask":
                         var answer = await agent.AskAsync(command.Conversation, command.Prompt ?? "", ct);
                         var l = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
-                        return Results.Json(new { answer.Text, answer.RetainedTurns, answer.CurrentTurnRetained, answer.ContextInvalidated, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, s.Aggregate, s.Revalidated, s.EvidenceId, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: Json);
+                        return Results.Json(new { answer.Text, report = answer.Report is null ? null : Report(answer.Report, http), answer.RetainedTurns, answer.CurrentTurnRetained, answer.ContextInvalidated, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, s.Aggregate, s.Revalidated, s.EvidenceId, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: AgentReportDrafts.Json);
+                    case "report-preview": return Results.Json(new { report = Report(await agent.PreviewReportAsync(command.Conversation, command.Draft, command.Revision, command.Page, ct), http) }, AgentReportDrafts.Json);
+                    case "report-save":
+                        var savedPage = await agent.SaveReportAsync(command.Conversation, command.Draft, command.Revision, ct);
+                        return Results.Json(new { pageId = savedPage, url = "/my-pages/" + savedPage });
                     case "delete": await agent.DeleteAsync(command.Conversation, ct); return Results.NoContent();
                     case "cancel": await agent.CancelAsync(command.Conversation, ct); return Results.NoContent();
                     default: return Results.NotFound();
@@ -61,6 +65,8 @@ public static class ReadAgentEndpoints
             }
             catch (UnauthorizedAccessException) { return Error(http, "AccessChanged", 403); }
             catch (ReadAgentException e) { return Error(http, e.Code, e.Code == "Busy" ? 429 : 400); }
+            catch (TenantPlatform.Application.PersonalPages.PersonalPageException e) { return Error(http, "Draft" + e.Code, 400); }
+            catch (McpClientException) { return Error(http, "SourceUnavailable", 400); }
             catch (AntiforgeryValidationException) { return Results.BadRequest(); }
             catch (JsonException) { return Results.BadRequest(); }
             catch (OperationCanceledException) { return Error(http, "CancelledOrTimedOut", 408); }
@@ -83,6 +89,23 @@ public static class ReadAgentEndpoints
         }
         return (account, Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(who.UserId + ":" + account))));
     }
+    private static object Report(AgentReportPreview report, HttpContext http)
+    {
+        var l = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
+        var d = report.Draft;
+        string EnumLabel(Enum e, string prefix = "") => l[prefix + e].Value;
+        var value = new { d.Version, d.Id, d.Revision, d.SavedPageId, d.SourceName, d.Definition.Title, d.Definition.Components,
+            intent = d.Intent, preview = report.Preview,
+            summary = new {
+                period = d.Definition.Period.Kind == TenantPlatform.Application.PersonalPages.PagePeriodKind.NextMonths ? l["DraftMonths", d.Definition.Period.Months!].Value : $"{d.Definition.Period.From:yyyy-MM-dd} – {d.Definition.Period.To:yyyy-MM-dd}",
+                status = d.Definition.Filter.Status is { } status ? EnumLabel(status, "AgreementStatus") : l["PagesAll"].Value,
+                type = d.Definition.Filter.Type is { } type ? EnumLabel(type, "AgreementType") : l["PagesAll"].Value,
+                archive = EnumLabel(d.Definition.Filter.Archive, "PagesArchive"),
+                building = d.Intent.Filter.BuildingName ?? (d.Definition.Filter.MissingBuilding ? l["PagesMissingOnly"].Value : l["PagesAll"].Value),
+                search = d.Definition.Filter.Search ?? "" } };
+        if (JsonSerializer.SerializeToUtf8Bytes(value, AgentReportDrafts.Json).Length > 131072) throw new ReadAgentException("DraftLimit");
+        return value;
+    }
     private static string? Summary(AgentSource source, IStringLocalizer<TenantPlatformResources> l)
     {
         string Flag(bool value) => l[value ? "Yes" : "No"].Value;
@@ -96,6 +119,6 @@ public static class ReadAgentEndpoints
     {
         var localizer = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
         var message = localizer["AgentError" + code];
-        return Results.Json(new { error = message.ResourceNotFound ? localizer["AgentErrorUnavailable"].Value : message.Value }, statusCode: status);
+        return Results.Json(new { invalidateDraft = code is "HistoryUnavailable" or "ConnectionUnavailable" or "AccessChanged" or "DraftSourceChanged" or "DraftAuthorization", error = message.ResourceNotFound ? localizer["AgentErrorUnavailable"].Value : message.Value }, statusCode: status);
     }
 }

@@ -29,7 +29,7 @@ test('report adapter clears stale results, preserves safe chart/table output and
         if (fail) return { ok: false, json: async () => ({ error: 'SOURCE FAILED' }) };
         return response(value);
     };
-    vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/personal-pages.js', 'utf8'), {
+    vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/report-renderer.js', 'utf8') + '\n' + fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/personal-pages.js', 'utf8'), {
         document: { querySelectorAll: () => [panel], createElement: () => new Element(), addEventListener() {} },
         window: { addEventListener: (event, fn) => events[event] = fn }, fetch, AbortController, setInterval() {}, clearInterval() {}, confirm: () => true, location: { assign() {} }
     });
@@ -54,7 +54,7 @@ test('manual editor emits the bounded declaration and saves without owner or acc
     fields.period.value = 'NextMonths'; fields.months.value = '3'; fields.archive.value = 'Exclude'; fields.Metric.value = '0'; fields.BuildingChart.value = '1'; fields.AgreementTable.value = '2';
     nodes.editor.elements = { namedItem: name => fields[name] }; panel.querySelector = selector => nodes[selector.match(/\[data-([^\]]+)\]/)[1]]; panel.querySelectorAll = () => [];
     let sent, target;
-    vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/personal-pages.js', 'utf8'), {
+    vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/report-renderer.js', 'utf8') + '\n' + fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/personal-pages.js', 'utf8'), {
         document: { querySelectorAll: () => [panel], createElement: () => new Element(), addEventListener() {} }, window: { addEventListener() {} },
         fetch: async (url, options) => { if (url.endsWith('/context')) return response({ context: 'current' }); sent = JSON.parse(options.body); return response({ pages: [{ id: 'new-page' }] }); },
         AbortController, setInterval() {}, clearInterval() {}, confirm: () => true, location: { assign: path => target = path }

@@ -9,7 +9,8 @@ public sealed record PersonalPageResult(DateTimeOffset RetrievedUtc, AgreementRe
 public sealed class PersonalPageRunner(PersonalPageService pages, McpRegistryService? registry, PersonalPageRuns runs, TimeProvider clock)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, RespectRequiredConstructorParameters = true, RespectNullableAnnotations = true, Converters = { new JsonStringEnumConverter(allowIntegerValues: false) } };
-    public async Task<PersonalPageResult> RunAsync(PageDefinition definition, int page = 1, Guid? savedId = null, CancellationToken ct = default)
+    public async Task<PersonalPageResult> RunAsync(PageDefinition definition, int page = 1, Guid? savedId = null, CancellationToken ct = default,
+        Func<string, string, string, CancellationToken, Task<string>>? read = null)
     {
         var who = await pages.RequireAsync(ct);
         using var lease = runs.Start(who, ct, out var token);
@@ -52,7 +53,8 @@ public sealed class PersonalPageRunner(PersonalPageService pages, McpRegistrySer
         {
             await pages.RequireAsync(token);
             if (registry is null) throw new PersonalPageException("SourceUnavailable");
-            var raw = await registry.CallAsync(definition.ConnectionId, name, version, JsonSerializer.Serialize(args, Json), token);
+            var arguments = JsonSerializer.Serialize(args, Json);
+            var raw = read is null ? await registry.CallAsync(definition.ConnectionId, name, version, arguments, token) : await read(name, version, arguments, token);
             if (Encoding.UTF8.GetByteCount(raw) > 65536) throw new PersonalPageException("Limit");
             using var doc = JsonDocument.Parse(raw);
             return doc.RootElement.GetProperty("structuredContent").Deserialize<T>(Json) ?? throw new PersonalPageException("Contract");

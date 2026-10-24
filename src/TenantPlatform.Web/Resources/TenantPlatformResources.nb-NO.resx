@@ -3426,4 +3426,23 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="PagesComplete" xml:space="preserve"><value>Hele utvalget på denne siden</value></data>
   <data name="PagesMore" xml:space="preserve"><value>Flere treff på senere sider</value></data>
   <data name="PagesLimitReached" xml:space="preserve"><value>Sidegrensen er nådd</value></data>
+  <data name="DraftTitle" xml:space="preserve"><value>Rapportutkast</value></data>
+  <data name="DraftSave" xml:space="preserve"><value>Lagre under Mine sider</value></data>
+  <data name="DraftOpen" xml:space="preserve"><value>Åpne rapportsiden</value></data>
+  <data name="DraftSaved" xml:space="preserve"><value>Rapportsiden er lagret.</value></data>
+  <data name="DraftOld" xml:space="preserve"><value>Endringen ble ikke anvendt. Siste gyldige utkast er beholdt; hent ny forhåndsvisning før lagring.</value></data>
+  <data name="DraftSnapshot" xml:space="preserve"><value>Forhåndsvisningen viser data hentet nå. Den lagrede siden henter ferske data når den åpnes.</value></data>
+  <data name="DraftSummary" xml:space="preserve"><value>Periode / status / type / arkiv / bygg / søk</value></data>
+  <data name="DraftMonths" xml:space="preserve"><value>Neste {0} kalendermåneder</value></data>
+  <data name="DraftNew" xml:space="preserve"><value>Nytt rapportutkast er klart. Ingenting er lagret.</value></data>
+  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>Forslaget er ikke en støttet sidedefinisjon. Siste gyldige utkast er beholdt. Bruk nøkkeltall, byggdiagram og avtaletabell med fast periode eller 1–12 måneder.</value></data>
+  <data name="AgentErrorDraftBuilding" xml:space="preserve"><value>Byggnavnet ga ikke ett entydig treff i autoriserte data. Oppgi et entydig navn eller velg rapport uten byggfilter. Utkastet ble ikke endret.</value></data>
+  <data name="AgentErrorDraftConflict" xml:space="preserve"><value>Utkastet eller Mine sider er endret. Hent et oppdatert utkast før lagring; ingen automatisk overskriving er utført.</value></data>
+  <data name="AgentErrorDraftLimit" xml:space="preserve"><value>Grensen for utkast, sider eller resultat er nådd. Snevr inn utvalget eller start en ny samtale.</value></data>
+  <data name="AgentErrorDraftSourceChanged" xml:space="preserve"><value>Kilden eller godkjenningen er endret. Utkastet kan ikke brukes uten aktuell personlig tilkobling og godkjenning.</value></data>
+  <data name="AgentErrorDraftAuthorization" xml:space="preserve"><value>Den personlige MCP-tilkoblingen må autoriseres på nytt. Utkastet er ikke lagret.</value></data>
+  <data name="AgentErrorDraftSourceUnavailable" xml:space="preserve"><value>MCP-kilden er utilgjengelig. Ingen nye tall vises, og utkastet er ikke endret.</value></data>
+  <data name="AgentErrorDraftContract" xml:space="preserve"><value>Forhåndsvisningen fikk en ugyldig eller endret kontrakt. Utkastet er ikke endret.</value></data>
+  <data name="AgentErrorDraftCancelled" xml:space="preserve"><value>Forhåndsvisning eller lagring ble avbrutt. Siste gyldige utkast er beholdt.</value></data>
+  <data name="AgentErrorDraftBusy" xml:space="preserve"><value>En rapportoperasjon er allerede aktiv. Vent eller avbryt før du prøver igjen.</value></data>
 </root>

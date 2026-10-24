@@ -137,3 +137,9 @@ Offisielle kilder kontrollert 17. oktober 2026: [OpenIddict-klientintegrasjon](h
 ## 8D: nye avtalelesere
 
 TenantPlatform-profilen oppdager nå seks verktøy. De nye agreements_query, agreements_aggregate og agreements_details krever samme eksplisitte tilgang, AutomaticRead-klassifisering og godkjenning av metadataversjon som øvrige verktøy. Oppdagelse gir ingen automatisk adgang. Se [8D-kontraktene](mcp-agreement-read-contracts.md), inkludert de fire nye målrettede SELECT-rettighetene som operatør må etablere separat. Legacyklienten på /mcp-client beholder sine tre tidligere verktøy.
+
+## 9A/9B: rapportkonsument og utkast i chat
+
+[Personlige rapportsider](personal-report-pages-operations.md) bruker samme personlige, godkjente agreements_query/agreements_aggregate på egen TenantPlatform-profil. 9B legger til en lokal strukturert forslagshandling i chatten; den er ikke et nytt oppdagbart MCP-verktøy og trenger ingen ekstra AutomaticRead-godkjenning. Brukeren må fortsatt velge forbindelsen og godta agentens datadeling. Utkast/preview oppretter ingen lagret side. Bare sidedefinisjonen persisteres ved den separate **Lagre under Mine sider**-knappen, gjennom eksisterende Application-sideadministrasjon. Previewresultater persisteres ikke.
+
+GUI-/chatlagring krever ikke aktivering av administrasjons-MCP eller ekstra OAuth-scope på brukerens lesetilkobling. Den separate `/mcp/pages`-flaten beholder sitt ekstra scope, eksplisitte samtykke og begrensede definisjonsskriver som beskrevet i 9A. personal_pages_-verktøy utelates fortsatt fra automatisk agentbruk. Ingen ny OAuth-klient eller utvidelse av MCP-leserollens skriverettigheter inngår i 9B.

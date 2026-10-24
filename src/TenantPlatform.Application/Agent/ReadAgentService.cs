@@ -9,7 +9,7 @@ using TenantPlatform.Core.Identity;
 namespace TenantPlatform.Application.Agent;
 
 public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService authorization, McpRegistryService registry,
-    IReadAgentModel model, IAgentSchemaValidator schemas, ReadAgentSessions sessions, ReadAgentLimits limits)
+    IReadAgentModel model, IAgentSchemaValidator schemas, ReadAgentSessions sessions, ReadAgentLimits limits, AgentReportDrafts? drafts = null)
 {
     public bool Ready => model.Ready && limits.Valid;
     private async Task<ActorSnapshot> Require(CancellationToken ct)
@@ -97,7 +97,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
             if (run.Trimmed) notices.Add("HistoryTrimmed");
             var history = run.History;
             // Re-fetch the complete transitive source closure before replaying ANY previous derived text.
-            var previousCalls = history.SelectMany(t => t.Calls).DistinctBy(c => c.Id).ToArray();
+            var previousCalls = history.SelectMany(t => t.Calls).Concat(run.Draft?.Dependencies ?? []).DistinctBy(c => c.Id).ToArray();
             var freshHistory = new Dictionary<Guid, (AgentPastCall Call, string Result, int Number)>();
             var invalidated = run.Invalidated;
             foreach (var past in previousCalls)
@@ -115,6 +115,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
             }
             if (invalidated)
             {
+                if (run.Draft?.Dependencies?.Count > 0) { run.ClearDraft(); run.Invalidate(); throw new ReadAgentException("HistoryUnavailable"); }
                 run.Invalidate(); notices.Add("HistoryInvalidated"); freshHistory.Clear(); sources.Clear(); used.Clear(); retainedCalls.Clear();
                 foreach (var turn in history) input.Add(JsonSerializer.SerializeToElement(new { role = "user", content = turn.Question }));
             }
@@ -136,6 +137,21 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                         content = JsonSerializer.Serialize(new { untrustedPreviousAnswer = old.Text, historicalSources = old.Sources }) }));
                 }
             }
+            var proposalAllowed = drafts is not null && !external && AgentReportDrafts.Requested(prompt, run.Draft is not null) &&
+                (run.Draft?.SavedPageId is null || AgentReportDrafts.Requested(prompt, false)) && selected.Any(t => t.Name == "agreements_query") && selected.Any(t => t.Name == "agreements_aggregate");
+            if (run.Draft is { } currentDraft)
+            {
+                if (drafts is null) throw new ReadAgentException("DraftInvalid");
+                try { await drafts.ValidateAsync(currentDraft, token, async (name, version, args, ct) => {
+                    var binding = selected.SingleOrDefault(t => t.Name == name && t.Version == version) ?? throw new ReadAgentException("HistoryUnavailable");
+                    return await Invoke(binding, args, Guid.NewGuid(), true, true, ct);
+                }); }
+                catch (Exception e) when (e is UnauthorizedAccessException or McpClientException || e is ReadAgentException { Code: "HistoryUnavailable" }) { run.ClearDraft(); run.Invalidate(); throw new ReadAgentException("HistoryUnavailable"); }
+                input.Add(JsonSerializer.SerializeToElement(new { role = "assistant", content = JsonSerializer.Serialize(new {
+                    untrustedCurrentReportIntent = currentDraft.Intent, saved = currentDraft.SavedPageId.HasValue,
+                    instruction = "Intent only, no retained report data. Revise this whole unsaved declaration only on explicit user request. Saved pages cannot be edited through chat." }, AgentReportDrafts.Json) }));
+            }
+            if (proposalAllowed) { if (tools.Length + 1 > limits.Tools) throw new ReadAgentException("ToolLimit"); tools = [..tools, AgentReportDrafts.Tool()]; }
             input.Add(JsonSerializer.SerializeToElement(new { role = "user", content = prompt }));
             for (var round = 0; round < limits.Rounds; round++)
             {
@@ -161,6 +177,28 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                     if (!saved.Retained) notices.Add("HistoryNotRetained");
                     return answer with { Notices = notices.Order().ToArray(), RetainedTurns = saved.Count, CurrentTurnRetained = saved.Retained, ContextInvalidated = invalidated };
                 }
+                if (reply.Calls.Any(c => c.Name == AgentReportDrafts.ToolName))
+                {
+                    if (!proposalAllowed || drafts is null || reply.Calls.Count != 1 || !callIds.Add(reply.Calls[0].Id)) throw new ReadAgentException("InvalidTool");
+                    if (++calls > limits.Calls) throw new ReadAgentException("CallLimit");
+                    var report = await drafts.PrepareAsync(reply.Calls[0].Arguments, connection, run.Draft, async (name, version, args, readToken) => {
+                        var binding = selected.SingleOrDefault(t => t.Name == name && t.Version == version) ?? throw new ReadAgentException("ConnectionUnavailable");
+                        return await Invoke(binding, args, Guid.NewGuid(), false, false, readToken);
+                    }, token);
+                    await ValidateContext(); await ValidateHistoricalResources(); token.ThrowIfCancellationRequested();
+                    // Preview data never enter model input or retained turn text. Intent lives separately in the session.
+                    report = report with { Draft = report.Draft with { Dependencies = retainedCalls.ToArray() } };
+                    // Current-turn reads may have changed while the model was proposing. Revalidate intent evidence before publication too.
+                    try { await drafts.ValidateAsync(report.Draft, token, async (name, version, args, ct) => {
+                        var binding = selected.SingleOrDefault(t => t.Name == name && t.Version == version) ?? throw new ReadAgentException("HistoryUnavailable");
+                        return await Invoke(binding, args, Guid.NewGuid(), true, false, ct);
+                    }); }
+                    catch (Exception e) when (e is UnauthorizedAccessException or McpClientException || e is ReadAgentException { Code: "HistoryUnavailable" }) { run.ClearDraft(); run.Invalidate(); throw new ReadAgentException("HistoryUnavailable"); }
+                    var saved = run.Commit(new(prompt, null, retainedCalls.ToArray()), report.Draft);
+                    if (saved.Trimmed) notices.Add("HistoryTrimmed");
+                    if (!saved.Retained) notices.Add("HistoryNotRetained");
+                    return new("", sources.ToArray(), notices.Order().ToArray(), saved.Count, saved.Retained, invalidated, report);
+                }
                 if (calls + reply.Calls.Count > limits.Calls) throw new ReadAgentException("CallLimit");
                 if (reply.Calls.Any(c => !callIds.Add(c.Id))) throw new ReadAgentException("InvalidTool");
                 input.AddRange(reply.Output);
@@ -175,7 +213,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
             }
             throw new ReadAgentException("RoundLimit");
 
-            async Task<string> Invoke(McpAvailableTool tool, string arguments, Guid evidenceId, bool revalidated)
+            async Task<string> Invoke(McpAvailableTool tool, string arguments, Guid evidenceId, bool revalidated, bool retain = true, CancellationToken? readToken = null)
             {
                 if (++calls > limits.Calls) throw new ReadAgentException("CallLimit");
                 if (Bytes(arguments) > 16 * 1024 || !schemas.Valid(tool.InputSchema, arguments)) throw new ReadAgentException("InvalidArguments");
@@ -185,7 +223,8 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                     !Guid.TryParse(argAccount.GetString(), out var proposed) || proposed != who.AccountId)) throw new ReadAgentException("AccountOverride");
                 await ValidateContext();
                 // Registry independently revalidates the exact version, approval, class, all local access and personal grant.
-                var result = await registry.CallAsync(connection, tool.Name, tool.Version, arguments, token);
+                var result = await registry.CallAsync(connection, tool.Name, tool.Version, arguments, readToken ?? token);
+                (readToken ?? token).ThrowIfCancellationRequested();
                 token.ThrowIfCancellationRequested();
                 used.Add(tool);
                 await ValidateContext(); // No result is sent to the model after a detected revocation.
@@ -223,7 +262,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 var identical = retainedCalls.FirstOrDefault(c => c.Tool == tool.Name && c.Version == tool.Version && c.Arguments == arguments && c.Fingerprint == fingerprint);
                 if (identical is not null) evidenceId = identical.Id;
                 sources.Add(new(sources.Count + 1, connection, tool.ConnectionName, tool.Name, tool.Version, paging, attention, revalidated, evidenceId, aggregate));
-                if (identical is null) retainedCalls.Add(new(evidenceId, tool.Name, tool.Version, arguments, fingerprint));
+                if (retain && identical is null) retainedCalls.Add(new(evidenceId, tool.Name, tool.Version, arguments, fingerprint));
                 return result;
             }
 
@@ -256,8 +295,41 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
         catch (OperationCanceledException) { throw new ReadAgentException("CancelledOrTimedOut"); }
         catch (UnauthorizedAccessException) { run.Invalidate(); throw; }
         catch (ReadAgentException) { throw; }
+        catch (TenantPlatform.Application.PersonalPages.PersonalPageException e) { throw new ReadAgentException("Draft" + e.Code); }
         catch (McpClientException) { throw new ReadAgentException("SourceUnavailable"); }
         catch (Exception) { throw new ReadAgentException("ModelUnavailable"); } // No provider/remote bodies escape.
+    }
+    public async Task<AgentReportPreview> PreviewReportAsync(Guid conversation, Guid draftId, Guid revision, int page = 1, CancellationToken ct = default)
+    {
+        var who = await Require(ct);
+        if (drafts is null) throw new ReadAgentException("Disabled");
+        using var run = sessions.Start(conversation, who, limits, ct);
+        var draft = run.Draft;
+        if (draft is null || draft.Id != draftId || draft.Revision != revision) throw new ReadAgentException("DraftConflict");
+        AgentReportPreview result;
+        try { result = await drafts.PreviewAsync(draft, page, run.Token); }
+        catch (ReadAgentException e) when (e.Code == "HistoryUnavailable") { run.ClearDraft(); run.Invalidate(); throw; }
+        sessions.Verify(conversation, who); run.Token.ThrowIfCancellationRequested();
+        return result;
+    }
+    public async Task<Guid> SaveReportAsync(Guid conversation, Guid draftId, Guid revision, CancellationToken ct = default)
+    {
+        var who = await Require(ct);
+        if (drafts is null) throw new ReadAgentException("Disabled");
+        using var run = sessions.Start(conversation, who, limits, ct);
+        var draft = run.Draft;
+        if (draft is null || draft.Id != draftId || draft.Revision != revision || draft.Definition.ConnectionId != sessions.Connection(conversation, who)) throw new ReadAgentException("DraftConflict");
+        try
+        {
+            var id = await drafts.SaveAsync(draft, run.Token);
+            sessions.Verify(conversation, who);
+            if (await Require(run.Token) != who) throw new UnauthorizedAccessException();
+            run.Token.ThrowIfCancellationRequested(); run.CompleteDraft(draft with { SavedPageId = id });
+            return id;
+        }
+        catch (ReadAgentException e) when (e.Code == "HistoryUnavailable") { run.ClearDraft(); run.Invalidate(); throw; }
+        catch (TenantPlatform.Application.PersonalPages.PersonalPageException e) { throw new ReadAgentException("Draft" + e.Code); }
+        catch (OperationCanceledException) { throw new ReadAgentException("CancelledOrTimedOut"); }
     }
     public static string ModelName(McpAvailableTool tool) => "read_" + Convert.ToHexString(SHA256.HashData(
         Encoding.UTF8.GetBytes(tool.ConnectionId.ToString("N") + "\n" + tool.Name + "\n" + tool.Version)))[..56].ToLowerInvariant();

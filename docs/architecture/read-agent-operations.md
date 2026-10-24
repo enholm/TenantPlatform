@@ -1,4 +1,6 @@
-# Innebygd MCP-leseassistent (8A/8B/8D)
+# Innebygd MCP-leseassistent (8A/8B/8D/9B)
+
+9B utvider chatten med midlertidige, validerte rapportutkast og en separat **Lagre under Mine sider**-knapp. Se [rapportkontrakt, kildeavhengigheter, grenser og eksplisitt lagring](personal-report-pages-operations.md#9b-rapportutkast-fra-chat). Den lokale forslagshandlingen er ikke et MCP-administrasjonsverktøy og lagrer ikke data. Den vanlige lesechatten og 8Bs historikkvern består. Bare den eksplisitte, antiforgery-beskyttede lagringshandlingen skriver den serverlagrede utkastrevisjonen gjennom 9As Application-brukstilfelle. Ingen automatisk modellstyrt lagring eller åpning av personal_pages_-verktøy er innført.
 
 8B viderefører 8As leseagent med midlertidig samtalekontekst. 8A bygger på [registeret og konsumentkatalogen](mcp-connection-registry-operations.md), [den delegerte klienten](internal-mcp-client-operations.md) og [OAuth-utstederen](oauth-issuer-operations.md). GUI har panelet `/agent`, lenket fra brukermenyen. Application styrer agentløkken; modellen velger blant lokale function-definisjoner, og Application utfører bare versjonsbundet `McpRegistryService.CallAsync`. Det er ingen direkte datalesing, legacyfallback eller OpenAI-hostet MCP-tilkobling.
 

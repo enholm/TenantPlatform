@@ -3427,4 +3427,23 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="PagesComplete" xml:space="preserve"><value>Hela urvalet på denna sida</value></data>
   <data name="PagesMore" xml:space="preserve"><value>Fler träffar på senare sidor</value></data>
   <data name="PagesLimitReached" xml:space="preserve"><value>Sidgränsen har nåtts</value></data>
+  <data name="DraftTitle" xml:space="preserve"><value>Rapportutkast</value></data>
+  <data name="DraftSave" xml:space="preserve"><value>Spara under Mina sidor</value></data>
+  <data name="DraftOpen" xml:space="preserve"><value>Öppna rapportsidan</value></data>
+  <data name="DraftSaved" xml:space="preserve"><value>Rapportsidan är sparad.</value></data>
+  <data name="DraftOld" xml:space="preserve"><value>Ändringen tillämpades inte. Det senaste giltiga utkastet finns kvar; hämta en ny förhandsvisning innan du sparar.</value></data>
+  <data name="DraftSnapshot" xml:space="preserve"><value>Förhandsvisningen visar data hämtade nu. Den sparade sidan hämtar aktuella data när den öppnas.</value></data>
+  <data name="DraftSummary" xml:space="preserve"><value>Period / status / typ / arkiv / byggnad / sökning</value></data>
+  <data name="DraftMonths" xml:space="preserve"><value>Nästa {0} kalendermånader</value></data>
+  <data name="DraftNew" xml:space="preserve"><value>Ett nytt rapportutkast är klart. Ingenting är sparat.</value></data>
+  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>Förslaget är inte en stödd siddefinition. Det senaste giltiga utkastet finns kvar. Använd nyckeltal, byggnadsdiagram och avtalstabell med fasta datum eller 1–12 månader.</value></data>
+  <data name="AgentErrorDraftBuilding" xml:space="preserve"><value>Byggnadsnamnet gav inte en entydig träff i behöriga data. Ange ett entydigt namn eller använd inget byggnadsfilter. Utkastet ändrades inte.</value></data>
+  <data name="AgentErrorDraftConflict" xml:space="preserve"><value>Utkastet eller Mina sidor har ändrats. Hämta ett uppdaterat utkast innan du sparar; ingenting skrevs över automatiskt.</value></data>
+  <data name="AgentErrorDraftLimit" xml:space="preserve"><value>En gräns för utkast, sidor eller resultat nåddes. Begränsa urvalet eller starta en ny konversation.</value></data>
+  <data name="AgentErrorDraftSourceChanged" xml:space="preserve"><value>Källan eller godkännandet har ändrats. Utkastet kräver aktuell personlig anslutning och godkännande.</value></data>
+  <data name="AgentErrorDraftAuthorization" xml:space="preserve"><value>Auktorisera den personliga MCP-anslutningen igen. Utkastet sparades inte.</value></data>
+  <data name="AgentErrorDraftSourceUnavailable" xml:space="preserve"><value>MCP-källan är otillgänglig. Inga nya tal visas och utkastet ändrades inte.</value></data>
+  <data name="AgentErrorDraftContract" xml:space="preserve"><value>Förhandsvisningen fick ett ogiltigt eller ändrat kontrakt. Utkastet ändrades inte.</value></data>
+  <data name="AgentErrorDraftCancelled" xml:space="preserve"><value>Förhandsvisningen eller sparandet avbröts. Det senaste giltiga utkastet finns kvar.</value></data>
+  <data name="AgentErrorDraftBusy" xml:space="preserve"><value>En rapportåtgärd är redan aktiv. Vänta eller avbryt innan du försöker igen.</value></data>
 </root>

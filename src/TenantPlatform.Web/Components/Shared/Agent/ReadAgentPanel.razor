@@ -11,6 +11,8 @@
     data-changed="@L["AgentErrorAccessChanged"]" data-cancelled="@L["AgentMessageCancelled"]"
     data-question-label="@L["AgentQuestion"]" data-answer-label="@L["AgentAnswerLabel"]"
     data-revalidated="@L["AgentSourceRevalidated"]" data-new-source="@L["AgentSourceNew"]"
+    data-draft-title="@L["DraftTitle"]" data-draft-save="@L["DraftSave"]" data-draft-open="@L["DraftOpen"]" data-draft-saved="@L["DraftSaved"]" data-draft-old="@L["DraftOld"]" data-draft-snapshot="@L["DraftSnapshot"]" data-draft-summary="@L["DraftSummary"]" data-draft-new="@L["DraftNew"]"
+    data-error="@L["PagesErrorUnavailable"]" data-yes="@L["Yes"]" data-no="@L["No"]" data-complete="@L["PagesComplete"]" data-more="@L["PagesMore"]" data-limit="@L["PagesLimitReached"]" data-empty="@L["PagesEmpty"]" data-missing="@L["PagesMissing"]" data-total="@L["PagesTotal"]" data-date="@L["PagesDate"]" data-snapshot="@L["PagesSnapshot"]" data-title="@L["Name"]" data-building="@L["Building"]" data-end="@L["AgreementEndDate"]" data-count="@L["PagesCount"]" data-page="@L["PagesPage"]"
     data-pending-history="@L["AgentHistoryPending"]" data-expired="@L["AgentSessionExpired"]">
     <h1 class="h4">@L["AgentTitle"]</h1>
     <p class="alert alert-warning">@L["AgentDisclosure"]</p>
@@ -35,6 +37,7 @@
         </form>
         <p class="mt-3" data-status role="status" aria-live="polite"></p>
         <div data-turns aria-live="polite"></div>
+        <section data-report-draft aria-live="polite"></section>
     }
 </section>
 @code {

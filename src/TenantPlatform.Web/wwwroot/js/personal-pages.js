@@ -30,40 +30,7 @@
                     filter: { search: field('search').value || null, status: field('status').value || null, type: field('type').value || null, archive: field('archive').value,
                         unitId: field('unit').value || null, organizationElementId: field('organization').value || null, geographicAreaId: field('geography').value || null, buildingId: field('building').value || null, missingBuilding: field('missing').checked }, components: positions.sort((a, b) => a[0] - b[0]).map(p => p[1]), layout: 'Stacked' };
             }
-            function render(value, components, preview) {
-                const filters = value.selection.filter;
-                text('p', `${panel.dataset.date}: ${filters.endDateFrom} – ${filters.endDateTo} · ${value.retrievedUtc}`, output);
-                text('p', panel.dataset.snapshot, output);
-                for (const component of components) {
-                    const section = document.createElement('section'); section.className = 'card card-body my-3'; output.append(section);
-                    if (component === 'Metric') { text('h2', panel.dataset.total, section); text('p', String(value.aggregate.totalCount), section); }
-                    if (component === 'BuildingChart') {
-                        text('h2', panel.dataset.building, section);
-                        const table = document.createElement('table'); table.className = 'table'; section.append(table);
-                        text('caption', `${panel.dataset.building} / ${panel.dataset.count}`, table);
-                        const header = document.createElement('tr'); text('th', panel.dataset.building, header).scope = 'col'; text('th', panel.dataset.count, header).scope = 'col'; table.append(header);
-                        for (const group of value.aggregate.groups) {
-                            const row = document.createElement('tr'); text('th', group.name || panel.dataset.missing, row).scope = 'row'; const cell = text('td', String(group.count), row);
-                            const bar = document.createElement('meter'); bar.className = 'w-100'; bar.min = 0; bar.max = Math.max(1, value.aggregate.totalCount); bar.value = group.count; bar.setAttribute('aria-label', (group.name || panel.dataset.missing) + ': ' + group.count); cell.append(bar); table.append(row);
-                        }
-                        if (!value.aggregate.groups.length) text('p', panel.dataset.empty, section);
-                    }
-                    if (component === 'AgreementTable') {
-                        text('h2', panel.dataset.title, section);
-                        const table = document.createElement('table'); table.className = 'table'; section.append(table);
-                        text('caption', `${panel.dataset.page}: ${value.table.page} · ${value.table.returnedCount} / ${value.table.totalCount}`, table);
-                        const header = document.createElement('tr'); for (const key of ['title', 'building', 'end']) text('th', panel.dataset[key], header).scope = 'col'; table.append(header);
-                        for (const item of value.table.items) { const row = document.createElement('tr'); text('td', item.title, row); text('td', item.building?.name || panel.dataset.missing, row); text('td', item.endDate || '—', row); table.append(row); }
-                        text('p', `${panel.dataset.complete}: ${value.table.complete ? panel.dataset.yes : panel.dataset.no} · ${panel.dataset.more}: ${value.table.hasMore ? panel.dataset.yes : panel.dataset.no} · ${panel.dataset.limit}: ${value.table.limitReached ? panel.dataset.yes : panel.dataset.no}`, section);
-                        if (!value.table.items.length) text('p', panel.dataset.empty, section);
-                        for (const [label, next, disabled] of [['←', value.table.page - 1, value.table.page <= 1], ['→', value.table.nextPage, !value.table.nextPage]]) {
-                            const button = text('button', label, section); button.className = 'btn btn-outline-secondary'; button.disabled = disabled;
-                            button.setAttribute('aria-label', panel.dataset.page + ' ' + (next || '')); button.addEventListener('click', () => run(next, preview));
-                        }
-                        if (value.table.limitReached) text('p', panel.dataset.error, section);
-                    }
-                }
-            }
+            function render(value, components, preview) { window.TenantPlatformReports.render(value, components, output, panel.dataset, next => run(next, preview)); }
             async function run(page, preview) {
                 clear(); const version = generation; const controller = request = new AbortController(); panel.querySelector('[data-cancel]').disabled = false; status.textContent = panel.dataset.loading;
                 try {

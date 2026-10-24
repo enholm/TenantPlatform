@@ -27,6 +27,8 @@ using TenantPlatform.Mcp;
 using TenantPlatform.Web.Security.McpClient;
 using TenantPlatform.Web.Security.OAuth;
 
+await AgentProtocolFixture.CheckReportSchemaAsync();
+if (args.SequenceEqual(new[] { "--model-protocol-only" })) return; // Test-only: never constructs a host or reads application configuration.
 var connection=Environment.GetEnvironmentVariable("MCP_CLIENT_TEST_CONNECTION")??throw new Exception("Use isolated PostgreSQL runner.");
 var cs=new NpgsqlConnectionStringBuilder(connection);
 if(cs.Database!="tenant_mcp_client_tests" || cs.Host?.StartsWith("/tmp/tenant-agreement-tests.",StringComparison.Ordinal)!=true) throw new Exception("Disposable MCP-client database/socket only.");

@@ -97,6 +97,11 @@ static partial class RegistryChecks
             Check((await Call(m, a2)).StatusCode == HttpStatusCode.OK, "member uses only own personally authorized credentials");
             await Connect(m, a1);
             await RunAgent(web, factory, adminA, member, accountA, accountB, a1, a2, a3, clock, agentProtocol, () => remoteCalls, a);
+            Console.WriteLine("Isolating report-draft quota window (production limit remains 60/minute).");
+            await Task.Delay(TimeSpan.FromSeconds(61));
+            await RunReportDrafts(web, factory, adminA, member, accountA, accountB, a1, a2, a, agentProtocol);
+            Console.WriteLine("Isolating manual-page quota window (production limit remains 60/minute).");
+            await Task.Delay(TimeSpan.FromSeconds(61));
             await RunPersonalPages(web, factory, writerRole, adminA, member, accountA, accountB, a1, a, own, agentProtocol);
             await Post(m, "disconnect", new() { ["id"] = a1.ToString() });
             await RunPolicies(web, factory, adminA, adminB, member, accountA, accountB, a1, a2, a3, clock, () => remoteCalls, a, m);

@@ -3390,4 +3390,23 @@ This is a reminder, not a termination or renewal.</value>
   <data name="PagesComplete" xml:space="preserve"><value>Entire selection on this page</value></data>
   <data name="PagesMore" xml:space="preserve"><value>More matches on later pages</value></data>
   <data name="PagesLimitReached" xml:space="preserve"><value>Page limit reached</value></data>
+  <data name="DraftTitle" xml:space="preserve"><value>Report draft</value></data>
+  <data name="DraftSave" xml:space="preserve"><value>Save under My pages</value></data>
+  <data name="DraftOpen" xml:space="preserve"><value>Open report page</value></data>
+  <data name="DraftSaved" xml:space="preserve"><value>The report page is saved.</value></data>
+  <data name="DraftOld" xml:space="preserve"><value>The change was not applied. The last valid draft is kept; refresh the preview before saving.</value></data>
+  <data name="DraftSnapshot" xml:space="preserve"><value>The preview shows data fetched now. The saved page fetches fresh data when opened.</value></data>
+  <data name="DraftSummary" xml:space="preserve"><value>Period / status / type / archive / building / search</value></data>
+  <data name="DraftMonths" xml:space="preserve"><value>Next {0} calendar months</value></data>
+  <data name="DraftNew" xml:space="preserve"><value>A new report draft is ready. Nothing is saved.</value></data>
+  <data name="AgentErrorDraftInvalid" xml:space="preserve"><value>The proposal is not a supported page definition. The last valid draft is kept. Use a metric, building chart and agreement table with fixed dates or 1–12 months.</value></data>
+  <data name="AgentErrorDraftBuilding" xml:space="preserve"><value>The building name did not uniquely match authorised data. Provide an unambiguous name or use no building filter. The draft was not changed.</value></data>
+  <data name="AgentErrorDraftConflict" xml:space="preserve"><value>The draft or My pages has changed. Obtain an updated draft before saving; nothing was overwritten automatically.</value></data>
+  <data name="AgentErrorDraftLimit" xml:space="preserve"><value>A draft, page or result limit was reached. Narrow the selection or start a new conversation.</value></data>
+  <data name="AgentErrorDraftSourceChanged" xml:space="preserve"><value>The source or approval has changed. The draft requires a current personal connection and approval.</value></data>
+  <data name="AgentErrorDraftAuthorization" xml:space="preserve"><value>Authorise the personal MCP connection again. The draft was not saved.</value></data>
+  <data name="AgentErrorDraftSourceUnavailable" xml:space="preserve"><value>The MCP source is unavailable. No new figures are shown and the draft was not changed.</value></data>
+  <data name="AgentErrorDraftContract" xml:space="preserve"><value>The preview received an invalid or changed contract. The draft was not changed.</value></data>
+  <data name="AgentErrorDraftCancelled" xml:space="preserve"><value>Preview or saving was cancelled. The last valid draft is kept.</value></data>
+  <data name="AgentErrorDraftBusy" xml:space="preserve"><value>A report operation is already active. Wait or cancel before trying again.</value></data>
 </root>
