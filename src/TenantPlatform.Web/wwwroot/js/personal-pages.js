@@ -24,14 +24,17 @@
                 const option = field('connection').selectedOptions[0];
                 const positions = ['Metric', 'BuildingChart', 'AgreementTable'].filter(c => field('show' + c).checked).map(c => [Number(field(c).value), c]);
                 if (new Set(positions.map(p => p[0])).size !== positions.length || !positions.length) throw new Error(panel.dataset.error);
-                const fixed = field('period').value === 'Fixed';
-                const columnPositions = ['Title', 'Type', 'Status', 'Building', 'StartDate', 'EndDate', 'NoticeDeadline', 'RenewalDate']
+                const requests = panel.dataset.area === 'ServiceRequests';
+                const fixed = !requests && field('period').value === 'Fixed';
+                const columnPositions = (requests ? ['Title', 'Status', 'Building', 'Unit', 'CreatedAt', 'SubmittedAt', 'CompletedAt'] : ['Title', 'Type', 'Status', 'Building', 'StartDate', 'EndDate', 'NoticeDeadline', 'RenewalDate'])
                     .filter(c => field('showColumn' + c).checked).map(c => [Number(field('column' + c).value), c]);
                 if (new Set(columnPositions.map(p => p[0])).size !== columnPositions.length) throw new Error(panel.dataset.error);
-                return { version: 2, groupBy: field('groupBy').value, columns: columnPositions.sort((a, b) => a[0] - b[0]).map(p => p[1]), title: field('title').value, connectionId: field('connection').value, profileVersion: option?.dataset.profile || '', queryVersion: option?.dataset.query || '', aggregateVersion: option?.dataset.aggregate || '',
-                    period: { kind: field('period').value, months: field('period').value === 'NextMonths' ? Number(field('months').value) : null, from: fixed ? field('from').value : null, to: fixed ? field('to').value : null },
-                    filter: { search: field('search').value || null, status: field('status').value || null, type: field('type').value || null, archive: field('archive').value,
+                const result = { version: requests ? 3 : 2, area: requests ? "ServiceRequests" : "Agreements", groupBy: field('groupBy').value, columns: columnPositions.sort((a, b) => a[0] - b[0]).map(p => p[1]), title: field('title').value, connectionId: field('connection').value, profileVersion: option?.dataset.profile || '', queryVersion: option?.dataset.query || '', aggregateVersion: option?.dataset.aggregate || '',
+                    period: { kind: requests ? 'All' : field('period').value, months: !requests && field('period').value === 'NextMonths' ? Number(field('months').value) : null, from: fixed ? field('from').value : null, to: fixed ? field('to').value : null },
+                    filter: requests ? {} : { search: field('search').value || null, status: field('status').value || null, type: field('type').value || null, archive: field('archive').value,
                         unitId: field('unit').value || null, organizationElementId: field('organization').value || null, geographicAreaId: field('geography').value || null, buildingId: field('building').value || null, missingBuilding: field('missing').checked }, components: positions.sort((a, b) => a[0] - b[0]).map(p => p[1]), layout: 'Stacked' };
+                if (requests) result.requestFilter = { search: field('search').value || null, status: field('status').value || null, buildingId: field('building').value || null, missingBuilding: field('missing').checked };
+                return result;
             }
             function render(value, components, preview) { window.TenantPlatformReports.render(value, components, output, panel.dataset, next => run(next, preview)); }
             async function run(page, preview) {

@@ -316,3 +316,7 @@ Den tidligere chart-rendereren viste grupper i en talltabell med nettleserens na
 Lokal CSS gir responsive stolper også uten Bootstrap-lastingen. På smale beholdere ligger etiketten over stolpen; tallene forblir synlige. Tekst lages fortsatt med textContent, og dekorative spor skjules for hjelpeteknologi mens etikett/antall er tilgjengelig tekst. Ingen ny pakke, nye datakall, modellkall eller definisjonsendring inngår. Eksisterende sider trenger ingen ny lagring. Last nettlesersiden helt på nytt for å erstatte den gamle JS-/CSS-visningen i en åpen fane.
 
 Solution-build og sju Node-adapterkontroller bestod. Syntetisk headless Chrome-visning er visuelt kontrollert på bred skjerm og med 320 px beholder; geometri bekrefter samme skala for 10/5/0 og synlige tall uten horisontal klipping. Dette er ikke en interaktiv helsideprøve mot Web eller en skjermlesertest. Ingen utviklings-/produksjonsdatabase eller ekstern modell ble brukt.
+
+## 9E: tjenesteforespørsler
+
+Et eksplisitt rapportområde ServiceRequests med v3-definisjon utvider nå den samme rapport-/utkastkjeden. Avtalenes v1/v2 betyr fortsatt Agreements, også når Area mangler. [Ny kontrakt, aktivering, SELECT, prompter og separat teststatus](mcp-service-request-read-contracts.md) beskriver det avgrensede området. Tidligere rapporttester er historikk; brukerens sist fullførte 9D-prøve bevares. Nye 9E-kontroller dokumenteres separat i moderniseringsplanen avsnitt 35.

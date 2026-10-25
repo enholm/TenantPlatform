@@ -3490,4 +3490,15 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AgentErrorModelRateLimited" xml:space="preserve"><value>Modelltilbyderen avviste kallet på grunn av kvote eller frekvensgrense (HTTP 429). Ingen automatisk gjentakelse er utført.</value></data>
   <data name="AgentErrorModelConnectionFailed" xml:space="preserve"><value>Kunne ikke opprette eller fullføre forbindelsen til modelltilbyderen. Kontroller nettverk og prøv igjen.</value></data>
   <data name="AgentErrorModelResponseInvalid" xml:space="preserve"><value>Modelltilbyderen returnerte et svar i et uventet format. Ingen rapport er lagret.</value></data>
+  <data name="RequestReportAll" xml:space="preserve"><value>Alle tjenesteforespørsler, uten tidsavgrensning</value></data>
+  <data name="PagesColumnCreatedAt" xml:space="preserve"><value>Opprettet (UTC)</value></data>
+  <data name="PagesColumnSubmittedAt" xml:space="preserve"><value>Innsendt (UTC)</value></data>
+  <data name="PagesColumnCompletedAt" xml:space="preserve"><value>Fullført (UTC)</value></data>
+  <data name="PagesColumnUnit" xml:space="preserve"><value>Enhet</value></data>
+  <data name="DraftChangeRequestSearch" xml:space="preserve"><value>Forespørselssøk</value></data>
+  <data name="DraftChangeRequestStatus" xml:space="preserve"><value>Forespørselsstatus</value></data>
+  <data name="RequestReportOAuthConsent" xml:space="preserve"><value>Denne klienten kan også lese tjenesteforespørsler du har tilgang til, inkludert status, bygg og tidspunkt. Den kan ikke endre forespørslene.</value></data>
+  <data name="RequestReportTotal" xml:space="preserve"><value>Unike autoriserte tjenesteforespørsler</value></data>
+  <data name="RequestReportTable" xml:space="preserve"><value>Rekkefølge: forespørselstabell</value></data>
+  <data name="RequestReportAggregateFacts" xml:space="preserve"><value>Gruppering: {0}; {1} unike tjenesteforespørsler i {2} grupper. Fullstendig: {3}; overlapp: {4}; konsistent snapshot: {5}.</value></data>
 </root>

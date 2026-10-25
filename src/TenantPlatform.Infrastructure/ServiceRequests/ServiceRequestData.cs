@@ -11,25 +11,28 @@ namespace TenantPlatform.Infrastructure.ServiceRequests;
 
 public sealed class ServiceRequestData(IDbContextFactory<TenantPlatformDbContext> factory) : IServiceRequestData
 {
-    private static IQueryable<ServiceRequest> Clauses(IQueryable<ServiceRequest> source, IReadOnlyList<TenantPlatform.Application.Security.RoleAssignment> clauses, bool provider)
+    private static IQueryable<Guid> Clauses(IQueryable<ServiceRequest> source, IReadOnlyList<TenantPlatform.Application.Security.RoleAssignment> clauses, bool provider)
     {
-        var result = source.Where(x => false);
+        var result = source.Where(x => false).Select(x => x.Id);
         foreach (var clause in clauses)
         {
             var building = clause.BuildingId; var organization = clause.OrganizationId;
             result = result.Union(source.Where(x => (!building.HasValue || x.BuildingId == building) &&
-                (!organization.HasValue || (provider ? x.AssignedServiceProviderOrganizationId == organization : x.RequesterOrganizationId == organization))));
+                (!organization.HasValue || (provider ? x.AssignedServiceProviderOrganizationId == organization : x.RequesterOrganizationId == organization))).Select(x => x.Id));
         }
         return result;
     }
-    private static IQueryable<ServiceRequest> Visible(TenantPlatformDbContext db, ServiceRequestReadScope scope, ServiceRequestListKind? kind)
+    internal static IQueryable<ServiceRequest> Visible(TenantPlatformDbContext db, ServiceRequestReadScope scope, ServiceRequestListKind? kind)
     {
         var source = db.ServiceRequests.AsNoTracking().Where(x => x.AccountId == scope.AccountId);
         if (kind == ServiceRequestListKind.Mine) return source.Where(x => x.RequesterUserId == scope.UserId);
-        if (kind == ServiceRequestListKind.Assigned) return Clauses(source, scope.Providers, true);
+        var providerIds = Clauses(source, scope.Providers, true);
+        if (kind == ServiceRequestListKind.Assigned) return source.Where(x => providerIds.Contains(x.Id));
         var admin = Clauses(source, scope.Administrators, false);
-        if (kind == ServiceRequestListKind.Administration) return admin;
-        return admin.Union(source.Where(x => x.RequesterUserId == scope.UserId)).Union(Clauses(source, scope.Tenants, false)).Union(Clauses(source, scope.Providers, true));
+        if (kind == ServiceRequestListKind.Administration) return source.Where(x => admin.Contains(x.Id));
+        var visibleIds = admin.Union(source.Where(x => x.RequesterUserId == scope.UserId).Select(x => x.Id))
+            .Union(Clauses(source, scope.Tenants, false)).Union(providerIds);
+        return source.Where(x => visibleIds.Contains(x.Id));
     }
     public async Task<List<ServiceRequestListItemDto>> ReadListAsync(ServiceRequestReadScope scope, ServiceRequestListKind kind, string languageCode, CancellationToken cancellationToken)
     {

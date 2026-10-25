@@ -30,7 +30,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
         var page = await registry.ListAsync(ct);
         var tools = await registry.AvailableToolsAsync(ct);
         return tools.Where(t => !t.Name.StartsWith("personal_pages_", StringComparison.Ordinal) && t.UseClass == McpToolUse.AutomaticRead &&
-            (External(t.ConnectionId, page) || t.Name is "agreements_list" or "agreements_attention" or "agreements_query" or "agreements_aggregate" or "agreements_details")).ToArray();
+            (External(t.ConnectionId, page) || t.Name is "agreements_list" or "agreements_attention" or "agreements_query" or "agreements_aggregate" or "agreements_details" or "service_requests_query" or "service_requests_aggregate")).ToArray();
     }
     private static bool External(Guid connection, McpRegistryPage page)
     {
@@ -185,7 +185,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 }
             }
             var proposalAllowed = drafts is not null && !external && AgentReportDrafts.Requested(prompt, run.Draft is not null) &&
-                (run.Draft?.SavedPageId is null || AgentReportDrafts.Requested(prompt, false)) && selected.Any(t => t.Name is "agreements_query" or "agreements_aggregate");
+                (run.Draft?.SavedPageId is null || AgentReportDrafts.Requested(prompt, false)) && selected.Any(t => TenantPlatform.Application.PersonalPages.ReportAreas.Sources.Any(s => s.QueryTool == t.Name || s.AggregateTool == t.Name));
             if (run.Draft is { } currentDraft)
             {
                 if (drafts is null) throw new ReadAgentException("DraftInvalid");
@@ -197,7 +197,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 input.Add(JsonSerializer.SerializeToElement(new { role = "assistant", content = JsonSerializer.Serialize(new {
                     untrustedCurrentReportIntent = currentDraft.Intent, saved = currentDraft.SavedPageId.HasValue,
                     editingExistingPage = currentDraft.Edit is not null,
-                    storedReferenceFilters = currentDraft.Edit is not null && (currentDraft.Definition.Filter.BuildingId.HasValue || currentDraft.Definition.Filter.UnitId.HasValue || currentDraft.Definition.Filter.OrganizationElementId.HasValue || currentDraft.Definition.Filter.GeographicAreaId.HasValue),
+                    storedReferenceFilters = currentDraft.Edit is not null && (currentDraft.Definition.RequestFilter?.BuildingId.HasValue == true || currentDraft.Definition.RequestFilter?.MissingBuilding == true || currentDraft.Definition.Filter.BuildingId.HasValue || currentDraft.Definition.Filter.UnitId.HasValue || currentDraft.Definition.Filter.OrganizationElementId.HasValue || currentDraft.Definition.Filter.GeographicAreaId.HasValue),
                     instruction = "Intent only, no retained report data. Revise this whole unsaved declaration only on explicit user request. Backend preserves stored reference filters; new identifiers cannot be chosen. Only an explicitly opened edit session can update an existing page through a separate user button." }, AgentReportDrafts.Json) }));
             }
             if (proposalAllowed) { if (tools.Length + 1 > limits.Tools) throw new ReadAgentException("ToolLimit"); tools = [..tools, AgentReportDrafts.Tool()]; }
@@ -286,7 +286,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 {
                     var data = json.RootElement.GetProperty("structuredContent");
                     if (data.GetProperty("schemaVersion").GetString() != "1" || data.GetProperty("accountId").GetGuid() != who.AccountId) throw new ReadAgentException("SourceUnavailable");
-                    if (tool.Name is "agreements_list" or "agreements_query")
+                    if (tool.Name is "agreements_list" or "agreements_query" or "service_requests_query")
                     {
                         notices.Add("Paging");
                         paging = new(data.GetProperty("requestedPage").GetInt32(), data.GetProperty("page").GetInt32(), data.GetProperty("pageSize").GetInt32(),
@@ -294,11 +294,11 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                             data.GetProperty("nextPage").ValueKind == JsonValueKind.Null ? null : data.GetProperty("nextPage").GetInt32(),
                             data.GetProperty("complete").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean(), data.GetProperty("limitReached").GetBoolean());
                     }
-                    if (tool.Name == "agreements_aggregate")
+                    if (tool.Name is "agreements_aggregate" or "service_requests_aggregate")
                     {
                         aggregate = new(data.GetProperty("groupBy").GetString()!, data.GetProperty("totalCount").GetInt32(),
                             data.GetProperty("groups").GetArrayLength(), data.GetProperty("complete").GetBoolean(), data.GetProperty("groupsOverlap").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean());
-                        if (!data.GetProperty("countsUniqueAgreements").GetBoolean() || !aggregate.Complete || aggregate.GroupsOverlap) throw new ReadAgentException("SourceUnavailable");
+                        if (!data.GetProperty(tool.Name == "agreements_aggregate" ? "countsUniqueAgreements" : "countsUniqueRequests").GetBoolean() || !aggregate.Complete || aggregate.GroupsOverlap) throw new ReadAgentException("SourceUnavailable");
                     }
                     if (tool.Name == "agreements_attention")
                     {

@@ -3454,4 +3454,15 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AgentErrorModelRateLimited" xml:space="preserve"><value>The model provider rejected the call because of quota or rate limits (HTTP 429). No automatic retry was made.</value></data>
   <data name="AgentErrorModelConnectionFailed" xml:space="preserve"><value>Could not establish or complete the connection to the model provider. Check the network and try again.</value></data>
   <data name="AgentErrorModelResponseInvalid" xml:space="preserve"><value>The model provider returned an unexpected response format. No report was saved.</value></data>
+  <data name="RequestReportAll" xml:space="preserve"><value>All service requests, without a date restriction</value></data>
+  <data name="PagesColumnCreatedAt" xml:space="preserve"><value>Created (UTC)</value></data>
+  <data name="PagesColumnSubmittedAt" xml:space="preserve"><value>Submitted (UTC)</value></data>
+  <data name="PagesColumnCompletedAt" xml:space="preserve"><value>Completed (UTC)</value></data>
+  <data name="PagesColumnUnit" xml:space="preserve"><value>Unit</value></data>
+  <data name="DraftChangeRequestSearch" xml:space="preserve"><value>Request search</value></data>
+  <data name="DraftChangeRequestStatus" xml:space="preserve"><value>Request status</value></data>
+  <data name="RequestReportOAuthConsent" xml:space="preserve"><value>This client can also read service requests you can access, including status, building and timestamps. It cannot change requests.</value></data>
+  <data name="RequestReportTotal" xml:space="preserve"><value>Unique authorised service requests</value></data>
+  <data name="RequestReportTable" xml:space="preserve"><value>Order: request table</value></data>
+  <data name="RequestReportAggregateFacts" xml:space="preserve"><value>Grouping: {0}; {1} unique service requests in {2} groups. Complete: {3}; overlapping: {4}; consistent snapshot: {5}.</value></data>
 </root>

@@ -3491,4 +3491,15 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="AgentErrorModelRateLimited" xml:space="preserve"><value>Modellleverantören avvisade anropet på grund av kvot eller frekvensgräns (HTTP 429). Ingen automatisk återförsök gjordes.</value></data>
   <data name="AgentErrorModelConnectionFailed" xml:space="preserve"><value>Kunde inte upprätta eller slutföra anslutningen till modellleverantören. Kontrollera nätverket och försök igen.</value></data>
   <data name="AgentErrorModelResponseInvalid" xml:space="preserve"><value>Modellleverantören returnerade ett oväntat svarsformat. Ingen rapport sparades.</value></data>
+  <data name="RequestReportAll" xml:space="preserve"><value>Alla tjänsteförfrågningar, utan tidsbegränsning</value></data>
+  <data name="PagesColumnCreatedAt" xml:space="preserve"><value>Skapad (UTC)</value></data>
+  <data name="PagesColumnSubmittedAt" xml:space="preserve"><value>Inskickad (UTC)</value></data>
+  <data name="PagesColumnCompletedAt" xml:space="preserve"><value>Slutförd (UTC)</value></data>
+  <data name="PagesColumnUnit" xml:space="preserve"><value>Enhet</value></data>
+  <data name="DraftChangeRequestSearch" xml:space="preserve"><value>Förfrågningssökning</value></data>
+  <data name="DraftChangeRequestStatus" xml:space="preserve"><value>Förfrågningsstatus</value></data>
+  <data name="RequestReportOAuthConsent" xml:space="preserve"><value>Den här klienten kan även läsa tjänsteförfrågningar du har åtkomst till, inklusive status, byggnad och tidpunkter. Den kan inte ändra förfrågningar.</value></data>
+  <data name="RequestReportTotal" xml:space="preserve"><value>Unika behöriga tjänsteförfrågningar</value></data>
+  <data name="RequestReportTable" xml:space="preserve"><value>Ordning: förfrågningstabell</value></data>
+  <data name="RequestReportAggregateFacts" xml:space="preserve"><value>Gruppering: {0}; {1} unika tjänsteförfrågningar i {2} grupper. Fullständig: {3}; överlappning: {4}; konsekvent snapshot: {5}.</value></data>
 </root>

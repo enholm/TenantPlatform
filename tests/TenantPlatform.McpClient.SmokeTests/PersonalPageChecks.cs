@@ -48,14 +48,14 @@ static partial class RegistryChecks
         Check(preview.Aggregate!.TotalCount == 27 && preview.Table!.ReturnedCount == 25 && preview.Table!.HasMore && preview.Aggregate!.Groups.Single().Key == "missing", "personal report total/chart use full SQL aggregate while table is paged");
         Check((await Scope(s => s.ListAsync())).Pages.Length == 0, "preview persists no result or definition");
         var actualCalls = PagesProtocol.Calls.TakeLast(2).ToArray();
-        Check(actualCalls[0].Name == "agreements_aggregate" && actualCalls[1].Name == "agreements_query" && actualCalls[1].Args.GetProperty("endDateFrom").GetString() == preview.Selection.Filter.EndDateFrom!.Value.ToString("yyyy-MM-dd"), "business data actually crosses MCP and query reuses server-normalized dates");
+        Check(actualCalls[0].Name == "agreements_aggregate" && actualCalls[1].Name == "agreements_query" && actualCalls[1].Args.GetProperty("endDateFrom").GetString() == preview.Selection!.Filter.EndDateFrom!.Value.ToString("yyyy-MM-dd"), "business data actually crosses MCP and query reuses server-normalized dates");
         var saved = await Scope(s => s.SaveAsync(null, empty.Revision, spec)); var id = saved.Pages.Single().Id;
         Check(saved.Pages.Single().OwnerUserId == admin && saved.Pages.Single().AccountId == account && saved.Pages.Single().Definition.Period.Kind == PagePeriodKind.NextMonths, "backend binds owner/account and persists relative intention");
         Check((await Run(spec, 2, id)).Table!.ReturnedCount == 2, "saved report reopens page two without scanning list pages");
         Check((await Scope(s => s.ListAsync(), member)).Pages.Length == 0, "personal lists exclude another user's definitions");
         await Denied(() => Scope(s => s.ReadAsync(id), member)); await Denied(() => Scope(s => s.ReadAsync(id), selected: foreign));
         await FailsPage(() => Scope(s => s.SaveAsync(id, empty.Revision, spec)), "Conflict");
-        var update = await Scope(s => s.SaveAsync(id, saved.Revision, spec with { Title = "Renamed", Period = new(PagePeriodKind.Fixed, null, preview.Selection.Filter.EndDateFrom, preview.Selection.Filter.EndDateTo) }));
+        var update = await Scope(s => s.SaveAsync(id, saved.Revision, spec with { Title = "Renamed", Period = new(PagePeriodKind.Fixed, null, preview.Selection!.Filter.EndDateFrom, preview.Selection!.Filter.EndDateTo) }));
         var two = await Scope(s => s.SaveAsync(null, update.Revision, spec with { Title = "Second" }));
         var moved = await Scope(s => s.ChangeAsync(id, two.Revision, 1)); Check(moved.Pages.Last().Id == id, "move preserves stable identity and saved ordering");
         await FailsPage(() => Scope(s => s.ChangeAsync(id, two.Revision, null)), "Conflict");
@@ -75,7 +75,7 @@ static partial class RegistryChecks
         var nextDay = await Run(kept.Definition);
         await using (var db = factory.CreateDbContext()) { var settings = await db.AgreementReminderSettings.SingleAsync(x => x.AccountId == account); settings.TimeZoneId = "Pacific/Pago_Pago"; await db.SaveChangesAsync(); }
         var priorDay = await Run(kept.Definition);
-        Check(nextDay.Selection.Today > priorDay.Selection.Today && nextDay.Selection.Filter.EndDateFrom != priorDay.Selection.Filter.EndDateFrom && (await Scope(p => p.ReadAsync(kept.Id))).Definition.Period.Kind == PagePeriodKind.NextMonths,
+        Check(nextDay.Selection!.Today > priorDay.Selection!.Today && nextDay.Selection!.Filter.EndDateFrom != priorDay.Selection!.Filter.EndDateFrom && (await Scope(p => p.ReadAsync(kept.Id))).Definition.Period.Kind == PagePeriodKind.NextMonths,
             "relative intent normalizes afresh across account-date boundary using server time zone");
         await using (var db = factory.CreateDbContext()) { var settings = await db.AgreementReminderSettings.SingleAsync(x => x.AccountId == account); if (settingsWereMissing) db.Remove(settings); else settings.TimeZoneId = previousZone!; await db.SaveChangesAsync(); }
         var noMatches = await Run(spec with { Filter = spec.Filter with { Search = "no-personal-matches" } });

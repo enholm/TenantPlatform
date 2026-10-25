@@ -8,14 +8,17 @@ using TenantPlatform.Application.Agreements;
 using TenantPlatform.Application.PersonalPages;
 using TenantPlatform.Application.Mcp;
 using TenantPlatform.Core.Agreements;
+using TenantPlatform.Core.Services;
+using TenantPlatform.Application.ServiceRequests;
 
 namespace TenantPlatform.Application.Agent;
 
 // Intent only: no identity, source IDs, contract versions or executable content from the model.
 public sealed record ReportPageFilter(string? Search = null, AgreementStatus? Status = null, AgreementType? Type = null,
     AgreementArchiveSelection Archive = AgreementArchiveSelection.Exclude, string? BuildingName = null, bool MissingBuilding = false);
+public sealed record RequestPageFilter(string? Search = null, ServiceRequestStatus? Status = null);
 public sealed record ReportPageProposal(string Title, PagePeriod Period, ReportPageFilter Filter, PageComponent[] Components, string Layout = "Stacked",
-    AgreementReportGrouping? GroupBy = null, PageColumn[]? Columns = null);
+    AgreementReportGrouping? GroupBy = null, PageColumn[]? Columns = null, ReportArea? Area = null, RequestPageFilter? RequestFilter = null);
 public sealed record AgentReportDraft(Guid Id, Guid Revision, Guid TargetPageId, Guid CollectionRevision,
     ReportPageProposal Intent, PageDefinition Definition, string SourceName, Guid? SavedPageId = null, int Version = 1, IReadOnlyList<AgentPastCall>? Dependencies = null,
     AgentReportEdit? Edit = null, bool SavedAsCopy = false);
@@ -33,7 +36,7 @@ public sealed class AgentReportDrafts(PersonalPageService pages, PersonalPageRun
         Converters = { new JsonStringEnumConverter(allowIntegerValues: false) } };
     public static AgentTool Tool() => new(ToolName,
         "Propose or revise ONE UNSAVED personal report page only when the current user explicitly requests it. Never save. " +
-        "Return the whole intended declaration. Supported: All (no EndDate restriction, including missing EndDate), EndDate Fixed or NextMonths 1-12; title/search/status/type/archive/missingBuilding; optional exact building NAME; " +
+        "Choose one area: Agreements (default for legacy proposals) or ServiceRequests. ServiceRequests requires period All with null months/from/to, filter={} and requestFilter with optional title search and stored status Draft/Submitted/Approved/InProgress/Completed/Rejected/Cancelled/Failed. Request columns: Title,Status,Building,Unit,CreatedAt,SubmittedAt,CompletedAt. Both areas support Metric, BuildingChart grouped Building/Status, and AgreementTable (legacy component name meaning the selected area table). No request dates/finance/custom fields. Do not mix domain filters or change the area of a saved page. Return the whole intended declaration. Agreements supported: All (no EndDate restriction, including missing EndDate), EndDate Fixed or NextMonths 1-12; title/search/status/type/archive/missingBuilding; optional exact building NAME; " +
         "One to three ordered components Metric, BuildingChart, AgreementTable, each at most once; Stacked only. " +
         "groupBy is Building or Status. columns is an ordered allowlist: Title, Type, Status, Building, StartDate, EndDate, NoticeDeadline, RenewalDate; at least one when AgreementTable is used, no duplicates. Explicitly supply columns (empty allowed without table). No finance, other groupings, sorting, layouts/sources. Editing an existing page requires an explicitly opened backend edit session; only revise its unsaved draft. " +
         "Stored reference filters are preserved by backend; never invent identifiers or promise to remove those filters. Ask for clarification for unsupported requests. " +
@@ -75,11 +78,25 @@ public sealed class AgentReportDrafts(PersonalPageService pages, PersonalPageRun
             intent = doc.RootElement.Deserialize<ReportPageProposal>(Json) ?? throw new JsonException();
         }
         catch (JsonException) { throw new ReadAgentException("DraftInvalid"); }
-        intent = intent with { Title = intent.Title.Trim(),
+        var area = intent.Area ?? previous?.Definition.Area ?? ReportArea.Agreements;
+        if (!Enum.IsDefined(area) || previous is not null && area != previous.Definition.Area) throw new ReadAgentException("DraftInvalid");
+        intent = intent with { Area = area, Title = intent.Title.Trim(),
             GroupBy = intent.GroupBy ?? previous?.Definition.GroupBy ?? AgreementReportGrouping.Building,
-            Columns = intent.Columns ?? previous?.Definition.Columns ?? PageDefinitions.LegacyColumns };
-        var source = (await pages.SourcesAsync(ct)).SingleOrDefault(s => s.ConnectionId == connection) ?? throw new ReadAgentException("ConnectionUnavailable");
+            Columns = intent.Columns ?? previous?.Definition.Columns ?? (area == ReportArea.Agreements ? PageDefinitions.LegacyColumns : new[] { PageColumn.Title, PageColumn.Status, PageColumn.Building, PageColumn.CreatedAt }) };
+        var source = (await pages.SourcesAsync(ct, area)).SingleOrDefault(s => s.ConnectionId == connection) ?? throw new ReadAgentException("ConnectionUnavailable");
         if (previous is not null) await pages.ValidateSourceAsync(previous.Definition, ct); // Never silently rebind a stored draft.
+        if (area == ReportArea.ServiceRequests)
+        {
+            var requestDefinition = RequestPageDraft.Build(intent, connection, source, previous);
+            var requestPreview = await runner.RunAsync(requestDefinition, ct: ct, read: read);
+            var requestCollection = await pages.ListAsync(ct);
+            ct.ThrowIfCancellationRequested();
+            return new(new(previous is { SavedPageId: null } ? previous.Id : Guid.NewGuid(), Guid.NewGuid(),
+                previous is { SavedPageId: null } ? previous.TargetPageId : Guid.NewGuid(),
+                previous is { Edit: not null, SavedPageId: null } ? previous.CollectionRevision : requestCollection.Revision,
+                intent, requestDefinition, source.Name, Edit: previous is { SavedPageId: null } ? previous.Edit : null), requestPreview);
+        }
+        if (intent.RequestFilter is not null) throw new ReadAgentException("DraftInvalid");
         var filter = (previous is { Edit: not null, SavedPageId: null } ? previous.Definition.Filter : new AgreementReportFilter()) with {
             Search = intent.Filter.Search, Status = intent.Filter.Status, Type = intent.Filter.Type, Archive = intent.Filter.Archive,
             MissingBuilding = intent.Filter.MissingBuilding };
@@ -127,9 +144,10 @@ public sealed class AgentReportDrafts(PersonalPageService pages, PersonalPageRun
         var page = collection.Pages.SingleOrDefault(p => p.Id == pageId) ?? throw new UnauthorizedAccessException();
         await pages.ValidateSourceAsync(page.Definition, ct);
         var d = PageDefinitions.Current(page.Definition);
-        var source = (await pages.SourcesAsync(ct)).Single(s => s.ConnectionId == d.ConnectionId);
-        var intent = new ReportPageProposal(d.Title, d.Period, new(d.Filter.Search, d.Filter.Status, d.Filter.Type, d.Filter.Archive,
-            MissingBuilding: d.Filter.MissingBuilding), d.Components, d.Layout, d.GroupBy, d.Columns);
+        var source = (await pages.SourcesAsync(ct, d.Area)).Single(s => s.ConnectionId == d.ConnectionId);
+        var intent = new ReportPageProposal(d.Title, d.Period, d.Area == ReportArea.ServiceRequests ? new ReportPageFilter() : new(d.Filter.Search, d.Filter.Status, d.Filter.Type, d.Filter.Archive,
+            MissingBuilding: d.Filter.MissingBuilding), d.Components, d.Layout, d.GroupBy, d.Columns, d.Area,
+            d.RequestFilter is { } request ? new(request.Search, request.Status) : null);
         return new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), collection.Revision, intent, d, source.Name, Edit: new(page.Id, page.Definition));
     }
     public static AgentReportChange[] Changes(AgentReportDraft draft)
@@ -143,6 +161,7 @@ public sealed class AgentReportDrafts(PersonalPageService pages, PersonalPageRun
         Add("Title", a.Title, b.Title); Add("Period", a.Period, b.Period); Add("Search", a.Filter.Search, b.Filter.Search);
         Add("Status", a.Filter.Status, b.Filter.Status); Add("Type", a.Filter.Type, b.Filter.Type); Add("Archive", a.Filter.Archive, b.Filter.Archive);
         Add("Building", a.Filter.BuildingId, b.Filter.BuildingId); Add("MissingBuilding", a.Filter.MissingBuilding, b.Filter.MissingBuilding);
+        Add("RequestSearch", a.RequestFilter?.Search, b.RequestFilter?.Search); Add("RequestStatus", a.RequestFilter?.Status, b.RequestFilter?.Status);
         Add("Components", a.Components, b.Components);
         Add("GroupBy", a.GroupBy, b.GroupBy); Add("Columns", a.Columns, b.Columns);
         return changes.ToArray();

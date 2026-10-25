@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Schema;
+using OpenIddict.Abstractions;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using TenantPlatform.Application.Agreements;
@@ -28,7 +29,7 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
           "type":{"type":"string","enum":["Lease","SoftwareLicense","ServiceMaintenance","Supplier","Other"]},
           "attention":{"type":"string","enum":["Notice","Renewal","Expired"]},"page":{"type":"integer","minimum":1,"maximum":10000,"default":1}}}
         """),
-        Tool<AttentionResult>("agreements_attention", "Read full separate Attention counts at the account date. Categories may overlap: DO NOT sum them as unique agreements. No list filters apply. Read only, no deadline/settings initialization.", """{"type":"object","additionalProperties":false,"required":["accountId"],"properties":{"accountId":{"type":"string","format":"uuid"}}}"""), ..ReportingCatalog()];
+        Tool<AttentionResult>("agreements_attention", "Read full separate Attention counts at the account date. Categories may overlap: DO NOT sum them as unique agreements. No list filters apply. Read only, no deadline/settings initialization.", """{"type":"object","additionalProperties":false,"required":["accountId"],"properties":{"accountId":{"type":"string","format":"uuid"}}}"""), ..ReportingCatalog(), ..ServiceRequestCatalog()];
 
     private static Tool Tool<T>(string name, string description, string input) => new()
     {
@@ -49,6 +50,7 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
                 "accounts_list" => [], "agreements_attention" => ["accountId"],
                 "agreements_list" => ["accountId", "search", "status", "type", "attention", "page"],
                 "agreements_query" or "agreements_aggregate" => ReportKeys(request.Name),
+                "service_requests_query" or "service_requests_aggregate" => RequestKeys(request.Name),
                 "agreements_details" => ["accountId", "agreementId"], _ => throw new ArgumentException()
             };
             if (args.Keys.Any(key => !allowed.Contains(key, StringComparer.Ordinal))) throw new ArgumentException();
@@ -76,6 +78,11 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
                 var data = await operation.ServiceProvider.GetRequiredService<IAgreementAttentionService>().GetAttentionAsync(account!.Value, ct);
                 payload = new AttentionResult("1", account.Value, data.Today, data.Notice, data.Renewal, data.Expired, 90);
             }
+            else if (request.Name is "service_requests_query" or "service_requests_aggregate")
+            {
+                if (!context.User.HasScope(TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read)) return Error("AUTHORIZATION_REQUIRED");
+                payload = await RequestReportAsync(operation.ServiceProvider, request.Name, account!.Value, args, ct);
+            }
             else if (request.Name is "agreements_query" or "agreements_aggregate" or "agreements_details")
                 payload = await ReportAsync(operation.ServiceProvider, request.Name, account!.Value, args, ct);
             else
@@ -92,6 +99,7 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
             // Reserve 4 KiB for JSON-RPC framing. The HTTP boundary measures the FINAL envelope as well.
             return JsonSerializer.SerializeToUtf8Bytes(result, Json).Length <= 60 * 1024 ? result : Error("RESULT_TOO_LARGE");
         }
+        catch (TenantPlatform.Application.ServiceRequests.ServiceRequestReportLimitException) { return Error("RESULT_TOO_LARGE"); }
         catch (AgreementReportLimitException) { return Error("RESULT_TOO_LARGE"); }
         catch (JsonException) { return Error("INVALID_ARGUMENT"); }
         catch (ArgumentException) { return Error("INVALID_ARGUMENT"); }

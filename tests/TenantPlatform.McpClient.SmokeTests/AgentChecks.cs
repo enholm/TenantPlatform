@@ -137,7 +137,7 @@ static partial class RegistryChecks
         Check(await Fails(() => mcpPending, "CancelledOrTimedOut"), "agent cancellation reaches actual MCP HTTP transport");
         await protocol.McpCancelled.Task.WaitAsync(TimeSpan.FromSeconds(5)); protocol.BlockMcp = false;
         // Approve the account-bound tools through the actual Application administration entrypoints.
-        foreach (var tool in (await Registry(s => s.ToolsAsync(own))).Where(t => t.Name != "accounts_list"))
+        foreach (var tool in (await Registry(s => s.ToolsAsync(own))).Where(t => t.Name.StartsWith("agreements_", StringComparison.Ordinal)))
         {
             await Registry(async s => { await s.SetToolPolicyAsync(own, tool.Name, tool.Version, McpToolAudience.Inherit, [], McpToolUse.AutomaticRead); await s.ApproveAsync(own, tool.Name, tool.Version, true); return true; });
         }

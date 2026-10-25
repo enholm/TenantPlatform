@@ -15,7 +15,7 @@
 @if (failed) { <p class="alert alert-warning">@L[errorKey]</p> }
 else
 {
-<div data-personal-pages @attributes="TenantPlatform.Web.PersonalPages.ReportLabels.Attributes(L)" data-id="@Id" data-revision="@collection.Revision" data-csrf="@token" data-context="@context"
+<div data-personal-pages data-area="@definition.Area" @attributes="TenantPlatform.Web.PersonalPages.ReportLabels.Attributes(L)" data-id="@Id" data-revision="@collection.Revision" data-csrf="@token" data-context="@context"
  data-components="@System.Text.Json.JsonSerializer.Serialize(definition.Components.Select(c => c.ToString()))" data-delete-confirm="@L["PagesDeleteConfirm"]" data-yes="@L["Yes"]" data-no="@L["No"]" data-complete="@L["PagesComplete"]" data-more="@L["PagesMore"]" data-limit="@L["PagesLimitReached"]" data-error="@L["PagesErrorUnavailable"]" data-cancelled="@L["PagesErrorCancelled"]" data-loading="@L["PagesLoading"]" data-saved="@L["PagesSaved"]" data-empty="@L["PagesEmpty"]" data-missing="@L["PagesMissing"]" data-total="@L["PagesTotal"]" data-all-dates="@L["PagesAllDates"]" data-date="@L["PagesDate"]" data-snapshot="@L["PagesSnapshot"]" data-title="@L["Name"]" data-building="@L["Building"]" data-end="@L["AgreementEndDate"]" data-status="@L["Status"]" data-type="@L["AgreementType"]" data-start="@L["PagesColumnStartDate"]" data-notice="@L["PagesColumnNoticeDeadline"]" data-renewal="@L["PagesColumnRenewalDate"]" data-count="@L["PagesCount"]" data-page="@L["PagesPage"]">
 @if (!Id.HasValue)
 {
@@ -42,29 +42,41 @@ else { <h2>@definition.Title</h2><a href="/my-pages">@L["MyPages"]</a>
     <option value="">@L["AgentSelectConnection"]</option>
     @foreach (var source in sources) { <option value="@source.ConnectionId" data-profile="@source.ProfileVersion" data-query="@source.QueryVersion" data-aggregate="@source.AggregateVersion" selected="@(source.ConnectionId == definition.ConnectionId && SameBinding(source))">@source.Name @(source.ConnectionId == definition.ConnectionId && !SameBinding(source) ? L["PagesCurrentBinding"] : "")</option> }
 </select></label>
+@if (definition.Area == ReportArea.Agreements)
+{
 <label class="form-label">@L["PagesPeriod"]<select name="period" class="form-select"><option value="All" selected="@(definition.Period.Kind == PagePeriodKind.All)">@L["PagesAllDates"]</option><option value="NextMonths" selected="@(definition.Period.Kind == PagePeriodKind.NextMonths)">@L["PagesNextMonths"]</option><option value="Fixed" selected="@(definition.Period.Kind == PagePeriodKind.Fixed)">@L["PagesFixed"]</option></select></label>
 <label>@L["PagesMonths"]<input class="form-control" name="months" type="number" min="1" max="12" value="@(definition.Period.Months ?? 3)" /></label>
 <label>@L["PagesFrom"]<input class="form-control" name="from" type="date" value="@definition.Period.From?.ToString("yyyy-MM-dd")" /></label>
 <label>@L["PagesTo"]<input class="form-control" name="to" type="date" value="@definition.Period.To?.ToString("yyyy-MM-dd")" /></label>
-<label>@L["Search"]<input class="form-control" name="search" value="@definition.Filter.Search" maxlength="200" /></label>
-<label>@L["Status"]<select class="form-select" name="status"><option value="">@L["PagesAll"]</option>@foreach (var status in Enum.GetValues<AgreementStatus>()) { <option value="@status" selected="@(definition.Filter.Status == status)">@L["AgreementStatus" + status]</option> }</select></label>
+}
+else { <p>@L["RequestReportAll"]</p> }
+<label>@L["Search"]<input class="form-control" name="search" value="@(definition.RequestFilter?.Search ?? definition.Filter.Search)" maxlength="200" /></label>
+@if (definition.Area == ReportArea.ServiceRequests)
+{ <label>@L["Status"]<select class="form-select" name="status"><option value="">@L["PagesAll"]</option>@foreach (var status in Enum.GetValues<TenantPlatform.Core.Services.ServiceRequestStatus>()) { <option value="@status" selected="@(definition.RequestFilter?.Status == status)">@L["ServiceRequestStatus_" + status]</option> }</select></label> }
+else
+{ <label>@L["Status"]<select class="form-select" name="status"><option value="">@L["PagesAll"]</option>@foreach (var status in Enum.GetValues<AgreementStatus>()) { <option value="@status" selected="@(definition.Filter.Status == status)">@L["AgreementStatus" + status]</option> }</select></label>
+}
+@if (definition.Area == ReportArea.Agreements) {
 <label>@L["AgreementType"]<select class="form-select" name="type"><option value="">@L["PagesAll"]</option>@foreach (var type in Enum.GetValues<AgreementType>()) { <option value="@type" selected="@(definition.Filter.Type == type)">@L["AgreementType" + type]</option> }</select></label>
 <label>@L["PagesArchive"]<select class="form-select" name="archive">@foreach (var archive in Enum.GetValues<AgreementArchiveSelection>()) { <option value="@archive" selected="@(definition.Filter.Archive == archive)">@L["PagesArchive" + archive]</option> }</select></label>
-<label>@L["PagesBuildingId"]<input class="form-control" name="building" value="@definition.Filter.BuildingId" /></label>
+}
+<label>@L["PagesBuildingId"]<input class="form-control" name="building" value="@(definition.RequestFilter?.BuildingId ?? definition.Filter.BuildingId)" /></label>
+@if (definition.Area == ReportArea.Agreements) {
 <label>@L["PagesUnitId"]<input class="form-control" name="unit" value="@definition.Filter.UnitId" /></label>
 <label>@L["PagesOrganizationId"]<input class="form-control" name="organization" value="@definition.Filter.OrganizationElementId" /></label>
 <label>@L["PagesGeographyId"]<input class="form-control" name="geography" value="@definition.Filter.GeographicAreaId" /></label>
-<label><input type="checkbox" name="missing" checked="@definition.Filter.MissingBuilding" /> @L["PagesMissingOnly"]</label>
+}
+<label><input type="checkbox" name="missing" checked="@(definition.RequestFilter?.MissingBuilding ?? definition.Filter.MissingBuilding)" /> @L["PagesMissingOnly"]</label>
 @foreach (var component in Enum.GetValues<PageComponent>())
 {
-    <label><input type="checkbox" name="@($"show{component}")" checked="@(definition.Components.Contains(component))" /> @L["PagesComponent" + component]<select class="form-select" name="@component">@for (var i = 0; i < 3; i++) { <option value="@i" selected="@(Array.IndexOf(definition.Components.Concat(Enum.GetValues<PageComponent>()).Distinct().ToArray(), component) == i)">@(i + 1)</option> }</select></label>
+    <label><input type="checkbox" name="@($"show{component}")" checked="@(definition.Components.Contains(component))" /> @L[ReportLabels.ComponentKey(definition.Area, component.ToString())]<select class="form-select" name="@component">@for (var i = 0; i < 3; i++) { <option value="@i" selected="@(Array.IndexOf(definition.Components.Concat(Enum.GetValues<PageComponent>()).Distinct().ToArray(), component) == i)">@(i + 1)</option> }</select></label>
 }
 <label>@L["PagesGrouping"]<select class="form-select" name="groupBy">@foreach (var group in Enum.GetValues<AgreementReportGrouping>()) { <option value="@group" selected="@(definition.GroupBy == group)">@L[group.ToString()]</option> }</select></label>
 <fieldset><legend>@L["PagesColumns"]</legend>
-@foreach (var column in Enum.GetValues<PageColumn>())
+@foreach (var column in ReportAreas.Columns(definition.Area))
 {
     <label class="d-block"><input type="checkbox" name="@($"showColumn{column}")" checked="@(definition.Columns!.Contains(column))" /> @L["PagesColumn" + column]
-        <select name="@($"column{column}")" aria-label="@L["PagesColumn" + column]">@for (var i = 0; i < 8; i++) { <option value="@i" selected="@(Array.IndexOf(definition.Columns!.Concat(Enum.GetValues<PageColumn>()).Distinct().ToArray(), column) == i)">@(i + 1)</option> }</select></label>
+        <select name="@($"column{column}")" aria-label="@L["PagesColumn" + column]">@for (var i = 0; i < 8; i++) { <option value="@i" selected="@(Array.IndexOf(definition.Columns!.Concat(ReportAreas.Columns(definition.Area)).Distinct().ToArray(), column) == i)">@(i + 1)</option> }</select></label>
 }
 </fieldset>
 <div class="mt-3"><button type="button" class="btn btn-outline-primary" data-preview>@L["PagesPreview"]</button> <button class="btn btn-primary" type="submit">@L["Save"]</button></div>
@@ -100,7 +112,7 @@ else { <h2>@definition.Title</h2><a href="/my-pages">@L["MyPages"]</a>
             var identity = await ReadAgentEndpoints.Identity(Http, Http.RequestAborted) ?? throw new UnauthorizedAccessException(); context = identity.Key;
             collection = await Pages.ListAsync(Http.RequestAborted);
             if (Id.HasValue) definition = PageDefinitions.Current((await Pages.ReadAsync(Id.Value, Http.RequestAborted)).Definition);
-            sources = await Pages.SourcesAsync(Http.RequestAborted);
+            sources = await Pages.SourcesAsync(Http.RequestAborted, definition.Area);
             token = Csrf.GetAndStoreTokens(Http).RequestToken;
         }
         catch (PersonalPageException e) when (e.Code == "Version") { failed = true; errorKey = "PagesErrorVersion"; }

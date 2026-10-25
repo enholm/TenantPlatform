@@ -41,6 +41,8 @@ public static class McpComposition
         services.AddScoped<IAgreementListService, AgreementListService>();
         services.AddScoped<IAgreementReportingData, AgreementReportingData>();
         services.AddScoped<AgreementReportingReader>();
+        services.AddScoped<TenantPlatform.Application.ServiceRequests.IServiceRequestReportingData, TenantPlatform.Infrastructure.ServiceRequests.ServiceRequestReportingData>();
+        services.AddScoped<TenantPlatform.Application.ServiceRequests.ServiceRequestReportingReader>();
         services.AddScoped<IAgreementDetailsData, AgreementDetailsData>();
         services.AddScoped<IAgreementDetailsReader, AgreementDetailsReader>();
         services.AddScoped<IAgreementAttentionData, AgreementAttentionData>();
@@ -139,7 +141,7 @@ public static class McpComposition
         app.MapGet("/.well-known/oauth-protected-resource/mcp", () => Results.Json(new
         {
             resource = options.Resource, authorization_servers = new[] { options.Issuer },
-            scopes_supported = new[] { McpOptions.ReadScope }, bearer_methods_supported = new[] { "header" }
+            scopes_supported = new[] { McpOptions.ReadScope, TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read }, bearer_methods_supported = new[] { "header" }
         })).AllowAnonymous();
         app.MapMcp("/mcp").RequireAuthorization("McpRead").RequireRateLimiting("McpRead");
         return app;

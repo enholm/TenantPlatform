@@ -38,7 +38,7 @@ public static class PersonalPagesMcp
         services.AddRateLimiter(o => { o.RejectionStatusCode = 429; o.AddPolicy("PersonalPagesAdmin", context => System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(context.User.GetClaim("sub") ?? "invalid", _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })); });
         services.AddMcpServer().WithHttpTransport(o => o.SessionMode = HttpServerSessionMode.Stateless)
             .WithListToolsHandler((_, _) => ValueTask.FromResult(new ListToolsResult { Tools = Names.Select(n => new Tool { Name = n,
-                Description = "Explicit personal page administration. Never AutomaticRead or automatic agent use. All operations require current user/account access and mutation revision. Save accepts declarative version 2 with optional components, Building/Status grouping and ordered allowlisted columns; legacy version 1 is explicitly converted on save.",
+                Description = "Explicit personal page administration. Never AutomaticRead or automatic agent use. All operations require current user/account access and mutation revision. Save accepts typed ServiceRequests version 3 or Agreements version 2 with optional components, Building/Status grouping and ordered allowlisted columns; legacy version 1 is explicitly converted on save.",
                 InputSchema = Input(n),
                 Annotations = new() { ReadOnlyHint = n.EndsWith("list") || n.EndsWith("read"), DestructiveHint = n.EndsWith("delete"), OpenWorldHint = false } }).ToList() }))
             .WithCallToolHandler(Call);

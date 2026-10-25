@@ -94,7 +94,7 @@ static partial class RegistryChecks
         var from = new DateOnly(2026, 7, 1); var to = new DateOnly(2026, 9, 30);
         model.ReportArguments = JsonSerializer.Serialize(intent with { Period = new(PagePeriodKind.Fixed, null, from, to) }, AgentReportDrafts.Json);
         var fixedDraft = (await Agent(a => a.AskAsync(conversation, "Lag en rapport på mine sider som viser avtaler for juli, augist og september 2026."))).Report!;
-        Check(fixedDraft.Draft.Definition.Period.Kind == PagePeriodKind.Fixed && fixedDraft.Preview.Selection.Filter.EndDateFrom == from && fixedDraft.Preview.Selection.Filter.EndDateTo == to,
+        Check(fixedDraft.Draft.Definition.Period.Kind == PagePeriodKind.Fixed && fixedDraft.Preview.Selection!.Filter.EndDateFrom == from && fixedDraft.Preview.Selection!.Filter.EndDateTo == to,
             "9B July-September request exposes the proposal and an explicitly proposed fixed period uses the deterministic runner");
         using (var payload = JsonDocument.Parse(model.Payloads.Last()))
             Check(payload.RootElement.GetProperty("instructions").GetString()!.Contains("propose_report_page IS AVAILABLE"), "9B model receives trusted current draft capability rather than relying on earlier assistant denials");

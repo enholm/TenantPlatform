@@ -54,6 +54,7 @@ public sealed class OAuthCertificateOptions
 }
 public sealed class OAuthClientOptions
 {
+    public bool AllowServiceRequests { get; set; }
     public bool AllowPersonalPages { get; set; }
     public string ClientId { get; set; } = "";
     public string DisplayName { get; set; } = "";

@@ -108,7 +108,7 @@ sealed class AgentProtocolFixture
         {
             if (ReportReadFirst && completed == 0)
             {
-                var query = tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _));
+                var query = tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && t.GetProperty("parameters").GetProperty("properties").TryGetProperty("type", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _));
                 var account = query.GetProperty("parameters").GetProperty("properties").GetProperty("accountId").GetProperty("const").GetString();
                 return new(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(new { status = "completed", output = new[] {
                     new { type = "function_call", call_id = "intent_read", name = query.GetProperty("name").GetString(), arguments = JsonSerializer.Serialize(new { accountId = account, search = "Draft fixture" }) } } }), Encoding.UTF8, "application/json") };
@@ -122,15 +122,16 @@ sealed class AgentProtocolFixture
         if (mode == "reasoning" && completed == 0) output.Add(new { type = "reasoning", id = "rs_fixture", summary = Array.Empty<object>(), encrypted_content = "synthetic-encrypted-reasoning" });
         if ((completed < (mode == "multi" ? 2 : 1) || mode == "round-limit") && mode != "history-only")
         {
-            var tool = mode is "own-list" or "protected" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _))
-                : mode == "own-query" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _))
-                : mode == "own-aggregate" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("groupBy", out _))
+            var tool = mode == "request-aggregate" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("groupBy", out _) && t.GetProperty("parameters").GetProperty("properties").GetProperty("status").GetRawText().Contains("Submitted"))
+                : mode is "own-list" or "protected" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _))
+                : mode == "own-query" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && t.GetProperty("parameters").GetProperty("properties").TryGetProperty("type", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _))
+                : mode == "own-aggregate" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("groupBy", out _) && t.GetProperty("parameters").GetProperty("properties").TryGetProperty("type", out _))
                 : mode == "own-details" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("agreementId", out _))
                 : tools.FirstOrDefault(t => t.GetProperty("parameters").GetProperty("properties").EnumerateObject().Count() == 1, tools[0]);
             var args = new JsonObject();
             if (tool.GetProperty("parameters").TryGetProperty("properties", out var properties) && properties.TryGetProperty("accountId", out var account))
                 args["accountId"] = mode == "override" ? ForeignAccount.ToString() : account.TryGetProperty("const", out var fixedAccount) ? fixedAccount.GetString() : ForeignAccount.ToString();
-            if (mode == "own-aggregate") args["groupBy"] = "Building";
+            if (mode is "own-aggregate" or "request-aggregate") args["groupBy"] = mode == "request-aggregate" ? "Status" : "Building";
             if (mode == "own-details") args["agreementId"] = ReportAgreement.ToString();
             if (mode == "invalid") args["unexpected"] = true;
             output.Add(new { type = "function_call", id = "fc_" + completed, call_id = "call_" + completed,

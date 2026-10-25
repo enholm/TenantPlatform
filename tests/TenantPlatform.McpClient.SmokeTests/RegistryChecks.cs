@@ -68,6 +68,7 @@ static partial class RegistryChecks
             await command.ExecuteNonQueryAsync();
         }
         issuer.Clients.Single(c => c.ClientId == own.ClientId).AllowPersonalPages = true;
+        issuer.Clients.Single(c => c.ClientId == own.ClientId).AllowServiceRequests = true;
         web = await StartWeb();
         await OAuthComposition.RegisterClientsAsync(web.Services, issuer);
         try
@@ -86,7 +87,7 @@ static partial class RegistryChecks
             Check((await Credentials()).Count(x => x.UserId == adminA && x.ProtectedTokens != null) == 3, "multiple personal credentials coexist without overwriting");
             Check((await Call(a, a2)).StatusCode == HttpStatusCode.BadRequest, "new tools cannot run before discovery/approval");
             await Discover(a, a1);
-            Check((await Tools(a1)).Select(x => x.Name).Order().SequenceEqual(new[] { "accounts_list", "agreements_aggregate", "agreements_attention", "agreements_details", "agreements_list", "agreements_query" }), "internal catalogue includes established and new read tools");
+            Check((await Tools(a1)).Select(x => x.Name).Order().SequenceEqual(new[] { "accounts_list", "agreements_aggregate", "agreements_attention", "agreements_details", "agreements_list", "agreements_query", "service_requests_aggregate", "service_requests_query" }), "internal catalogue includes established and new read tools");
             await Approve(a, a1); Check((await Call(a, a1)).IsSuccessStatusCode, "internal registered profile still enforces local subject and reads over MCP");
             await Discover(a, a2); await Discover(a, a3); await Discover(b, b1);
             var tools2 = await Tools(a2); var tools3 = await Tools(a3);
@@ -107,6 +108,10 @@ static partial class RegistryChecks
                 await RunReportEditing(web, factory, adminA, member, accountA, accountB, a1, a, agentProtocol);
                 return;
             }
+            if (Environment.GetEnvironmentVariable("MCP_CLIENT_TEST_REQUESTS_ONLY") == "1") {
+                await Task.Delay(TimeSpan.FromSeconds(61));
+                await RunRequestReports(web, factory, adminA, accountA, accountB, a1, a, agentProtocol); return;
+            }
             await RunAgent(web, factory, adminA, member, accountA, accountB, a1, a2, a3, clock, agentProtocol, () => remoteCalls, a);
             Console.WriteLine("Isolating report-draft quota window (production limit remains 60/minute).");
             await Task.Delay(TimeSpan.FromSeconds(61));
@@ -117,6 +122,10 @@ static partial class RegistryChecks
             Console.WriteLine("Isolating flexible-report quota window.");
             await Task.Delay(TimeSpan.FromSeconds(61));
             await RunFlexibleReports(web, factory, adminA, accountA, a1, a, agentProtocol);
+            Console.WriteLine("Isolating service-request report quota window.");
+            await Task.Delay(TimeSpan.FromSeconds(61));
+            await RunRequestReports(web, factory, adminA, accountA, accountB, a1, a, agentProtocol);
+            // RunPersonalPages deliberately fills the owner's collection to MaxPages; keep that quota test last.
             Console.WriteLine("Isolating manual-page quota window (production limit remains 60/minute).");
             await Task.Delay(TimeSpan.FromSeconds(61));
             await RunPersonalPages(web, factory, writerRole, adminA, member, accountA, accountB, a1, a, own, agentProtocol);

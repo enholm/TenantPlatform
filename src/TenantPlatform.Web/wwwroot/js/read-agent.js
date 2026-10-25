@@ -37,7 +37,7 @@
                     if (!report.changes?.length) text('p', panel.dataset.editNoChanges, root);
                 }
                 text('p', panel.dataset.draftSummary, root);
-                text('p', [report.summary.period, report.summary.status, report.summary.type, report.summary.archive, report.summary.building, report.summary.search].join(' / '), root);
+                text('p', [report.summary.period, report.summary.status, report.summary.type, report.summary.archive, report.summary.building, report.summary.search].filter(Boolean).join(' / '), root);
                 text('p', panel.dataset.draftSnapshot, root);
                 if (fresh && report.preview) {
                     const preview = document.createElement('div'); root.append(preview);

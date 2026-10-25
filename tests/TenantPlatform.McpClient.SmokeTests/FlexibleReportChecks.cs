@@ -55,8 +55,8 @@ static partial class RegistryChecks
                 result.Columns.SequenceEqual(spec.Columns!) && result.GroupBy == spec.GroupBy && result.Components.SequenceEqual(spec.Components), "9D absent components have absent data; ordered columns/grouping survive " + mask);
             if (result.Aggregate is { } a) Check(a.Complete && a.TotalCount == 27 && a.Groups.Sum(g => g.Count) == 27 && a.GroupBy == spec.GroupBy.ToString(), "9D complete unique aggregate for grouping " + spec.GroupBy);
             if (result.Table is { } t) Check(t.TotalCount == 27 && t.ReturnedCount == 25 && t.HasMore && !t.Complete && !t.SnapshotConsistent, "9D table remains honestly paged without summing its rows");
-            if (calls.Length == 2) Check(calls[1].Args.GetProperty("endDateFrom").GetString() == result.Selection.Filter.EndDateFrom!.Value.ToString("yyyy-MM-dd") &&
-                calls[1].Args.GetProperty("endDateTo").GetString() == result.Selection.Filter.EndDateTo!.Value.ToString("yyyy-MM-dd") && !calls[1].Args.TryGetProperty("endsWithinMonths", out _), "9D combined calls reuse the target's normalized concrete dates");
+            if (calls.Length == 2) Check(calls[1].Args.GetProperty("endDateFrom").GetString() == result.Selection!.Filter.EndDateFrom!.Value.ToString("yyyy-MM-dd") &&
+                calls[1].Args.GetProperty("endDateTo").GetString() == result.Selection!.Filter.EndDateTo!.Value.ToString("yyyy-MM-dd") && !calls[1].Args.TryGetProperty("endsWithinMonths", out _), "9D combined calls reuse the target's normalized concrete dates");
             else Check(calls[0].Args.GetProperty("endsWithinMonths").GetInt32() == 3, "9D single-tool plan delegates period normalization to the source");
         }
         Check(model.Payloads.Count == modelCount, "9D all seven component combinations run with AI disabled and no key"); options.ApiKey = previousKey; options.Enabled = true;
@@ -141,7 +141,7 @@ static partial class RegistryChecks
         var beforeAll = PagesProtocol.Calls.Count;
         report = await Ask("Lag en side som heter «Aktive avtaler per bygg». Vis bare et stolpediagram med antall aktive avtaler fordelt på bygg. Ta med avtaler uavhengig av sluttdato, men utelat arkiverte avtaler. Ikke vis nøkkeltall eller avtaletabell.");
         var allCall = PagesProtocol.Calls.Skip(beforeAll).Single();
-        Check(report.Preview.Aggregate!.TotalCount == expectedAll && report.Preview.Selection.Filter.EndDateFrom is null && report.Preview.Selection.Filter.EndDateTo is null &&
+        Check(report.Preview.Aggregate!.TotalCount == expectedAll && report.Preview.Selection!.Filter.EndDateFrom is null && report.Preview.Selection!.Filter.EndDateTo is null &&
             !allCall.Args.TryGetProperty("endDateFrom", out _) && !allCall.Args.TryGetProperty("endDateTo", out _) && !allCall.Args.TryGetProperty("endsWithinMonths", out _),
             "all-date proposal uses one real aggregate, includes missing/past/distant EndDate and excludes archives without invented date bounds");
         Check(report.Preview.Table is null && report.Draft.Definition.Components.SequenceEqual(new[] { PageComponent.BuildingChart }) && (await Pages(p => p.ListAsync())).Revision == beforeNew.Revision,
@@ -152,9 +152,9 @@ static partial class RegistryChecks
         Check(allDefinition.Period.Kind == PagePeriodKind.All && (await Run(allDefinition)).Aggregate!.TotalCount == expectedAll, "all-date selection survives explicit save and deterministic reopening");
         var allTable = await Run(allDefinition with { Components = [PageComponent.BuildingChart, PageComponent.AgreementTable], Columns = [PageColumn.Title] });
         var allTableOnly = await Run(allDefinition with { Components = [PageComponent.AgreementTable], Columns = [PageColumn.Title] });
-        Check(allTableOnly.Aggregate is null && allTableOnly.Table!.TotalCount == expectedAll && allTableOnly.Selection.Filter.EndDateFrom is null,
+        Check(allTableOnly.Aggregate is null && allTableOnly.Table!.TotalCount == expectedAll && allTableOnly.Selection!.Filter.EndDateFrom is null,
             "table-only report retains All without adding dates or fetching aggregate");
-        Check(allTable.Table!.Selection.Filter == allTable.Aggregate!.Selection.Filter && allTable.Selection.Filter.EndDateFrom is null, "combined all-date calls retain the same unrestricted date filter");
+        Check(allTable.Table!.Selection!.Filter == allTable.Aggregate!.Selection!.Filter && allTable.Selection!.Filter.EndDateFrom is null, "combined all-date calls retain the same unrestricted date filter");
         Check((await Pages(p => p.ReadAsync(created))).Definition.Components.SequenceEqual(new[] { PageComponent.BuildingChart }), "9D explicit new-page save keeps the exact optional component set");
         // Bound unused versions must not be refreshed by a proposal that later adds the tool back.
         var bound = (await Pages(p => p.ReadAsync(created))).Definition;

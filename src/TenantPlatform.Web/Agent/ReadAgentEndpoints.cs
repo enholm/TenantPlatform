@@ -103,13 +103,14 @@ public static class ReadAgentEndpoints
         var l = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
         var d = report.Draft;
         string EnumLabel(Enum e, string prefix = "") => l[prefix + e].Value;
-        string Period(TenantPlatform.Application.PersonalPages.PagePeriod p) => p.Kind == TenantPlatform.Application.PersonalPages.PagePeriodKind.NextMonths
+        string Period(TenantPlatform.Application.PersonalPages.PagePeriod p) => d.Definition.Area == TenantPlatform.Application.PersonalPages.ReportArea.ServiceRequests ? l["RequestReportAll"].Value : p.Kind == TenantPlatform.Application.PersonalPages.PagePeriodKind.NextMonths
             ? l["DraftMonths", p.Months!].Value : p.Kind == TenantPlatform.Application.PersonalPages.PagePeriodKind.All ? l["PagesAllDates"].Value : $"{p.From:yyyy-MM-dd} – {p.To:yyyy-MM-dd}";
         string ChangeValue(string field, JsonElement value) => value.ValueKind == JsonValueKind.Null ? l["PagesAll"].Value : field switch {
             "Period" => Period(value.Deserialize<TenantPlatform.Application.PersonalPages.PagePeriod>(AgentReportDrafts.Json)!),
-            "Components" => string.Join(" → ", value.EnumerateArray().Select(x => l["PagesComponent" + x.GetString()].Value)),
+            "Components" => string.Join(" → ", value.EnumerateArray().Select(x => l[TenantPlatform.Web.PersonalPages.ReportLabels.ComponentKey(d.Definition.Area, x.GetString()!)].Value)),
             "Columns" => string.Join(" → ", value.EnumerateArray().Select(x => l["PagesColumn" + x.GetString()].Value)),
             "GroupBy" => l[value.GetString()!].Value,
+            "RequestStatus" => l["ServiceRequestStatus_" + value.GetString()].Value,
             "Status" => l["AgreementStatus" + value.GetString()].Value, "Type" => l["AgreementType" + value.GetString()].Value,
             "Archive" => l["PagesArchive" + value.GetString()].Value, "MissingBuilding" => l[value.GetBoolean() ? "Yes" : "No"].Value,
             _ => value.GetString() ?? "" };
@@ -119,11 +120,11 @@ public static class ReadAgentEndpoints
             intent = d.Intent, preview = report.Preview,
             summary = new {
                 period = Period(d.Definition.Period),
-                status = d.Definition.Filter.Status is { } status ? EnumLabel(status, "AgreementStatus") : l["PagesAll"].Value,
-                type = d.Definition.Filter.Type is { } type ? EnumLabel(type, "AgreementType") : l["PagesAll"].Value,
-                archive = EnumLabel(d.Definition.Filter.Archive, "PagesArchive"),
-                building = d.Intent.Filter.BuildingName ?? (d.Definition.Filter.MissingBuilding ? l["PagesMissingOnly"].Value : d.Definition.Filter.BuildingId.HasValue ? l["DraftStoredBuilding"].Value : l["PagesAll"].Value),
-                search = d.Definition.Filter.Search ?? "" } };
+                status = d.Definition.RequestFilter?.Status is { } requestStatus ? EnumLabel(requestStatus, "ServiceRequestStatus_") : d.Definition.Filter.Status is { } status ? EnumLabel(status, "AgreementStatus") : l["PagesAll"].Value,
+                type = d.Definition.Area == TenantPlatform.Application.PersonalPages.ReportArea.ServiceRequests ? "" : d.Definition.Filter.Type is { } type ? EnumLabel(type, "AgreementType") : l["PagesAll"].Value,
+                archive = d.Definition.Area == TenantPlatform.Application.PersonalPages.ReportArea.ServiceRequests ? "" : EnumLabel(d.Definition.Filter.Archive, "PagesArchive"),
+                building = d.Intent.Filter.BuildingName ?? ((d.Definition.RequestFilter?.MissingBuilding ?? d.Definition.Filter.MissingBuilding) ? l["PagesMissingOnly"].Value : (d.Definition.RequestFilter?.BuildingId ?? d.Definition.Filter.BuildingId).HasValue ? l["DraftStoredBuilding"].Value : l["PagesAll"].Value),
+                search = d.Definition.RequestFilter?.Search ?? d.Definition.Filter.Search ?? "" } };
         if (JsonSerializer.SerializeToUtf8Bytes(value, AgentReportDrafts.Json).Length > 131072) throw new ReadAgentException("DraftLimit");
         return value;
     }
@@ -132,7 +133,7 @@ public static class ReadAgentEndpoints
         string Flag(bool value) => l[value ? "Yes" : "No"].Value;
         if (source.Page is { } p) return l["AgentPageFacts", p.Page, p.RequestedPage, p.ReturnedCount, p.TotalCount, p.PageSize,
             Flag(p.HasMore), p.NextPage?.ToString() ?? "—", Flag(p.Complete), Flag(p.SnapshotConsistent), Flag(p.LimitReached)].Value;
-        if (source.Aggregate is { } g) return l["AgentAggregateFacts", l[g.GroupBy].Value, g.TotalCount, g.GroupCount, Flag(g.Complete), Flag(g.GroupsOverlap), Flag(g.SnapshotConsistent)].Value;
+        if (source.Aggregate is { } g) return l[source.Tool == "service_requests_aggregate" ? "RequestReportAggregateFacts" : "AgentAggregateFacts", l[g.GroupBy].Value, g.TotalCount, g.GroupCount, Flag(g.Complete), Flag(g.GroupsOverlap), Flag(g.SnapshotConsistent)].Value;
         if (source.Attention is { } a) return l["AgentAttentionFacts", a.Today, a.Notice, a.Renewal, a.Expired, a.HorizonDays].Value;
         return null;
     }

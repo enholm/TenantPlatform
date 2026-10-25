@@ -22,22 +22,23 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
     // definition through today's model, including when an operation changes another page.
     private static void RequireSupportedVersions(PersonalPageCollection collection)
     {
-        if (collection.Pages.Any(p => p.Definition.Version is not (1 or 2))) throw new PersonalPageException("Version");
+        if (collection.Pages.Any(p => !PageDefinitions.Supported(p.Definition))) throw new PersonalPageException("Version");
     }
     public async Task<PersonalPage> ReadAsync(Guid id, CancellationToken ct = default) =>
         (await ListAsync(ct)).Pages.SingleOrDefault(x => x.Id == id) ?? throw new UnauthorizedAccessException();
-    public async Task<PageSource[]> SourcesAsync(CancellationToken ct = default)
+    public async Task<PageSource[]> SourcesAsync(CancellationToken ct = default, ReportArea area = ReportArea.Agreements)
     {
         await RequireAsync(ct);
         if (registry is null) return [];
+        var adapter = ReportAreas.Get(area);
         var page = await registry.ListAsync(ct); var available = (await registry.AvailableToolsAsync(ct)).Where(t => t.UseClass == TenantPlatform.Core.Identity.McpToolUse.AutomaticRead).ToArray();
         return page.Servers.Where(s => page.Profiles.Any(p => p.Id == s.ProfileId && p.Version == s.ProfileVersion && !p.Binding.External))
-            .Select(s => { var q = available.SingleOrDefault(t => t.ConnectionId == s.Id && t.Name == "agreements_query"); var a = available.SingleOrDefault(t => t.ConnectionId == s.Id && t.Name == "agreements_aggregate");
-                return q is null && a is null ? null : new PageSource(s.Id, s.Name, q?.Version ?? "", a?.Version ?? "", s.ProfileVersion); }).OfType<PageSource>().ToArray();
+            .Select(s => { var q = available.SingleOrDefault(t => t.ConnectionId == s.Id && t.Name == adapter.QueryTool); var a = available.SingleOrDefault(t => t.ConnectionId == s.Id && t.Name == adapter.AggregateTool);
+                return q is null && a is null ? null : new PageSource(s.Id, s.Name, q?.Version ?? "", a?.Version ?? "", s.ProfileVersion, area); }).OfType<PageSource>().ToArray();
     }
     public static void Validate(PageDefinition d)
     {
-        if (d.Version is not (1 or 2)) throw new PersonalPageException("Version");
+        if (!PageDefinitions.Supported(d)) throw new PersonalPageException("Version");
         if (string.IsNullOrWhiteSpace(d.Title) || d.Title.Length > 100 || d.Title.Any(char.IsControl) || d.ConnectionId == Guid.Empty ||
             d.ProfileVersion.Length is < 1 or > 200 || d.QueryVersion.Length > 200 || d.AggregateVersion.Length > 200 ||
             PageDefinitions.NeedsQuery(d) && d.QueryVersion.Length == 0 || PageDefinitions.NeedsAggregate(d) && d.AggregateVersion.Length == 0 || d.Layout != "Stacked" ||
@@ -47,6 +48,14 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
             (d.Version == 1 ? d.Components.Length != 3 || d.GroupBy != AgreementReportGrouping.Building || d.Columns is not null :
                 d.Columns is null || d.Columns.Length > 8 || d.Columns.Distinct().Count() != d.Columns.Length || d.Columns.Any(c => !Enum.IsDefined(c)) ||
                 PageDefinitions.NeedsQuery(d) && d.Columns.Length == 0)) throw new PersonalPageException("Invalid");
+        if (d.Area == ReportArea.ServiceRequests)
+        {
+            if (d.RequestFilter is null || d.Filter != new AgreementReportFilter() || d.Period != new PagePeriod(PagePeriodKind.All, null) ||
+                d.Columns!.Any(c => c is not (PageColumn.Title or PageColumn.Status or PageColumn.Building or PageColumn.Unit or PageColumn.CreatedAt or PageColumn.SubmittedAt or PageColumn.CompletedAt))) throw new PersonalPageException("Invalid");
+            try { TenantPlatform.Application.ServiceRequests.ServiceRequestReportingReader.Normalize(d.RequestFilter); } catch (ArgumentException) { throw new PersonalPageException("Invalid"); }
+            return;
+        }
+        if (d.RequestFilter is not null || d.Columns?.Any(c => c > PageColumn.RenewalDate) == true) throw new PersonalPageException("Invalid");
         try { AgreementReportFilterRules.Validate(d.Filter); } catch (ArgumentException) { throw new PersonalPageException("Invalid"); }
         if (d.Filter.EndDateFrom.HasValue || d.Filter.EndDateTo.HasValue || d.Filter.EndsWithinMonths.HasValue || !Enum.IsDefined(d.Period.Kind) ||
             (d.Period.Kind == PagePeriodKind.All ? d.Version < 2 || d.Period.Months.HasValue || d.Period.From.HasValue || d.Period.To.HasValue :
@@ -56,7 +65,7 @@ public sealed class PersonalPageService(ICurrentActor actor, IAuthorizationServi
     public async Task ValidateSourceAsync(PageDefinition d, CancellationToken ct)
     {
         Validate(d);
-        if (!(await SourcesAsync(ct)).Any(s => s.ConnectionId == d.ConnectionId && (!PageDefinitions.NeedsQuery(d) || s.QueryVersion == d.QueryVersion) && (!PageDefinitions.NeedsAggregate(d) || s.AggregateVersion == d.AggregateVersion) && s.ProfileVersion == d.ProfileVersion))
+        if (!(await SourcesAsync(ct, d.Area)).Any(s => s.ConnectionId == d.ConnectionId && (!PageDefinitions.NeedsQuery(d) || s.QueryVersion == d.QueryVersion) && (!PageDefinitions.NeedsAggregate(d) || s.AggregateVersion == d.AggregateVersion) && s.ProfileVersion == d.ProfileVersion))
         {
             if (registry is null) throw new PersonalPageException("SourceUnavailable");
             var state = await registry.DescribeAsync(d.ConnectionId, ct);

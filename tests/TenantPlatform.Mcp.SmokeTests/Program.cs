@@ -30,6 +30,7 @@ using TenantPlatform.Infrastructure.Persistence.OAuth;
 using TenantPlatform.Mcp;
 using TenantPlatform.Web.Security.OAuth;
 
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = System.Globalization.CultureInfo.GetCultureInfo("en-GB");
 var connection = Environment.GetEnvironmentVariable("MCP_TEST_CONNECTION") ?? throw new Exception("Use isolated PostgreSQL runner.");
 var cs = new NpgsqlConnectionStringBuilder(connection);
 if (cs.Database != "tenant_mcp_tests" || cs.Host?.StartsWith("/tmp/tenant-agreement-tests.", StringComparison.Ordinal) != true) throw new Exception("Disposable MCP database only.");
@@ -40,7 +41,7 @@ var pfxPassword = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
 var oauth = new OAuthIssuerOptions { Enabled = true, Issuer = "https://tenant.test/", Resource = "https://mcp.test/mcp", ConnectionString = connection,
     SigningCertificatePath = Path.Combine(directory,"sign.pfx"), SigningCertificatePassword = pfxPassword,
     EncryptionCertificatePath = Path.Combine(directory,"enc.pfx"), EncryptionCertificatePassword = pfxPassword, CookieKeyDirectory = Path.Combine(directory,"keys"),
-    Clients = [new() { ClientId = "protocol-fixture", DisplayName = "MCP fixture", Secret = secret, RedirectUris = ["https://client.test/callback"] }] };
+    Clients = [new() { AllowServiceRequests = true, ClientId = "protocol-fixture", DisplayName = "MCP fixture", Secret = secret, RedirectUris = ["https://client.test/callback"] }] };
 foreach (var path in new[] { oauth.SigningCertificatePath, oauth.EncryptionCertificatePath })
 {
     using var rsa = RSA.Create(2048); var request = new CertificateRequest("CN=MCP test only",rsa,HashAlgorithmName.SHA256,RSASignaturePadding.Pkcs1);
@@ -78,6 +79,8 @@ await using(var admin = new NpgsqlConnection(connection))
     await admin.OpenAsync();
     await using var command = new NpgsqlCommand("CREATE ROLE mcp_reader LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT; REVOKE CREATE ON SCHEMA public FROM PUBLIC; GRANT CONNECT ON DATABASE tenant_mcp_tests TO mcp_reader; GRANT USAGE ON SCHEMA public TO mcp_reader; GRANT SELECT ON "+string.Join(",",tables.Select(x=>"public."+x))+" TO mcp_reader",admin);
     await command.ExecuteNonQueryAsync();
+    await using var requestGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"RequesterUserId\",\"RequesterOrganizationId\",\"AssignedServiceProviderOrganizationId\",\"BuildingId\",\"UnitId\",\"Title\",\"Status\",\"CreatedAt\",\"SubmittedAt\",\"CompletedAt\") ON public.service_requests TO mcp_reader", admin);
+    await requestGrant.ExecuteNonQueryAsync();
 }
 var runtime = new NpgsqlConnectionStringBuilder(connection) { Username="mcp_reader",SearchPath="public" }.ConnectionString;
 var options = new McpOptions { Issuer=oauth.Issuer,Resource=oauth.Resource,ConnectionString=runtime,Clients=["protocol-fixture"],AllowedOrigins=["https://client.test"] };
@@ -112,7 +115,7 @@ try
     {
         await using var client=await Client(token,version);
         var tools=await client.ListToolsAsync();
-        Check(tools.Select(t=>t.Name).Order().SequenceEqual(new[]{"accounts_list","agreements_aggregate","agreements_attention","agreements_details","agreements_list","agreements_query"}),"exact six tools "+version);
+        Check(tools.Select(t=>t.Name).Order().SequenceEqual(new[]{"accounts_list","agreements_aggregate","agreements_attention","agreements_details","agreements_list","agreements_query","service_requests_aggregate","service_requests_query"}),"exact eight tools "+version);
         var schemas=JsonSerializer.Serialize(tools.Select(t=>t.ProtocolTool));
         Check(tools.All(t=>t.ProtocolTool.OutputSchema!.Value.GetProperty("additionalProperties").ValueKind==JsonValueKind.False) && !schemas.Contains("Owner") && schemas.Contains("additionalProperties") && schemas.Contains("outputSchema"),"bounded input/output schemas "+version);
         var accounts=Data(await client.CallToolAsync("accounts_list",new Dictionary<string,object?>()));
@@ -137,6 +140,9 @@ try
         var surfaces=JsonSerializer.Serialize(new[]{list,second,attention,accounts});
         Check(!new[]{"ownerUserId","ownerName","owners","SECRET_OWNER","transportId","recipientAddress","terms","revision","grants"}.Any(surfaces.Contains),"no omitted metadata in complete payload");
     }
+    await using (var agreementOnly = await Client(token, "2026-07-28"))
+        Check(Error(await agreementOnly.CallToolAsync("service_requests_query", Args(a))) == "AUTHORIZATION_REQUIRED", "agreement-only OAuth token cannot read requests");
+    await ServiceRequestReportingChecks.Run(factory, runtime, password, async subject => { var (access, _) = await Issue(subject, true); return await Client(access, "2026-07-28"); });
     await ReportingChecks.Run(factory, runtime, password, async subject => { var (access, _) = await Issue(subject); return await Client(access, "2026-07-28"); });
     await using var live=await Client(token,"2026-07-28");
     await using var secondClient=await Client(otherToken,"2026-07-28");
@@ -154,7 +160,7 @@ try
     await using(var db=factory.CreateDbContext()) { (await db.Users.SingleAsync(x=>x.Id==user)).IsActive=true; await db.SaveChangesAsync(); }
     await using(var db=factory.CreateDbContext()) { var member=await db.UserAccounts.SingleAsync(x=>x.UserId==user); db.UserAccountRoles.Add(new UserAccountRole { Id=Guid.NewGuid(),UserAccountId=member.Id,Role=UserRole.AccountAdmin }); await db.SaveChangesAsync(); }
     Check(Data(await live.CallToolAsync("agreements_list",Args(a))).GetProperty("totalCount").GetInt32()==29,"fresh account role expands Application scope");
-    await using(var db=factory.CreateDbContext()) { db.UserAccountRoles.Remove(await db.UserAccountRoles.SingleAsync()); await db.SaveChangesAsync(); }
+    await using(var db=factory.CreateDbContext()) { db.UserAccountRoles.Remove(await db.UserAccountRoles.SingleAsync(r => r.UserAccount.UserId == user)); await db.SaveChangesAsync(); }
     Check(Data(await live.CallToolAsync("agreements_list",Args(a))).GetProperty("totalCount").GetInt32()==28,"removed role stops expanded access next call");
     Check(Error(await secondClient.CallToolAsync("agreements_list",Args(a)))=="RESOURCE_UNAVAILABLE","PlatformAdmin token does not bypass account membership");
     var management=await browser.Get("/oauth/connections"); var revokeFields=Fields(await management.Content.ReadAsStringAsync());
@@ -295,13 +301,15 @@ try
         builder.Services.ConfigureAll<Microsoft.Extensions.Http.HttpClientFactoryOptions>(http => http.HttpMessageHandlerBuilderActions.Add(handler => handler.AdditionalHandlers.Insert(0, new IssuerRoute(issuer!.GetTestServer().CreateHandler()))));
         var app=builder.Build(); app.MapTenantMcp(); await app.StartAsync(); return app;
     }
-    async Task<(string,Browser)> Issue(Guid subject)
+    async Task<(string,Browser)> Issue(Guid subject, bool requests = false)
     {
         var browser=new Browser(issuer!.GetTestClient()); var verifier=Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(48));
-        var path="/connect/authorize"+QueryString.Create(new Dictionary<string,string?> { ["client_id"]="protocol-fixture",["redirect_uri"]="https://client.test/callback",["response_type"]="code",["scope"]=McpOptions.ReadScope+" offline_access",["resource"]=oauth.Resource,["state"]="mcp-test",["code_challenge_method"]="S256",["code_challenge"]=Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier))) });
+        var path="/connect/authorize"+QueryString.Create(new Dictionary<string,string?> { ["client_id"]="protocol-fixture",["redirect_uri"]="https://client.test/callback",["response_type"]="code",["scope"]=McpOptions.ReadScope+" offline_access"+(requests ? " " + TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read : ""),["resource"]=oauth.Resource,["state"]="mcp-test",["code_challenge_method"]="S256",["code_challenge"]=Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier))) });
         var redirect=await browser.Get(path); var login=Fields(await (await browser.Get(redirect.Headers.Location!.OriginalString)).Content.ReadAsStringAsync());
         login["email"]=subject+"@example.test"; login["password"]=password;
-        var logged=await browser.Post("/auth/login",login); var consent=Fields(await (await browser.Get(logged.Headers.Location!.OriginalString)).Content.ReadAsStringAsync()); consent["decision"]="approve";
+        var logged=await browser.Post("/auth/login",login); var consentHtml = await (await browser.Get(logged.Headers.Location!.OriginalString)).Content.ReadAsStringAsync();
+        if (requests) Check(WebUtility.HtmlDecode(consentHtml).Contains("This client can also read service requests"), "request scope has explicit consent description");
+        var consent=Fields(consentHtml); consent["decision"]="approve";
         var approved=await browser.Post("/connect/authorize",consent); var code=QueryHelpers.ParseQuery(approved.Headers.Location!.Query)["code"].ToString();
         var response=await browser.Post("/connect/token",new() { ["grant_type"]="authorization_code",["client_id"]="protocol-fixture",["client_secret"]=secret,["redirect_uri"]="https://client.test/callback",["code_verifier"]=verifier,["code"]=code,["resource"]=oauth.Resource });
         Check(response.IsSuccessStatusCode,"actual login/consent/code+PKCE token flow");

@@ -1,22 +1,29 @@
 // Shared deterministic 9A/9B presentation. No model, HTML evaluation or network.
 (() => {
     function text(tag, value, parent) { const node = document.createElement(tag); node.textContent = value; parent.append(node); return node; }
+    const areas = {
+        Agreements: (value, labels) => ({ value, period: value.selection.filter.endDateFrom == null && value.selection.filter.endDateTo == null ? labels.allDates : `${value.selection.filter.endDateFrom} – ${value.selection.filter.endDateTo}`, statusPrefix: 'status', extraCells: {} }),
+        ServiceRequests: (value, labels) => ({ value: { ...value, aggregate: value.requests.aggregate, table: value.requests.table }, period: labels.requestAll, statusPrefix: 'requestStatus', labels: { ...labels, total: labels.requestTotal || labels.total }, extraCells: {
+            CreatedAt: ['requestCreatedAt', item => item.createdAt], SubmittedAt: ['requestSubmittedAt', item => item.submittedAt || '—'],
+            CompletedAt: ['requestCompletedAt', item => item.completedAt || '—'], Unit: ['requestUnit', item => item.unit?.name || labels.missing]
+        } })
+    };
     function render(value, components, output, labels, onPage) {
                 components = value.components || components;
-                const filters = value.selection.filter;
+                const area = areas[value.area || "Agreements"](value, labels); value = area.value; labels = area.labels || labels;
                 const columns = value.columns || ['Title', 'Building', 'EndDate'];
                 const cells = {
-                    Title: ['title', item => item.title],
+                    Title: ['title', item => item.title || '—'],
                     Type: ['type', item => labels['type' + item.type] || item.type],
-                    Status: ['status', item => labels['status' + item.status] || item.status],
+                    Status: ['status', item => labels[area.statusPrefix + item.status] || item.status],
                     Building: ['building', item => item.building?.name || labels.missing],
                     StartDate: ['start', item => item.startDate || '—'],
                     EndDate: ['end', item => item.endDate || '—'],
                     NoticeDeadline: ['notice', item => item.noticeDeadline || '—'],
-                    RenewalDate: ['renewal', item => item.renewalDate || '—']
+                    RenewalDate: ['renewal', item => item.renewalDate || '—'], ...area.extraCells
                 };
                 const grouping = value.groupBy === 'Status' ? labels.status : labels.building;
-                const period = filters.endDateFrom == null && filters.endDateTo == null ? labels.allDates : `${filters.endDateFrom} – ${filters.endDateTo}`;
+                const period = area.period;
                 text('p', `${labels.date}: ${period} · ${value.retrievedUtc}`, output);
                 text('p', labels.snapshot, output);
                 for (const component of components) {
@@ -29,7 +36,7 @@
                         // All rows share the same zero-based count scale. Bar length is not a percentage of the total.
                         const maximum = Math.max(1, ...value.aggregate.groups.map(group => group.count));
                         for (const group of value.aggregate.groups) {
-                            const name = value.groupBy === 'Status' ? (labels['status' + group.key] || group.name || group.key) : (group.name || labels.missing);
+                            const name = value.groupBy === 'Status' ? (labels[area.statusPrefix + group.key] || group.name || group.key) : (group.name || labels.missing);
                             const row = document.createElement('div'); row.className = 'report-bar-row'; row.setAttribute('role', 'listitem'); chart.append(row);
                             text('span', name, row).className = 'report-bar-label';
                             const track = document.createElement('div'); track.className = 'report-bar-track'; track.setAttribute('aria-hidden', 'true'); row.append(track);
