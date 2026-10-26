@@ -1,5 +1,7 @@
 # MCP-lesedekning – steg 9F
 
+> **Gjeldende føring etter 10A (26. oktober 2026):** Denne filens navn, 46 gamle samlerader og historiske checkpoint beholdes. Tidligere 9F videreføres som **steg 10 – Utvidet MCP-lesedekning**. [Operasjonsoversikten](mcp-read-operation-inventory.md) splitter radene til 116 baselineoperasjoner + tre nye funn og er primær fremdriftsmåling. Alle 28 gamle åpne/delvise rader består. [Ny rekkefølge og separat avslutningssjekkliste for 9A–9E](modernization-plan.md#43-steg-10a-revidert-plan-og-operasjonsbaseline) gjelder fremover: 10B struktur, 10C belegg, 10D tjenester, 10E møterom, 10F avtaler, 10G leasing, 10H sluttavstemming. PreviewBasisAsync nedenfor er historisk nestevalg og ligger nå under 10F, etter 10B–10E. Ingen MCP-implementering er gjort i 10A.
+
 Status: **påbegynt, ikke ferdig**. Dette er en dekningsoversikt, ikke en gjentakelse av steg 4s arkitekturmigrering. En Application-operasjon som er migrert er ikke dermed publisert gjennom MCP. Produksjonsinngangene nedenfor er kontrollert mot arbeidskopien; siste del av steget skal avstemme både denne listen og steg 4-oversikten på nytt.
 
 ## Baseline og kontroll av 9E
@@ -166,6 +168,8 @@ Faktisk verifikasjon og presist fortsettelsespunkt føres i moderniseringsplanen
 
 
 ## Checkpoint 7 – gjeldende status
+
+Dette er siste implementeringscheckpoint, bevart med opprinnelig lenkemål. Dets videre prioritering er erstattet av steg 10-planen ovenfor; resultater og 28 restrader er uendret.
 
 46 oversiktsrader og fortsatt **28 selvstendige helt/delvis åpne operasjonsrader**. Ingen hel rad lukkes av liste/detalj: den samlede grunnlagsraden er bare delvis dekket. Hjelperaden AgreementNoticeRules viser fortsatt samme åpne noticehistorikk som detaljraden, uten en ekstra autorisert inngang.
 

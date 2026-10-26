@@ -1,5 +1,7 @@
 # Kartlegging og plan for videreutvikling av TenantPlatform
 
+> **Gjeldende plan 26. oktober 2026 – steg 10A:** Steg 4 er implementert og sluttkontrollert i 19.35. Steg 9 er den avgrensede rapportleveransen 9A–9E, implementert og automatisert verifisert; brukerbekreftet 9D-testing beholdes, mens operativ/interaktiv 9E-avslutning ikke er bekreftet. Tidligere 9F videreføres som **steg 10: Utvidet MCP-lesedekning**. Historiske avsnitt 36–42 og lenkemål beholdes. Neste implementering er **10B struktur og organisasjon**, ikke PreviewBasisAsync. Se [gjeldende status, sjekkliste og rekkefølge](#43-steg-10a-revidert-plan-og-operasjonsbaseline) og [sporbar operasjonsbaseline](mcp-read-operation-inventory.md). Tidlige «nå/ikke ferdig/ingen MCP»-utsagn nedenfor beskriver tidspunktet i sine historiske avsnitt.
+
 Dato: 17. oktober 2026. Kodegrunnlag: Git-revisjon `78232b0`, undersøkt arbeidskopi uten eksisterende endringer ved oppstart.
 
 **Gjeldende føring for videre migrering (17. oktober 2026):** Hele steg 4 skal fullføres før steg 5 eller MCP. Eldre avsnitts forslag om en begrenset MCP-host før full migrering er historikk og gjelder ikke dette oppdraget. Se avsnitt 19 og [løpende migreringsoversikt](step-4-migration-inventory.md) for faktisk status. Steg 4 er fortsatt ikke ferdig.
@@ -2204,3 +2206,63 @@ Ingen av disse fem inngangene er implementert som MCP-lesing i checkpoint7. Rade
 Manuelt gjenstår senere minste SELECT/verktøyaktivering, økonomiutvalgets liste→detalj/revisjonsvisning, ugyldige/store snapshots, paging og status-/grantendring i annen økt. Tidligere uavklarte interaktive kontroller og 9E-driftsfeil er fortsatt ubekreftet. Generell sesjonsrevokering og flerinstansdrift er egne oppgaver. Containerbygg/8C er fortsatt utsatt.
 
 Ingen utviklings-/produksjonsdatabaseendring, operative GRANT-er, klientregistrering, driftsmigrering, ekte/betalte modellkall, utsendinger, deploy, commit, push eller Serga-endring inngår.
+
+
+## 43. Steg 10A: revidert plan og operasjonsbaseline
+
+**26. oktober 2026: 10A er en dokumentert planleveranse, ikke en ny MCP-implementering.** Application-/MCP-katalogen, rapportadapterne, autentiserings-/områdeskillet og de refererte Application-metodene er kontrollert mot arbeidskopien. Ingen produksjonskode, pakker, konfigurasjon eller database er endret. Steg 4s avsluttede arkitekturmigrering (19.35) beholdes; MCP-publisering er en separat oppgave.
+
+### 43.1 Steg 9 – avgrenset rapportleveranse og faktisk status
+
+| Del | Implementering | Automatisert verifikasjon | Brukerbekreftet interaktivt | Operativ aktivering |
+|---|---|---|---|---|
+| 9A | Personlige sider, eksplisitt lagring og deterministisk MCP-kjøring | Avsnitt 31 og senere 9A–9E-regresjoner | Ikke en egen ny helhetsbekreftelse i 10A | Må kontrolleres per bruker/konto/kilde; ikke utledet av tester |
+| 9B | Prompt til validert rapportutkast og forhåndsvisning | Avsnitt 32 og senere regresjoner | Tidligere brukerforløp/feilrettinger er historikk; ingen ny 10A-prøve | Som 9A |
+| 9C | Endre lagret side, før/etter, original/kopi, revisjonsvern | Avsnitt 33 og senere regresjoner | Ingen separat ny helhetsbekreftelse | Som 9A |
+| 9D | Valgfrie komponenter, kolonner, gruppering og synlige stolper | Avsnitt 34; senere full MCPClient-regresjon | **Brukeren bekreftet ved oppstart av 9E at siste 9D-rapportfunksjonalitet var ferdig testet.** Denne bekreftelsen beholdes. | Bekreftelsen utvides ikke til 9E eller senere MCP-verktøy |
+| 9E | Tjenesteforespørsler: query/aggregate, v3 og egen deterministisk adapter; hele opprettings-/redigeringskjeden | Avsnitt 35; sist full MCP/MCPClient-regresjon i 42.3 | **Ikke bekreftet**; tidligere kildefeil er fortsatt operativt ubekreftet | OAuth-scope/AllowServiceRequests, profilbinding, godkjenning og tolv SELECT-kolonner må alle være på plass; rapporterte false-kontroller er ikke senere bekreftet rettet |
+
+Kontrollert kode: `ReportAreas.Sources` har bare Agreements og ServiceRequests. `PersonalPageService`, `PersonalPageRunner`, `AgentReportDrafts` og eksisterende modell-/GUI-adaptere støtter deklarative definisjoner, eksplisitt preview/save og redigering. Avtaler v1/v2 (manglende Area betyr Agreements) og ServiceRequests v3 bevares. Lagret kjøring bruker versjonsbundne registerkall og personlig OAuth, uten AI eller direkte datalesefallback. Den tidligere kildefeilen er ikke bevis på manglende rapportimplementering, men grønne syntetiske tester er heller ikke bevis på operativ aktivering.
+
+**Avslutningssjekkliste for steg 9** – resultat må dokumenteres med dato, område, bruker/konto og kildeversjon, uten tokens/persondata:
+
+- [ ] **9E-kildefeilen:** dokumenter at riktig klient har AllowServiceRequests, personlig samtykke inkluderer scope, profilbinding er gjeldende og begge service_requests-verktøy er oppdaget/klassifisert/eksakt godkjent. Verifiser alle tolv nødvendige SELECT-kolonner i faktisk avgrenset leserolle og et vellykket query/aggregate-kall. Ikke slå sammen OAuth-, register- og SQL-feil til «godkjent».
+- [ ] **Avtaler:** registrer eksisterende relevant 9D-brukerbekreftelse som evidens; utfør bare manglende eller senere berørte kontroller. Dokumenter prompt → utkast → synlig forhåndsvisning med diagram/tabell og paging → eksplisitt lagring. Avvisning/feil skal ikke lagre eller vise nye ufullstendige tall.
+- [ ] **Tjenesteforespørsler:** samme komplette kjede med alle datoer, lagret Status/Building, nullverdier, ekte totals og paginert tabell. Kontroller at diagram faktisk rendres, ikke bare at det finnes tall.
+- [ ] **Begge områder:** åpne lagret side med «Endre med AI», kontroller serverbundet område/konto/kilde, før/etter, eksplisitt original- eller kopilagring og revisjonskonflikt. Modellen kan ikke skifte eier, konto, område eller tilkobling.
+- [ ] **Begge områder:** gjenåpne lagret side og kjør med AI deaktivert, inklusive neste tabellside og gammel avtalesidedefinisjon. Kontroller at ingen modell brukes og at feil ikke gir DB-fallback eller gamle tall presentert som nye.
+- [ ] **Tilgang:** ny lasting etter fjernet godkjenning/grant/medlemskap avvises; kontobytte og områdebytte blander ikke utkast/kilder. Kontroller berørte språk/etiketter. Før bare faktiske nye manuelle resultater inn; 9D-bekreftelsen trekkes ikke tilbake.
+
+Steg 9 er **implementert og automatisert verifisert, men ikke erklært operativt avsluttet**. Bred MCP-dekning er ikke et ferdigkriterium for steg 9. Containerbygg/deployment 8C forblir utsatt. Generell sesjonsrevokering, flerinstansdrift og separate produktregler er egne spor.
+
+### 43.2 Steg 10 – Utvidet MCP-lesedekning
+
+Tidligere 9F checkpoint 1–7 i avsnitt 36–42 er implementeringshistorikk for dette sporet. Ingen ferdige readere skal omimplementeres. Historiske «neste PreviewBasis»-tekster gjelder den gamle rekkefølgen; dette avsnittet har prioritet. Eksisterende kontraktsfilnavn og lenkemål beholdes. [Den gamle dekningsoversikten](mcp-read-coverage.md) bevarer 46 samlerader / 28 åpne eller delvise rader; [operasjonsoversikten](mcp-read-operation-inventory.md) er primær måling videre.
+
+| Delsteg | Avgrensning | Implementert | Delvis | Ikke implementert | Uavklart | Utelatt | Operasjoner |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 10A | Kodekontroll, oppsplittet baseline og gjennomførbar plan – denne dokumentasjonsleveransen | – | – | – | – | – | Ingen nye runtime-operasjoner |
+| 10B | Bygg, enheter, organisasjoner, organisasjons-/geografihierarki og beholdte kontovalg | 1 | 0 | 8 | 0 | 4 | 13 |
+| 10C | Lagrede beleggsperioder, liste/detalj og avgrenset rapport | 0 | 0 | 2 | 0 | 1 | 3 |
+| 10D | Resterende definisjoner/felt/provider/katalog og forespørselsvisninger/detalj; bevar 9E | 2 | 3 | 10 | 0 | 2 | 17 |
+| 10E | Rom, booking og lokal tilgjengelighet; ingen providertransport | 0 | 0 | 5 | 0 | 3 | 8 |
+| 10F | Resterende avtale-/notice-/analyse-/dokumentmetadata og avansert økonomi | 16 | 2 | 8 | 0 | 5 | 31 |
+| 10G | Leasingens liste-/detalj-/ordre-/livsløps-/plan-/faktura-/rapport-/dokument-/dimensjonslesing | 0 | 0 | 38 | 0 | 9 | 47 |
+| **Totalt 10B–10G** | **116 oppsplittede baselineoperasjoner + tre separate funn** | **19** | **5** | **71** | **0** | **24** | **119** |
+| 10H | Sluttavstemming av alle operasjoner, katalog, Application-autorisasjon, rapportavgrensning og steg 4-innganger | – | – | – | – | – | Kontroll av hele baselinen |
+
+Nye funn er N01 klassifikasjonskatalog (ikke MCP-implementert), N02 utstyrsbygg (ikke MCP-implementert) og N03 ordrebasert anskaffelsesforslag (utelatt skriveforberedelse). De finnes allerede i Application/steg 4, men hadde ingen egen rad i de 46 MCP-radene. De er ikke nye funksjonskrav skapt i 10A. Baseline uten tillegg har 19 implementerte, 5 delvise, 69 ikke implementerte og 23 utelatte operasjoner; ingen uavklarte. Eventuelle senere funn legges eksplisitt til med neste N-ID. Ingen prosent som likestiller et hierarkioppslag og fakturaavstemming.
+
+De 28 gamle restradene er alle krysskoblet: C02, C10, C13–14, C16–17, C19–20, C22, C24–27, C29–30, C32 og C34–45. Rene AgreementNoticeRules er ikke en ekstra autorisert inngang og peker til noticehistorikken på C02. Partial `GetBasisAsync` betyr lagret snapshot ferdig, aktualitetsvurdering gjenstår; `ListBasisAsync` er ferdig bare i dokumentert lagret feltutvalg. Rollevisningene for requests er fortsatt D selv om 9E-unionen er F. Ingen rest forsvinner ved oppsplittingen.
+
+**PreviewBasisAsync blir stående i 10F**, med berørte grunnlag, faktisk freshness/korreksjonsvurdering, bulkvalg/-preview og godkjenningslesing. Den gamle ±13-måneders mellomperioden, fakturadato-utvalg, retning/valuta, begrensning av arbeidsmengde og fravær av Commit skal bevares og verifiseres i et smalt uttrekk. Ingen av disse nye finansoperasjonene er implementert i 10A.
+
+### 43.3 Leveransegrenser, neste implementering og dokumentasjonskontroll
+
+Hver I/D-rad i [operasjonsoversikten](mcp-read-operation-inventory.md) har konkret metode/variant, behov/feltutvalg, Application-regel, effekter, MCP-status, evidens og rest/aksept. Rapportstøtte og drift registreres separat. Der listes de avgrensede nye rapportkildene og deres komplette opprettings-/redigerings-/modellfrie kjede; detalj-/oppslagsverktøy krever ikke automatisk rapportadapter. Nye domener må ha eksplisitt vurdert scope/klienttillatelse/samtykke/profilbinding og minste SELECT. Avtalescope er ingen generell datafullmakt. Eksisterende versjonsgodkjenning, personlig OAuth, samtaleisolasjon og tolvgrensen beholdes.
+
+**Eksakt første 10B-uttrekk: STR-001, BuildingService.GetBuildingsAsync-semantikken.** Planlegg smal Application BuildingReportingReader med Buildings.Open, konkret SQL query/count/group og `buildings_query` / `buildings_aggregate` i MCP. Fast side25, Name/ID, navn-søk, reell total og valgfri eksakt lagret City-gruppering med missing-gruppe og eksplisitt overflow. Ingen detaljtellinger/enhetsliste, nye statusregler eller avtaleautorisasjon. Først etter direkte Application-/OAuth/MCP-/isolert PostgreSQL-prøver av legacy-listetilgang, avvisninger/tilbakekalling, filter/paging/null/overflow og skrivevern er STR-001 ferdig. Bygg-rapportadapteren følger som neste sammenhengende slice; alene STR-001 lukker ikke 10B. Den nøyaktige kontrakten, foreslåtte filer og videre rekkefølge står i inventaret. Dette oppdraget implementerer ingen av dem.
+
+**Utført kontroll i 10A:** alle 46 gamle rader har krysskobling; alle 28 restrader har reell I/D-rest; C15 er ikke dobbeltelt; 116 baselineoperasjoner og tre eksplisitte tillegg summerer til 119. Per-delstegsummer er kontrollert mot operasjonsradene. Eksisterende moderniseringsoverskrifter og coverage-overskrifter/eksplisitte ankere beholdes; lokale nye dokumentlenker er kontrollert. Diffen omfatter bare nødvendig arkitekturdokumentasjon. Ingen bygg/test/PostgreSQL er kjørt på nytt for denne dokumentasjonsendringen, og ingen ny runtime-/GUI-/driftsverifikasjon påstås. Eksisterende dokumenterte resultater i 34/35/42 er referanser, ikke nye kjøringer.
+
+Ingen vanlig Web-start, ekte modellkall, database-/GRANT-/klientregistrerings-/konfigurasjonsendring, migrering, deploy, commit, push eller Serga-endring. Containerbygg er fortsatt utsatt. **10A er avsluttet som plan; 10B–10H og utvidet MCP-dekning er ikke ferdige.**

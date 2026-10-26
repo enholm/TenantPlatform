@@ -1,5 +1,7 @@
 # Personlige rapportsider (9A–9D)
 
+> **Statusavgrensning etter 10A:** Rapportleveransen er steg **9A–9E**; bredere MCP-lesedekning (tidligere 9F) videreføres i steg 10. Avtaler og tjenesteforespørsler er fortsatt de eneste implementerte rapportområdene. Brukerens bekreftede 9D-test beholdes; den bekrefter ikke 9E-driftsaktivering. [Felles avslutningssjekkliste](modernization-plan.md#431-steg-9--avgrenset-rapportleveranse-og-faktisk-status) omfatter begge områders oppretting, redigering og modellfrie kjøring samt tidligere ubekreftet 9E-kildefeil. Ingen ny funksjonalitet, test eller operativ aktivering følger av dokumentasjonsendringen.
+
 9F checkpoint3 beholder v1/v2/v3 og legger til [separat chatområdebinding og manuelt valg av støttet rapportområde](read-agent-areas.md#rapportsider). Lagret sides backendområde bestemmer AI-redigering; modellen og URL kan ikke bytte det. Modellfri rapportkjøring bruker fortsatt den lagrede definisjonens adapter, uavhengig av chatvalget.
 
 **Gjeldende kontrakt:** se [9D](#9d-valgfrie-komponenter-gruppering-og-kolonner) nedenfor. Beskrivelsene av v1 og obligatoriske komponenter i 9A–9C er historikk; nye lagringer bruker v2.

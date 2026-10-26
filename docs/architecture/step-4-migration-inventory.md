@@ -558,3 +558,8 @@ Ferdig Application-migrering betyr ikke at operasjonen er MCP-publisert eller sk
 
 
 9F checkpoint2 publiserer nå også eksisterende AgreementDeadlineReader.ReadAsync, AgreementDashboardService.GetDashboardContractsAsync og fem dimensjoner av AgreementInsightsService.GetInsightsAsync gjennom avgrensede MCP-kontrakter. SQL-sideprojeksjonen i AgreementDeadlineData er snevret inn uten å endre eksisterende filtre/kategorier/GUI-kontrakt. Dette gjør ikke andre migrerte steg4-lesinger MCP-tilgjengelige; [gjeldende 9F-oversikt](mcp-read-coverage.md#checkpoint-2--gjeldende-status) har fortsatt33 helt/delvis åpne rader. Personkatalogen i Owner-innsikt og vilkårlig AssignedUserId er ikke eksponert.
+
+
+### Videre MCP-publisering etter 10A
+
+Steg 4s ferdigstatus og historiske 9F-henvisninger ovenfor beholdes. Tidligere 9F videreføres under **steg 10 – Utvidet MCP-lesedekning**; [ny operasjonsbaseline](mcp-read-operation-inventory.md) avstemmer alle 46 MCP-samlerader med faktisk Application-kode. Klassifikasjonskatalog, utstyrsbygg og ordrebasert anskaffelsesforslag er registrert som separate funn i MCP-oversikten, uten å gjøre ferdig steg 4-migrering uferdig. Leasing-dashboard/oppfølging trenger fortsatt nye skrivefrie lesespor; historiske autoriserte initialiseringsfasader er ikke MCP-readere. [Gjeldende prioritering og avgrensning av steg 9](modernization-plan.md#43-steg-10a-revidert-plan-og-operasjonsbaseline). Ingen produksjonsendring eller ny testkjøring i 10A.
