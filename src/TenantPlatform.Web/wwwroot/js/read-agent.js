@@ -7,6 +7,19 @@
             const get = name => panel.querySelector(`[data-${name}]`);
             let conversation = null, request = null, generation = 0, turns = [], expiryTimer = null, report = null, reportFresh = false;
             let editPage = panel.dataset.editPage || null;
+            const areas = JSON.parse(panel.dataset.areas || '{}');
+            let selectedArea = panel.dataset.editArea || '';
+            function populateAreas(preferred = '') {
+                const select = get('area'); select.replaceChildren();
+                const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = panel.dataset.areaPlaceholder; select.append(placeholder);
+                for (const area of areas[get('connection').value] || []) {
+                    const option = document.createElement('option'); option.value = area;
+                    option.textContent = area === 'Agreements' ? panel.dataset.areaAgreements : area === 'AgreementDetails' ? panel.dataset.areaDetails : area === 'AgreementFinance' ? panel.dataset.areaFinance : area === 'ServiceRequests' ? panel.dataset.areaServiceRequests : panel.dataset.areaExternal;
+                    select.append(option);
+                }
+                select.value = (areas[get('connection').value] || []).includes(preferred) ? preferred : '';
+                selectedArea = select.value;
+            }
             const saves = new Set(['report-save', 'report-update', 'report-copy']);
             function text(tag, value, parent) { const node = document.createElement(tag); node.textContent = value; parent.append(node); return node; }
             function render(verified = true, extra = null) {
@@ -75,7 +88,7 @@
                 } finally { if (version === generation) { request = null; busy(false); renderDraft(reportFresh); } }
             }
             const busy = value => {
-                get('send').disabled = value || !get('consent').checked || !get('connection').value;
+                get('send').disabled = value || !get('consent').checked || !get('connection').value || !get('area').value;
                 get('cancel').disabled = !value; get('connection').disabled = value || !!editPage || !!report?.editingPageId; get('consent').disabled = value;
                 const start = get('edit-start'); if (start) start.disabled = value || !get('consent').checked;
             };
@@ -105,6 +118,7 @@
             }
             function acceptStart(started) {
                 conversation = started.conversation;
+                if (started.area) { get('area').value = started.area; selectedArea = started.area; }
                 if (expiryTimer) clearTimeout(expiryTimer);
                 expiryTimer = setTimeout(() => { reset(); get('status').textContent = panel.dataset.expired; }, started.expiresInSeconds * 1000);
             }
@@ -112,7 +126,7 @@
                 if (request || !get('consent').checked) return;
                 // Explicit fresh opening; no old chat history or other connection is sent to this session.
                 const resetting = generation + 1; await reset(); if (generation !== resetting) return;
-                editPage = panel.dataset.editPage; get('connection').value = panel.dataset.editConnection;
+                editPage = panel.dataset.editPage; get('connection').value = panel.dataset.editConnection; populateAreas(panel.dataset.editArea);
                 request = new AbortController(); const signal = request.signal; const version = ++generation; busy(true);
                 try {
                     await checkContext(); if (version !== generation) return;
@@ -125,13 +139,13 @@
             });
             get('question-form').addEventListener('submit', async event => {
                 event.preventDefault();
-                if (!get('connection').value || !get('consent').checked || request) return;
+                if (!get('connection').value || !get('area').value || !get('consent').checked || request) return;
                 const question = get('prompt').value;
                 render(false); if (report) { report.preview = null; renderDraft(false); } busy(true); get('status').textContent = panel.dataset.running;
                 request = new AbortController(); const signal = request.signal; const version = ++generation;
                 try {
                     if (!conversation) {
-                        const started = await post(editPage ? 'report-edit' : 'begin', { connection: get('connection').value, pageId: editPage || undefined, account: panel.dataset.account, sharingAccepted: true }, signal);
+                        const started = await post(editPage ? 'report-edit' : 'begin', { ...(editPage ? {} : { area: get('area').value }), connection: get('connection').value, pageId: editPage || undefined, account: panel.dataset.account, sharingAccepted: true }, signal);
                         if (generation !== version) { post('delete', { conversation: started.conversation }).catch(() => {}); return; }
                         acceptStart(started); if (started.report) { report = started.report; renderDraft(false); }
                     }
@@ -161,7 +175,32 @@
                 if (conversation) { try { await post('cancel', { conversation }); } catch { /* No completed data is reintroduced. */ } }
             });
             get('new').addEventListener('click', () => reset());
-            get('connection').addEventListener('change', () => reset());
+            get('connection').addEventListener('change', () => { populateAreas(); return reset(); });
+            get('area').addEventListener('change', async () => {
+                const next = get('area').value;
+                if (next === selectedArea) return;
+                if ((conversation || request || (report && !report.savedPageId)) && !window.confirm(panel.dataset.areaConfirm)) { get('area').value = selectedArea; return; }
+                const previous = conversation; const connection = get('connection').value;
+                // Invalidate locally BEFORE awaiting any server response, including a pending begin.
+                generation++; const version = generation;
+                request?.abort(); request = null; conversation = null; turns = []; report = null; editPage = null;
+                if (expiryTimer) clearTimeout(expiryTimer); expiryTimer = null;
+                selectedArea = next; get('edit-intro')?.replaceChildren(); render(); renderDraft(); get('prompt').value = ''; busy(false);
+                if (!previous) return;
+                if (!next) { await post('delete', { conversation: previous }).catch(() => {}); return; }
+                request = new AbortController(); const signal = request.signal; busy(true);
+                try {
+                    const started = await post('switch-area', { conversation: previous, area: next, resetAccepted: true }, signal);
+                    if (version !== generation) { post('delete', { conversation: started.conversation }).catch(() => {}); return; }
+                    await checkContext();
+                    if (version !== generation || connection !== get('connection').value) { post('delete', { conversation: started.conversation }).catch(() => {}); return; }
+                    acceptStart(started); get('status').textContent = '';
+                } catch (error) {
+                    await post('delete', { conversation: previous }).catch(() => {});
+                    if (version === generation) { if (error.accessChanged) await reset(true); else get('status').textContent = error.message; }
+                } finally { if (version === generation) { request = null; busy(false); } }
+            });
+            populateAreas(selectedArea);
             get('consent').addEventListener('change', () => { if (!get('consent').checked) reset(); else busy(false); });
             busy(false);
             window.addEventListener('focus', checkContext);

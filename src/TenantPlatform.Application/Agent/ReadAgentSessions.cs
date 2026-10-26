@@ -20,10 +20,11 @@ public sealed class ReadAgentSessions : IDisposable
     private long sequence;
     private readonly Dictionary<Guid, Session> sessions = [];
     private readonly Dictionary<CancellationTokenSource, (Guid User, long Bytes, long DraftBytes)> running = [];
-    private sealed class Session(ActorSnapshot owner, Guid connection, DateTimeOffset end, long order)
+    private sealed class Session(ActorSnapshot owner, Guid connection, DateTimeOffset end, long order, ReadAgentArea area)
     {
         public ActorSnapshot Owner { get; } = owner;
         public Guid Connection { get; } = connection;
+        public ReadAgentArea Area { get; } = area;
         public DateTimeOffset End { get; } = end;
         public long Order { get; } = order;
         public CancellationTokenSource? Run { get; set; }
@@ -33,7 +34,7 @@ public sealed class ReadAgentSessions : IDisposable
         public bool Trimmed { get; set; }
         public long Bytes { get; set; }
     }
-    public Guid Create(ActorSnapshot owner, Guid connection, Guid? preserve = null)
+    public Guid Create(ActorSnapshot owner, Guid connection, Guid? preserve = null, ReadAgentArea area = ReadAgentArea.Agreements)
     {
         lock (gate)
         {
@@ -46,10 +47,22 @@ public sealed class ReadAgentSessions : IDisposable
                 sessions.Remove(idle.Key);
             }
             if (sessions.Count >= 1000) throw new ReadAgentException("Busy");
-            var id = Guid.NewGuid(); sessions[id] = new(owner, connection, clock.GetUtcNow().Add(Lifetime), ++sequence); return id;
+            var id = Guid.NewGuid(); sessions[id] = new(owner, connection, clock.GetUtcNow().Add(Lifetime), ++sequence, area); return id;
         }
     }
     public Guid Connection(Guid id, ActorSnapshot owner) { lock (gate) return Require(id, owner).Connection; }
+    public Guid Replace(Guid id, ActorSnapshot owner, ReadAgentArea area)
+    {
+        lock (gate)
+        {
+            var previous = Require(id, owner);
+            previous.Run?.Cancel();
+            var replacement = Create(owner, previous.Connection, id, area);
+            previous.History.Clear(); previous.Draft = null; sessions.Remove(id);
+            return replacement;
+        }
+    }
+    public ReadAgentArea Area(Guid id, ActorSnapshot owner) { lock (gate) return Require(id, owner).Area; }
     public Lease Start(Guid id, ActorSnapshot owner, ReadAgentLimits limits, CancellationToken ct)
     {
         lock (gate)

@@ -5,5 +5,6 @@
     <ProjectReference Include="../../src/TenantPlatform.Web/TenantPlatform.Web.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.11" />
     <Compile Include="../Shared/OAuthTestHost.cs" Link="OAuthTestHost.cs" />
+    <Compile Include="../Shared/FinanceReadPrivileges.cs" Link="FinanceReadPrivileges.cs" />
   </ItemGroup>
 </Project>

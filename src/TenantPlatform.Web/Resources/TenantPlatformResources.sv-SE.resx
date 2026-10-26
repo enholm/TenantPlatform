@@ -3502,4 +3502,21 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="RequestReportTotal" xml:space="preserve"><value>Unika behöriga tjänsteförfrågningar</value></data>
   <data name="RequestReportTable" xml:space="preserve"><value>Ordning: förfrågningstabell</value></data>
   <data name="RequestReportAggregateFacts" xml:space="preserve"><value>Gruppering: {0}; {1} unika tjänsteförfrågningar i {2} grupper. Fullständig: {3}; överlappning: {4}; konsekvent snapshot: {5}.</value></data>
+  <data name="AgentNoticeDeadlineCategories" xml:space="preserve"><value>Fristkategorierna gäller synliga lagrade frister före listfiltren och kan överlappa. En tom lista kan bero på att initialisering saknas.</value></data>
+  <data name="AgentNoticePrioritySelection" xml:space="preserve"><value>Prioritetslistan visar högst fem avtal. Den är inte en fullständig avtalslista eller ett totalantal.</value></data>
+  <data name="AgentNoticeInsightScope" xml:space="preserve"><value>Insikter utesluter arkiverade avtal. Med vald hierarkinod gäller totalen bara detta underträd; summera inte antal från flera nivåer.</value></data>
+  <data name="AgentArea" xml:space="preserve"><value>Område</value></data>
+  <data name="AgentSelectArea" xml:space="preserve"><value>Välj område</value></data>
+  <data name="AgentAreaAgreements" xml:space="preserve"><value>Avtal – översikt och rapport</value></data>
+  <data name="AgentAreaServiceRequests" xml:space="preserve"><value>Tjänsteförfrågningar</value></data>
+  <data name="AgentAreaExternal" xml:space="preserve"><value>Externa verktyg</value></data>
+  <data name="AgentAreaExplanation" xml:space="preserve"><value>Området begränsar verktygen. Det ger ingen ny åtkomst eller godkännande. Byte startar en tom konversation.</value></data>
+  <data name="AgentAreaResetConfirm" xml:space="preserve"><value>Byte tar bort konversationen, källkontexten och osparade rapportändringar och avbryter pågående körning. Fortsätta?</value></data>
+  <data name="AgentErrorAreaInvalid" xml:space="preserve"><value>Området är okänt eller saknar tillgängliga godkända verktyg på anslutningen.</value></data>
+  <data name="PagesAreaResetConfirm" xml:space="preserve"><value>Byte av rapportområde tar bort osparade ändringar i detta formulär och avbryter förhandsvisningen. Fortsätta?</value></data>
+  <data name="AgentAreaAgreementDetails" xml:space="preserve"><value>Avtal – detaljer och uppföljning</value></data>
+  <data name="AgentAreaAgreementFinance" xml:space="preserve"><value>Avtal – ekonomi</value></data>
+  <data name="AgentFinanceFacts" xml:space="preserve"><value>Ekonomikälla {0}; valuta {1}; riktning {2}; period {3}–{4}; komplett {5}; radversioner {6}; priser {7}; prognosperioder {8}. Prognos är beräknad, inte fakturor eller betalningar.</value></data>
+  <data name="AgentFinanceHistory" xml:space="preserve"><value>Lagrade rader och priser</value></data>
+  <data name="AgentFinanceForecast" xml:space="preserve"><value>Beräknad prognos</value></data>
 </root>

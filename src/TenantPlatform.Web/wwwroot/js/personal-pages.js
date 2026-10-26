@@ -60,6 +60,10 @@
                 } catch (error) { if (version === generation) status.textContent = error.message; }
                 finally { if (version === generation) request = null; }
             }
+            panel.querySelector('[data-report-area]')?.addEventListener('change', event => {
+                if (confirm(panel.dataset.areaConfirm)) { clear(); location.assign('/my-pages?area=' + encodeURIComponent(event.target.value)); }
+                else event.target.value = panel.dataset.area;
+            });
             form.addEventListener('submit', event => { event.preventDefault(); try { mutate('save', { id: panel.dataset.id || null, revision: panel.dataset.revision, definition: definition() }); } catch (error) { status.textContent = error.message; } });
             panel.querySelector('[data-preview]').addEventListener('click', () => run(1, true));
             panel.querySelector('[data-refresh]')?.addEventListener('click', () => run(1, false));

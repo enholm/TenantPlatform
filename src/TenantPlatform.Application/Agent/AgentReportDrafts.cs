@@ -47,6 +47,15 @@ public sealed class AgentReportDrafts(PersonalPageService pages, PersonalPageRun
             new JsonSchemaExporterOptions { TreatNullObliviousAsNonNullable = true })));
 
     // A source cannot grant proposal capability: only a direct user request can expose this local action.
+    public static AgentTool ForArea(ReportArea area)
+    {
+        var tool = Tool();
+        var parameters = System.Text.Json.Nodes.JsonNode.Parse(tool.Parameters.GetRawText())!;
+        parameters["properties"]!["area"] = new System.Text.Json.Nodes.JsonObject {
+            ["type"] = "string", ["enum"] = new System.Text.Json.Nodes.JsonArray(area.ToString()) };
+        return tool with { Description = tool.Description + " Current server-bound area: " + area + ". Use only this area; it cannot be changed.",
+            Parameters = JsonSerializer.SerializeToElement(parameters) };
+    }
     public static bool Requested(string prompt, bool hasDraft) => Regex.IsMatch(prompt,
         hasDraft ? @"\b(lag|opprett|endre|kall|ta|bare|kun|vis|sett|bytt|flytt|fjern|grupper|bruk|lagre|create|make|change|rename|only|show|set|use|save|move|remove|group|skapa|ändra|kalla|visa|spara|flytta)\b"
         : @"\b(lag|lage|opprett|opprette|create|make|build|skapa)\b.*\b(side|siden|rapport|rapportside|page|report|sida|diagram|chart)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Singleline);
@@ -66,7 +75,7 @@ public sealed class AgentReportDrafts(PersonalPageService pages, PersonalPageRun
             if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(raw))) != dependency.Fingerprint) throw new ReadAgentException("HistoryUnavailable");
         }
     }
-    public async Task<AgentReportPreview> PrepareAsync(string arguments, Guid connection, AgentReportDraft? previous,
+    public async Task<AgentReportPreview> PrepareAsync(string arguments, Guid connection, AgentReportDraft? previous, ReportArea requiredArea,
         Func<string, string, string, CancellationToken, Task<string>> read, CancellationToken ct)
     {
         if (Encoding.UTF8.GetByteCount(arguments) > 16384) throw new ReadAgentException("DraftInvalid");
@@ -78,8 +87,8 @@ public sealed class AgentReportDrafts(PersonalPageService pages, PersonalPageRun
             intent = doc.RootElement.Deserialize<ReportPageProposal>(Json) ?? throw new JsonException();
         }
         catch (JsonException) { throw new ReadAgentException("DraftInvalid"); }
-        var area = intent.Area ?? previous?.Definition.Area ?? ReportArea.Agreements;
-        if (!Enum.IsDefined(area) || previous is not null && area != previous.Definition.Area) throw new ReadAgentException("DraftInvalid");
+        var area = intent.Area ?? previous?.Definition.Area ?? requiredArea;
+        if (!Enum.IsDefined(area) || area != requiredArea || previous is not null && area != previous.Definition.Area) throw new ReadAgentException("DraftInvalid");
         intent = intent with { Area = area, Title = intent.Title.Trim(),
             GroupBy = intent.GroupBy ?? previous?.Definition.GroupBy ?? AgreementReportGrouping.Building,
             Columns = intent.Columns ?? previous?.Definition.Columns ?? (area == ReportArea.Agreements ? PageDefinitions.LegacyColumns : new[] { PageColumn.Title, PageColumn.Status, PageColumn.Building, PageColumn.CreatedAt }) };

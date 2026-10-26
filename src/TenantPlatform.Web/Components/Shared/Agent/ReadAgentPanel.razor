@@ -7,6 +7,8 @@
 @inject Microsoft.Extensions.Options.IOptions<ReadAgentOptions> Options
 
 <section class="card card-body" @attributes="TenantPlatform.Web.PersonalPages.ReportLabels.Attributes(L)" data-read-agent data-account="@account" data-context="@context" data-csrf="@verification"
+    data-areas="@System.Text.Json.JsonSerializer.Serialize(connections.ToDictionary(c => c.Id.ToString(), c => c.Areas.Select(a => a.Area.ToString()).ToArray()))"
+    data-edit-area="@editArea" data-area-confirm="@L["AgentAreaResetConfirm"]" data-area-details="@L["AgentAreaAgreementDetails"]" data-area-finance="@L["AgentAreaAgreementFinance"]" data-area-agreements="@L["AgentAreaAgreements"]" data-area-service-requests="@L["AgentAreaServiceRequests"]" data-area-external="@L["AgentAreaExternal"]" data-area-placeholder="@L["AgentSelectArea"]"
     data-edit-page="@EditPage" data-edit-connection="@editConnection" data-edit-updated="@L["DraftUpdated"]" data-edit-copied="@L["DraftCopied"]"
     data-editing="@L["DraftEditing"]" data-edit-save="@L["DraftSaveChanges"]" data-edit-copy="@L["DraftSaveCopy"]" data-edit-discard="@L["DraftDiscard"]" data-edit-reload="@L["DraftReload"]" data-edit-reload-confirm="@L["DraftReloadConfirm"]" data-edit-changes="@L["DraftChanges"]" data-edit-no-changes="@L["DraftNoChanges"]"
     data-running="@L["AgentRunning"]" data-done="@L["AgentDone"]" data-failure="@L["AgentErrorUnavailable"]"
@@ -30,6 +32,10 @@
                 @foreach (var connection in connections) { <option value="@connection.Id" selected="@(editConnection == connection.Id)">@connection.Name (@connection.ToolCount)</option> }
             </select>
         </label>
+        <label class="form-label">@L["AgentArea"]
+            <select class="form-select" data-area required><option value="">@L["AgentSelectArea"]</option></select>
+        </label>
+        <p class="form-text">@L["AgentAreaExplanation"]</p>
         <label class="form-check mb-3"><input type="checkbox" class="form-check-input" data-consent /> <span>@L["AgentAcceptDisclosure"]</span></label>
         @if (EditPage.HasValue) { <p data-edit-intro>@L["DraftEditing"]: @editTitle</p><button class="btn btn-outline-primary" type="button" data-edit-start>@L["PagesEditAi"]</button> }
         <form data-question-form>
@@ -49,6 +55,7 @@
     [Parameter] public HttpContext? RequestContext { get; set; }
     [Parameter] public Guid? EditPage { get; set; }
     private Guid? editConnection;
+    private string? editArea;
     private string? editTitle;
     private Guid? account;
     private string? context, verification;
@@ -71,7 +78,7 @@
                 connections = await agent.ConnectionsAsync(http.RequestAborted);
                 if (EditPage is Guid pageId) {
                     var draft = await agent.EditPageAsync(pageId, http.RequestAborted);
-                    editConnection = draft.Definition.ConnectionId; editTitle = draft.Definition.Title;
+                    editConnection = draft.Definition.ConnectionId; editTitle = draft.Definition.Title; editArea = ReadAgentAreas.FromReport(draft.Definition.Area).ToString();
                 }
             }
         }

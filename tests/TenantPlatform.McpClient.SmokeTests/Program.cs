@@ -72,6 +72,11 @@ await using(var admin=new NpgsqlConnection(connection))
     await admin.OpenAsync(); await using var command=new NpgsqlCommand("CREATE ROLE internal_mcp_reader LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT; REVOKE CREATE ON SCHEMA public FROM PUBLIC; GRANT CONNECT ON DATABASE tenant_mcp_client_tests TO internal_mcp_reader; GRANT USAGE ON SCHEMA public TO internal_mcp_reader; GRANT SELECT ON accounts,users,user_accounts,user_account_roles,agreements,agreement_access,organizations,agreement_reminder_settings,buildings,units,organization_elements,geographic_areas TO internal_mcp_reader",admin); await command.ExecuteNonQueryAsync();
     await using var requestGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"RequesterUserId\",\"RequesterOrganizationId\",\"AssignedServiceProviderOrganizationId\",\"BuildingId\",\"UnitId\",\"Title\",\"Status\",\"CreatedAt\",\"SubmittedAt\",\"CompletedAt\") ON public.service_requests TO internal_mcp_reader", admin);
     await requestGrant.ExecuteNonQueryAsync();
+    await using var deadlineGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"AgreementId\",\"Kind\",\"DueDate\",\"Status\",\"State\",\"UpdatedUtc\",\"AssignedUserId\") ON public.agreement_deadlines TO internal_mcp_reader", admin);
+    await deadlineGrant.ExecuteNonQueryAsync();
+    await using var extensionGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"Name\") ON public.agreement_indices TO internal_mcp_reader; GRANT SELECT (\"Id\",\"AccountId\",\"DeadlineId\",\"Kind\",\"CreatedUtc\") ON public.agreement_deadline_history TO internal_mcp_reader", admin);
+    await extensionGrant.ExecuteNonQueryAsync();
+    await using var financeGrant = new NpgsqlCommand(FinanceReadPrivileges.Sql("internal_mcp_reader"), admin); await financeGrant.ExecuteNonQueryAsync();
 }
 var readConnection=new NpgsqlConnectionStringBuilder(connection) { Username="internal_mcp_reader" }.ConnectionString;
 var clock=new AdjustableClock(); var logs=new LogCapture(); var route=new RouteControl();

@@ -550,3 +550,11 @@ Sluttkontrollen gikk også utenfor leasing: alle offentlige asynkrone Web-tjenes
 **Separate spor:** PropertyAdmin-produktregler, harmonisering av dokumenterte legacy kandidat-/bakgrunnsroller, større sesjons-/initialiseringsarkitektur og generell sesjonsrevokering er ikke utvidet eller erklært løst. Nye Application-kall revaliderer aktivstatus/medlemskap/grants/roller; det innfører ikke en ny global økt-/cookie-revokeringsgaranti. De separate sporene endrer ikke at steg 4s migrering og sluttkontroll nå er gjennomført.
 
 Steg 5 er ikke startet. Ingen MCP-host, agent, nye roller, deploy, commit eller push er gjort. Denne leveransen gir ikke i seg selv autorisasjon til å starte steg 5.
+
+
+## MCP-dekning etter steg 4 (9F)
+
+Ferdig Application-migrering betyr ikke at operasjonen er MCP-publisert eller skrivefri. [9F-dekningsoversikten](mcp-read-coverage.md) er den separate, løpende listen over faktiske verktøy, åpne uttrekk og faglige utelatelser. Første fristprojeksjon har eget autorisert Application-brukstilfelle og SQL-sideutvalg; eksisterende GUI-initialisering er ikke eksponert. Det er ved 9F-kontrollen også bekreftet at LeasingFollowupService.ListLeasingFollowupsAsync kjører kontovis initialisering, og at GetLeasingDashboardAsync bruker denne. Deres autoriserte steg 4-orkestrering er ikke en skrivefri MCP-lesegaranti. Ingen steg 4-rad markeres umigrert av den grunn; nye skrivefrie leseinnganger gjenstår før disse to kan publiseres gjennom MCP.
+
+
+9F checkpoint2 publiserer nå også eksisterende AgreementDeadlineReader.ReadAsync, AgreementDashboardService.GetDashboardContractsAsync og fem dimensjoner av AgreementInsightsService.GetInsightsAsync gjennom avgrensede MCP-kontrakter. SQL-sideprojeksjonen i AgreementDeadlineData er snevret inn uten å endre eksisterende filtre/kategorier/GUI-kontrakt. Dette gjør ikke andre migrerte steg4-lesinger MCP-tilgjengelige; [gjeldende 9F-oversikt](mcp-read-coverage.md#checkpoint-2--gjeldende-status) har fortsatt33 helt/delvis åpne rader. Personkatalogen i Owner-innsikt og vilkårlig AssignedUserId er ikke eksponert.

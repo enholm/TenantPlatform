@@ -44,7 +44,7 @@ static partial class RegistryChecks
         var intent = new ReportPageProposal("Avtaleutløp", new(PagePeriodKind.NextMonths, 3), new(Search: "Draft fixture"),
             [PageComponent.Metric, PageComponent.BuildingChart, PageComponent.AgreementTable]);
         model.ReportArguments = JsonSerializer.Serialize(intent, AgentReportDrafts.Json);
-        var conversation = await Agent(a => a.BeginAsync(source, account, true));
+        var conversation = await Agent(a => a.BeginAsync(source, account, true, ReadAgentArea.Agreements));
         var answer = await Agent(a => a.AskAsync(conversation, "Lag en side med avtaler som utløper de neste tre månedene, med antall, diagram per bygg og avtaletabell."));
         var report = answer.Report ?? throw new Exception("Missing draft preview");
         Check(report.Preview.Aggregate!.TotalCount == 2 && report.Preview.Table!.Items.Length == 2 && report.Draft.Definition.ConnectionId == source,
@@ -131,7 +131,7 @@ static partial class RegistryChecks
         Check(model.Payloads.Count == modelCount, "9B saved page opens through 9A without a model or model key"); options.Enabled = true; options.ApiKey = previousKey;
         Console.WriteLine("Isolating report conflict/revocation quota window."); await Task.Delay(TimeSpan.FromSeconds(61));
         // A new draft sees the collection revision at preview. A manual write must cause a conflict, not a blind retry.
-        sessions.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true)); model.ReportArguments = JsonSerializer.Serialize(intent, AgentReportDrafts.Json);
+        sessions.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true, ReadAgentArea.Agreements)); model.ReportArguments = JsonSerializer.Serialize(intent, AgentReportDrafts.Json);
         var conflict = (await Agent(a => a.AskAsync(conversation, "Lag en rapportside"))).Report!.Draft;
         var all = await Pages(s => s.ListAsync()); await Pages(s => s.SaveAsync(saved, all.Revision, stored.Definition with { Title = "Manual edit" }));
         await Failure(() => Agent(a => a.SaveReportAsync(conversation, conflict.Id, conflict.Revision)), "DraftConflict");
@@ -141,9 +141,9 @@ static partial class RegistryChecks
         await Denied(() => Scope(sp => sp.GetRequiredService<ReadAgentService>().SaveReportAsync(conversation, conflict.Id, conflict.Revision), member));
         await Denied(() => Scope(sp => sp.GetRequiredService<ReadAgentService>().SaveReportAsync(conversation, conflict.Id, conflict.Revision), selected: foreign));
         // A source or an unrelated question cannot enable the proposal action.
-        var ext = await Agent(a => a.BeginAsync(external, account, true));
+        var ext = await Agent(a => a.BeginAsync(external, account, true, ReadAgentArea.External));
         await Failure(() => Agent(a => a.AskAsync(ext, "Lag en rapportside")), "InvalidTool");
-        sessions.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true));
+        sessions.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true, ReadAgentArea.Agreements));
         await Failure(() => Agent(a => a.AskAsync(conversation, "Hvilke avtaler har vi?")), "InvalidTool");
         var last = (await Agent(a => a.AskAsync(conversation, "Lag en rapportside"))).Report!.Draft;
         // Cancellation must preserve the successful draft and reject a late proposal.
@@ -157,7 +157,7 @@ static partial class RegistryChecks
         await Agent(async a => { await a.DeleteAsync(conversation); return true; });
         await Denied(() => Agent(a => a.SaveReportAsync(conversation, last.Id, last.Revision)));
         Console.WriteLine("Isolating derived-intent resource validation quota window."); await Task.Delay(TimeSpan.FromSeconds(61));
-        sessions.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true)); model.ReportReadFirst = true;
+        sessions.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true, ReadAgentArea.Agreements)); model.ReportReadFirst = true;
         var derived = (await Agent(a => a.AskAsync(conversation, "Lag en rapportside"))).Report!.Draft;
         model.ReportReadFirst = false;
         Check(derived.Dependencies?.Count == 1, "9B model-derived intent retains its actual resource dependencies");
@@ -167,7 +167,7 @@ static partial class RegistryChecks
         await Failure(() => Agent(a => a.SaveReportAsync(conversation, derived.Id, derived.Revision)), "HistoryUnavailable");
         await Failure(() => Agent(a => a.PreviewReportAsync(conversation, derived.Id, derived.Revision)), "DraftConflict");
         Check((await Pages(s => s.ListAsync())).Pages.Length == initial.Pages.Length + 1, "9B changed source invalidates derived draft after history trimming and prevents saving");
-        sessions.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true)); model.ReportReadFirst = true;
+        sessions.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true, ReadAgentArea.Agreements)); model.ReportReadFirst = true;
         model.BeforeReport = async () => { await using var db = factory.CreateDbContext(); await db.Agreements.Where(a => a.Id == rows[0]).ExecuteUpdateAsync(s => s.SetProperty(a => a.Title, "Draft fixture changed during model proposal")); };
         await Failure(() => Agent(a => a.AskAsync(conversation, "Lag en rapportside")), "HistoryUnavailable"); model.ReportReadFirst = false;
         Check((await Pages(s => s.ListAsync())).Pages.Length == initial.Pages.Length + 1, "9B changed current-turn evidence during model proposal cannot publish a stale derived draft");

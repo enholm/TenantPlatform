@@ -71,10 +71,13 @@ public sealed class AgreementDeadlineData(IDbContextFactory<TenantPlatformDbCont
         const int size = 25;
         var page = Math.Clamp(filter.Page, 1, Math.Max(1, (count + size - 1) / size));
         var rows = await query.OrderBy(x => x.Deadline.DueDate).ThenBy(x => x.Deadline.Id)
-            .Skip((page - 1) * size).Take(size).ToListAsync(ct);
-        return new(rows.Select(x => new AgreementDeadlineRow(x.Deadline.Id, x.Agreement.Id, x.Agreement.Title,
-            x.Counterparty, x.Agreement.Type, x.Deadline.Kind, x.Deadline.DueDate, x.Deadline.DueDate.DayNumber - today.DayNumber,
-            x.OwnerId, x.OwnerName, x.Valid, x.Deadline.Status, x.Deadline.State, x.Deadline.UpdatedUtc)).ToList(),
+            .Skip((page - 1) * size).Take(size)
+            .Select(x => new { x.Deadline.Id, AgreementId = x.Agreement.Id, x.Agreement.Title,
+                AgreementType = x.Agreement.Type, x.Deadline.Kind, x.Deadline.DueDate, x.Deadline.Status,
+                x.Deadline.State, x.Deadline.UpdatedUtc, x.Counterparty, x.OwnerId, x.OwnerName, x.Valid }).ToListAsync(ct);
+        return new(rows.Select(x => new AgreementDeadlineRow(x.Id, x.AgreementId, x.Title,
+            x.Counterparty, x.AgreementType, x.Kind, x.DueDate, x.DueDate.DayNumber - today.DayNumber,
+            x.OwnerId, x.OwnerName, x.Valid, x.Status, x.State, x.UpdatedUtc)).ToList(),
             count, page, size, owners, overdue, next30, missing);
     }
 }

@@ -21,9 +21,9 @@ test('panel preserves completed pairs, cancels message, deletes context and igno
     const panel = new Element();
     panel.dataset = { account: 'account', context: 'context', csrf: 'csrf', questionLabel: 'Question', answerLabel: 'Answer',
         revalidated: 'REVALIDATED', newSource: 'NEW', pendingHistory: 'pending', expired: 'expired', cancelled: 'cancelled', done: 'done', failure: 'failure', changed: 'changed' };
-    const nodes = Object.fromEntries(['question-form', 'connection', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns'].map(k => [k, new Element()]));
+    const nodes = Object.fromEntries(['question-form', 'connection', 'area', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns'].map(k => [k, new Element()]));
     panel.querySelector = query => nodes[query.match(/\[data-([^\]]+)\]/)[1]];
-    nodes.connection.value = 'selected'; nodes.consent.checked = true;
+    nodes.connection.value = 'selected'; nodes.consent.checked = true; panel.dataset.areas = JSON.stringify({ selected: ['Agreements', 'ServiceRequests'] }); panel.dataset.editArea = 'Agreements';
     const calls = []; let pendingAsk, pendingBegin, answers = 0, expiry;
     const fetch = async (url, options) => {
         calls.push({ url, body: options?.body && JSON.parse(options.body) });
@@ -34,7 +34,7 @@ test('panel preserves completed pairs, cancels message, deletes context and igno
         return { status: 204, ok: true };
     };
     const context = { document: { querySelectorAll: () => [panel], createElement: () => new Element(), addEventListener() {} },
-        window: { addEventListener() {} }, fetch, AbortController, setInterval() {}, clearInterval() {}, setTimeout(fn) { expiry = fn; return 1; }, clearTimeout() { expiry = null; } };
+        window: { addEventListener() {}, confirm() { return true; } }, fetch, AbortController, setInterval() {}, clearInterval() {}, setTimeout(fn) { expiry = fn; return 1; }, clearTimeout() { expiry = null; } };
     vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/read-agent.js', 'utf8'), context);
     const submit = async question => { nodes.prompt.value = question; return nodes['question-form'].listeners.submit({ preventDefault() {} }); };
     await submit('first question'); await submit('follow-up');
@@ -58,8 +58,8 @@ test('panel preserves completed pairs, cancels message, deletes context and igno
 
 test('chat draft uses shared real preview, explicit revision-bound save and clears stale or late data', async () => {
     const panel = new Element(); panel.dataset = { account: 'account', context: 'context', csrf: 'csrf', draftTitle: 'DRAFT', draftSave: 'SAVE', draftOpen: 'OPEN', draftOld: 'UNCHANGED', draftSnapshot: 'SNAPSHOT', total: 'TOTAL', date: 'PERIOD' };
-    const nodes = Object.fromEntries(['question-form', 'connection', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns', 'report-draft'].map(k => [k, new Element()]));
-    panel.querySelector = query => nodes[query.match(/\[data-([^\]]+)\]/)[1]]; nodes.connection.value = 'selected'; nodes.consent.checked = true;
+    const nodes = Object.fromEntries(['question-form', 'connection', 'area', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns', 'report-draft'].map(k => [k, new Element()]));
+    panel.querySelector = query => nodes[query.match(/\[data-([^\]]+)\]/)[1]]; nodes.connection.value = 'selected'; nodes.consent.checked = true; panel.dataset.areas = JSON.stringify({ selected: ['Agreements', 'ServiceRequests'] }); panel.dataset.editArea = 'Agreements';
     const preview = { retrievedUtc: 'NOW', selection: { filter: { endDateFrom: '2026-10-19', endDateTo: '2027-01-19' } }, aggregate: { totalCount: 27, groups: [{ name: '<script>not-code</script>', count: 27 }] }, table: { page: 1, items: [], totalCount: 27, returnedCount: 0, hasMore: true, nextPage: 2 } };
     const report = () => ({ id: 'draft-id', revision: 'revision-2', title: '<img src=unsafe>', sourceName: 'SOURCE', components: ['Metric', 'BuildingChart', 'AgreementTable'], summary: { period: 'Next 3 months', status: 'Active', type: 'All', archive: 'Exclude', building: 'All', search: '' }, preview });
     const calls = []; let failAsk = false, pending, stamp = 'context';
@@ -72,7 +72,7 @@ test('chat draft uses shared real preview, explicit revision-bound save and clea
         if (url.endsWith('/report-preview')) return response({ report: report() });
         return { status: 204, ok: true };
     };
-    const context = { document: { querySelectorAll: () => [panel], createElement: () => new Element(), addEventListener() {} }, window: { addEventListener() {} }, fetch, AbortController, setInterval() {}, clearInterval() {}, setTimeout() {}, clearTimeout() {} };
+    const context = { document: { querySelectorAll: () => [panel], createElement: () => new Element(), addEventListener() {} }, window: { addEventListener() {}, confirm() { return true; } }, fetch, AbortController, setInterval() {}, clearInterval() {}, setTimeout() {}, clearTimeout() {} };
     vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/report-renderer.js', 'utf8') + '\n' + fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/read-agent.js', 'utf8'), context);
     const submit = async () => { nodes.prompt.value = 'Lag en side'; await nodes['question-form'].listeners.submit({ preventDefault() {} }); };
     await submit(); const root = nodes['report-draft']; assert.match(root.text(), /TOTAL 27/); assert.match(root.text(), /<script>not-code<\/script>/);
@@ -95,9 +95,9 @@ test('saved-page editing uses bound actions, preserves conflicts and requires ex
     const panel = new Element(); panel.dataset = { account: 'account', context: 'context', csrf: 'csrf', editPage: 'original-page', editConnection: 'own-source',
         editing: 'EDITING', editSave: 'UPDATE', editCopy: 'COPY', editDiscard: 'DISCARD', editUpdated: 'UPDATED ORIGINAL', editCopied: 'SAVED COPY', editReload: 'RELOAD', editReloadConfirm: 'Discard draft and reload?',
         editChanges: 'CHANGES', editNoChanges: 'UNCHANGED', draftTitle: 'DRAFT', draftSave: 'SAVE', draftOpen: 'OPEN', draftOld: 'STALE', date: 'REFRESH', total: 'TOTAL' };
-    const nodes = Object.fromEntries(['question-form', 'connection', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns', 'report-draft', 'edit-start', 'edit-intro'].map(k => [k, new Element()]));
+    const nodes = Object.fromEntries(['question-form', 'connection', 'area', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns', 'report-draft', 'edit-start', 'edit-intro'].map(k => [k, new Element()]));
     panel.querySelector = query => nodes[query.match(/\[data-([^\]]+)\]/)[1]];
-    nodes.connection.value = 'own-source'; nodes.consent.checked = true;
+    nodes.connection.value = 'own-source'; nodes.consent.checked = true; panel.dataset.areas = JSON.stringify({ 'own-source': ['Agreements', 'ServiceRequests'] }); panel.dataset.editArea = 'Agreements';
     const report = (changed = false) => ({ id: 'draft', revision: changed ? 'r2' : 'r1', editingPageId: 'original-page', originalTitle: '<script>old</script>',
         title: changed ? 'New title' : '<script>old</script>', sourceName: 'SOURCE', components: ['Metric'],
         changes: changed ? [{ field: 'PERIOD', before: '3 months', after: '6 months' }] : [], summary: { period: 'period' },
@@ -147,4 +147,53 @@ test('saved-page editing uses bound actions, preserves conflicts and requires ex
     await nodes['edit-start'].listeners.click(); stamp = 'different-user'; failUpdate = false; const writes = calls.filter(c => c.url.endsWith('/report-update')).length;
     await button('UPDATE').listeners.click(); assert.equal(root.children.length, 0); assert.equal(nodes['edit-intro'].children.length, 0);
     assert.equal(calls.filter(c => c.url.endsWith('/report-update')).length, writes);
+});
+
+test('area switch warns for drafts, cancels active work and rejects late ask, begin and switched-context replies', async () => {
+    const panel = new Element();
+    panel.dataset = { account: 'account', context: 'identity', csrf: 'csrf',
+        areas: JSON.stringify({ source: ['Agreements', 'AgreementDetails'] }), areaConfirm: 'DISCARD CONTEXT?', areaPlaceholder: 'AREA',
+        areaAgreements: 'AGREEMENTS', areaAgreementDetails: 'REQUESTS', pendingHistory: 'pending', draftTitle: 'DRAFT', changed: 'CHANGED' };
+    const nodes = Object.fromEntries(['question-form', 'connection', 'area', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns', 'report-draft'].map(k => [k, new Element()]));
+    panel.querySelector = q => nodes[q.match(/\[data-([^\]]+)\]/)[1]];
+    nodes.connection.value = 'source'; nodes.consent.checked = true;
+    let confirmed = false, confirms = 0, blockedAsk, blockedBegin, blockedSwitch, identity = 'identity', asks = 0;
+    const calls = [];
+    const draft = { id: 'draft', revision: 'r1', title: 'UNSAVED PRIVATE DRAFT', sourceName: 'source', summary: {}, components: [], preview: {} };
+    const fetch = async (url, options) => {
+        const body = options?.body && JSON.parse(options.body); calls.push({ url, body, signal: options?.signal });
+        if (url === '/agent/context') return response({ context: identity });
+        if (url === '/agent/begin') return blockedBegin ? blockedBegin.promise : response({ conversation: 'old', area: body.area, expiresInSeconds: 1800 });
+        if (url === '/agent/switch-area') return blockedSwitch ? blockedSwitch.promise : response({ conversation: 'new', area: body.area, expiresInSeconds: 1800 });
+        if (url === '/agent/ask') return blockedAsk ? blockedAsk.promise : response({ ...completed('ANSWER', 1), report: asks++ === 0 ? draft : null });
+        return { status: 204, ok: true };
+    };
+    const context = { document: { querySelectorAll: () => [panel], createElement: () => new Element(), addEventListener() {} },
+        window: { addEventListener() {}, confirm(message) { assert.equal(message, 'DISCARD CONTEXT?'); confirms++; return confirmed; }, TenantPlatformReports: { render() {} } },
+        fetch, AbortController, setInterval() {}, clearInterval() {}, setTimeout() { return 1; }, clearTimeout() {} };
+    vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/read-agent.js', 'utf8'), context);
+    const submit = () => nodes['question-form'].listeners.submit({ preventDefault() {} });
+    assert.equal(nodes.area.value, ''); assert.equal(nodes.send.disabled, true);
+    nodes.area.value = 'Agreements'; await nodes.area.listeners.change();
+    await submit(); assert.match(nodes['report-draft'].text(), /UNSAVED PRIVATE DRAFT/);
+    nodes.area.value = 'AgreementDetails'; await nodes.area.listeners.change();
+    assert.equal(nodes.area.value, 'Agreements'); assert.match(nodes['report-draft'].text(), /UNSAVED PRIVATE DRAFT/);
+    blockedAsk = deferred(); const active = submit(); await tick();
+    const oldSignal = calls.filter(c => c.url === '/agent/ask').at(-1).signal;
+    confirmed = true; blockedSwitch = deferred(); nodes.area.value = 'AgreementDetails'; const switched = nodes.area.listeners.change(); await tick();
+    assert.equal(oldSignal.aborted, true); assert.equal(nodes['report-draft'].text(), ''); assert.equal(nodes.turns.text(), '');
+    blockedAsk.resolve(response(completed('LATE SECRET', 9))); await active; blockedAsk = null;
+    blockedSwitch.resolve(response({ conversation: 'new', area: 'AgreementDetails', expiresInSeconds: 1800 })); await switched; blockedSwitch = null;
+    await submit(); assert.equal(calls.filter(c => c.url === '/agent/ask').at(-1).body.conversation, 'new');
+    assert.doesNotMatch(nodes.turns.text(), /LATE SECRET|UNSAVED PRIVATE/);
+    await nodes.new.listeners.click(); blockedBegin = deferred(); const beginning = submit(); await tick();
+    nodes.area.value = 'Agreements'; await nodes.area.listeners.change();
+    blockedBegin.resolve(response({ conversation: 'late-begin', area: 'AgreementDetails', expiresInSeconds: 1800 })); await beginning; blockedBegin = null;
+    assert(calls.some(c => c.url === '/agent/delete' && c.body.conversation === 'late-begin'));
+    assert(!calls.some(c => c.url === '/agent/ask' && c.body.conversation === 'late-begin'));
+    await submit(); blockedSwitch = deferred(); nodes.area.value = 'AgreementDetails'; const changing = nodes.area.listeners.change(); await tick();
+    identity = 'different-user-or-account'; blockedSwitch.resolve(response({ conversation: 'late-switch', area: 'AgreementDetails', expiresInSeconds: 1800 })); await changing;
+    assert.equal(nodes.turns.text(), ''); assert.equal(nodes.send.disabled, true);
+    assert(calls.some(c => c.url === '/agent/delete' && c.body.conversation === 'late-switch'));
+    assert(confirms >= 4);
 });

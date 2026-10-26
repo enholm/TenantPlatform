@@ -16,9 +16,16 @@
 else
 {
 <div data-personal-pages data-area="@definition.Area" @attributes="TenantPlatform.Web.PersonalPages.ReportLabels.Attributes(L)" data-id="@Id" data-revision="@collection.Revision" data-csrf="@token" data-context="@context"
- data-components="@System.Text.Json.JsonSerializer.Serialize(definition.Components.Select(c => c.ToString()))" data-delete-confirm="@L["PagesDeleteConfirm"]" data-yes="@L["Yes"]" data-no="@L["No"]" data-complete="@L["PagesComplete"]" data-more="@L["PagesMore"]" data-limit="@L["PagesLimitReached"]" data-error="@L["PagesErrorUnavailable"]" data-cancelled="@L["PagesErrorCancelled"]" data-loading="@L["PagesLoading"]" data-saved="@L["PagesSaved"]" data-empty="@L["PagesEmpty"]" data-missing="@L["PagesMissing"]" data-total="@L["PagesTotal"]" data-all-dates="@L["PagesAllDates"]" data-date="@L["PagesDate"]" data-snapshot="@L["PagesSnapshot"]" data-title="@L["Name"]" data-building="@L["Building"]" data-end="@L["AgreementEndDate"]" data-status="@L["Status"]" data-type="@L["AgreementType"]" data-start="@L["PagesColumnStartDate"]" data-notice="@L["PagesColumnNoticeDeadline"]" data-renewal="@L["PagesColumnRenewalDate"]" data-count="@L["PagesCount"]" data-page="@L["PagesPage"]">
+ data-area-confirm="@L["PagesAreaResetConfirm"]" data-components="@System.Text.Json.JsonSerializer.Serialize(definition.Components.Select(c => c.ToString()))" data-delete-confirm="@L["PagesDeleteConfirm"]" data-yes="@L["Yes"]" data-no="@L["No"]" data-complete="@L["PagesComplete"]" data-more="@L["PagesMore"]" data-limit="@L["PagesLimitReached"]" data-error="@L["PagesErrorUnavailable"]" data-cancelled="@L["PagesErrorCancelled"]" data-loading="@L["PagesLoading"]" data-saved="@L["PagesSaved"]" data-empty="@L["PagesEmpty"]" data-missing="@L["PagesMissing"]" data-total="@L["PagesTotal"]" data-all-dates="@L["PagesAllDates"]" data-date="@L["PagesDate"]" data-snapshot="@L["PagesSnapshot"]" data-title="@L["Name"]" data-building="@L["Building"]" data-end="@L["AgreementEndDate"]" data-status="@L["Status"]" data-type="@L["AgreementType"]" data-start="@L["PagesColumnStartDate"]" data-notice="@L["PagesColumnNoticeDeadline"]" data-renewal="@L["PagesColumnRenewalDate"]" data-count="@L["PagesCount"]" data-page="@L["PagesPage"]">
 @if (!Id.HasValue)
 {
+    <label class="form-label">@L["AgentArea"]
+        <select class="form-select" data-report-area>
+            @foreach (var area in ReportAreas.Sources.Select(s => s.Area)) {
+                <option value="@area" selected="@(definition.Area == area)">@L[area == ReportArea.Agreements ? "AgentAreaAgreements" : "AgentAreaServiceRequests"]</option>
+            }
+        </select>
+    </label>
     <ol class="list-group mb-3">
     @for (var i = 0; i < collection.Pages.Length; i++)
     {
@@ -89,6 +96,7 @@ else
 }
 @code {
     [Parameter] public Guid? Id { get; set; }
+    [SupplyParameterFromQuery(Name = "area")] public string? NewArea { get; set; }
     [CascadingParameter] public HttpContext? Http { get; set; }
     [Parameter] public HttpContext? RequestContext { get; set; }
     private bool failed;
@@ -112,6 +120,11 @@ else
             var identity = await ReadAgentEndpoints.Identity(Http, Http.RequestAborted) ?? throw new UnauthorizedAccessException(); context = identity.Key;
             collection = await Pages.ListAsync(Http.RequestAborted);
             if (Id.HasValue) definition = PageDefinitions.Current((await Pages.ReadAsync(Id.Value, Http.RequestAborted)).Definition);
+            if (!Id.HasValue && NewArea is { } areaText) {
+                if (!Enum.GetNames<ReportArea>().Contains(areaText, StringComparer.Ordinal) || !Enum.TryParse<ReportArea>(areaText, out var area) || !ReportAreas.Sources.Any(s => s.Area == area)) throw new PersonalPageException("Version");
+                if (area == ReportArea.ServiceRequests) definition = definition with { Version = 3, Area = area,
+                    Period = new(PagePeriodKind.All, null), Filter = new(), RequestFilter = new(), Columns = ReportAreas.Columns(area) };
+            }
             sources = await Pages.SourcesAsync(Http.RequestAborted, definition.Area);
             token = Csrf.GetAndStoreTokens(Http).RequestToken;
         }

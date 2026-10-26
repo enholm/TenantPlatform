@@ -17,8 +17,8 @@ namespace TenantPlatform.Web.Agent;
 
 public static class ReadAgentEndpoints
 {
-    private sealed record Command(Guid Conversation, Guid Connection, Guid Account, bool SharingAccepted, string? Prompt, Guid Draft = default, Guid Revision = default, int Page = 1, Guid PageId = default);
-    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 8 };
+    private sealed record Command(Guid Conversation, Guid Connection, Guid Account, bool SharingAccepted, string? Prompt, Guid Draft = default, Guid Revision = default, int Page = 1, Guid PageId = default, ReadAgentArea? Area = null, bool ResetAccepted = false);
+    private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, MaxDepth = 8, Converters = { new JsonStringEnumConverter<ReadAgentArea>(allowIntegerValues: false) } };
     public static void MapReadAgent(this WebApplication app)
     {
         app.MapGet("/agent/context", async (HttpContext http, CancellationToken ct) =>
@@ -47,20 +47,27 @@ public static class ReadAgentEndpoints
                 { if (buffer.Length + n > 96 * 1024) return Results.StatusCode(413); buffer.Write(bytes, 0, n); }
                 var command = JsonSerializer.Deserialize<Command>(buffer.ToArray(), Json) ?? throw new JsonException();
                 var agent = http.RequestServices.GetRequiredService<ReadAgentService>();
+                if (action is not ("begin" or "switch-area") && command.Area.HasValue) throw new JsonException();
                 switch (action)
                 {
-                    case "begin": return Results.Json(new { conversation = await agent.BeginAsync(command.Connection, command.Account, command.SharingAccepted, ct), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds });
+                    case "begin":
+                        var begun = await agent.BeginAsync(command.Connection, command.Account, command.SharingAccepted, command.Area ?? throw new ReadAgentException("AreaInvalid"), ct);
+                        return Results.Json(new { conversation = begun, area = (await agent.AreaAsync(begun, ct)).ToString(), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds });
+                    case "switch-area":
+                        if (command.Connection != Guid.Empty) throw new JsonException();
+                        var switched = await agent.SwitchAreaAsync(command.Conversation, command.Area ?? throw new ReadAgentException("AreaInvalid"), command.ResetAccepted, ct);
+                        return Results.Json(new { conversation = switched, area = (await agent.AreaAsync(switched, ct)).ToString(), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds });
                     case "report-edit":
                         var opened = await agent.BeginEditAsync(command.PageId, command.Account, command.SharingAccepted, ct);
-                        return Results.Json(new { opened.Conversation, report = Report(opened.Report, http), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds }, AgentReportDrafts.Json);
+                        return Results.Json(new { opened.Conversation, area = (await agent.AreaAsync(opened.Conversation, ct)).ToString(), report = Report(opened.Report, http), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds }, AgentReportDrafts.Json);
                     case "report-reload":
                         var reloaded = await agent.ReloadReportAsync(command.Conversation, command.Draft, command.Revision, ct);
-                        return Results.Json(new { reloaded.Conversation, report = Report(reloaded.Report, http), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds }, AgentReportDrafts.Json);
+                        return Results.Json(new { reloaded.Conversation, area = (await agent.AreaAsync(reloaded.Conversation, ct)).ToString(), report = Report(reloaded.Report, http), expiresInSeconds = ReadAgentSessions.Lifetime.TotalSeconds }, AgentReportDrafts.Json);
                     case "report-discard": await agent.DiscardReportAsync(command.Conversation, command.Draft, command.Revision, ct); return Results.NoContent();
                     case "ask":
                         var answer = await agent.AskAsync(command.Conversation, command.Prompt ?? "", ct);
                         var l = http.RequestServices.GetRequiredService<IStringLocalizer<TenantPlatformResources>>();
-                        return Results.Json(new { answer.Text, report = answer.Report is null ? null : Report(answer.Report, http), answer.RetainedTurns, answer.CurrentTurnRetained, answer.ContextInvalidated, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, s.Aggregate, s.Revalidated, s.EvidenceId, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: AgentReportDrafts.Json);
+                        return Results.Json(new { answer.Text, report = answer.Report is null ? null : Report(answer.Report, http), answer.RetainedTurns, answer.CurrentTurnRetained, answer.ContextInvalidated, sources = answer.Sources.Select(s => new { s.Number, s.ConnectionId, s.ConnectionName, s.Tool, s.Version, s.Page, s.Attention, s.Aggregate, s.Finance, s.Revalidated, s.EvidenceId, summary = Summary(s, l) }), notices = answer.Notices.Select(k => l["AgentNotice" + k].Value) }, options: AgentReportDrafts.Json);
                     case "report-preview": return Results.Json(new { report = Report(await agent.PreviewReportAsync(command.Conversation, command.Draft, command.Revision, command.Page, ct), http) }, AgentReportDrafts.Json);
                     case "report-save":
                     case "report-update":
@@ -133,7 +140,8 @@ public static class ReadAgentEndpoints
         string Flag(bool value) => l[value ? "Yes" : "No"].Value;
         if (source.Page is { } p) return l["AgentPageFacts", p.Page, p.RequestedPage, p.ReturnedCount, p.TotalCount, p.PageSize,
             Flag(p.HasMore), p.NextPage?.ToString() ?? "—", Flag(p.Complete), Flag(p.SnapshotConsistent), Flag(p.LimitReached)].Value;
-        if (source.Aggregate is { } g) return l[source.Tool == "service_requests_aggregate" ? "RequestReportAggregateFacts" : "AgentAggregateFacts", l[g.GroupBy].Value, g.TotalCount, g.GroupCount, Flag(g.Complete), Flag(g.GroupsOverlap), Flag(g.SnapshotConsistent)].Value;
+        if (source.Finance is { } f) return l["AgentFinanceFacts", l[f.From is null ? "AgentFinanceHistory" : "AgentFinanceForecast"].Value, f.Currency ?? "", f.Direction is { } direction ? l["FinanceDirection" + direction].Value : "", f.From ?? "", f.To ?? "", Flag(f.Complete), f.VersionsTotal?.ToString() ?? "", f.PricesTotal?.ToString() ?? "", f.PeriodCount?.ToString() ?? ""].Value;
+        if (source.Aggregate is { } g) return l[source.Tool == "service_requests_aggregate" ? "RequestReportAggregateFacts" : "AgentAggregateFacts", l[source.Tool == "agreements_insights" ? "DashboardDimension" + g.GroupBy : g.GroupBy].Value, g.TotalCount, g.GroupCount, Flag(g.Complete), Flag(g.GroupsOverlap), Flag(g.SnapshotConsistent)].Value;
         if (source.Attention is { } a) return l["AgentAttentionFacts", a.Today, a.Notice, a.Renewal, a.Expired, a.HorizonDays].Value;
         return null;
     }

@@ -29,7 +29,7 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
           "type":{"type":"string","enum":["Lease","SoftwareLicense","ServiceMaintenance","Supplier","Other"]},
           "attention":{"type":"string","enum":["Notice","Renewal","Expired"]},"page":{"type":"integer","minimum":1,"maximum":10000,"default":1}}}
         """),
-        Tool<AttentionResult>("agreements_attention", "Read full separate Attention counts at the account date. Categories may overlap: DO NOT sum them as unique agreements. No list filters apply. Read only, no deadline/settings initialization.", """{"type":"object","additionalProperties":false,"required":["accountId"],"properties":{"accountId":{"type":"string","format":"uuid"}}}"""), ..ReportingCatalog(), ..ServiceRequestCatalog()];
+        Tool<AttentionResult>("agreements_attention", "Read full separate Attention counts at the account date. Categories may overlap: DO NOT sum them as unique agreements. No list filters apply. Read only, no deadline/settings initialization.", """{"type":"object","additionalProperties":false,"required":["accountId"],"properties":{"accountId":{"type":"string","format":"uuid"}}}"""), ..ReportingCatalog(), ..ServiceRequestCatalog(), FollowupTool(), DeadlineTool(), ..OverviewCatalog(), ..ExtensionCatalog(), ..FinanceCatalog(), ..IndexCatalog(), ..BasisCatalog()];
 
     private static Tool Tool<T>(string name, string description, string input) => new()
     {
@@ -51,7 +51,18 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
                 "agreements_list" => ["accountId", "search", "status", "type", "attention", "page"],
                 "agreements_query" or "agreements_aggregate" => ReportKeys(request.Name),
                 "service_requests_query" or "service_requests_aggregate" => RequestKeys(request.Name),
-                "agreements_details" => ["accountId", "agreementId"], _ => throw new ArgumentException()
+                "agreements_details" => ["accountId", "agreementId"],
+                "agreements_prioritized" => ["accountId"],
+                "agreements_insights" => ["accountId", "dimension", "selected"],
+                "agreements_deadlines" => DeadlineKeys,
+                "agreements_followup" or "agreements_followup_history" => ["accountId", "agreementId", "page"],
+                "agreements_financial_lines" => ["accountId", "agreementId", "lineId", "versionsPage", "pricesPage"],
+                "agreements_bases" => ["accountId", "direction", "agreementId", "status", "from", "to", "page"],
+                "agreements_basis" => ["accountId", "basisId", "revision"],
+                "agreements_indices" => ["accountId", "search", "resolution", "page"],
+                "agreements_index_values" => ["accountId", "indexId", "view", "from", "to", "page"],
+                "agreements_forecast" => ["accountId", "agreementId", "from", "to"],
+                "agreements_relations" => ["accountId", "kind", "search", "page"], _ => throw new ArgumentException()
             };
             if (args.Keys.Any(key => !allowed.Contains(key, StringComparer.Ordinal))) throw new ArgumentException();
             Guid? account = null;
@@ -78,6 +89,22 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
                 var data = await operation.ServiceProvider.GetRequiredService<IAgreementAttentionService>().GetAttentionAsync(account!.Value, ct);
                 payload = new AttentionResult("1", account.Value, data.Today, data.Notice, data.Renewal, data.Expired, 90);
             }
+            else if (request.Name == "agreements_prioritized")
+                payload = await PriorityAsync(operation.ServiceProvider, account!.Value, ct);
+            else if (request.Name == "agreements_insights")
+                payload = await InsightsAsync(operation.ServiceProvider, account!.Value, args, ct);
+            else if (request.Name == "agreements_deadlines")
+                payload = await DeadlinesAsync(operation.ServiceProvider, account!.Value, args, ct);
+            else if (request.Name is "agreements_bases" or "agreements_basis")
+                payload = await BasisAsync(operation.ServiceProvider, request.Name, account!.Value, args, ct);
+            else if (request.Name is "agreements_indices" or "agreements_index_values")
+                payload = await IndexAsync(operation.ServiceProvider, request.Name, account!.Value, args, ct);
+            else if (request.Name is "agreements_financial_lines" or "agreements_forecast")
+                payload = await FinanceAsync(operation.ServiceProvider, request.Name, account!.Value, args, ct);
+            else if (request.Name is "agreements_followup_history" or "agreements_relations")
+                payload = await ExtensionAsync(operation.ServiceProvider, request.Name, account!.Value, args, ct);
+            else if (request.Name == "agreements_followup")
+                payload = await FollowupAsync(operation.ServiceProvider, account!.Value, args, ct);
             else if (request.Name is "service_requests_query" or "service_requests_aggregate")
             {
                 if (!context.User.HasScope(TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read)) return Error("AUTHORIZATION_REQUIRED");
@@ -100,6 +127,9 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
             return JsonSerializer.SerializeToUtf8Bytes(result, Json).Length <= 60 * 1024 ? result : Error("RESULT_TOO_LARGE");
         }
         catch (TenantPlatform.Application.ServiceRequests.ServiceRequestReportLimitException) { return Error("RESULT_TOO_LARGE"); }
+        catch (AgreementBasisSnapshotException) { return Error("SNAPSHOT_UNAVAILABLE"); }
+        catch (AgreementFinanceLimitException) { return Error("RESULT_TOO_LARGE"); }
+        catch (AgreementValidationException) { return Error("CALCULATION_UNAVAILABLE"); }
         catch (AgreementReportLimitException) { return Error("RESULT_TOO_LARGE"); }
         catch (JsonException) { return Error("INVALID_ARGUMENT"); }
         catch (ArgumentException) { return Error("INVALID_ARGUMENT"); }

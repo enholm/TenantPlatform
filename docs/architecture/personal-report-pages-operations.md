@@ -1,5 +1,7 @@
 # Personlige rapportsider (9A–9D)
 
+9F checkpoint3 beholder v1/v2/v3 og legger til [separat chatområdebinding og manuelt valg av støttet rapportområde](read-agent-areas.md#rapportsider). Lagret sides backendområde bestemmer AI-redigering; modellen og URL kan ikke bytte det. Modellfri rapportkjøring bruker fortsatt den lagrede definisjonens adapter, uavhengig av chatvalget.
+
 **Gjeldende kontrakt:** se [9D](#9d-valgfrie-komponenter-gruppering-og-kolonner) nedenfor. Beskrivelsene av v1 og obligatoriske komponenter i 9A–9C er historikk; nye lagringer bruker v2.
 
 «Mine sider» (`/my-pages`) administrerer personlige, kontoavgrensede rapporter. `/my-pages/{id}` åpner en lagret side med ferske data. Oppretting, manuell redigering, forhåndsvisning, lagring, flytt opp/ned og sletting inngår. Tittel er visningstekst; stabil GUID er identitet. Ingen AI, modellnøkkel, deling, eksport, bakgrunnsoppdatering eller rapportresultatlager kreves.

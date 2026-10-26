@@ -22,16 +22,7 @@ public sealed partial class AgreementFinancialService(IAuthorizationService auth
         return new(a.Revision, current.CanEdit && !a.IsArchived, a.Direction, a.Currency,
             state.Lines.Select(x => new AgreementLineDetails(x, state.Versions.Where(v => v.LineId == x.Id).OrderByDescending(v => v.Sequence).ToList(), state.Prices.Where(v => v.LineId == x.Id).OrderByDescending(v => v.Sequence).ToList())).ToList(), state.Documents, state.ActorNames);
     }
-    private static List<AgreementCalculatedPeriod> Calculate(AgreementFinancialState state, DateOnly from, DateOnly to)
-    {
-        var a = state.Agreement;
-        var versions = state.Versions.Where(x => x.Status != AgreementLineStatus.Draft).OrderBy(x => x.LineId).ThenBy(x => x.Sequence).ToList();
-        foreach (var v in versions) v.Documents = v.Documents.OrderBy(x => x.DocumentId).ToList();
-        var sequences = versions.Select(x => (x.LineId, x.Sequence)).ToHashSet();
-        var prices = state.Prices.Where(x => x.Independent || sequences.Contains((x.LineId, x.Sequence))).OrderBy(x => x.LineId).ThenBy(x => x.Sequence).ToList();
-        var automatic = AgreementAutomaticIndexCalculator.Project(a.IndexSetupNeedsReview, versions, prices, state.Selections.OrderBy(x => x.Sequence).ToList(), state.Indices, state.IndexValues.Where(x => !x.Superseded).ToList());
-        return AgreementPeriodCalculator.Calculate(a.Id, a.Direction ?? throw new AgreementValidationException("FinanceSetupRequired"), a.Currency ?? throw new AgreementValidationException("FinanceSetupRequired"), versions, prices, from, to, automatic);
-    }
+    private static List<AgreementCalculatedPeriod> Calculate(AgreementFinancialState state, DateOnly from, DateOnly to) => AgreementForecastCalculation.Calculate(state, from, to);
     public async Task<AgreementForecastDto> ForecastAsync(Guid accountId, Guid agreementId, DateOnly from, DateOnly to, CancellationToken ct = default)
     {
         var scope = await Require(accountId, agreementId, false, ct);

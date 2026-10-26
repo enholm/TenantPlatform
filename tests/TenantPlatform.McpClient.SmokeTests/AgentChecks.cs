@@ -31,6 +31,10 @@ static partial class RegistryChecks
         protocol.OtherTool = ReadAgentService.ModelName(otherTool);
         Check(protocol.OtherTool != ReadAgentService.ModelName(available.Single(t => t.ConnectionId == external)), "same original tool name gets stable distinct model aliases per connection/version");
         Check((await Agent(s => s.ConnectionsAsync())).Select(c => c.Id).Contains(external), "agent catalog uses registered personally authorized automatic tools");
+        Check(ReadAgentAreas.Includes(ReadAgentArea.External, true, "agreements_list") && !ReadAgentAreas.Includes(ReadAgentArea.Agreements, true, "agreements_list") &&
+            !ReadAgentAreas.Known("agreements_invented"), "exact own mapping, familiar external names remain external");
+        Check(await Fails(() => Agent(a => a.BeginAsync(own, account, true, (ReadAgentArea)999)), "AreaInvalid") &&
+            await Fails(() => Agent(a => a.BeginAsync(external, account, true, ReadAgentArea.Agreements)), "AreaInvalid"), "unknown and mismatched connection areas rejected in Application");
         var before = remoteCalls();
         var conversation = await Begin(external);
         var answer = await Agent(s => s.AskAsync(conversation, "multi"));
@@ -141,10 +145,24 @@ static partial class RegistryChecks
         {
             await Registry(async s => { await s.SetToolPolicyAsync(own, tool.Name, tool.Version, McpToolAudience.Inherit, [], McpToolUse.AutomaticRead); await s.ApproveAsync(own, tool.Name, tool.Version, true); return true; });
         }
+        Check(await Fails(() => Agent(a => a.BeginAsync(own, account, true, ReadAgentArea.External)), "AreaInvalid"), "own connection cannot select the external area");
+        Check(ReadAgentAreas.Parent(ReadAgentArea.AgreementFinance) == ReadAgentArea.Agreements && !ReadAgentAreas.Reports(ReadAgentArea.AgreementFinance) && ReadAgentAreas.FromReport(TenantPlatform.Application.PersonalPages.ReportArea.Agreements) == ReadAgentArea.Agreements, "agreement subsets reuse server binding; report edits choose overview only");
+        var subset = await Begin(own);
+        protocol.OtherTool = ReadAgentService.ModelName((await Registry(r => r.AvailableToolsAsync())).Single(t => t.ConnectionId == own && t.Name == "agreements_forecast"));
+        Check(await Fails(() => Agent(a => a.AskAsync(subset, "cross")), "InvalidTool"), "approved financial tool cannot cross overview subset");
+        await Agent(async a => { await a.DeleteAsync(subset); return true; });
         var ownConversation = await Begin(own);
         Check(await Fails(() => Agent(s => s.AskAsync(ownConversation, "override")), "AccountOverride"), "own tool account override rejected before MCP");
+        var limitConversation = await Begin(own);
+        var beforeLimit = protocol.Payloads.Count;
+        Check(await Fails(() => Agent(s => s.AskAsync(limitConversation, "own-list"), limits: new ReadAgentLimits { Tools = 1 }), "ToolLimit") && protocol.Payloads.Count == beforeLimit, "area catalogue exceeding configured limit rejects before model, without truncation");
         var ownAnswer = await Agent(s => s.AskAsync(ownConversation, "own-list"));
         Check(ownAnswer.Sources.Single().Tool == "agreements_list" && ownAnswer.Notices.Contains("Paging") && ownAnswer.Sources.Single().Page is { PageSize: 25, SnapshotConsistent: false }, "own account data actually comes through MCP with visible paging caveat");
+        using (var areaPayload = JsonDocument.Parse(protocol.Payloads.Last())) {
+            var actualNames = areaPayload.RootElement.GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()).Order().ToArray();
+            var expectedNames = (await Registry(r => r.AvailableToolsAsync())).Where(t => t.ConnectionId == own && ReadAgentAreas.Includes(ReadAgentArea.Agreements, false, t.Name)).Select(ReadAgentService.ModelName).Order().ToArray();
+            Check(actualNames.SequenceEqual(expectedNames), "agreements model receives every available approved agreement tool and no tools from another area");
+        }
         var attention = await Agent(s => s.AskAsync(ownConversation, "normal"));
         Check(attention.Notices.Contains("Overlapping") && attention.Sources.Last().Tool == "agreements_attention", "attention overlap warning established by backend, not model");
         var reportBuilding = Guid.NewGuid();
@@ -154,18 +172,129 @@ static partial class RegistryChecks
             db.Buildings.Add(new TenantPlatform.Core.Properties.Building { Id = reportBuilding, AccountId = account, Name = "Report history building" });
             await db.SaveChangesAsync();
         }
-        foreach (var (prompt, expected) in new[] { ("own-query", "agreements_query"), ("own-aggregate", "agreements_aggregate"), ("own-details", "agreements_details") })
+        var financeLine = Guid.NewGuid();
+        await using (var db = factory.CreateDbContext()) {
+            var agreement = await db.Agreements.SingleAsync(a => a.Id == protocol.ReportAgreement); agreement.Direction = TenantPlatform.Core.Agreements.AgreementDirection.Cost; agreement.Currency = "NOK";
+            db.AgreementLines.Add(new() { Id = financeLine, AccountId = account, AgreementId = agreement.Id });
+            db.AgreementLineVersions.Add(new() { Id = Guid.NewGuid(), AccountId = account, AgreementId = agreement.Id, LineId = financeLine, Sequence = 1,
+                Name = "Agent cost", Status = TenantPlatform.Core.Agreements.AgreementLineStatus.Active, EffectiveFrom = new(2026, 1, 1), StartDate = new(2026, 1, 1), FirstPayableDate = new(2026, 1, 1),
+                Frequency = TenantPlatform.Core.Agreements.AgreementFrequency.Monthly, Anchor = TenantPlatform.Core.Agreements.AgreementAnchor.Calendar, AnchorDate = new(1, 1, 1), ActorUserId = admin });
+            db.AgreementPriceVersions.Add(new() { Id = Guid.NewGuid(), AccountId = account, AgreementId = agreement.Id, LineId = financeLine, Sequence = 1,
+                EffectiveFrom = new(2026, 1, 1), Quantity = 1, UnitPrice = 120, ActorUserId = admin }); await db.SaveChangesAsync();
+        }
+        foreach (var (overviewPrompt, overviewTool) in new[] { ("own-priority", "agreements_prioritized"), ("own-insights", "agreements_insights") })
         {
-            var reportConversation = await Begin(own);
+            var overviewConversation = await Begin(own);
+            var overviewAnswer = await Agent(s => s.AskAsync(overviewConversation, overviewPrompt));
+            Check(overviewAnswer.Sources.Single().Tool == overviewTool && overviewAnswer.Notices.Contains(overviewPrompt == "own-priority" ? "PrioritySelection" : "InsightScope"), "overview uses actual MCP source and scope notice: " + overviewTool);
+            Check((await Agent(s => s.AskAsync(overviewConversation, "history-only"))).Sources.Single().Revalidated, "overview is revalidated before history reuse: " + overviewTool);
+        }
+        var deadlineConversation = await Begin(own, area: ReadAgentArea.AgreementDetails);
+        var accountDeadlines = await Agent(s => s.AskAsync(deadlineConversation, "own-deadlines"));
+        Check(accountDeadlines.Notices.Contains("DeadlineCategories") && accountDeadlines.Sources.Single() is { Tool: "agreements_deadlines", Page.PageSize: 25 }, "account deadline source includes actual MCP paging provenance");
+        Check((await Agent(s => s.AskAsync(deadlineConversation, "history-only"))).Sources.Single().Revalidated, "account deadline source is revalidated before history reuse");
+        var followupConversation = await Begin(own, area: ReadAgentArea.AgreementDetails);
+        var deadlineAnswer = await Agent(s => s.AskAsync(followupConversation, "own-followup"));
+        Check(deadlineAnswer.Sources.Single() is { Tool: "agreements_followup", Page.PageSize: 25 }, "follow-up tool has actual MCP source and paging provenance");
+        Check((await Agent(s => s.AskAsync(followupConversation, "history-only"))).Sources.Single().Revalidated, "follow-up source revalidated before history reuse");
+        Console.WriteLine("Isolating expanded detail/history/relation source quota window; production limit unchanged.");
+        await Task.Delay(TimeSpan.FromSeconds(61));
+        foreach (var (prompt, expected) in new[] { ("own-query", "agreements_query"), ("own-aggregate", "agreements_aggregate"), ("own-details", "agreements_details"), ("own-events", "agreements_followup_history"), ("own-relations", "agreements_relations"), ("own-finance", "agreements_financial_lines"), ("own-forecast", "agreements_forecast") })
+        {
+            var reportConversation = await Begin(own, area: expected is "agreements_financial_lines" or "agreements_forecast" ? ReadAgentArea.AgreementFinance : expected is "agreements_details" or "agreements_followup_history" ? ReadAgentArea.AgreementDetails : ReadAgentArea.Agreements);
             var reportAnswer = await Agent(s => s.AskAsync(reportConversation, prompt));
             Check(reportAnswer.Sources.Single().Tool == expected, "agent invokes approved new tool through actual MCP: " + expected);
             var followup = await Agent(s => s.AskAsync(reportConversation, "history-only"));
             Check(followup.Sources.Single().Revalidated && followup.RetainedTurns == 2, "new source participates in 8B history: " + expected);
             if (expected == "agreements_aggregate") Check(reportAnswer.Sources.Single().Aggregate is { Complete: true, GroupsOverlap: false, SnapshotConsistent: false }, "aggregate provenance preserves completeness and grouping semantics");
             await using (var db = factory.CreateDbContext()) { await db.Agreements.Where(a => a.Id == protocol.ReportAgreement).ExecuteUpdateAsync(s => s.SetProperty(a => a.Title, "Changed reporting source " + expected).SetProperty(a => a.BuildingId, expected == "agreements_aggregate" ? (Guid?)null : reportBuilding)); }
+            if (expected == "agreements_followup_history") {
+                await using var db = factory.CreateDbContext();
+                var eventDeadline = new TenantPlatform.Core.Agreements.AgreementDeadline { Id = Guid.NewGuid(), AccountId = account, AgreementId = protocol.ReportAgreement,
+                    Kind = TenantPlatform.Core.Agreements.AgreementDeadlineKind.Notice, DueDate = new(2027, 1, 1), PeriodStartDate = new(2026, 1, 1) };
+                db.AgreementDeadlines.Add(eventDeadline);
+                db.AgreementDeadlineHistory.Add(new() { Id = Guid.NewGuid(), AccountId = account, DeadlineId = eventDeadline.Id,
+                    Kind = TenantPlatform.Core.Agreements.AgreementHistoryKind.Created, CreatedUtc = DateTimeOffset.UtcNow });
+                await db.SaveChangesAsync();
+            }
+            if (expected == "agreements_relations") {
+                await using var db = factory.CreateDbContext();
+                (await db.Buildings.SingleAsync(b => b.Id == reportBuilding)).Name = "Changed relation source"; await db.SaveChangesAsync();
+            }
+            if (expected is "agreements_financial_lines" or "agreements_forecast") {
+                Check(reportAnswer.Sources.Single().Finance is { Currency: "NOK", Direction: "Cost", Complete: true }, "actual financial source facts include currency, direction and completeness");
+                await using var db = factory.CreateDbContext(); (await db.AgreementPriceVersions.SingleAsync(p => p.LineId == financeLine)).UnitPrice += 1; await db.SaveChangesAsync();
+                using var payload = JsonDocument.Parse(protocol.Payloads.Last());
+                Check(payload.RootElement.GetProperty("tools").EnumerateArray().All(t => t.GetProperty("name").GetString() != AgentReportDrafts.ToolName), "finance subset never offers unsupported report proposals");
+            }
             var firstReportPayload = protocol.Payloads.Count;
             var changedReport = await Agent(s => s.AskAsync(reportConversation, "history-only"));
             Check(changedReport.ContextInvalidated && protocol.Payloads.Skip(firstReportPayload).All(p => !p.Contains("untrustedPreviousAnswer")), "changed new source invalidates derived history: " + expected);
+        }
+        Console.WriteLine("Isolating index source quota window; production limit unchanged.");
+        await Task.Delay(TimeSpan.FromSeconds(61));
+        protocol.ReportIndex = Guid.NewGuid();
+        await using (var db = factory.CreateDbContext()) {
+            db.AgreementIndexRecords.Add(new() { Id = protocol.ReportIndex, AccountId = account, Code = "AGENT_INDEX", Name = "Agent index", Resolution = TenantPlatform.Core.Agreements.AgreementIndexResolution.Month, Source = "https://statistics.example.test/path?SECRET=private", ActorUserId = admin });
+            db.AgreementIndexValueRecords.Add(new() { Id = Guid.NewGuid(), AccountId = account, IndexId = protocol.ReportIndex, Period = new(2026, 1, 1),
+                PeriodKey = Guid.NewGuid(), Revision = 1, Value = 100, ActorUserId = admin }); await db.SaveChangesAsync();
+        }
+        var indexLimit = await Begin(own, area: ReadAgentArea.AgreementFinance);
+        var beforeIndexLimit = protocol.Payloads.Count;
+        Check(await Fails(() => Agent(a => a.AskAsync(indexLimit, "own-indices"), limits: defaults with { Tools = 8 }), "ToolLimit") && protocol.Payloads.Count == beforeIndexLimit, "finance catalogue nine tools, lower cap rejects whole before model");
+        foreach (var (indexPrompt, indexTool) in new[] { ("own-indices", "agreements_indices"), ("own-index-values", "agreements_index_values") }) {
+            var indexConversation = await Begin(own, area: ReadAgentArea.AgreementFinance);
+            var indexAnswer = await Agent(a => a.AskAsync(indexConversation, indexPrompt));
+            Check(indexAnswer.Sources.Single() is { Page.PageSize: 25 } && indexAnswer.Sources.Single().Tool == indexTool, "index actual MCP paging provenance: " + indexTool);
+            using (var payload = JsonDocument.Parse(protocol.Payloads.Last())) {
+                var names = payload.RootElement.GetProperty("tools").EnumerateArray().Select(t => t.GetProperty("name").GetString()).Order().ToArray();
+                var expected = (await Registry(r => r.AvailableToolsAsync())).Where(t => t.ConnectionId == own && ReadAgentAreas.Includes(ReadAgentArea.AgreementFinance, false, t.Name)).Select(ReadAgentService.ModelName).Order().ToArray();
+                Check(names.Length == 9 && names.SequenceEqual(expected), "exact approved finance subset including both indices, no proposal or truncation");
+            }
+            Check((await Agent(a => a.AskAsync(indexConversation, "history-only"))).Sources.Single().Revalidated, "index history re-fetches exact source");
+            await using (var db = factory.CreateDbContext()) {
+                if (indexTool == "agreements_indices") (await db.AgreementIndexRecords.SingleAsync(i => i.Id == protocol.ReportIndex)).Name = "Changed index metadata";
+                else {
+                    var old = await db.AgreementIndexValueRecords.SingleAsync(i => i.IndexId == protocol.ReportIndex); old.Superseded = true;
+                    db.AgreementIndexValueRecords.Add(new() { Id = Guid.NewGuid(), AccountId = account, IndexId = protocol.ReportIndex, Period = old.Period,
+                        PeriodKey = old.PeriodKey, Revision = 2, Value = 110, ActorUserId = admin });
+                }
+                await db.SaveChangesAsync();
+            }
+            var beforeChanged = protocol.Payloads.Count;
+            var changedIndex = await Agent(a => a.AskAsync(indexConversation, "history-only"));
+            Check(changedIndex.ContextInvalidated && protocol.Payloads.Skip(beforeChanged).All(p => !p.Contains("untrustedPreviousAnswer")), "index revision/metadata invalidates transitive derived history");
+        }
+        var revokedIndex = await Begin(own, member, ReadAgentArea.AgreementFinance);
+        await Agent(a => a.AskAsync(revokedIndex, "own-index-values"), user: member);
+        await using (var db = factory.CreateDbContext()) { (await db.Users.SingleAsync(u => u.Id == member)).IsActive = false; await db.SaveChangesAsync(); }
+        Check(await DeniedAgent(() => Agent(a => a.AskAsync(revokedIndex, "history-only"), user: member)), "lost active account context cannot reuse index evidence");
+        await using (var db = factory.CreateDbContext()) { (await db.Users.SingleAsync(u => u.Id == member)).IsActive = true; await db.SaveChangesAsync(); }
+        Console.WriteLine("Isolating stored-basis source quota window; production limit unchanged.");
+        await Task.Delay(TimeSpan.FromSeconds(61));
+        await using (var db = factory.CreateDbContext()) {
+            (await db.AgreementLineVersions.SingleAsync(v => v.LineId == financeLine)).BillingTiming = TenantPlatform.Core.Agreements.AgreementBillingTiming.Advance; await db.SaveChangesAsync();
+        }
+        var basisWriter = new TenantPlatform.Application.Agreements.AgreementFinancialService(
+            new TenantPlatform.Application.Security.AuthorizationService(new FixedActor(new(true, admin, account)), new TenantPlatform.Infrastructure.Authorization.AuthorizationData(factory), TimeProvider.System),
+            new TenantPlatform.Infrastructure.Agreements.AgreementFinancialData(factory), TimeProvider.System);
+        protocol.ReportBasis = (await basisWriter.GenerateBasisAsync(account, protocol.ReportAgreement, TenantPlatform.Core.Agreements.AgreementDirection.Cost, new(2026,1,1), new(2026,1,31))).Created.Single();
+        foreach (var (basisPrompt, basisTool) in new[] { ("own-bases", "agreements_bases"), ("own-basis", "agreements_basis") }) {
+            var basisConversation = await Begin(own, area: ReadAgentArea.AgreementFinance);
+            var answerBasis = await Agent(a => a.AskAsync(basisConversation, basisPrompt));
+            Check(answerBasis.Sources.Single().Tool == basisTool && (basisTool != "agreements_bases" || answerBasis.Sources.Single().Page is { PageSize: 25 }), "actual stored-basis MCP source distinct from forecast: " + basisTool);
+            Check((await Agent(a => a.AskAsync(basisConversation, "history-only"))).Sources.Single().Revalidated, "stored-basis source revalidated before history");
+            await using (var db = factory.CreateDbContext()) {
+                if (basisTool == "agreements_bases") (await db.AgreementBasisRecords.SingleAsync(b => b.Id == protocol.ReportBasis)).Status = TenantPlatform.Core.Agreements.AgreementBasisStatus.Approved;
+                else {
+                    var snapshot = await db.AgreementBasisSnapshotRecords.SingleAsync(b => b.BasisId == protocol.ReportBasis);
+                    var payload = System.Text.Json.Nodes.JsonNode.Parse(snapshot.DataJson)!; payload["Events"]![0]!["Amount"] = 321; snapshot.DataJson = payload.ToJsonString();
+                }
+                await db.SaveChangesAsync();
+            }
+            var beforeBasisChange = protocol.Payloads.Count;
+            var changedBasis = await Agent(a => a.AskAsync(basisConversation, "history-only"));
+            Check(changedBasis.ContextInvalidated && protocol.Payloads.Skip(beforeBasisChange).All(p => !p.Contains("untrustedPreviousAnswer")), "changed stored status/snapshot invalidates derived basis history");
         }
         // The tool remains authorized while an individual agreement's Read grant is revoked.
         var businessGrant = Guid.NewGuid();
@@ -176,18 +305,35 @@ static partial class RegistryChecks
                 AgreementId = agreement.Id, UserId = member, Level = TenantPlatform.Core.Agreements.AgreementAccessLevel.Read });
             await db.SaveChangesAsync();
         }
-        foreach (var prompt in new[] { "own-query", "own-aggregate", "own-details" })
+        var historyDeadline = Guid.NewGuid();
+        await using (var db = factory.CreateDbContext())
         {
-            var scopedReport = await Begin(own, member);
+            db.AgreementDeadlines.Add(new TenantPlatform.Core.Agreements.AgreementDeadline { Id = historyDeadline, AccountId = account,
+                AgreementId = protocol.ReportAgreement, Kind = TenantPlatform.Core.Agreements.AgreementDeadlineKind.Notice,
+                DueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1), PeriodStartDate = new DateOnly(2026, 1, 1),
+                CreatedUtc = DateTimeOffset.UtcNow, UpdatedUtc = DateTimeOffset.UtcNow });
+            await db.SaveChangesAsync();
+        }
+        foreach (var prompt in new[] { "own-query", "own-aggregate", "own-details", "own-followup", "own-deadlines", "own-insights", "own-events", "own-relations", "own-finance", "own-forecast", "own-bases", "own-basis" })
+        {
+            if (prompt == "own-bases") {
+                Console.WriteLine("Isolating stored-basis resource revocation quota window; production limit unchanged.");
+                await Task.Delay(TimeSpan.FromSeconds(61));
+            }
+            var scopedReport = await Begin(own, member, prompt is "own-finance" or "own-forecast" or "own-bases" or "own-basis" ? ReadAgentArea.AgreementFinance : prompt is "own-details" or "own-followup" or "own-events" or "own-deadlines" ? ReadAgentArea.AgreementDetails : ReadAgentArea.Agreements);
             await Agent(s => s.AskAsync(scopedReport, prompt), user: member);
             await using (var db = factory.CreateDbContext()) { db.Remove(await db.AgreementAccess.SingleAsync(a => a.Id == businessGrant)); await db.SaveChangesAsync(); }
-            if (prompt == "own-details") Check(await Fails(() => Agent(s => s.AskAsync(scopedReport, "history-only"), user: member), "HistoryUnavailable"), "revoked detail cannot re-enter conversation history");
+            if (prompt is "own-details" or "own-followup" or "own-events" or "own-finance" or "own-forecast" or "own-bases" or "own-basis") Check(await Fails(() => Agent(s => s.AskAsync(scopedReport, "history-only"), user: member), "HistoryUnavailable"), "revoked detail cannot re-enter conversation history");
             else Check((await Agent(s => s.AskAsync(scopedReport, "history-only"), user: member)).ContextInvalidated, "revoked agreement changes new list/aggregate and invalidates derived history: " + prompt);
             await using (var db = factory.CreateDbContext())
             {
                 db.AgreementAccess.Add(new TenantPlatform.Core.Agreements.AgreementAccess { Id = businessGrant, AccountId = account, AgreementId = protocol.ReportAgreement, UserId = member, Level = TenantPlatform.Core.Agreements.AgreementAccessLevel.Read });
                 await db.SaveChangesAsync();
             }
+        }
+        await using (var db = factory.CreateDbContext())
+        {
+            db.AgreementDeadlines.Remove(await db.AgreementDeadlines.SingleAsync(d => d.Id == historyDeadline)); await db.SaveChangesAsync();
         }
         var protectedConversation = await Begin(own, member);
         var protectedAnswer = await Agent(s => s.AskAsync(protectedConversation, "protected"), user: member);
@@ -274,15 +420,18 @@ static partial class RegistryChecks
         var page = await (await browser.Get("/agent")).Content.ReadAsStringAsync();
         Check(page.Contains("data-read-agent") && page.Contains("OpenAI") && page.Contains("data-consent") && !page.Contains("synthetic-agent-key") && !page.Contains("<script>alert"), "SSR chat panel discloses provider, requires selection/acceptance, contains no key or model HTML");
         var csrf = WebUtility.HtmlDecode(Regex.Match(page, "data-csrf=\"([^\"]+)\"").Groups[1].Value);
-        var response = await Http("begin", new { connection = external, account, sharingAccepted = true });
+        var response = await Http("begin", new { connection = external, account, sharingAccepted = true, area = "External" });
         Check(response.IsSuccessStatusCode, "real cookie/antiforgery HTTP begins conversation");
         using var begun = JsonDocument.Parse(await response.Content.ReadAsStringAsync()); var conversationHttp = begun.RootElement.GetProperty("conversation").GetGuid();
         response = await Http("ask", new { conversation = conversationHttp, prompt = "normal" });
         var body = await response.Content.ReadAsStringAsync();
         Check(response.IsSuccessStatusCode && !body.Contains("<script>") && body.Contains("sources") && !body.Contains("private-provider-error"), "HTTP answer safely JSON-encodes model HTML and sends actual sources");
+        Check((await Http("begin", new { connection = own, account, sharingAccepted = true, area = "Unknown" })).StatusCode == HttpStatusCode.BadRequest &&
+            (await Http("begin", new { connection = own, account, sharingAccepted = true })).StatusCode == HttpStatusCode.BadRequest, "HTTP requires an explicit known area");
+        Check((await Http("ask", new { conversation = conversationHttp, prompt = "normal", area = "Agreements" })).StatusCode == HttpStatusCode.BadRequest, "HTTP cannot override the server-bound area on an existing conversation");
         Check((await Http("ask", new { conversation = conversationHttp, prompt = "normal", userId = member })).StatusCode == HttpStatusCode.BadRequest, "HTTP rejects client identity injection");
         Check((await Http("ask", new { conversation = conversationHttp, prompt = "normal" }, token: false)).StatusCode == HttpStatusCode.BadRequest, "chat POST requires antiforgery");
-        var reportHttp = await Http("begin", new { connection = own, account, sharingAccepted = true });
+        var reportHttp = await Http("begin", new { connection = own, account, sharingAccepted = true, area = "Agreements" });
         using var reportBegun = JsonDocument.Parse(await reportHttp.Content.ReadAsStringAsync());
         var reportResponse = await Http("ask", new { conversation = reportBegun.RootElement.GetProperty("conversation").GetGuid(), prompt = "own-aggregate" });
         Check(reportResponse.IsSuccessStatusCode, "aggregate source reaches real cookie-protected agent HTTP endpoint");
@@ -339,7 +488,7 @@ static partial class RegistryChecks
         }
         async Task ToolUpdate(Guid id, Action<Microsoft.EntityFrameworkCore.Query.UpdateSettersBuilder<McpDiscoveredTool>> update)
         { await using var db = new OAuthDbContext(options); await db.Set<McpDiscoveredTool>().Where(t => t.ConnectionId == id).ExecuteUpdateAsync(update); }
-        Task<Guid> Begin(Guid id, Guid? user = null) => Agent(s => s.BeginAsync(id, account, true), user: user);
+        Task<Guid> Begin(Guid id, Guid? user = null, ReadAgentArea area = ReadAgentArea.Agreements) => Agent(s => s.BeginAsync(id, account, true, id == own ? area : ReadAgentArea.External), user: user);
         async Task<T> Registry<T>(Func<McpRegistryService, Task<T>> action) => await Scope(admin, account, sp => action(sp.GetRequiredService<McpRegistryService>()));
         async Task<T> Agent<T>(Func<ReadAgentService, Task<T>> action, Guid? user = null, Guid? selected = null, ReadAgentLimits? limits = null) =>
             await Scope(user ?? admin, selected ?? account, sp => {

@@ -135,7 +135,7 @@ static partial class RegistryChecks
         }
         int expectedAll;
         await using (var db = factory.CreateDbContext()) expectedAll = await db.Agreements.CountAsync(a => a.AccountId == account && a.Status == AgreementStatus.Active && !a.IsArchived);
-        memory.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true));
+        memory.ClearUser(admin); conversation = await Agent(a => a.BeginAsync(source, account, true, ReadAgentArea.Agreements));
         intent = new("Aktive avtaler per bygg", new(PagePeriodKind.All, null), new(Status: AgreementStatus.Active), [PageComponent.BuildingChart], GroupBy: AgreementReportGrouping.Building, Columns: []);
         var beforeNew = await Pages(p => p.ListAsync());
         var beforeAll = PagesProtocol.Calls.Count;

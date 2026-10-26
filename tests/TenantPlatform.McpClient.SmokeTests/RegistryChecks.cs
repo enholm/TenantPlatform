@@ -87,7 +87,7 @@ static partial class RegistryChecks
             Check((await Credentials()).Count(x => x.UserId == adminA && x.ProtectedTokens != null) == 3, "multiple personal credentials coexist without overwriting");
             Check((await Call(a, a2)).StatusCode == HttpStatusCode.BadRequest, "new tools cannot run before discovery/approval");
             await Discover(a, a1);
-            Check((await Tools(a1)).Select(x => x.Name).Order().SequenceEqual(new[] { "accounts_list", "agreements_aggregate", "agreements_attention", "agreements_details", "agreements_list", "agreements_query", "service_requests_aggregate", "service_requests_query" }), "internal catalogue includes established and new read tools");
+            Check((await Tools(a1)).Select(x => x.Name).Order().SequenceEqual(new[] { "accounts_list", "agreements_aggregate", "agreements_attention", "agreements_bases", "agreements_basis", "agreements_deadlines", "agreements_details", "agreements_financial_lines", "agreements_followup", "agreements_followup_history", "agreements_forecast", "agreements_index_values", "agreements_indices", "agreements_insights", "agreements_list", "agreements_prioritized", "agreements_query", "agreements_relations", "service_requests_aggregate", "service_requests_query" }), "internal catalogue includes established and new read tools");
             await Approve(a, a1); Check((await Call(a, a1)).IsSuccessStatusCode, "internal registered profile still enforces local subject and reads over MCP");
             await Discover(a, a2); await Discover(a, a3); await Discover(b, b1);
             var tools2 = await Tools(a2); var tools3 = await Tools(a3);

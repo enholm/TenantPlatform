@@ -38,7 +38,7 @@ public static class AgreementPeriodCalculator
 
     public static List<AgreementCalculatedPeriod> Calculate(Guid agreementId, AgreementDirection direction, string currency,
         IEnumerable<AgreementLineVersion> lineVersions, IEnumerable<AgreementPriceVersion> priceVersions,
-        DateOnly from, DateOnly to, IReadOnlyDictionary<Guid, List<AgreementAutomaticPrice>>? automaticPrices = null)
+        DateOnly from, DateOnly to, IReadOnlyDictionary<Guid, List<AgreementAutomaticPrice>>? automaticPrices = null, CancellationToken ct = default, int maxPeriods = 20000)
     {
         if (from > to || from == default || to.Year > 9998 || to.DayNumber - from.DayNumber > 3660 ||
             !Enum.IsDefined(direction) || !Currencies.Contains(currency))
@@ -51,6 +51,7 @@ public static class AgreementPeriodCalculator
         var prices = priceVersions.Where(x => x.Independent || publishedSequences.Contains((x.LineId, x.Sequence))).ToLookup(x => x.LineId);
         foreach (var line in published.GroupBy(x => x.LineId))
         {
+            ct.ThrowIfCancellationRequested();
             // A later recorded correction supersedes older definitions from its effective date,
             // including an older definition whose start was mistakenly registered too late.
             var versions = line.Where(v => !line.Any(newer => newer.Sequence > v.Sequence && newer.EffectiveFrom <= v.EffectiveFrom))
@@ -117,6 +118,7 @@ public static class AgreementPeriodCalculator
                 .Append(actualFrom).Append(actualUntil).Distinct().Order().ToArray();
             for (var part = 0; part < boundaries.Length - 1; part++)
             {
+                ct.ThrowIfCancellationRequested();
                 var partFrom = boundaries[part]; var partUntil = boundaries[part + 1];
                 var price = prices[v.LineId].Where(x => x.AgreementId == agreementId && x.EffectiveFrom <= partFrom)
                     .OrderByDescending(x => x.Sequence).FirstOrDefault()
@@ -127,7 +129,7 @@ public static class AgreementPeriodCalculator
                     partFrom, partUntil.AddDays(-1), invoice, price.Quantity, automatic?.UnitPrice ?? price.UnitPrice, days, totalDays, 0, included,
                     v.Id, price.Id, once ? $"{v.LineId:N}:once" : $"{v.LineId:N}:{referenceFrom:yyyyMMdd}",
                     v.Documents.Select(x => x.DocumentId).Order().ToArray()) { IndexAdjustments = automatic?.Adjustments ?? [] });
-                if (result.Count > 20000) throw new AgreementValidationException("FinanceInvalidRange");
+                if (result.Count > Math.Min(maxPeriods, 20000)) { if (maxPeriods < 20000) throw new AgreementFinanceLimitException(); throw new AgreementValidationException("FinanceInvalidRange"); }
             }
         }
     }

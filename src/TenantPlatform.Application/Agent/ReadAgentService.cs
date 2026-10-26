@@ -30,7 +30,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
         var page = await registry.ListAsync(ct);
         var tools = await registry.AvailableToolsAsync(ct);
         return tools.Where(t => !t.Name.StartsWith("personal_pages_", StringComparison.Ordinal) && t.UseClass == McpToolUse.AutomaticRead &&
-            (External(t.ConnectionId, page) || t.Name is "agreements_list" or "agreements_attention" or "agreements_query" or "agreements_aggregate" or "agreements_details" or "service_requests_query" or "service_requests_aggregate")).ToArray();
+            (External(t.ConnectionId, page) || ReadAgentAreas.Known(t.Name))).ToArray();
     }
     private static bool External(Guid connection, McpRegistryPage page)
     {
@@ -41,19 +41,39 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
     {
         await Require(ct);
         if (!Ready) return [];
-        return (await Catalog(ct)).GroupBy(t => t.ConnectionId).Select(g => new AgentConnection(g.Key, g.First().ConnectionName, g.Count())).ToArray();
+        var registryPage = await registry.ListAsync(ct);
+        return (await Catalog(ct)).GroupBy(t => t.ConnectionId).Select(g => new AgentConnection(g.Key, g.First().ConnectionName, g.Count(), Enum.GetValues<ReadAgentArea>().Select(a => new AgentAreaOption(a, g.Count(t => ReadAgentAreas.Includes(a, External(t.ConnectionId, registryPage), t.Name))))
+                .Where(a => a.ToolCount > 0).ToArray())).ToArray();
     }
-    public async Task<Guid> BeginAsync(Guid selectedConnection, Guid expectedAccount, bool sharingAccepted, CancellationToken ct = default)
-        => await BeginCoreAsync(selectedConnection, expectedAccount, sharingAccepted, ct, null);
-    private async Task<Guid> BeginCoreAsync(Guid selectedConnection, Guid expectedAccount, bool sharingAccepted, CancellationToken ct, Guid? preserve)
+    public async Task<Guid> BeginAsync(Guid selectedConnection, Guid expectedAccount, bool sharingAccepted, ReadAgentArea area, CancellationToken ct = default)
+        => await BeginCoreAsync(selectedConnection, expectedAccount, sharingAccepted, area, ct, null);
+    private async Task<Guid> BeginCoreAsync(Guid selectedConnection, Guid expectedAccount, bool sharingAccepted, ReadAgentArea area, CancellationToken ct, Guid? preserve)
     {
         var who = await Require(ct);
         if (!Ready) throw new ReadAgentException("Disabled");
         if (who.AccountId != expectedAccount || !sharingAccepted) throw new ReadAgentException("ConsentRequired");
-        if (!(await Catalog(ct)).Any(t => t.ConnectionId == selectedConnection)) throw new ReadAgentException("ConnectionUnavailable");
-        return sessions.Create(who, selectedConnection, preserve);
+        if (!Enum.IsDefined(area)) throw new ReadAgentException("AreaInvalid");
+        var page = await registry.ListAsync(ct);
+        var available = (await Catalog(ct)).Where(t => t.ConnectionId == selectedConnection).ToArray();
+        if (available.Length == 0) throw new ReadAgentException("ConnectionUnavailable");
+        if (!available.Any(t => ReadAgentAreas.Includes(area, External(selectedConnection, page), t.Name))) throw new ReadAgentException("AreaInvalid");
+        ct.ThrowIfCancellationRequested();
+        if (await Require(ct) != who) throw new UnauthorizedAccessException();
+        return sessions.Create(who, selectedConnection, preserve, area);
     }
     public async Task DeleteAsync(Guid conversation, CancellationToken ct = default) => sessions.Delete(conversation, await Require(ct));
+    public async Task<Guid> SwitchAreaAsync(Guid conversation, ReadAgentArea area, bool resetAccepted, CancellationToken ct = default)
+    {
+        var who = await Require(ct);
+        if (!resetAccepted || !Enum.IsDefined(area)) throw new ReadAgentException("AreaInvalid");
+        var connection = sessions.Connection(conversation, who);
+        var page = await registry.ListAsync(ct);
+        if (!(await Catalog(ct)).Any(t => t.ConnectionId == connection && ReadAgentAreas.Includes(area, External(connection, page), t.Name))) throw new ReadAgentException("AreaInvalid");
+        if (await Require(ct) != who) throw new UnauthorizedAccessException();
+        ct.ThrowIfCancellationRequested();
+        return sessions.Replace(conversation, who, area);
+    }
+    public async Task<ReadAgentArea> AreaAsync(Guid conversation, CancellationToken ct = default) => sessions.Area(conversation, await Require(ct));
     // Safe read for SSR; never creates a conversation or fetches model/business data.
     public async Task<AgentReportDraft> EditPageAsync(Guid pageId, CancellationToken ct = default)
     {
@@ -69,7 +89,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
         if (who.AccountId != expectedAccount || !sharingAccepted) throw new ReadAgentException("ConsentRequired");
         var draft = await EditPageAsync(pageId, ct);
         if (preserve is Guid old && draft.Definition.ConnectionId != sessions.Connection(old, who)) throw new ReadAgentException("DraftSourceChanged");
-        var id = await BeginCoreAsync(draft.Definition.ConnectionId, expectedAccount, sharingAccepted, ct, preserve);
+        var id = await BeginCoreAsync(draft.Definition.ConnectionId, expectedAccount, sharingAccepted, ReadAgentAreas.FromReport(draft.Definition.Area), ct, preserve);
         try
         {
             using var run = sessions.Start(id, who, limits, ct);
@@ -114,11 +134,13 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
         if (!Ready) throw new ReadAgentException("Disabled");
         if (string.IsNullOrWhiteSpace(prompt) || prompt.Length > limits.PromptCharacters) throw new ReadAgentException("PromptLimit");
         var connection = sessions.Connection(conversation, who);
+        var area = sessions.Area(conversation, who);
         using var run = sessions.Start(conversation, who, limits, ct);
         var token = run.Token;
         try
         {
-            var selected = (await Catalog(token)).Where(t => t.ConnectionId == connection).OrderBy(t => t.Name, StringComparer.Ordinal).ToArray();
+            var registryPage = await registry.ListAsync(token);
+            var selected = (await Catalog(token)).Where(t => t.ConnectionId == connection && ReadAgentAreas.Includes(area, External(connection, registryPage), t.Name)).OrderBy(t => t.Name, StringComparer.Ordinal).ToArray();
             if (selected.Length == 0) { run.Invalidate(); throw new ReadAgentException("ConnectionUnavailable"); }
             if (selected.Length > limits.Tools) throw new ReadAgentException("ToolLimit"); // Never silently truncate a catalogue.
             var page = await registry.ListAsync(token);
@@ -184,7 +206,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                         content = JsonSerializer.Serialize(new { untrustedPreviousAnswer = old.Text, historicalSources = old.Sources }) }));
                 }
             }
-            var proposalAllowed = drafts is not null && !external && AgentReportDrafts.Requested(prompt, run.Draft is not null) &&
+            var proposalAllowed = drafts is not null && !external && ReadAgentAreas.Reports(area) && AgentReportDrafts.Requested(prompt, run.Draft is not null) &&
                 (run.Draft?.SavedPageId is null || AgentReportDrafts.Requested(prompt, false)) && selected.Any(t => TenantPlatform.Application.PersonalPages.ReportAreas.Sources.Any(s => s.QueryTool == t.Name || s.AggregateTool == t.Name));
             if (run.Draft is { } currentDraft)
             {
@@ -200,7 +222,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                     storedReferenceFilters = currentDraft.Edit is not null && (currentDraft.Definition.RequestFilter?.BuildingId.HasValue == true || currentDraft.Definition.RequestFilter?.MissingBuilding == true || currentDraft.Definition.Filter.BuildingId.HasValue || currentDraft.Definition.Filter.UnitId.HasValue || currentDraft.Definition.Filter.OrganizationElementId.HasValue || currentDraft.Definition.Filter.GeographicAreaId.HasValue),
                     instruction = "Intent only, no retained report data. Revise this whole unsaved declaration only on explicit user request. Backend preserves stored reference filters; new identifiers cannot be chosen. Only an explicitly opened edit session can update an existing page through a separate user button." }, AgentReportDrafts.Json) }));
             }
-            if (proposalAllowed) { if (tools.Length + 1 > limits.Tools) throw new ReadAgentException("ToolLimit"); tools = [..tools, AgentReportDrafts.Tool()]; }
+            if (proposalAllowed) { if (tools.Length + 1 > limits.Tools) throw new ReadAgentException("ToolLimit"); tools = [..tools, AgentReportDrafts.ForArea(ReadAgentAreas.ToReport(area))]; }
             input.Add(JsonSerializer.SerializeToElement(new { role = "user", content = prompt }));
             for (var round = 0; round < limits.Rounds; round++)
             {
@@ -230,7 +252,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 {
                     if (!proposalAllowed || drafts is null || reply.Calls.Count != 1 || !callIds.Add(reply.Calls[0].Id)) throw new ReadAgentException("InvalidTool");
                     if (++calls > limits.Calls) throw new ReadAgentException("CallLimit");
-                    var report = await drafts.PrepareAsync(reply.Calls[0].Arguments, connection, run.Draft, async (name, version, args, readToken) => {
+                    var report = await drafts.PrepareAsync(reply.Calls[0].Arguments, connection, run.Draft, ReadAgentAreas.ToReport(area), async (name, version, args, readToken) => {
                         var binding = selected.SingleOrDefault(t => t.Name == name && t.Version == version) ?? throw new ReadAgentException("ConnectionUnavailable");
                         return await Invoke(binding, args, Guid.NewGuid(), false, false, readToken);
                     }, token);
@@ -280,19 +302,74 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 var bytes = Bytes(result); resultBytes += bytes;
                 if (bytes > limits.ResultBytes || resultBytes > limits.TotalResultBytes) throw new ReadAgentException("ResultLimit");
                 using var json = JsonDocument.Parse(result);
-                AgentPageFacts? paging = null; AgentAttentionFacts? attention = null; AgentAggregateFacts? aggregate = null;
+                AgentPageFacts? paging = null; AgentAttentionFacts? attention = null; AgentAggregateFacts? aggregate = null; AgentFinanceFacts? finance = null;
                 if (external) notices.Add("ExternalCompleteness");
                 else
                 {
                     var data = json.RootElement.GetProperty("structuredContent");
-                    if (data.GetProperty("schemaVersion").GetString() != "1" || data.GetProperty("accountId").GetGuid() != who.AccountId) throw new ReadAgentException("SourceUnavailable");
-                    if (tool.Name is "agreements_list" or "agreements_query" or "service_requests_query")
+                    if (data.GetProperty("schemaVersion").GetString() != (tool.Name == "agreements_details" ? "2" : "1") || data.GetProperty("accountId").GetGuid() != who.AccountId) throw new ReadAgentException("SourceUnavailable");
+                    if (tool.Name is "agreements_list" or "agreements_query" or "agreements_followup" or "agreements_deadlines" or "agreements_followup_history" or "agreements_relations" or "service_requests_query")
                     {
                         notices.Add("Paging");
                         paging = new(data.GetProperty("requestedPage").GetInt32(), data.GetProperty("page").GetInt32(), data.GetProperty("pageSize").GetInt32(),
                             data.GetProperty("returnedCount").GetInt32(), data.GetProperty("totalCount").GetInt32(), data.GetProperty("hasMore").GetBoolean(),
                             data.GetProperty("nextPage").ValueKind == JsonValueKind.Null ? null : data.GetProperty("nextPage").GetInt32(),
                             data.GetProperty("complete").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean(), data.GetProperty("limitReached").GetBoolean());
+                    }
+                    if (tool.Name is "agreements_bases" or "agreements_basis")
+                    {
+                        if (data.GetProperty("coverage").GetString() != (tool.Name == "agreements_bases" ? "StoredCalculationBases" : "StoredCalculationBasisSnapshot")) throw new ReadAgentException("SourceUnavailable");
+                        var p = data.GetProperty("data");
+                        var summaries = tool.Name == "agreements_bases" ? p.GetProperty("items").EnumerateArray().ToArray() : [p.GetProperty("summary")];
+                        if (summaries.Any(s => s.GetProperty("freshness").GetString() != "NotEvaluated")) throw new ReadAgentException("SourceUnavailable");
+                        if (tool.Name == "agreements_bases")
+                        {
+                            notices.Add("Paging");
+                            paging = new(p.GetProperty("requestedPage").GetInt32(), p.GetProperty("page").GetInt32(), p.GetProperty("pageSize").GetInt32(), p.GetProperty("returnedCount").GetInt32(), p.GetProperty("totalCount").GetInt32(), p.GetProperty("hasMore").GetBoolean(),
+                                p.GetProperty("nextPage").ValueKind == JsonValueKind.Null ? null : p.GetProperty("nextPage").GetInt32(), p.GetProperty("complete").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean(), p.GetProperty("limitReached").GetBoolean());
+                        }
+                    }
+                    if (tool.Name is "agreements_indices" or "agreements_index_values")
+                    {
+                        var p = data.GetProperty("data");
+                        var coverage = data.GetProperty("coverage").GetString();
+                        if (tool.Name == "agreements_indices" ? coverage != "AccountIndexRegister" : coverage != (data.GetProperty("view").GetString() == "Current" ? "CurrentStoredRevisions" : "StoredRevisionHistory")) throw new ReadAgentException("SourceUnavailable");
+                        notices.Add("Paging");
+                        paging = new(p.GetProperty("requestedPage").GetInt32(), p.GetProperty("page").GetInt32(), p.GetProperty("pageSize").GetInt32(),
+                            p.GetProperty("returnedCount").GetInt32(), p.GetProperty("totalCount").GetInt32(), p.GetProperty("hasMore").GetBoolean(),
+                            p.GetProperty("nextPage").ValueKind == JsonValueKind.Null ? null : p.GetProperty("nextPage").GetInt32(),
+                            p.GetProperty("complete").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean(), p.GetProperty("limitReached").GetBoolean());
+                    }
+                    if (tool.Name is "agreements_financial_lines" or "agreements_forecast")
+                    {
+                        var f = data.GetProperty("data");
+                        var forecast = tool.Name == "agreements_forecast";
+                        var complete = forecast ? data.GetProperty("complete").GetBoolean() : f.GetProperty("versions").GetProperty("complete").GetBoolean() && f.GetProperty("prices").GetProperty("complete").GetBoolean();
+                        finance = new(f.GetProperty("currency").GetString(), f.GetProperty("direction").GetString(), data.GetProperty("coverage").GetString()!,
+                            forecast ? f.GetProperty("from").GetString() : null, forecast ? f.GetProperty("to").GetString() : null, complete,
+                            forecast ? null : f.GetProperty("versions").GetProperty("totalCount").GetInt32(), forecast ? null : f.GetProperty("prices").GetProperty("totalCount").GetInt32(),
+                            forecast ? f.GetProperty("periods").GetArrayLength() : null);
+                        if (finance.Coverage != (forecast ? "CalculatedForecastNotActualTransactions" : "StoredLineAndPriceHistory")) throw new ReadAgentException("SourceUnavailable");
+                    }
+                    if (tool.Name == "agreements_insights")
+                    {
+                        aggregate = new(data.GetProperty("dimension").GetString()!, data.GetProperty("totalCount").GetInt32(),
+                            data.GetProperty("groups").GetArrayLength(), data.GetProperty("complete").GetBoolean(), data.GetProperty("groupsOverlap").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean());
+                        if (!aggregate.Complete || aggregate.GroupsOverlap || data.GetProperty("dataScope").GetString() != "NonArchivedVisibleAgreements") throw new ReadAgentException("SourceUnavailable");
+                        notices.Add("InsightScope");
+                    }
+                    if (tool.Name == "agreements_prioritized")
+                    {
+                        if (data.GetProperty("selectionLimit").GetInt32() != 5 || data.GetProperty("isCompleteAgreementList").GetBoolean() ||
+                            !data.GetProperty("selectionComplete").GetBoolean()) throw new ReadAgentException("SourceUnavailable");
+                        notices.Add("PrioritySelection");
+                    }
+                    if (tool.Name == "agreements_deadlines")
+                    {
+                        var categories = data.GetProperty("categories");
+                        if (!categories.GetProperty("beforeListFilters").GetBoolean() || !categories.GetProperty("groupsOverlap").GetBoolean() ||
+                            data.GetProperty("dataCoverage").GetString() != "StoredOccurrencesOnly") throw new ReadAgentException("SourceUnavailable");
+                        notices.Add("DeadlineCategories");
                     }
                     if (tool.Name is "agreements_aggregate" or "service_requests_aggregate")
                     {
@@ -310,7 +387,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 var fingerprint = Fingerprint(result);
                 var identical = retainedCalls.FirstOrDefault(c => c.Tool == tool.Name && c.Version == tool.Version && c.Arguments == arguments && c.Fingerprint == fingerprint);
                 if (identical is not null) evidenceId = identical.Id;
-                sources.Add(new(sources.Count + 1, connection, tool.ConnectionName, tool.Name, tool.Version, paging, attention, revalidated, evidenceId, aggregate));
+                sources.Add(new(sources.Count + 1, connection, tool.ConnectionName, tool.Name, tool.Version, paging, attention, revalidated, evidenceId, aggregate, finance));
                 if (retain && identical is null) retainedCalls.Add(new(evidenceId, tool.Name, tool.Version, arguments, fingerprint));
                 return result;
             }

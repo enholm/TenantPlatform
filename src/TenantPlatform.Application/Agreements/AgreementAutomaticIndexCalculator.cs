@@ -17,7 +17,7 @@ public static class AgreementAutomaticIndexCalculator
     public static Dictionary<Guid, List<AgreementAutomaticPrice>> Project(bool needsReview,
         IReadOnlyList<AgreementLineVersion> versions, IReadOnlyList<AgreementPriceVersion> prices,
         IReadOnlyList<AgreementIndexSelection> selections, IReadOnlyList<AgreementIndex> indices,
-        IReadOnlyList<AgreementIndexValue> values)
+        IReadOnlyList<AgreementIndexValue> values, CancellationToken ct = default)
     {
         var result = new Dictionary<Guid, List<AgreementAutomaticPrice>>();
         if (needsReview || selections.Count == 0) return result;
@@ -28,6 +28,7 @@ public static class AgreementAutomaticIndexCalculator
         var indexDates = levels.SelectMany(x => x).Select(x => x.Period).Concat(selections.Select(x => x.EffectiveFrom)).Distinct().ToArray();
         foreach (var group in versions.GroupBy(x => x.LineId))
         {
+            ct.ThrowIfCancellationRequested();
             if (!group.Any(x => x.IndexRegulated)) continue;
             var lineVersions = group.OrderByDescending(x => x.Sequence).ToArray();
             var linePrices = priceLookup[group.Key].OrderByDescending(x => x.Sequence).ToArray();
@@ -42,6 +43,7 @@ public static class AgreementAutomaticIndexCalculator
             bool wasEligible = false;
             foreach (var date in dates)
             {
+                ct.ThrowIfCancellationRequested();
                 var line = lineVersions.FirstOrDefault(x => x.EffectiveFrom <= date);
                 var price = linePrices.FirstOrDefault(x => x.EffectiveFrom <= date);
                 if (line is null || price is null) continue;

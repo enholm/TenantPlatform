@@ -81,11 +81,17 @@ await using(var admin = new NpgsqlConnection(connection))
     await command.ExecuteNonQueryAsync();
     await using var requestGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"RequesterUserId\",\"RequesterOrganizationId\",\"AssignedServiceProviderOrganizationId\",\"BuildingId\",\"UnitId\",\"Title\",\"Status\",\"CreatedAt\",\"SubmittedAt\",\"CompletedAt\") ON public.service_requests TO mcp_reader", admin);
     await requestGrant.ExecuteNonQueryAsync();
+    await using var deadlineGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"AgreementId\",\"Kind\",\"DueDate\",\"Status\",\"State\",\"UpdatedUtc\") ON public.agreement_deadlines TO mcp_reader", admin);
+    await deadlineGrant.ExecuteNonQueryAsync();
+    await using var extensionGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"Name\") ON public.agreement_indices TO mcp_reader; GRANT SELECT (\"Id\",\"AccountId\",\"DeadlineId\",\"Kind\",\"CreatedUtc\") ON public.agreement_deadline_history TO mcp_reader", admin);
+    await extensionGrant.ExecuteNonQueryAsync();
+    await using var financeGrant = new NpgsqlCommand(FinanceReadPrivileges.Sql("mcp_reader"), admin); await financeGrant.ExecuteNonQueryAsync();
 }
 var runtime = new NpgsqlConnectionStringBuilder(connection) { Username="mcp_reader",SearchPath="public" }.ConnectionString;
 var options = new McpOptions { Issuer=oauth.Issuer,Resource=oauth.Resource,ConnectionString=runtime,Clients=["protocol-fixture"],AllowedOrigins=["https://client.test"] };
 var logs = new LogCapture(); var clock = new AdjustableClock();
 WebApplication? issuer=null, host=null;
+var refreshTokens = new Dictionary<string, string>(StringComparer.Ordinal);
 try
 {
     issuer=await OAuthTestHost.Start(oauth,factory,clock,logs);
@@ -100,6 +106,23 @@ try
     var delegationId=jwt.GetClaim(OpenIddictConstants.Claims.Private.AuthorizationId).Value;
     Check(!string.IsNullOrEmpty(delegationId),"actual access JWT carries signed delegation identifier");
     host=await Start();
+    token = await Renew(token);
+    if (Environment.GetEnvironmentVariable("MCP_TEST_BASIS_ONLY") == "1") {
+        await BasisReadChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+        return;
+    }
+    if (Environment.GetEnvironmentVariable("MCP_TEST_INDEX_ONLY") == "1") {
+        await IndexReadChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+        return;
+    }
+    if (Environment.GetEnvironmentVariable("MCP_TEST_FINANCE_ONLY") == "1") {
+        await FinanceReadChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+        return;
+    }
+    if (Environment.GetEnvironmentVariable("MCP_TEST_EXTENSIONS_ONLY") == "1") {
+        await AgreementExtensionChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+        return;
+    }
     using var raw=host.GetTestClient(); raw.BaseAddress=new Uri("https://mcp.test");
     var metadata=await raw.GetStringAsync("/.well-known/oauth-protected-resource/mcp");
     Check(metadata.Contains(oauth.Resource)&&metadata.Contains(oauth.Issuer),"fixed resource discovery");
@@ -115,7 +138,7 @@ try
     {
         await using var client=await Client(token,version);
         var tools=await client.ListToolsAsync();
-        Check(tools.Select(t=>t.Name).Order().SequenceEqual(new[]{"accounts_list","agreements_aggregate","agreements_attention","agreements_details","agreements_list","agreements_query","service_requests_aggregate","service_requests_query"}),"exact eight tools "+version);
+        Check(tools.Select(t=>t.Name).Order().SequenceEqual(new[]{"accounts_list","agreements_aggregate","agreements_attention", "agreements_bases", "agreements_basis","agreements_deadlines","agreements_details","agreements_financial_lines","agreements_followup","agreements_followup_history","agreements_forecast","agreements_index_values", "agreements_indices", "agreements_insights","agreements_list","agreements_prioritized","agreements_query","agreements_relations","service_requests_aggregate","service_requests_query"}),"exact twenty tools "+version);
         var schemas=JsonSerializer.Serialize(tools.Select(t=>t.ProtocolTool));
         Check(tools.All(t=>t.ProtocolTool.OutputSchema!.Value.GetProperty("additionalProperties").ValueKind==JsonValueKind.False) && !schemas.Contains("Owner") && schemas.Contains("additionalProperties") && schemas.Contains("outputSchema"),"bounded input/output schemas "+version);
         var accounts=Data(await client.CallToolAsync("accounts_list",new Dictionary<string,object?>()));
@@ -142,8 +165,38 @@ try
     }
     await using (var agreementOnly = await Client(token, "2026-07-28"))
         Check(Error(await agreementOnly.CallToolAsync("service_requests_query", Args(a))) == "AUTHORIZATION_REQUIRED", "agreement-only OAuth token cannot read requests");
+    await FollowupReadChecks.Run(factory, runtime, user, a, grantAgreement, b, _ => Client(token, "2026-07-28"));
+    await using (var admin = new NpgsqlConnection(connection))
+    {
+        await admin.OpenAsync();
+        await using var grant = new NpgsqlCommand("GRANT SELECT (\"AssignedUserId\") ON public.agreement_deadlines TO mcp_reader", admin);
+        await grant.ExecuteNonQueryAsync();
+    }
+    Console.WriteLine("Isolating account-deadline quota window; production limits unchanged.");
+    await Task.Delay(TimeSpan.FromSeconds(61));
+    token = await Renew(token);
+    await AccountDeadlineChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+    await Task.Delay(TimeSpan.FromSeconds(61));
+    token = await Renew(token);
+    await AgreementOverviewChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+    await Task.Delay(TimeSpan.FromSeconds(61));
+    token = await Renew(token);
+    await FinanceReadChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+    await Task.Delay(TimeSpan.FromSeconds(61));
+    token = await Renew(token);
+    await IndexReadChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+    await Task.Delay(TimeSpan.FromSeconds(61));
+    token = await Renew(token);
+    await BasisReadChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+    await Task.Delay(TimeSpan.FromSeconds(61));
+    token = await Renew(token);
+    await AgreementExtensionChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
+    await Task.Delay(TimeSpan.FromSeconds(61));
+    token = await Renew(token);
     await ServiceRequestReportingChecks.Run(factory, runtime, password, async subject => { var (access, _) = await Issue(subject, true); return await Client(access, "2026-07-28"); });
     await ReportingChecks.Run(factory, runtime, password, async subject => { var (access, _) = await Issue(subject); return await Client(access, "2026-07-28"); });
+    // These stages intentionally outlive a five-minute JWT; renew via the real issuer.
+    token = await Renew(token); otherToken = await Renew(otherToken);
     await using var live=await Client(token,"2026-07-28");
     await using var secondClient=await Client(otherToken,"2026-07-28");
     var parallel=await Task.WhenAll(Enumerable.Range(0,4).Select(async i=> {
@@ -301,6 +354,19 @@ try
         builder.Services.ConfigureAll<Microsoft.Extensions.Http.HttpClientFactoryOptions>(http => http.HttpMessageHandlerBuilderActions.Add(handler => handler.AdditionalHandlers.Insert(0, new IssuerRoute(issuer!.GetTestServer().CreateHandler()))));
         var app=builder.Build(); app.MapTenantMcp(); await app.StartAsync(); return app;
     }
+    async Task<string> Renew(string accessToken)
+    {
+        using var http = issuer!.GetTestClient();
+        using var response = await http.PostAsync(oauth.Issuer + "connect/token", new FormUrlEncodedContent(new Dictionary<string,string> {
+            ["grant_type"] = "refresh_token", ["refresh_token"] = refreshTokens[accessToken], ["client_id"] = "protocol-fixture",
+            ["client_secret"] = secret, ["resource"] = oauth.Resource }));
+        Check(response.IsSuccessStatusCode, "long suite renews through actual rotating refresh grant; JWT lifetime unchanged");
+        using var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var renewed = payload.RootElement.GetProperty("access_token").GetString()!;
+        refreshTokens[renewed] = payload.RootElement.GetProperty("refresh_token").GetString()!;
+        refreshTokens.Remove(accessToken);
+        return renewed;
+    }
     async Task<(string,Browser)> Issue(Guid subject, bool requests = false)
     {
         var browser=new Browser(issuer!.GetTestClient()); var verifier=Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(48));
@@ -313,7 +379,10 @@ try
         var approved=await browser.Post("/connect/authorize",consent); var code=QueryHelpers.ParseQuery(approved.Headers.Location!.Query)["code"].ToString();
         var response=await browser.Post("/connect/token",new() { ["grant_type"]="authorization_code",["client_id"]="protocol-fixture",["client_secret"]=secret,["redirect_uri"]="https://client.test/callback",["code_verifier"]=verifier,["code"]=code,["resource"]=oauth.Resource });
         Check(response.IsSuccessStatusCode,"actual login/consent/code+PKCE token flow");
-        return (JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("access_token").GetString()!,browser);
+        using var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var accessToken = payload.RootElement.GetProperty("access_token").GetString()!;
+        refreshTokens[accessToken] = payload.RootElement.GetProperty("refresh_token").GetString()!;
+        return (accessToken,browser);
     }
 }
 finally { if(host is not null) await host.DisposeAsync(); if(issuer is not null) await issuer.DisposeAsync(); Directory.Delete(directory,true); }

@@ -3465,4 +3465,21 @@ This is a reminder, not a termination or renewal.</value>
   <data name="RequestReportTotal" xml:space="preserve"><value>Unique authorised service requests</value></data>
   <data name="RequestReportTable" xml:space="preserve"><value>Order: request table</value></data>
   <data name="RequestReportAggregateFacts" xml:space="preserve"><value>Grouping: {0}; {1} unique service requests in {2} groups. Complete: {3}; overlapping: {4}; consistent snapshot: {5}.</value></data>
+  <data name="AgentNoticeDeadlineCategories" xml:space="preserve"><value>Deadline categories apply to visible stored deadlines before list filters and may overlap. An empty list may mean missing initialization.</value></data>
+  <data name="AgentNoticePrioritySelection" xml:space="preserve"><value>The priority selection shows at most five agreements. It is not a complete agreement list or total.</value></data>
+  <data name="AgentNoticeInsightScope" xml:space="preserve"><value>Insights exclude archived agreements. With a selected hierarchy node the total covers only that subtree; do not sum counts across levels.</value></data>
+  <data name="AgentArea" xml:space="preserve"><value>Area</value></data>
+  <data name="AgentSelectArea" xml:space="preserve"><value>Select an area</value></data>
+  <data name="AgentAreaAgreements" xml:space="preserve"><value>Agreements – overview and reports</value></data>
+  <data name="AgentAreaServiceRequests" xml:space="preserve"><value>Service requests</value></data>
+  <data name="AgentAreaExternal" xml:space="preserve"><value>External tools</value></data>
+  <data name="AgentAreaExplanation" xml:space="preserve"><value>The area limits the tools; it grants no access or approval. Switching starts an empty conversation.</value></data>
+  <data name="AgentAreaResetConfirm" xml:space="preserve"><value>Switching removes the conversation, source context and unsaved report changes, and cancels active work. Continue?</value></data>
+  <data name="AgentErrorAreaInvalid" xml:space="preserve"><value>The area is unknown or has no available approved tools on this connection.</value></data>
+  <data name="PagesAreaResetConfirm" xml:space="preserve"><value>Changing report area discards unsaved changes in this form and cancels the preview. Continue?</value></data>
+  <data name="AgentAreaAgreementDetails" xml:space="preserve"><value>Agreements – details and follow-up</value></data>
+  <data name="AgentAreaAgreementFinance" xml:space="preserve"><value>Agreements – finance</value></data>
+  <data name="AgentFinanceFacts" xml:space="preserve"><value>Finance source {0}; currency {1}; direction {2}; period {3}–{4}; complete {5}; line versions {6}; prices {7}; forecast periods {8}. A forecast is calculated, not invoices or payments.</value></data>
+  <data name="AgentFinanceHistory" xml:space="preserve"><value>Stored lines and prices</value></data>
+  <data name="AgentFinanceForecast" xml:space="preserve"><value>Calculated forecast</value></data>
 </root>

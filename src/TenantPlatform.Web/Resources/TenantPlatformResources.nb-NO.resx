@@ -3501,4 +3501,21 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="RequestReportTotal" xml:space="preserve"><value>Unike autoriserte tjenesteforespørsler</value></data>
   <data name="RequestReportTable" xml:space="preserve"><value>Rekkefølge: forespørselstabell</value></data>
   <data name="RequestReportAggregateFacts" xml:space="preserve"><value>Gruppering: {0}; {1} unike tjenesteforespørsler i {2} grupper. Fullstendig: {3}; overlapp: {4}; konsistent snapshot: {5}.</value></data>
+  <data name="AgentNoticeDeadlineCategories" xml:space="preserve"><value>Fristkategoriene gjelder synlige lagrede frister før listefiltrene og kan overlappe. Tom liste kan skyldes manglende initialisering.</value></data>
+  <data name="AgentNoticePrioritySelection" xml:space="preserve"><value>Prioritetslisten viser høyst fem avtaler. Den er ikke en fullstendig avtaleliste eller et totaltall.</value></data>
+  <data name="AgentNoticeInsightScope" xml:space="preserve"><value>Innsikt utelater arkiverte avtaler. Med valgt hierarkinode gjelder totalen bare dette undertreet; ikke summer tall fra flere nivåer.</value></data>
+  <data name="AgentArea" xml:space="preserve"><value>Område</value></data>
+  <data name="AgentSelectArea" xml:space="preserve"><value>Velg område</value></data>
+  <data name="AgentAreaAgreements" xml:space="preserve"><value>Avtaler – oversikt og rapport</value></data>
+  <data name="AgentAreaServiceRequests" xml:space="preserve"><value>Tjenesteforespørsler</value></data>
+  <data name="AgentAreaExternal" xml:space="preserve"><value>Eksterne verktøy</value></data>
+  <data name="AgentAreaExplanation" xml:space="preserve"><value>Området avgrenser verktøyene. Det gir ikke ny tilgang eller godkjenning. Bytte starter en tom samtale.</value></data>
+  <data name="AgentAreaResetConfirm" xml:space="preserve"><value>Bytte fjerner samtalen, kildekonteksten og ulagrede rapportendringer, og avbryter aktiv kjøring. Fortsette?</value></data>
+  <data name="AgentErrorAreaInvalid" xml:space="preserve"><value>Området er ukjent eller har ingen tilgjengelige, godkjente verktøy på tilkoblingen.</value></data>
+  <data name="PagesAreaResetConfirm" xml:space="preserve"><value>Bytte rapportområde forkaster ulagrede endringer i dette skjemaet og avbryter forhåndsvisningen. Fortsette?</value></data>
+  <data name="AgentAreaAgreementDetails" xml:space="preserve"><value>Avtaler – detaljer og oppfølging</value></data>
+  <data name="AgentAreaAgreementFinance" xml:space="preserve"><value>Avtaler – økonomi</value></data>
+  <data name="AgentFinanceFacts" xml:space="preserve"><value>Økonomikilde {0}; valuta {1}; retning {2}; periode {3}–{4}; komplett {5}; linjeversjoner {6}; priser {7}; prognoseperioder {8}. Prognose er beregnet, ikke faktura eller betaling.</value></data>
+  <data name="AgentFinanceHistory" xml:space="preserve"><value>Lagrede linjer og priser</value></data>
+  <data name="AgentFinanceForecast" xml:space="preserve"><value>Beregnet prognose</value></data>
 </root>

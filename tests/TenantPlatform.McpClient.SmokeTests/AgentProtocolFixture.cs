@@ -70,6 +70,8 @@ sealed class AgentProtocolFixture
     public string OtherTool = "";
     public Guid ForeignAccount;
     public Guid ReportAgreement;
+    public Guid ReportIndex;
+    public Guid ReportBasis;
     public Guid? ExternalAccountSeen;
     public readonly List<string> Payloads = [];
     public TaskCompletionSource? WhenBlocked;
@@ -108,7 +110,7 @@ sealed class AgentProtocolFixture
         {
             if (ReportReadFirst && completed == 0)
             {
-                var query = tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && t.GetProperty("parameters").GetProperty("properties").TryGetProperty("type", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _));
+                var query = tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && t.GetProperty("parameters").GetProperty("properties").TryGetProperty("type", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("kind", out _));
                 var account = query.GetProperty("parameters").GetProperty("properties").GetProperty("accountId").GetProperty("const").GetString();
                 return new(HttpStatusCode.OK) { Content = new StringContent(JsonSerializer.Serialize(new { status = "completed", output = new[] {
                     new { type = "function_call", call_id = "intent_read", name = query.GetProperty("name").GetString(), arguments = JsonSerializer.Serialize(new { accountId = account, search = "Draft fixture" }) } } }), Encoding.UTF8, "application/json") };
@@ -124,15 +126,33 @@ sealed class AgentProtocolFixture
         {
             var tool = mode == "request-aggregate" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("groupBy", out _) && t.GetProperty("parameters").GetProperty("properties").GetProperty("status").GetRawText().Contains("Submitted"))
                 : mode is "own-list" or "protected" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _))
-                : mode == "own-query" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && t.GetProperty("parameters").GetProperty("properties").TryGetProperty("type", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _))
+                : mode == "own-query" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("page", out _) && t.GetProperty("parameters").GetProperty("properties").TryGetProperty("type", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("attention", out _) && !t.GetProperty("parameters").GetProperty("properties").TryGetProperty("kind", out _))
                 : mode == "own-aggregate" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("groupBy", out _) && t.GetProperty("parameters").GetProperty("properties").TryGetProperty("type", out _))
-                : mode == "own-details" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("agreementId", out _))
+                : mode == "own-priority" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("prioritized selection"))
+                : mode == "own-insights" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("dimension", out _))
+                : mode == "own-deadlines" ? tools.Single(t => t.GetProperty("parameters").GetProperty("properties").TryGetProperty("mine", out _))
+                : mode == "own-followup" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Read stored deadline occurrences"))
+                : mode == "own-events" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Read stored follow-up events"))
+                : mode == "own-relations" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Find exact relation IDs"))
+                : mode == "own-finance" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Read stored financial line versions"))
+                : mode == "own-bases" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Find stored calculation bases"))
+                : mode == "own-basis" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Read one stored calculation basis snapshot"))
+                : mode == "own-indices" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Find account index register entries"))
+                : mode == "own-index-values" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Read stored index values"))
+                : mode == "own-forecast" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Calculate the existing agreement forecast"))
+                : mode == "own-details" ? tools.Single(t => t.GetProperty("description").GetString()!.Contains("Contract v2."))
                 : tools.FirstOrDefault(t => t.GetProperty("parameters").GetProperty("properties").EnumerateObject().Count() == 1, tools[0]);
             var args = new JsonObject();
             if (tool.GetProperty("parameters").TryGetProperty("properties", out var properties) && properties.TryGetProperty("accountId", out var account))
                 args["accountId"] = mode == "override" ? ForeignAccount.ToString() : account.TryGetProperty("const", out var fixedAccount) ? fixedAccount.GetString() : ForeignAccount.ToString();
+            if (mode == "own-bases") { args["direction"] = "Cost"; args["agreementId"] = ReportAgreement.ToString(); }
+            if (mode == "own-basis") args["basisId"] = ReportBasis.ToString();
+            if (mode == "own-relations") args["kind"] = "Building";
+            if (mode == "own-insights") args["dimension"] = "Type";
             if (mode is "own-aggregate" or "request-aggregate") args["groupBy"] = mode == "request-aggregate" ? "Status" : "Building";
-            if (mode == "own-details") args["agreementId"] = ReportAgreement.ToString();
+            if (mode is "own-details" or "own-followup" or "own-events" or "own-finance" or "own-forecast") args["agreementId"] = ReportAgreement.ToString();
+            if (mode == "own-index-values") { args["indexId"] = ReportIndex.ToString(); args["view"] = "History"; args["from"] = "2026-01-01"; args["to"] = "2026-12-31"; }
+            if (mode == "own-forecast") { args["from"] = "2026-01-01"; args["to"] = "2026-03-31"; }
             if (mode == "invalid") args["unexpected"] = true;
             output.Add(new { type = "function_call", id = "fc_" + completed, call_id = "call_" + completed,
                 name = mode == "unknown" ? "not_available" : mode == "cross" ? OtherTool : tool.GetProperty("name").GetString(), arguments = args.ToJsonString(), status = "completed" });
