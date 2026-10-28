@@ -3519,4 +3519,9 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="AgentFinanceFacts" xml:space="preserve"><value>Ekonomikälla {0}; valuta {1}; riktning {2}; period {3}–{4}; komplett {5}; radversioner {6}; priser {7}; prognosperioder {8}. Prognos är beräknad, inte fakturor eller betalningar.</value></data>
   <data name="AgentFinanceHistory" xml:space="preserve"><value>Lagrade rader och priser</value></data>
   <data name="AgentFinanceForecast" xml:space="preserve"><value>Beräknad prognos</value></data>
+  <data name="AgentAreaStructure" xml:space="preserve"><value>Struktur – byggnader</value></data>
+  <data name="StructureOAuthConsent" xml:space="preserve"><value>Läs byggnadslistor och antal inom din befintliga kontoåtkomst. Detta ger inte åtkomst till byggnadsdetaljer.</value></data>
+  <data name="StructureAggregateFacts" xml:space="preserve"><value>Byggnadsgruppering: {0}. Totalt {1}, grupper {2}. Fullständigt: {3}. Överlapp: {4}. Gemensam ögonblicksbild: {5}.</value></data>
+  <data name="None" xml:space="preserve"><value>Ingen gruppering</value></data>
+  <data name="AgentNoticeStructureReportsUnavailable" xml:space="preserve"><value>Byggnadsrapporter stöds inte ännu. Strukturvalet kan bara läsa byggnadslistor och antal.</value></data>
 </root>

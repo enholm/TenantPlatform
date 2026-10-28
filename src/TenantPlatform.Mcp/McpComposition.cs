@@ -43,6 +43,8 @@ public static class McpComposition
         services.AddScoped<AgreementReportingReader>();
         services.AddScoped<TenantPlatform.Application.ServiceRequests.IServiceRequestReportingData, TenantPlatform.Infrastructure.ServiceRequests.ServiceRequestReportingData>();
         services.AddScoped<TenantPlatform.Application.ServiceRequests.ServiceRequestReportingReader>();
+        services.AddScoped<TenantPlatform.Application.Buildings.IBuildingReportingData, TenantPlatform.Infrastructure.Buildings.BuildingReportingData>();
+        services.AddScoped<TenantPlatform.Application.Buildings.BuildingReportingReader>();
         services.AddScoped<IAgreementDetailsData, AgreementDetailsData>();
         services.AddScoped<IAgreementDetailsReader, AgreementDetailsReader>();
         services.AddScoped<IAgreementReadExtensionData, AgreementReadExtensionData>();
@@ -110,7 +112,8 @@ public static class McpComposition
         });
         services.AddSingleton<ReadTools>();
         services.AddMcpServer().WithHttpTransport(http => http.SessionMode = HttpServerSessionMode.Stateless)
-            .WithListToolsHandler((_, _) => ValueTask.FromResult(new ListToolsResult { Tools = ReadTools.Catalog.ToList() }))
+            .WithListToolsHandler((context, _) => ValueTask.FromResult(new ListToolsResult { Tools = ReadTools.Catalog.Where(t =>
+                t.Name is not ("buildings_query" or "buildings_aggregate") || context.User?.HasScope(TenantPlatform.Application.Buildings.StructureReadScopes.Read) == true).ToList() }))
             .WithCallToolHandler((context, ct) => context.Services!.GetRequiredService<ReadTools>().CallAsync(context, ct));
         return services;
     }
@@ -157,7 +160,7 @@ public static class McpComposition
         app.MapGet("/.well-known/oauth-protected-resource/mcp", () => Results.Json(new
         {
             resource = options.Resource, authorization_servers = new[] { options.Issuer },
-            scopes_supported = new[] { McpOptions.ReadScope, TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read }, bearer_methods_supported = new[] { "header" }
+            scopes_supported = new[] { TenantPlatform.Application.Buildings.StructureReadScopes.Read, McpOptions.ReadScope, TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read }, bearer_methods_supported = new[] { "header" }
         })).AllowAnonymous();
         app.MapMcp("/mcp").RequireAuthorization("McpRead").RequireRateLimiting("McpRead");
         return app;

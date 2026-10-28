@@ -29,7 +29,7 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
           "type":{"type":"string","enum":["Lease","SoftwareLicense","ServiceMaintenance","Supplier","Other"]},
           "attention":{"type":"string","enum":["Notice","Renewal","Expired"]},"page":{"type":"integer","minimum":1,"maximum":10000,"default":1}}}
         """),
-        Tool<AttentionResult>("agreements_attention", "Read full separate Attention counts at the account date. Categories may overlap: DO NOT sum them as unique agreements. No list filters apply. Read only, no deadline/settings initialization.", """{"type":"object","additionalProperties":false,"required":["accountId"],"properties":{"accountId":{"type":"string","format":"uuid"}}}"""), ..ReportingCatalog(), ..ServiceRequestCatalog(), FollowupTool(), DeadlineTool(), ..OverviewCatalog(), ..ExtensionCatalog(), ..FinanceCatalog(), ..IndexCatalog(), ..BasisCatalog()];
+        Tool<AttentionResult>("agreements_attention", "Read full separate Attention counts at the account date. Categories may overlap: DO NOT sum them as unique agreements. No list filters apply. Read only, no deadline/settings initialization.", """{"type":"object","additionalProperties":false,"required":["accountId"],"properties":{"accountId":{"type":"string","format":"uuid"}}}"""), ..ReportingCatalog(), ..BuildingCatalog(), ..ServiceRequestCatalog(), FollowupTool(), DeadlineTool(), ..OverviewCatalog(), ..ExtensionCatalog(), ..FinanceCatalog(), ..IndexCatalog(), ..BasisCatalog()];
 
     private static Tool Tool<T>(string name, string description, string input) => new()
     {
@@ -51,6 +51,7 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
                 "agreements_list" => ["accountId", "search", "status", "type", "attention", "page"],
                 "agreements_query" or "agreements_aggregate" => ReportKeys(request.Name),
                 "service_requests_query" or "service_requests_aggregate" => RequestKeys(request.Name),
+                "buildings_query" => ["accountId", "search", "page"], "buildings_aggregate" => ["accountId", "search", "groupBy"],
                 "agreements_details" => ["accountId", "agreementId"],
                 "agreements_prioritized" => ["accountId"],
                 "agreements_insights" => ["accountId", "dimension", "selected"],
@@ -105,6 +106,11 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
                 payload = await ExtensionAsync(operation.ServiceProvider, request.Name, account!.Value, args, ct);
             else if (request.Name == "agreements_followup")
                 payload = await FollowupAsync(operation.ServiceProvider, account!.Value, args, ct);
+            else if (request.Name is "buildings_query" or "buildings_aggregate")
+            {
+                if (!context.User.HasScope(TenantPlatform.Application.Buildings.StructureReadScopes.Read)) return Error("AUTHORIZATION_REQUIRED");
+                payload = await BuildingAsync(operation.ServiceProvider, request.Name, account!.Value, args, ct);
+            }
             else if (request.Name is "service_requests_query" or "service_requests_aggregate")
             {
                 if (!context.User.HasScope(TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read)) return Error("AUTHORIZATION_REQUIRED");
@@ -126,6 +132,7 @@ public sealed partial class ReadTools(IServiceScopeFactory scopes)
             // Reserve 4 KiB for JSON-RPC framing. The HTTP boundary measures the FINAL envelope as well.
             return JsonSerializer.SerializeToUtf8Bytes(result, Json).Length <= 60 * 1024 ? result : Error("RESULT_TOO_LARGE");
         }
+        catch (TenantPlatform.Application.Buildings.BuildingReportLimitException) { return Error("RESULT_TOO_LARGE"); }
         catch (TenantPlatform.Application.ServiceRequests.ServiceRequestReportLimitException) { return Error("RESULT_TOO_LARGE"); }
         catch (AgreementBasisSnapshotException) { return Error("SNAPSHOT_UNAVAILABLE"); }
         catch (AgreementFinanceLimitException) { return Error("RESULT_TOO_LARGE"); }

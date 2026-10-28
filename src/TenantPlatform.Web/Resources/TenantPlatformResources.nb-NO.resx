@@ -3518,4 +3518,9 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="AgentFinanceFacts" xml:space="preserve"><value>Økonomikilde {0}; valuta {1}; retning {2}; periode {3}–{4}; komplett {5}; linjeversjoner {6}; priser {7}; prognoseperioder {8}. Prognose er beregnet, ikke faktura eller betaling.</value></data>
   <data name="AgentFinanceHistory" xml:space="preserve"><value>Lagrede linjer og priser</value></data>
   <data name="AgentFinanceForecast" xml:space="preserve"><value>Beregnet prognose</value></data>
+  <data name="AgentAreaStructure" xml:space="preserve"><value>Struktur – bygg</value></data>
+  <data name="StructureOAuthConsent" xml:space="preserve"><value>Les bygglister og byggantall innenfor din eksisterende kontotilgang. Dette gir ikke innsyn i byggdetaljer.</value></data>
+  <data name="StructureAggregateFacts" xml:space="preserve"><value>Bygggruppering: {0}. Totalt {1}, grupper {2}. Komplett: {3}. Overlapp: {4}. Felles snapshot: {5}.</value></data>
+  <data name="None" xml:space="preserve"><value>Ingen gruppering</value></data>
+  <data name="AgentNoticeStructureReportsUnavailable" xml:space="preserve"><value>Byggrapporter støttes ikke ennå. Strukturutvalget kan bare lese bygglister og byggantall.</value></data>
 </root>

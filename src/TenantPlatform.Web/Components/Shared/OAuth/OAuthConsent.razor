@@ -4,6 +4,7 @@
     <h1>@L["OAuthConsentTitle"]</h1>
     <p>@L["OAuthClientLabel"]: <strong>@ClientName</strong></p>
     <p>@L["OAuthReadAccess"]</p>
+    @if (StructureAllowed) { <p>@L["StructureOAuthConsent"]</p> }
     @if (RequestsAllowed) { <p>@L["RequestReportOAuthConsent"]</p> }
     @if (PagesAllowed) { <p class="alert alert-warning">@L["PagesOAuthConsent"]</p> }
     <p>@L["OAuthDuration"]</p>
@@ -20,6 +21,7 @@
     [Parameter] public string ClientName { get; set; } = "";
     [Parameter] public string Interaction { get; set; } = "";
     [Parameter] public Dictionary<string, string> Parameters { get; set; } = [];
+    [Parameter] public bool StructureAllowed { get; set; }
     [Parameter] public bool RequestsAllowed { get; set; }
     [Parameter] public bool PagesAllowed { get; set; }
     [Parameter] public bool RefreshAllowed { get; set; }

@@ -14,7 +14,7 @@
                 const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = panel.dataset.areaPlaceholder; select.append(placeholder);
                 for (const area of areas[get('connection').value] || []) {
                     const option = document.createElement('option'); option.value = area;
-                    option.textContent = area === 'Agreements' ? panel.dataset.areaAgreements : area === 'AgreementDetails' ? panel.dataset.areaDetails : area === 'AgreementFinance' ? panel.dataset.areaFinance : area === 'ServiceRequests' ? panel.dataset.areaServiceRequests : panel.dataset.areaExternal;
+                    option.textContent = area === 'Agreements' ? panel.dataset.areaAgreements : area === 'AgreementDetails' ? panel.dataset.areaDetails : area === 'AgreementFinance' ? panel.dataset.areaFinance : area === 'Structure' ? panel.dataset.areaStructure : area === 'ServiceRequests' ? panel.dataset.areaServiceRequests : panel.dataset.areaExternal;
                     select.append(option);
                 }
                 select.value = (areas[get('connection').value] || []).includes(preferred) ? preferred : '';

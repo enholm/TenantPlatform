@@ -141,7 +141,7 @@ public static class ReadAgentEndpoints
         if (source.Page is { } p) return l["AgentPageFacts", p.Page, p.RequestedPage, p.ReturnedCount, p.TotalCount, p.PageSize,
             Flag(p.HasMore), p.NextPage?.ToString() ?? "—", Flag(p.Complete), Flag(p.SnapshotConsistent), Flag(p.LimitReached)].Value;
         if (source.Finance is { } f) return l["AgentFinanceFacts", l[f.From is null ? "AgentFinanceHistory" : "AgentFinanceForecast"].Value, f.Currency ?? "", f.Direction is { } direction ? l["FinanceDirection" + direction].Value : "", f.From ?? "", f.To ?? "", Flag(f.Complete), f.VersionsTotal?.ToString() ?? "", f.PricesTotal?.ToString() ?? "", f.PeriodCount?.ToString() ?? ""].Value;
-        if (source.Aggregate is { } g) return l[source.Tool == "service_requests_aggregate" ? "RequestReportAggregateFacts" : "AgentAggregateFacts", l[source.Tool == "agreements_insights" ? "DashboardDimension" + g.GroupBy : g.GroupBy].Value, g.TotalCount, g.GroupCount, Flag(g.Complete), Flag(g.GroupsOverlap), Flag(g.SnapshotConsistent)].Value;
+        if (source.Aggregate is { } g) return l[source.Tool == "buildings_aggregate" ? "StructureAggregateFacts" : source.Tool == "service_requests_aggregate" ? "RequestReportAggregateFacts" : "AgentAggregateFacts", l[source.Tool == "agreements_insights" ? "DashboardDimension" + g.GroupBy : g.GroupBy].Value, g.TotalCount, g.GroupCount, Flag(g.Complete), Flag(g.GroupsOverlap), Flag(g.SnapshotConsistent)].Value;
         if (source.Attention is { } a) return l["AgentAttentionFacts", a.Today, a.Notice, a.Renewal, a.Expired, a.HorizonDays].Value;
         return null;
     }

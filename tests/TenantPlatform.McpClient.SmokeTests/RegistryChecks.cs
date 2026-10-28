@@ -67,8 +67,22 @@ static partial class RegistryChecks
             await using var command = new NpgsqlCommand("CREATE ROLE personal_pages_writer LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT; GRANT CONNECT ON DATABASE tenant_mcp_client_tests TO personal_pages_writer; GRANT USAGE ON SCHEMA public TO personal_pages_writer; GRANT SELECT,INSERT,UPDATE ON personal_page_sets TO personal_pages_writer", admin);
             await command.ExecuteNonQueryAsync();
         }
+        // Default false must preserve both old profile-hash shapes byte-for-byte.
+        var configured = issuer.Clients.Single(c => c.ClientId == own.ClientId);
+        foreach (var requests in new[] { false, true }) {
+            configured.AllowServiceRequests = requests; configured.AllowStructure = false; own.Inspect(issuer);
+            object legacy = requests ? new { own.ClientId, own.Issuer, own.Resource, own.Callback, own.ServiceRequestsAllowed, registryOptions.InternalAllowedPrivateAddresses }
+                : (object)new { own.ClientId, own.Issuer, own.Resource, own.Callback, registryOptions.InternalAllowedPrivateAddresses };
+            var expected = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(legacy))));
+            var before = new McpAuthProfiles(own, registryOptions).Loaded.Single(p => p.Public.Id == "tenantplatform");
+            Check(before.Public.Version == expected && !before.Scopes.Contains(TenantPlatform.Application.Buildings.StructureReadScopes.Read), "disabled structure preserves legacy profile hash and scopes");
+            configured.AllowStructure = true; own.Inspect(issuer);
+            var after = new McpAuthProfiles(own, registryOptions).Loaded.Single(p => p.Public.Id == "tenantplatform");
+            Check(after.Public.Version != expected && after.Scopes.Contains(TenantPlatform.Application.Buildings.StructureReadScopes.Read), "enabling structure changes binding and explicitly requested scopes");
+        }
         issuer.Clients.Single(c => c.ClientId == own.ClientId).AllowPersonalPages = true;
         issuer.Clients.Single(c => c.ClientId == own.ClientId).AllowServiceRequests = true;
+        issuer.Clients.Single(c => c.ClientId == own.ClientId).AllowStructure = true;
         web = await StartWeb();
         await OAuthComposition.RegisterClientsAsync(web.Services, issuer);
         try
@@ -87,7 +101,7 @@ static partial class RegistryChecks
             Check((await Credentials()).Count(x => x.UserId == adminA && x.ProtectedTokens != null) == 3, "multiple personal credentials coexist without overwriting");
             Check((await Call(a, a2)).StatusCode == HttpStatusCode.BadRequest, "new tools cannot run before discovery/approval");
             await Discover(a, a1);
-            Check((await Tools(a1)).Select(x => x.Name).Order().SequenceEqual(new[] { "accounts_list", "agreements_aggregate", "agreements_attention", "agreements_bases", "agreements_basis", "agreements_deadlines", "agreements_details", "agreements_financial_lines", "agreements_followup", "agreements_followup_history", "agreements_forecast", "agreements_index_values", "agreements_indices", "agreements_insights", "agreements_list", "agreements_prioritized", "agreements_query", "agreements_relations", "service_requests_aggregate", "service_requests_query" }), "internal catalogue includes established and new read tools");
+            Check((await Tools(a1)).Select(x => x.Name).Order().SequenceEqual(new[] { "accounts_list", "agreements_aggregate", "agreements_attention", "agreements_bases", "agreements_basis", "agreements_deadlines", "agreements_details", "agreements_financial_lines", "agreements_followup", "agreements_followup_history", "agreements_forecast", "agreements_index_values", "agreements_indices", "agreements_insights", "agreements_list", "agreements_prioritized", "agreements_query", "agreements_relations", "buildings_aggregate", "buildings_query", "service_requests_aggregate", "service_requests_query" }), "internal catalogue includes established and new read tools");
             await Approve(a, a1); Check((await Call(a, a1)).IsSuccessStatusCode, "internal registered profile still enforces local subject and reads over MCP");
             await Discover(a, a2); await Discover(a, a3); await Discover(b, b1);
             var tools2 = await Tools(a2); var tools3 = await Tools(a3);
@@ -112,6 +126,7 @@ static partial class RegistryChecks
                 await Task.Delay(TimeSpan.FromSeconds(61));
                 await RunRequestReports(web, factory, adminA, accountA, accountB, a1, a, agentProtocol); return;
             }
+            if (Environment.GetEnvironmentVariable("MCP_CLIENT_TEST_STRUCTURE_ONLY") == "1") { await RunBuildingAgent(web, factory, adminA, accountA, a1, a, agentProtocol); return; }
             await RunAgent(web, factory, adminA, member, accountA, accountB, a1, a2, a3, clock, agentProtocol, () => remoteCalls, a);
             Console.WriteLine("Isolating report-draft quota window (production limit remains 60/minute).");
             await Task.Delay(TimeSpan.FromSeconds(61));
@@ -125,6 +140,9 @@ static partial class RegistryChecks
             Console.WriteLine("Isolating service-request report quota window.");
             await Task.Delay(TimeSpan.FromSeconds(61));
             await RunRequestReports(web, factory, adminA, accountA, accountB, a1, a, agentProtocol);
+            Console.WriteLine("Isolating structure-agent quota window.");
+            await Task.Delay(TimeSpan.FromSeconds(61));
+            await RunBuildingAgent(web, factory, adminA, accountA, a1, a, agentProtocol);
             // RunPersonalPages deliberately fills the owner's collection to MaxPages; keep that quota test last.
             Console.WriteLine("Isolating manual-page quota window (production limit remains 60/minute).");
             await Task.Delay(TimeSpan.FromSeconds(61));

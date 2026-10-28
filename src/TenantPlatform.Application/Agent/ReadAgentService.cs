@@ -223,6 +223,9 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                     instruction = "Intent only, no retained report data. Revise this whole unsaved declaration only on explicit user request. Backend preserves stored reference filters; new identifiers cannot be chosen. Only an explicitly opened edit session can update an existing page through a separate user button." }, AgentReportDrafts.Json) }));
             }
             if (proposalAllowed) { if (tools.Length + 1 > limits.Tools) throw new ReadAgentException("ToolLimit"); tools = [..tools, AgentReportDrafts.ForArea(ReadAgentAreas.ToReport(area))]; }
+            if (area == ReadAgentArea.Structure && !external && AgentReportDrafts.Requested(prompt, false)) notices.Add("StructureReportsUnavailable");
+            if (area == ReadAgentArea.Structure && !external)
+                input.Add(JsonSerializer.SerializeToElement(new { role = "developer", content = "Selected area is Structure: building list and counts only. No building report adapter or proposal tool exists. Explain that building report creation/editing is not yet supported when requested; do not claim to create a page or switch to an agreement report. City is an exact stored string, not a normalized municipality; None means no grouping." }));
             input.Add(JsonSerializer.SerializeToElement(new { role = "user", content = prompt }));
             for (var round = 0; round < limits.Rounds; round++)
             {
@@ -308,7 +311,7 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                 {
                     var data = json.RootElement.GetProperty("structuredContent");
                     if (data.GetProperty("schemaVersion").GetString() != (tool.Name == "agreements_details" ? "2" : "1") || data.GetProperty("accountId").GetGuid() != who.AccountId) throw new ReadAgentException("SourceUnavailable");
-                    if (tool.Name is "agreements_list" or "agreements_query" or "agreements_followup" or "agreements_deadlines" or "agreements_followup_history" or "agreements_relations" or "service_requests_query")
+                    if (tool.Name is "agreements_list" or "agreements_query" or "agreements_followup" or "agreements_deadlines" or "agreements_followup_history" or "agreements_relations" or "service_requests_query" or "buildings_query")
                     {
                         notices.Add("Paging");
                         paging = new(data.GetProperty("requestedPage").GetInt32(), data.GetProperty("page").GetInt32(), data.GetProperty("pageSize").GetInt32(),
@@ -371,11 +374,11 @@ public sealed class ReadAgentService(ICurrentActor actor, IAuthorizationService 
                             data.GetProperty("dataCoverage").GetString() != "StoredOccurrencesOnly") throw new ReadAgentException("SourceUnavailable");
                         notices.Add("DeadlineCategories");
                     }
-                    if (tool.Name is "agreements_aggregate" or "service_requests_aggregate")
+                    if (tool.Name is "agreements_aggregate" or "service_requests_aggregate" or "buildings_aggregate")
                     {
                         aggregate = new(data.GetProperty("groupBy").GetString()!, data.GetProperty("totalCount").GetInt32(),
                             data.GetProperty("groups").GetArrayLength(), data.GetProperty("complete").GetBoolean(), data.GetProperty("groupsOverlap").GetBoolean(), data.GetProperty("snapshotConsistent").GetBoolean());
-                        if (!data.GetProperty(tool.Name == "agreements_aggregate" ? "countsUniqueAgreements" : "countsUniqueRequests").GetBoolean() || !aggregate.Complete || aggregate.GroupsOverlap) throw new ReadAgentException("SourceUnavailable");
+                        if (!data.GetProperty(tool.Name == "buildings_aggregate" ? "countsUniqueBuildings" : tool.Name == "agreements_aggregate" ? "countsUniqueAgreements" : "countsUniqueRequests").GetBoolean() || !aggregate.Complete || aggregate.GroupsOverlap) throw new ReadAgentException("SourceUnavailable");
                     }
                     if (tool.Name == "agreements_attention")
                     {

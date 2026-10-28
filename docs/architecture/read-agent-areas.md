@@ -1,6 +1,6 @@
 # Samtalebundet områdevalg – 9F checkpoint 3
 
-Områdevalget ble implementert i checkpoint3. Checkpoint5 gjenbruker samme uforanderlige samtalevalg for avtalenes tre katalogunderutvalg. Se [finans- og katalogkontrakten](mcp-agreement-finance-read.md), [dekningsoversikten](mcp-read-coverage.md) og moderniseringsplanens avsnitt42 (checkpoint7). Hele9F er fortsatt ufullført.
+Områdevalget ble implementert i checkpoint3. Checkpoint5 gjenbruker samme uforanderlige samtalevalg for avtalenes tre katalogunderutvalg. Se [finans- og katalogkontrakten](mcp-agreement-finance-read.md), [dekningsoversikten](mcp-read-coverage.md) og moderniseringsplanens avsnitt42 (checkpoint7). Tidligere9F videreføres nå under steg10; se moderniseringsplanens avsnitt43–44. STR-001 utvider mekanismen med eget strukturutvalg, mens bred MCP-dekning fortsatt er ufullført.
 
 ## Områder og katalog
 
@@ -12,6 +12,7 @@ Brukeren velger én tilgjengelig MCP-tilkobling og et eksplisitt område før en
 | Avtaler – detaljer og oppfølging (`AgreementDetails`) | agreements_query, agreements_details, agreements_followup, agreements_deadlines, agreements_followup_history, agreements_relations |
 | Avtaler – økonomi (`AgreementFinance`) | agreements_query, agreements_details, agreements_relations, agreements_financial_lines, agreements_forecast, agreements_indices, agreements_index_values, agreements_bases, agreements_basis |
 | Tjenesteforespørsler (`ServiceRequests`) | service_requests_query, service_requests_aggregate |
+| Struktur – bygg (`Structure`) | buildings_query, buildings_aggregate; eget personlig strukturscope og eksakt godkjenning, ingen rapportforslag |
 | Ekstern kilde (`External`) | Bare en tilkobling med faktisk ekstern registerprofil; dens allerede tillatte lesekatalog beholdes uten TenantPlatform-domeneinndeling |
 
 Navneprefiks og modellforslag brukes ikke til områdetilhørighet. Et eksternt verktøy med et kjent avtalenavn forblir eksternt. `accounts_list` er fortsatt et kontovalg-/testverktøy utenfor agentkatalogen. Eksisterende klassifiserings-/sikkerhetsfiltre gjelder også eksterne kilder.
@@ -20,7 +21,7 @@ Områdevalgene og antall lesekilder per område beregnes fra registerets tilgjen
 
 Samtalen lagrer område sammen med eksisterende bruker-/konto-/tilkoblingsbinding på serveren. Alle spørsmål bruker dette området. HTTP krever kjent område ved start, avviser manglende/ukjent/numerisk område og avviser områdefelt på spørsmål og andre handlinger som ikke er start/bytte. Et modellkall til et alias utenfor samtalens katalog avvises. Eksisterende fersk autorisasjon og revalidering av tidligere kilders versjon/tilgang består.
 
-Standardgrensen er fortsatt tolv modellverktøy. Den kontrolleres etter områdeavgrensningen og på nytt med eventuelt rapportforslagverktøy. Med hele dagens godkjente katalog er det7 oversiktslesere pluss ett forslag,6 detaljlesere,9 økonomilesere eller2 forespørselslesere pluss ett forslag. Bare oversikt og tjenesteforespørsler får rapportforslag; backend velger disse ved redigering. De tre avtalevalgene har eksplisitt felles Parent=Agreements i samme mekanisme. Eksterne profiler får ikke eget rapportforslagverktøy. Lavere konfigurert grense eller en for stor ekstern katalog gir `ToolLimit`, uten modellkall eller stille utelatelse.
+Standardgrensen er fortsatt tolv modellverktøy. Den kontrolleres etter områdeavgrensningen og på nytt med eventuelt rapportforslagverktøy. Med hele dagens godkjente katalog er det7 oversiktslesere pluss ett forslag,6 detaljlesere,9 økonomilesere eller2 forespørselslesere pluss ett forslag. Struktur har2 lesere og intet lokalt rapportverktøy; se [byggkontrakt og aktivering](mcp-building-read-contracts.md). Bare oversikt og tjenesteforespørsler får rapportforslag; backend velger disse ved redigering. De tre avtalevalgene har eksplisitt felles Parent=Agreements i samme mekanisme. Eksterne profiler får ikke eget rapportforslagverktøy. Lavere konfigurert grense eller en for stor ekstern katalog gir `ToolLimit`, uten modellkall eller stille utelatelse.
 
 ## Bytte, kansellering og sene svar
 

@@ -3482,4 +3482,9 @@ This is a reminder, not a termination or renewal.</value>
   <data name="AgentFinanceFacts" xml:space="preserve"><value>Finance source {0}; currency {1}; direction {2}; period {3}–{4}; complete {5}; line versions {6}; prices {7}; forecast periods {8}. A forecast is calculated, not invoices or payments.</value></data>
   <data name="AgentFinanceHistory" xml:space="preserve"><value>Stored lines and prices</value></data>
   <data name="AgentFinanceForecast" xml:space="preserve"><value>Calculated forecast</value></data>
+  <data name="AgentAreaStructure" xml:space="preserve"><value>Structure – buildings</value></data>
+  <data name="StructureOAuthConsent" xml:space="preserve"><value>Read building lists and counts within your existing account access. This does not grant building detail access.</value></data>
+  <data name="StructureAggregateFacts" xml:space="preserve"><value>Building grouping: {0}. Total {1}, groups {2}. Complete: {3}. Overlap: {4}. Shared snapshot: {5}.</value></data>
+  <data name="None" xml:space="preserve"><value>No grouping</value></data>
+  <data name="AgentNoticeStructureReportsUnavailable" xml:space="preserve"><value>Building reports are not supported yet. The Structure selection can only read building lists and counts.</value></data>
 </root>

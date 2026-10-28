@@ -188,7 +188,7 @@ try
     bad = CodeRequest((await Approve(browser, authorizePath)).Code); bad["resource"] = "https://wrong.test"; await Token(bad, false);
     bad = CodeRequest((await Approve(browser, authorizePath)).Code); bad["client_secret"] = "invalid"; await Token(bad, false);
     await Token(CodeRequest(approved.Code), false); // Reuse must not issue another token.
-    foreach (var path in new[] { "/connect/authorize" + Query(Authorization("unknown")), "/connect/authorize" + Query(Authorization(resource:"https://wrong.test")) })
+    foreach (var path in new[] { "/connect/authorize" + Query(Authorization("unknown")), "/connect/authorize" + Query(Authorization(OAuthIssuerOptions.ReadScope + " " + TenantPlatform.Application.Buildings.StructureReadScopes.Read)), "/connect/authorize" + Query(Authorization(resource:"https://wrong.test")) })
     {
         var response = await browser.Get(path);
         Check(response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Redirect, "invalid scope/resource produces protocol error");

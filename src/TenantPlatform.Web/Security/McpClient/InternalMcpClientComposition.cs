@@ -41,6 +41,7 @@ public static class InternalMcpClientComposition
                 Issuer = new Uri(options.Issuer), RedirectUri = new Uri(options.Callback)
             };
             registration.Scopes.UnionWith([OAuthIssuerOptions.ReadScope, Scopes.OfflineAccess]);
+            if (options.StructureAllowed) registration.Scopes.Add(TenantPlatform.Application.Buildings.StructureReadScopes.Read);
             if (options.ServiceRequestsAllowed) registration.Scopes.Add(TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read);
             registration.CodeChallengeMethods.Add(CodeChallengeMethods.Sha256);
             registration.ClientAuthenticationMethods.Add(ClientAuthenticationMethods.ClientSecretPost);

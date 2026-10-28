@@ -152,8 +152,8 @@ test('saved-page editing uses bound actions, preserves conflicts and requires ex
 test('area switch warns for drafts, cancels active work and rejects late ask, begin and switched-context replies', async () => {
     const panel = new Element();
     panel.dataset = { account: 'account', context: 'identity', csrf: 'csrf',
-        areas: JSON.stringify({ source: ['Agreements', 'AgreementDetails'] }), areaConfirm: 'DISCARD CONTEXT?', areaPlaceholder: 'AREA',
-        areaAgreements: 'AGREEMENTS', areaAgreementDetails: 'REQUESTS', pendingHistory: 'pending', draftTitle: 'DRAFT', changed: 'CHANGED' };
+        areas: JSON.stringify({ source: ['Agreements', 'Structure'] }), areaConfirm: 'DISCARD CONTEXT?', areaPlaceholder: 'AREA',
+        areaAgreements: 'AGREEMENTS', areaStructure: 'BUILDINGS', pendingHistory: 'pending', draftTitle: 'DRAFT', changed: 'CHANGED' };
     const nodes = Object.fromEntries(['question-form', 'connection', 'area', 'consent', 'prompt', 'send', 'cancel', 'new', 'status', 'turns', 'report-draft'].map(k => [k, new Element()]));
     panel.querySelector = q => nodes[q.match(/\[data-([^\]]+)\]/)[1]];
     nodes.connection.value = 'source'; nodes.consent.checked = true;
@@ -174,25 +174,26 @@ test('area switch warns for drafts, cancels active work and rejects late ask, be
     vm.runInNewContext(fs.readFileSync('src/TenantPlatform.Web/wwwroot/js/read-agent.js', 'utf8'), context);
     const submit = () => nodes['question-form'].listeners.submit({ preventDefault() {} });
     assert.equal(nodes.area.value, ''); assert.equal(nodes.send.disabled, true);
+    assert(nodes.area.children.some(n => n.value === 'Structure' && n.textContent === 'BUILDINGS'));
     nodes.area.value = 'Agreements'; await nodes.area.listeners.change();
     await submit(); assert.match(nodes['report-draft'].text(), /UNSAVED PRIVATE DRAFT/);
-    nodes.area.value = 'AgreementDetails'; await nodes.area.listeners.change();
+    nodes.area.value = 'Structure'; await nodes.area.listeners.change();
     assert.equal(nodes.area.value, 'Agreements'); assert.match(nodes['report-draft'].text(), /UNSAVED PRIVATE DRAFT/);
     blockedAsk = deferred(); const active = submit(); await tick();
     const oldSignal = calls.filter(c => c.url === '/agent/ask').at(-1).signal;
-    confirmed = true; blockedSwitch = deferred(); nodes.area.value = 'AgreementDetails'; const switched = nodes.area.listeners.change(); await tick();
+    confirmed = true; blockedSwitch = deferred(); nodes.area.value = 'Structure'; const switched = nodes.area.listeners.change(); await tick();
     assert.equal(oldSignal.aborted, true); assert.equal(nodes['report-draft'].text(), ''); assert.equal(nodes.turns.text(), '');
     blockedAsk.resolve(response(completed('LATE SECRET', 9))); await active; blockedAsk = null;
-    blockedSwitch.resolve(response({ conversation: 'new', area: 'AgreementDetails', expiresInSeconds: 1800 })); await switched; blockedSwitch = null;
+    blockedSwitch.resolve(response({ conversation: 'new', area: 'Structure', expiresInSeconds: 1800 })); await switched; blockedSwitch = null;
     await submit(); assert.equal(calls.filter(c => c.url === '/agent/ask').at(-1).body.conversation, 'new');
     assert.doesNotMatch(nodes.turns.text(), /LATE SECRET|UNSAVED PRIVATE/);
     await nodes.new.listeners.click(); blockedBegin = deferred(); const beginning = submit(); await tick();
     nodes.area.value = 'Agreements'; await nodes.area.listeners.change();
-    blockedBegin.resolve(response({ conversation: 'late-begin', area: 'AgreementDetails', expiresInSeconds: 1800 })); await beginning; blockedBegin = null;
+    blockedBegin.resolve(response({ conversation: 'late-begin', area: 'Structure', expiresInSeconds: 1800 })); await beginning; blockedBegin = null;
     assert(calls.some(c => c.url === '/agent/delete' && c.body.conversation === 'late-begin'));
     assert(!calls.some(c => c.url === '/agent/ask' && c.body.conversation === 'late-begin'));
-    await submit(); blockedSwitch = deferred(); nodes.area.value = 'AgreementDetails'; const changing = nodes.area.listeners.change(); await tick();
-    identity = 'different-user-or-account'; blockedSwitch.resolve(response({ conversation: 'late-switch', area: 'AgreementDetails', expiresInSeconds: 1800 })); await changing;
+    await submit(); blockedSwitch = deferred(); nodes.area.value = 'Structure'; const changing = nodes.area.listeners.change(); await tick();
+    identity = 'different-user-or-account'; blockedSwitch.resolve(response({ conversation: 'late-switch', area: 'Structure', expiresInSeconds: 1800 })); await changing;
     assert.equal(nodes.turns.text(), ''); assert.equal(nodes.send.disabled, true);
     assert(calls.some(c => c.url === '/agent/delete' && c.body.conversation === 'late-switch'));
     assert(confirms >= 4);

@@ -62,7 +62,7 @@ public static class OAuthEndpoints
         var request = http.GetOpenIddictServerRequest()!;
         if (request.GetParameters().Any(x => !AuthorizationParameters.Contains(x.Key)) ||
             !ValidResource(request, options) || !request.HasScope(OAuthIssuerOptions.ReadScope) ||
-            request.GetScopes().Any(x => x != OAuthIssuerOptions.ReadScope && x != TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read && x != Scopes.OfflineAccess && x != TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage)) return Error(Errors.InvalidRequest);
+            request.GetScopes().Any(x => x != OAuthIssuerOptions.ReadScope && x != TenantPlatform.Application.Buildings.StructureReadScopes.Read && x != TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read && x != Scopes.OfflineAccess && x != TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage)) return Error(Errors.InvalidRequest);
         var cookie = await http.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         if (!cookie.Succeeded)
         {
@@ -80,6 +80,7 @@ public static class OAuthEndpoints
             {
                 ClientName = (await clients.GetDisplayNameAsync(client!, ct)) ?? request.ClientId!,
                 Interaction = interactions.Create(request, user), Parameters = request.GetParameters().ToDictionary(x => x.Key, x => x.Value.ToString()),
+                StructureAllowed = request.HasScope(TenantPlatform.Application.Buildings.StructureReadScopes.Read),
                 RequestsAllowed = request.HasScope(TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read),
                 PagesAllowed = request.HasScope(TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage),
                 RefreshAllowed = request.HasScope(Scopes.OfflineAccess), VerificationToken = antiforgery.GetAndStoreTokens(http).RequestToken

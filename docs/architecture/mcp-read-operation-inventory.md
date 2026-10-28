@@ -1,6 +1,6 @@
 # Operasjonsoversikt for utvidet MCP-lesedekning – steg 10A
 
-Baseline fastsatt 26. oktober 2026 mot arbeidskopien etter tidligere 9F checkpoint 7. **Dette er en dokumentasjonsleveranse; ingen nye verktøy eller rapportområder er implementert.** [Moderniseringsplanens gjeldende føring](modernization-plan.md#43-steg-10a-revidert-plan-og-operasjonsbaseline) erstatter den gamle prioriteringen av PreviewBasisAsync.
+Baseline fastsatt 26. oktober 2026 mot arbeidskopien etter tidligere 9F checkpoint 7. **Gjeldende status etter første 10B-uttrekk: STR-001 er implementert og automatisert verifisert**, med buildings_query/aggregate og eksplisitt strukturutvalg. Ingen rapportadapter eller STR-002 er levert. [Faktisk verifikasjon og neste byggrapportuttrekk](modernization-plan.md#44-steg-10b-str-001--byggliste-og-byggaggregat), [kontrakt/aktivering](mcp-building-read-contracts.md). 10As opprinnelige rekkefølge beholdes; PreviewBasisAsync ligger fortsatt under10F.
 
 ## Telling, sporbarhet og avgrensning
 
@@ -17,15 +17,15 @@ N01–N03 er nye funn utenfor den opprinnelige 46-raders baseline og er merket N
 
 | Delsteg/domene | Implementert | Delvis | Ikke implementert | Uavklart | Utelatt | Sum |
 |---|---:|---:|---:|---:|---:|---:|
-| 10B | 1 | 0 | 8 | 0 | 4 | 13 |
+| 10B | 2 | 0 | 7 | 0 | 4 | 13 |
 | 10C | 0 | 0 | 2 | 0 | 1 | 3 |
 | 10D | 2 | 3 | 10 | 0 | 2 | 17 |
 | 10E | 0 | 0 | 5 | 0 | 3 | 8 |
 | 10F | 16 | 2 | 8 | 0 | 5 | 31 |
 | 10G | 0 | 0 | 38 | 0 | 9 | 47 |
-| **Totalt inkl. nye funn** | 19 | 5 | 71 | 0 | 24 | 119 |
+| **Totalt inkl. nye funn** | 20 | 5 | 70 | 0 | 24 | 119 |
 
-Fast oppsplittet C-baseline: **116 operasjoner** (19 implementert, 5 delvis, 69 ikke implementert, 0 uavklart, 23 utelatt). Tillegg N01–N03: **3 operasjoner** (2 ikke implementert, 1 utelatt). Alle tillegg er i 10G. Totalt 119; ingen nye produksjonsleveranser i 10A.
+Fast oppsplittet C-baseline: **116 operasjoner** (nå 20 implementert, 5 delvis, 68 ikke implementert, 0 uavklart, 23 utelatt). Tillegg N01–N03: **3 operasjoner** (2 ikke implementert, 1 utelatt). Alle tillegg er i 10G. Totalt119. 10A endret bare dokumentasjon; første10B har siden lukket én eksisterende operasjon uten å endre baselineantallet. Alle28 gamle restrader består fordi C16 fortsatt mangler detaljlesing.
 
 ## Autorisasjon, effekter og felles ferdigkriterium
 
@@ -55,6 +55,8 @@ Autorisasjonskoder nedenfor viser faktiske Application-regler, ikke nye MCP-scop
 
 ## Verifikasjonsreferanser
 
+E10B: [STR-001 full verifikasjon](modernization-plan.md#442-verifikasjon-og-aktivering) og [målrettet kontrakt](mcp-building-read-contracts.md#verifikasjon-og-manuell-kontroll). Dette er en ny kontroll etter10A; referansene nedenfor er den tidligere baselinen.
+
 Dette er tidligere dokumentert verifikasjon, **ikke nye kjøringer i 10A**. E0: [medlemskontovalg/OAuth/MCP fra 5B2](modernization-plan.md#23-steg-5b2-separat-autentisert-mcp-lesehost) og senere MCP-regresjoner. E8D: [8D-kontraktene og verifikasjonen](modernization-plan.md#30-steg-8d-avtaleutvalg-dimensjoner-aggregater-og-detaljlesing). E9D: [9D og senere regresjoner](modernization-plan.md#34-steg-9d-fleksible-rapportkomponenter-og-tabellvisning). E9E: [9E](modernization-plan.md#35-steg-9e-tjenesteforespørsler-som-nytt-rapportområde) og [kontrakt](mcp-service-request-read-contracts.md). E1/E2/E4/E5/E6/E7: historiske checkpoint 1/2/4/5/6/7 i moderniseringsplanens avsnitt 36/37/39/40/41/42. E7 inkluderer full MCP/MCPClient-, AgreementPeriods-/AgreementProcessing-PostgreSQL og Node-kontroller etter siste produksjonsendring. I/D uten E har ingen påstått ny MCP-verifikasjon; [steg 4s sluttkontroll](step-4-migration-inventory.md#1935-steg-4-implementert-og-sluttkontrollert) gjelder Application-migreringen, ikke MCP-dekning.
 
 Kilder kontrollert i kode: [Application](../../src/TenantPlatform.Application), [MCPs manuelle katalog/dispatch](../../src/TenantPlatform.Mcp/ReadTools.cs), [eksakt områdetilordning](../../src/TenantPlatform.Application/Agent/ReadAgentAreas.cs), [rapportområder](../../src/TenantPlatform.Application/PersonalPages/ReportAreas.cs), [steg 4-inventar](step-4-migration-inventory.md). Se også kontraktene for [detalj/historikk/relasjoner](mcp-agreement-detail-history-relations.md), [økonomi](mcp-agreement-finance-read.md), [indeks](mcp-agreement-index-read.md) og [grunnlag](mcp-agreement-basis-read.md).
@@ -66,7 +68,7 @@ K gjelder hver rad sammen med konkret rest nedenfor. Status gjelder MCP, ikke dr
 
 | ID | Gammel rad | Application-metode / variant | Behov og avgrenset leseomfang | Tilgang/effekt | MCP-verktøy | Status | Verifikasjon | Konkret rest → ferdigkriterium (og K) |
 |---|---|---|---|---|---|---|---|---|
-| STR-001 | C16 | `BuildingService.GetBuildingsAsync` | Byggliste: ID/navn/adresse/postnummer/by | B-L | — | Ikke implementert | — | SQL-paging/søk og reell total før MCP; første uttrekk nedenfor. |
+| STR-001 | C16 | `BuildingReportingReader.ListAsync/CountAsync` (samme Open-regel som BuildingService.GetBuildingsAsync) | Byggliste: ID/navn/adresse/postnummer/by og unik SQL-total/City | B-L; ferskt revalidert før/etter SQL | buildings_query / buildings_aggregate v1 | Implementert | E10B | Bevar side25/Name/Id, eksakte City-grupper og skrivevern. Byggrapportadapter følger separat; STR-002 er fortsatt I. |
 | STR-002 | C16 | `BuildingService.GetBuildingAsync` | Konkret bygg: ordinære felt; relaterte enheter og tellefelt vurderes særskilt | B-D | — | Ikke implementert | — | Smal detalj; avstem UnitCount/TenantCount/OpenRequestCount og enhetsinnsyn før eksponering. |
 | STR-003 | C17 | `UnitService.GetUnitsAsync` | Enhetsliste, byggfilter, type/aktiv/parent | U-L | — | Ikke implementert | — | SQL-side og autorisert type-/byggaggregat; hierarchy IDs uten skjult datautvidelse. |
 | STR-004 | C17 | `UnitService.GetUnitAsync` | Enhet med kontobygg/parent, ChildUnitCount/OccupancyCount | U-D | — | Ikke implementert | — | Detaljprojeksjon; egne tillatelser og betydning for relasjonstellinger. |
@@ -292,6 +294,8 @@ For nye rapportkilder skal typede filtre ikke endre område/identitet/eier/tilko
 Hvert delsteg skal dokumentere eksakte SELECT-kolonner/joinreferanser, ingen DML eller brede tabellprivilegier; kreve eksplisitt klientregistrering og personlig samtykke når nødvendig; oppdagelse/klassifisering/eksakt versjonsgodkjenning og eventuell eksplisitt gjenbinding av lagrede sider. Kode-/testleveranse utfører ikke disse driftsstegene. Først en separat dokumentert prøve med riktig personlig bruker/konto bekrefter operativ aktivering. Tidligere 9E-feil er fortsatt ubekreftet. Containerbygg/deployment 8C, generell Web-cookie-/sesjonsrevokering og flerinstansstøtte er separate spor, ikke skjulte 10A-krav.
 
 ## Implementerbar 10B-rekkefølge og første uttrekk
+
+**STR-001 er nå levert. Neste oppdrag er bare den avgrensede Bygg-rapportadapteren** med prompt→preview→eksplisitt lagring/redigering→kjøring uten AI. 10A-planens opprinnelige slice og ferdigkriterium nedenfor beholdes som sporbar beskrivelse av hva som er verifisert; de skal ikke implementeres på nytt.
 
 Kodegrunnlaget for denne rekkefølgen: [BuildingService](../../src/TenantPlatform.Application/Buildings/BuildingService.cs), [BuildingData](../../src/TenantPlatform.Infrastructure/Buildings/BuildingData.cs), [UnitService](../../src/TenantPlatform.Application/Units/UnitService.cs), [OrganizationService](../../src/TenantPlatform.Application/Organizations/OrganizationService.cs), [AccountRegisterService](../../src/TenantPlatform.Application/AccountSettings/AccountRegisterService.cs) og [felles evaluator/legacyunntak](../../src/TenantPlatform.Application/Security/AuthorizationService.cs). Eksisterende direkte [BuildingChecks](../../tests/TenantPlatform.AgreementList.SmokeTests/BuildingChecks.cs) prøver blant annet bred PropertyAdmin-liste mot avvist detalj på annet bygg; de er grunnlag, ikke tilstrekkelig bevis for fremtidig MCP.
 

@@ -1,5 +1,7 @@
 # MCP-lesedekning – steg 9F
 
+> **STR-001 implementert:** Bygglistens ordinære felt og unik total/City-grupper er publisert som buildings_query/aggregate v1 med eget personlig strukturscope og agentutvalg. [Kontrakt og verifikasjon](mcp-building-read-contracts.md), [gjeldende operasjonstall](mcp-read-operation-inventory.md). C16 er fortsatt delvis åpen for byggdetalj; de28 gamle restradene består. Ingen byggrapportadapter eller operativ aktivering er levert.
+
 > **Gjeldende føring etter 10A (26. oktober 2026):** Denne filens navn, 46 gamle samlerader og historiske checkpoint beholdes. Tidligere 9F videreføres som **steg 10 – Utvidet MCP-lesedekning**. [Operasjonsoversikten](mcp-read-operation-inventory.md) splitter radene til 116 baselineoperasjoner + tre nye funn og er primær fremdriftsmåling. Alle 28 gamle åpne/delvise rader består. [Ny rekkefølge og separat avslutningssjekkliste for 9A–9E](modernization-plan.md#43-steg-10a-revidert-plan-og-operasjonsbaseline) gjelder fremover: 10B struktur, 10C belegg, 10D tjenester, 10E møterom, 10F avtaler, 10G leasing, 10H sluttavstemming. PreviewBasisAsync nedenfor er historisk nestevalg og ligger nå under 10F, etter 10B–10E. Ingen MCP-implementering er gjort i 10A.
 
 Status: **påbegynt, ikke ferdig**. Dette er en dekningsoversikt, ikke en gjentakelse av steg 4s arkitekturmigrering. En Application-operasjon som er migrert er ikke dermed publisert gjennom MCP. Produksjonsinngangene nedenfor er kontrollert mot arbeidskopien; siste del av steget skal avstemme både denne listen og steg 4-oversikten på nytt.
@@ -42,7 +44,7 @@ Oppfølgingsmetadata som bevisst ikke følger fristverktøyet: person-ID-er/navn
 
 | Application-inngang | Autorisasjon | Aktuelle felt/filtre og dagens MCP | Egnethet/effekter | Status |
 |---|---|---|---|---|
-| BuildingService.GetBuildingsAsync/GetBuildingAsync | Buildings.Open på konto / Buildings.Read på konkret bygg; eksplisitt bred PropertyAdmin-liste er legacy | ID/navn/adresse; relasjonsnavn i avtaler er ikke full byggdekning | L/D/A; skrivefri | Gjenstår |
+| BuildingService.GetBuildingsAsync/GetBuildingAsync; BuildingReportingReader.ListAsync/CountAsync | Buildings.Open på konto / Buildings.Read på konkret bygg; bred PropertyAdmin-liste er bevart legacy | buildings_query/aggregate v1: Id/Name/AddressLine1/PostalCode/City; navn-søk, side25 og unik total/eksakt City. Eget strukturscope; intet detaljinnsyn fra liste | L/A skrivefri; ingen rapportadapter eller initialisering | Delvis: STR-001 implementert og fullverifisert; GetBuildingAsync/STR-002 gjenstår |
 | UnitService.GetUnitsAsync/GetUnitAsync | Units.Open / Units.Read; listeunntak gir ikke detaljfullmakt | ID/navn/type/IsActive/bygg/parent; byggfilter | L/D/A; skrivefri; antall enheter er ikke belegg | Gjenstår |
 | UnitService.GetParentCandidatesAsync | Units.Create på bygg | Redigeringsvalg | Oppslag | Utelatt: støtte for skriveeditor, dekk ordinært hierarki gjennom enhetslesing |
 | OrganizationService.GetOrganizationsAsync/GetOrganizationAsync | GetOrganizationListAccessAsync / Organizations.Read; legacy listeomfang bevares eksplisitt | ID/navn/type/IsActive/nummer; ingen kontaktpersoner automatisk | L/D/A; skrivefri | Gjenstår |

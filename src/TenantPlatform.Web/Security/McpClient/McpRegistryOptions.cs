@@ -41,11 +41,13 @@ public sealed class McpAuthProfiles : IMcpAuthProfiles
         {
             foreach (var address in options.InternalAllowedPrivateAddresses)
                 if (!System.Net.IPAddress.TryParse(address, out var ip) || McpNetworkPolicy.Forbidden(ip)) throw new InvalidOperationException("Invalid private address approval.");
-            var version = own.ServiceRequestsAllowed
+            var version = own.StructureAllowed
+                ? Hash(new { own.ClientId, own.Issuer, own.Resource, own.Callback, own.ServiceRequestsAllowed, own.StructureAllowed, options.InternalAllowedPrivateAddresses })
+                : own.ServiceRequestsAllowed
                 ? Hash(new { own.ClientId, own.Issuer, own.Resource, own.Callback, own.ServiceRequestsAllowed, options.InternalAllowedPrivateAddresses })
                 : Hash(new { own.ClientId, own.Issuer, own.Resource, own.Callback, options.InternalAllowedPrivateAddresses });
             loaded.Add(new(new("tenantplatform", version, "TenantPlatform", own.Resource, new(own.ClientId, own.Issuer, own.Resource, ProfileVersion: version), true),
-                InternalMcpClientOptions.Registration, own.Callback, own.ClientSecret, [OAuth.OAuthIssuerOptions.ReadScope, "offline_access", ..own.ServiceRequestsAllowed ? new[] { TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read } : Array.Empty<string>()], options.InternalAllowedPrivateAddresses));
+                InternalMcpClientOptions.Registration, own.Callback, own.ClientSecret, [OAuth.OAuthIssuerOptions.ReadScope, "offline_access", ..own.StructureAllowed ? new[] { TenantPlatform.Application.Buildings.StructureReadScopes.Read } : Array.Empty<string>(), ..own.ServiceRequestsAllowed ? new[] { TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read } : Array.Empty<string>()], options.InternalAllowedPrivateAddresses));
             foreach (var value in options.Profiles)
             {
                 if (value.Id.Length is < 1 or > 60 || !value.Id.All(c => char.IsAsciiLetterOrDigit(c) || c == '-') || value.Id == "tenantplatform" ||

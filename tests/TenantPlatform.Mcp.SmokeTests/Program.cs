@@ -41,7 +41,7 @@ var pfxPassword = Convert.ToHexString(RandomNumberGenerator.GetBytes(24));
 var oauth = new OAuthIssuerOptions { Enabled = true, Issuer = "https://tenant.test/", Resource = "https://mcp.test/mcp", ConnectionString = connection,
     SigningCertificatePath = Path.Combine(directory,"sign.pfx"), SigningCertificatePassword = pfxPassword,
     EncryptionCertificatePath = Path.Combine(directory,"enc.pfx"), EncryptionCertificatePassword = pfxPassword, CookieKeyDirectory = Path.Combine(directory,"keys"),
-    Clients = [new() { AllowServiceRequests = true, ClientId = "protocol-fixture", DisplayName = "MCP fixture", Secret = secret, RedirectUris = ["https://client.test/callback"] }] };
+    Clients = [new() { AllowStructure = true, AllowServiceRequests = true, ClientId = "protocol-fixture", DisplayName = "MCP fixture", Secret = secret, RedirectUris = ["https://client.test/callback"] }] };
 foreach (var path in new[] { oauth.SigningCertificatePath, oauth.EncryptionCertificatePath })
 {
     using var rsa = RSA.Create(2048); var request = new CertificateRequest("CN=MCP test only",rsa,HashAlgorithmName.SHA256,RSASignaturePadding.Pkcs1);
@@ -73,7 +73,7 @@ await using (var db = factory.CreateDbContext())
     db.AgreementAccess.Add(new AgreementAccess { AccountId=a,AgreementId=grantAgreement,UserId=user,Level=AgreementAccessLevel.Read });
     await db.SaveChangesAsync();
 }
-var tables = new[] { "accounts","users","user_accounts","user_account_roles","agreements","agreement_access","organizations","agreement_reminder_settings","buildings","units","organization_elements","geographic_areas" };
+var tables = new[] { "accounts","users","user_accounts","user_account_roles","agreements","agreement_access","organizations","agreement_reminder_settings","units","organization_elements","geographic_areas" };
 await using(var admin = new NpgsqlConnection(connection))
 {
     await admin.OpenAsync();
@@ -81,6 +81,7 @@ await using(var admin = new NpgsqlConnection(connection))
     await command.ExecuteNonQueryAsync();
     await using var requestGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"RequesterUserId\",\"RequesterOrganizationId\",\"AssignedServiceProviderOrganizationId\",\"BuildingId\",\"UnitId\",\"Title\",\"Status\",\"CreatedAt\",\"SubmittedAt\",\"CompletedAt\") ON public.service_requests TO mcp_reader", admin);
     await requestGrant.ExecuteNonQueryAsync();
+    await using var buildingGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"Name\",\"AddressLine1\",\"PostalCode\",\"City\") ON public.buildings TO mcp_reader", admin); await buildingGrant.ExecuteNonQueryAsync();
     await using var deadlineGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"AgreementId\",\"Kind\",\"DueDate\",\"Status\",\"State\",\"UpdatedUtc\") ON public.agreement_deadlines TO mcp_reader", admin);
     await deadlineGrant.ExecuteNonQueryAsync();
     await using var extensionGrant = new NpgsqlCommand("GRANT SELECT (\"Id\",\"AccountId\",\"Name\") ON public.agreement_indices TO mcp_reader; GRANT SELECT (\"Id\",\"AccountId\",\"DeadlineId\",\"Kind\",\"CreatedUtc\") ON public.agreement_deadline_history TO mcp_reader", admin);
@@ -107,6 +108,10 @@ try
     Check(!string.IsNullOrEmpty(delegationId),"actual access JWT carries signed delegation identifier");
     host=await Start();
     token = await Renew(token);
+    if (Environment.GetEnvironmentVariable("MCP_TEST_BUILDINGS_ONLY") == "1") {
+        await BuildingReportingChecks.Run(factory, runtime, password, async (subject, structure) => { var (access, _) = await Issue(subject, structure: structure); return await Client(access, "2026-07-28"); });
+        return;
+    }
     if (Environment.GetEnvironmentVariable("MCP_TEST_BASIS_ONLY") == "1") {
         await BasisReadChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
         return;
@@ -138,7 +143,7 @@ try
     {
         await using var client=await Client(token,version);
         var tools=await client.ListToolsAsync();
-        Check(tools.Select(t=>t.Name).Order().SequenceEqual(new[]{"accounts_list","agreements_aggregate","agreements_attention", "agreements_bases", "agreements_basis","agreements_deadlines","agreements_details","agreements_financial_lines","agreements_followup","agreements_followup_history","agreements_forecast","agreements_index_values", "agreements_indices", "agreements_insights","agreements_list","agreements_prioritized","agreements_query","agreements_relations","service_requests_aggregate","service_requests_query"}),"exact twenty tools "+version);
+        Check(tools.Select(t=>t.Name).Order().SequenceEqual(new[]{"accounts_list","agreements_aggregate","agreements_attention", "agreements_bases", "agreements_basis","agreements_deadlines","agreements_details","agreements_financial_lines","agreements_followup","agreements_followup_history","agreements_forecast","agreements_index_values", "agreements_indices", "agreements_insights","agreements_list","agreements_prioritized","agreements_query","agreements_relations","service_requests_aggregate","service_requests_query"}),"exact twenty legacy tools without structure scope "+version);
         var schemas=JsonSerializer.Serialize(tools.Select(t=>t.ProtocolTool));
         Check(tools.All(t=>t.ProtocolTool.OutputSchema!.Value.GetProperty("additionalProperties").ValueKind==JsonValueKind.False) && !schemas.Contains("Owner") && schemas.Contains("additionalProperties") && schemas.Contains("outputSchema"),"bounded input/output schemas "+version);
         var accounts=Data(await client.CallToolAsync("accounts_list",new Dictionary<string,object?>()));
@@ -193,6 +198,7 @@ try
     await AgreementExtensionChecks.Run(factory, runtime, user, a, grantAgreement, b, () => Client(token, "2026-07-28"));
     await Task.Delay(TimeSpan.FromSeconds(61));
     token = await Renew(token);
+    await BuildingReportingChecks.Run(factory, runtime, password, async (subject, structure) => { var (access, _) = await Issue(subject, structure: structure); return await Client(access, "2026-07-28"); });
     await ServiceRequestReportingChecks.Run(factory, runtime, password, async subject => { var (access, _) = await Issue(subject, true); return await Client(access, "2026-07-28"); });
     await ReportingChecks.Run(factory, runtime, password, async subject => { var (access, _) = await Issue(subject); return await Client(access, "2026-07-28"); });
     // These stages intentionally outlive a five-minute JWT; renew via the real issuer.
@@ -367,10 +373,10 @@ try
         refreshTokens.Remove(accessToken);
         return renewed;
     }
-    async Task<(string,Browser)> Issue(Guid subject, bool requests = false)
+    async Task<(string,Browser)> Issue(Guid subject, bool requests = false, bool structure = false)
     {
         var browser=new Browser(issuer!.GetTestClient()); var verifier=Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(48));
-        var path="/connect/authorize"+QueryString.Create(new Dictionary<string,string?> { ["client_id"]="protocol-fixture",["redirect_uri"]="https://client.test/callback",["response_type"]="code",["scope"]=McpOptions.ReadScope+" offline_access"+(requests ? " " + TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read : ""),["resource"]=oauth.Resource,["state"]="mcp-test",["code_challenge_method"]="S256",["code_challenge"]=Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier))) });
+        var path="/connect/authorize"+QueryString.Create(new Dictionary<string,string?> { ["client_id"]="protocol-fixture",["redirect_uri"]="https://client.test/callback",["response_type"]="code",["scope"]=McpOptions.ReadScope+" offline_access"+(requests ? " " + TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read : "")+(structure ? " " + TenantPlatform.Application.Buildings.StructureReadScopes.Read : ""),["resource"]=oauth.Resource,["state"]="mcp-test",["code_challenge_method"]="S256",["code_challenge"]=Base64UrlEncoder.Encode(SHA256.HashData(Encoding.ASCII.GetBytes(verifier))) });
         var redirect=await browser.Get(path); var login=Fields(await (await browser.Get(redirect.Headers.Location!.OriginalString)).Content.ReadAsStringAsync());
         login["email"]=subject+"@example.test"; login["password"]=password;
         var logged=await browser.Post("/auth/login",login); var consentHtml = await (await browser.Get(logged.Headers.Location!.OriginalString)).Content.ReadAsStringAsync();

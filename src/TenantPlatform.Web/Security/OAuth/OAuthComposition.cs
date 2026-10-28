@@ -30,12 +30,13 @@ public static class OAuthComposition
                 server.SetAuthorizationEndpointUris("/connect/authorize").SetTokenEndpointUris("/connect/token")
                     .SetRevocationEndpointUris("/connect/revoke");
                 server.AllowAuthorizationCodeFlow().AllowRefreshTokenFlow().RequireProofKeyForCodeExchange();
-                server.RegisterScopes(OAuthIssuerOptions.ReadScope, TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read, TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage).RegisterResources(options.Resource);
+                server.RegisterScopes(TenantPlatform.Application.Buildings.StructureReadScopes.Read, OAuthIssuerOptions.ReadScope, TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read, TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage).RegisterResources(options.Resource);
                 server.Configure(configuration =>
                 {
                     configuration.Scopes.Clear();
                     configuration.Scopes.Add(OAuthIssuerOptions.ReadScope);
                     configuration.Scopes.Add(TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read);
+                    configuration.Scopes.Add(TenantPlatform.Application.Buildings.StructureReadScopes.Read);
                     configuration.Scopes.Add(Scopes.OfflineAccess);
                     configuration.Scopes.Add(TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage);
                     configuration.CodeChallengeMethods.Clear();
@@ -78,6 +79,7 @@ public static class OAuthComposition
             descriptor.Permissions.UnionWith([Permissions.Endpoints.Authorization, Permissions.Endpoints.Token, Permissions.Endpoints.Revocation,
                 Permissions.GrantTypes.AuthorizationCode, Permissions.GrantTypes.RefreshToken, Permissions.ResponseTypes.Code,
                 Permissions.Prefixes.Scope + OAuthIssuerOptions.ReadScope]);
+            if (client.AllowStructure) descriptor.Permissions.Add(Permissions.Prefixes.Scope + TenantPlatform.Application.Buildings.StructureReadScopes.Read);
             if (client.AllowServiceRequests) descriptor.Permissions.Add(Permissions.Prefixes.Scope + TenantPlatform.Application.ServiceRequests.ServiceRequestReportScopes.Read);
             if (client.AllowPersonalPages) descriptor.Permissions.Add(Permissions.Prefixes.Scope + TenantPlatform.Application.PersonalPages.PersonalPageScopes.Manage);
             descriptor.AddResourcePermissions(options.Resource);

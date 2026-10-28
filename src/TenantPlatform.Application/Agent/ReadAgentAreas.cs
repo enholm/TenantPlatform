@@ -2,7 +2,7 @@ using TenantPlatform.Application.PersonalPages;
 
 namespace TenantPlatform.Application.Agent;
 
-public enum ReadAgentArea { Agreements, ServiceRequests, External, AgreementDetails, AgreementFinance }
+public enum ReadAgentArea { Agreements, ServiceRequests, External, AgreementDetails, AgreementFinance, Structure }
 public sealed record AgentAreaOption(ReadAgentArea Area, int ToolCount);
 
 public static class ReadAgentAreas
@@ -11,6 +11,7 @@ public static class ReadAgentAreas
     // registry's personally authorized, approved AutomaticRead set on every operation.
     private static readonly IReadOnlyDictionary<string, ReadAgentArea[]> OwnTools = new Dictionary<string, ReadAgentArea[]>(StringComparer.Ordinal)
     {
+        ["buildings_query"] = [ReadAgentArea.Structure], ["buildings_aggregate"] = [ReadAgentArea.Structure],
         ["agreements_bases"] = [ReadAgentArea.AgreementFinance], ["agreements_basis"] = [ReadAgentArea.AgreementFinance],
         ["agreements_indices"] = [ReadAgentArea.AgreementFinance], ["agreements_index_values"] = [ReadAgentArea.AgreementFinance],
         ["agreements_financial_lines"] = [ReadAgentArea.AgreementFinance], ["agreements_forecast"] = [ReadAgentArea.AgreementFinance],
