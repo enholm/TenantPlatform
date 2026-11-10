@@ -3,7 +3,7 @@
 **Project:** TenantPlatform  
 **Feature:** Unified dimension-based classification  
 **Target modules:** Shared Dimensions, Agreements, Leasing, Dashboard and Demo Data  
-**Execution:** AgentOrchestrator 0.5.1 — Autonomous Development  
+**Execution:** AgentOrchestrator 0.5.1 — Autonomous Development (explicit source-only policy grants)  
 **Scope:** Domain, Application, Infrastructure, Web, EF Core migrations, localization, demo-data generation and automated tests
 
 ---
@@ -70,9 +70,9 @@ AgentOrchestrator must not access the ordinary application database.
 
 Use only configured trusted build and smoke-test verification commands.
 
-PostgreSQL-specific migration execution and full database-backed demo initialization may remain unverified during the autonomous run if no isolated database verifier is configured.
+PostgreSQL migration execution, fresh-database creation, and full database-backed demo initialization are explicitly deferred to `POST_RUN_VERIFICATION`. They are not autonomous implementation steps, must not be attempted, and must not be classified as requests for destructive-database or infrastructure authorization.
 
-The final report must explicitly identify such unverified checks.
+The final report must explicitly mark these checks **NOT PERFORMED — POST_RUN_VERIFICATION**, rather than PASS or FAIL. Source-level tests and migration compilation are still required wherever supported by trusted commands.
 
 Do not claim that successful compilation proves successful PostgreSQL migration execution.
 
@@ -653,7 +653,7 @@ Implement the necessary EF Core changes for:
 8. Do not implement data-copying migration logic for disposable development database contents.
 9. Do not access the ordinary application database during autonomous execution.
 
-PostgreSQL-specific migration execution remains a separate verification gate unless a trusted isolated verifier is available.
+PostgreSQL migration execution and fresh-database initialization are mandatory **post-run manual verification gates**. The autonomous agent must only author migration source and update the specifically authorized current snapshot. It must never execute migrations, open database connections, reset a database, or issue SQL.
 
 ## 12. Automated Tests
 
@@ -750,7 +750,7 @@ Do not claim that tests passed if they were only compiled.
 
 Do not claim that PostgreSQL migrations were tested if no isolated PostgreSQL database was used.
 
-Report verified and unverified acceptance criteria separately.
+Report verified and unverified acceptance criteria separately. Specifically report PostgreSQL migration application, fresh-database initialization, and database-backed demo equivalence as `NOT PERFORMED — POST_RUN_VERIFICATION`. Never treat compilation or in-memory tests as proof of PostgreSQL behavior.
 
 ## 13. Autonomous Execution Requirements
 
@@ -772,13 +772,48 @@ AgentOrchestrator 0.5.1 shall implement this feature as one autonomous developme
 - Do not automatically merge or deploy.
 - Do not access the ordinary application database.
 
-### 13.2 Verification-only steps
+### 13.2 Explicit source-authoring authorization and policy boundaries
+
+This task intentionally changes the application architecture. The operator must explicitly enable the following **reviewed opt-ins** in the trusted `develop.json` under its existing `autonomous` object before starting a **fresh** autonomous run:
+
+```json
+"authorizedCategories": ["ARCHITECTURE"],
+"migrationSourceAuthoring": {
+  "directories": [
+    "src/TenantPlatform.Infrastructure/Persistence/Migrations/"
+  ],
+  "snapshotPaths": [
+    "src/TenantPlatform.Infrastructure/Persistence/Migrations/TenantPlatformDbContextModelSnapshot.cs"
+  ]
+}
+```
+
+These are fragments of the existing `autonomous` object, not a complete configuration file. Keep `allowedPaths` restricted to `src/` and `tests/`; the grant does not enlarge that boundary. The named snapshot path must match the actual active snapshot before use; if it does not, stop and request a reviewed configuration correction rather than silently widening access.
+
+The `ARCHITECTURE` grant authorizes architectural **source-code changes** only within the configured file scopes. The `migrationSourceAuthoring` grant permits creation of new EF Core migration source files in the named directory and modification of the explicitly named **current** model snapshot. Existing historical migrations are immutable. Do not delete or rewrite historical migrations, delete the snapshot, or delete migration source files. Obsolete ordinary source files within allowed scopes may be removed when required, but this does not authorize database operations.
+
+**Authoring is not execution.** It is permitted to author a new migration whose `Up` method removes obsolete legacy tables or columns, including `DropTable` and `DropColumn` operations, provided it preserves unrelated schema. It is **not** permitted to apply that migration, invoke `dotnet ef database update`, run SQL, connect to PostgreSQL, reset a database, or access production or development data. Do not request or grant `DESTRUCTIVE_DATABASE`, `INFRASTRUCTURE`, `DEPLOYMENT`, `AUTHENTICATION`, or `AUTHORIZATION` merely to implement this feature.
+
+Preserve the existing authentication and authorization architecture. Account-scoped queries, existing Application-layer access checks, and tests verifying tenant isolation are ordinary feature work, **not** a request to redesign security. Do not change authentication mechanisms, authorization policy architecture, privilege boundaries, or credential handling. If an actual security-architecture change proves necessary, report it as blocked rather than reclassifying or bypassing policy.
+
+The run plan must use exact file scopes for its steps, contained by the directory grants, and must identify the new migration and current snapshot explicitly where required. Use the installed AgentOrchestrator policy enforcement, trusted verification commands, worktree isolation, and audit logging; do not weaken them. Any source change requiring a protected file outside these grants must be reported rather than attempted.
+
+### 13.3 Fresh plan and deferred operational decisions
+
+Start a **new** autonomous plan from this revised specification. Do not resume or reuse the previously blocked plan or its unresolved decisions. In particular:
+
+- Migration source authoring is approved within the named scope; **destructive database execution is not approved**. A source-only migration step must not be classified as database execution merely because its generated migration removes obsolete schema.
+- PostgreSQL migration testing, database recreation and demo initialization are **explicitly deferred** to `POST_RUN_VERIFICATION`. They are not infrastructure changes for the agent to approve or perform.
+- The plan must not add an execution step that requires database access, external infrastructure, deployment, or a new trusted command.
+- If a required implementation change genuinely needs an ungranted sensitive category, record the blocker and stop that work; do not infer approval from this document.
+
+### 13.4 Verification-only steps
 
 Verification-only steps may use empty file scopes when supported by AgentOrchestrator.
 
 Such steps must execute only existing trusted verification commands and must not modify source files.
 
-### 13.3 Completion
+### 13.5 Completion
 
 The run must distinguish between:
 
@@ -786,11 +821,11 @@ The run must distinguish between:
 
 **IMPLEMENTATION FAILED:** A blocking issue prevents completing the required implementation.
 
-Database-backed PostgreSQL verification may remain a documented manual acceptance gate.
+Database-backed PostgreSQL verification is a separate, explicitly deferred `POST_RUN_VERIFICATION` acceptance gate. Its unperformed status does not block completion of source-only implementation, and does not imply permission to access databases.
 
 Do not report PostgreSQL migration execution or fresh-database initialization as verified unless those operations actually ran in an isolated environment.
 
-### 13.4 Safety
+### 13.6 Safety
 
 Do not weaken trusted execution restrictions to complete the task.
 
@@ -818,11 +853,11 @@ Produce one consolidated report containing:
 12. Dashboard roll-up and drill-down implementation.
 13. Leasing regression results.
 14. Build and smoke-test results.
-15. Automatically approved decisions.
+15. Decisions made within explicitly granted policy scope and their audit records.
 16. Repair attempts and outcomes.
 17. Remaining limitations.
-18. Unverified PostgreSQL-specific checks.
-19. Manual database recreation and verification checklist.
+18. `POST_RUN_VERIFICATION` checks marked NOT PERFORMED, with no claim of database success.
+19. Manual `POST_RUN_VERIFICATION` checklist: review migration source and destructive operations, recreate only the user-approved disposable development database, apply the full migration chain, initialize demo data, verify hierarchy and agreement distributions, repeat initialization for idempotency, and run PostgreSQL-backed regression checks. These actions are for the user or a separately authorized process, not this autonomous run.
 20. Worktree path and instructions for reviewing the implementation.
 
 ## 15. Acceptance Criteria
@@ -856,7 +891,9 @@ The implementation is ready for user review when:
 - Percentages use the displayed sibling-level counts.
 - Existing Leasing functionality remains unchanged.
 - Relevant trusted automated verification passes.
-- The final report clearly identifies any unverified database-specific acceptance criteria.
+- The final report clearly identifies all deferred database-specific acceptance criteria as `NOT PERFORMED — POST_RUN_VERIFICATION`, with manual follow-up steps.
+- New migration source files compile and the specifically authorized current snapshot is updated; historical migrations remain byte-for-byte unchanged.
+- No database connections, SQL execution, migration application, database resets, deployment or security-architecture changes occur during autonomous execution.
 
 ## 16. Explicit Non-Goals
 
@@ -894,4 +931,4 @@ Do not migrate disposable database records.
 
 Do not access the existing application database.
 
-Complete the implementation autonomously, verify everything permitted by the trusted environment, and report the remaining database recreation and PostgreSQL verification steps for the user.
+Complete the source-only implementation autonomously under the reviewed `ARCHITECTURE` and `migrationSourceAuthoring` grants, verify everything permitted by the trusted environment, and explicitly defer database recreation and PostgreSQL checks to `POST_RUN_VERIFICATION` for the user.
