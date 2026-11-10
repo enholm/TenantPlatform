@@ -30,7 +30,7 @@ static class LeasingComponentChecks
             var router = await dimensions.SaveValueAsync(dimension, null, new() { DimensionId = dimension, ParentId = network, Name = "Router", Code = "RTR" });
             await dimensions.SaveValueAsync(dimension, null, new() { DimensionId = dimension, ParentId = router, Name = "Router type", Code = "TYPE" });
             await Render(typeof(TenantPlatform.Web.Components.Pages.Dimensions.DimensionsPage), "settings/dimensions", Guid.Empty, html =>
-                Require(html.Contains("Dimensjoner") && html.Contains("Department") && html.Contains("form-control") && html.Contains("col-lg-4"), "shared dimension register renders with responsive cards and labelled controls"));
+                Require(html.Contains("Dimensjoner") && html.Contains("Department") && html.Contains("stretched-link") && html.Contains("col-xl-5") && html.Contains("col-xl-7") && !html.Contains("role=\"alert\"") && !html.Contains("<form"), "dimension register renders selectable overview cards and an empty detail panel without edit forms or erroneous alerts"));
             await Render(typeof(LeasingEditor), $"leasing/acquisitions/{acquisition}/edit", acquisition, html =>
                 Require(html.Contains("Klassifisering og kostnadsfordeling") && html.Contains("Technology") && html.Contains("type=\"search\"") && html.Contains("<summary>"), "classification editor renders searchable paths and keyboard-accessible expandable controls"));
         }
@@ -83,36 +83,38 @@ static class LeasingComponentChecks
                         typeof(ComponentBase).GetMethod("StateHasChanged", flags)!.Invoke(page, null);
                         await Task.Yield();
                     }
+                    Guid[] ParentIds() => System.Text.RegularExpressions.Regex.Matches(root.ToHtmlString(), "<option value=\"([0-9a-f-]{36})\"")
+                        .Select(match => Guid.Parse(match.Groups[1].Value)).ToArray();
                     var register = await dimensions!.GetAsync();
                     var dimension = register.Dimensions.Single(x => x.Code == "HIERARCHY");
                     var network = register.Values.Single(x => x.DimensionId == dimension.Id && x.Code == "NET");
                     var router = register.Values.Single(x => x.DimensionId == dimension.Id && x.Code == "RTR");
                     var routerType = register.Values.Single(x => x.DimensionId == dimension.Id && x.Code == "TYPE");
-                    await Act("EditDimension", dimension);
+                    await Act("OpenValues", dimension);
                     var treeHtml = System.Net.WebUtility.HtmlDecode(root.ToHtmlString());
                     Require(treeHtml.Contains("padding-inline-start: 40px") && treeHtml.Contains("Network / Router / Router type") && treeHtml.Contains("Legg til underelement"), "dimension values render three indented levels and add-child actions");
                     await Act("NewChild", routerType.Id);
                     var input = (DimensionValue)typeof(DimensionsPage).GetField("valueInput", flags)!.GetValue(page)!;
                     Require(input.ParentId == routerType.Id, "add-child preselects the clicked value at any depth");
                     input.Name = "Fourth level"; input.Code = "FOUR";
-                    await Act("SaveValue");
+                    await Act("SaveValue", input);
                     register = await dimensions.GetAsync();
                     var paths = DimensionHierarchy.Build(dimension, register.Values);
                     Require(paths.Single(x => x.Code == "FOUR").Depth == 3 && paths.Single(x => x.Code == "FOUR").Path == "Network / Router / Router type / Fourth level", "saving through the editor persists a fourth hierarchy level");
                     await Act("EditValue", network.Id);
-                    var parents = (IEnumerable<DimensionValueOption>)typeof(DimensionsPage).GetProperty("ParentOptions", flags)!.GetValue(page)!;
+                    var parents = ParentIds();
                     Require(!parents.Any(), "parent picker excludes self and all descendants");
                     await Act("EditValue", routerType.Id);
-                    parents = (IEnumerable<DimensionValueOption>)typeof(DimensionsPage).GetProperty("ParentOptions", flags)!.GetValue(page)!;
-                    Require(parents.Select(x => x.Id).SequenceEqual(new[] { network.Id, router.Id }), "parent picker keeps ancestors and excludes the edited subtree");
+                    parents = ParentIds();
+                    Require(parents.SequenceEqual(new[] { network.Id, router.Id }), "parent picker keeps ancestors and excludes the edited subtree");
                     input = (DimensionValue)typeof(DimensionsPage).GetField("valueInput", flags)!.GetValue(page)!;
                     input.ParentId = null;
-                    await Act("SaveValue");
+                    await Act("SaveValue", input);
                     register = await dimensions.GetAsync(); paths = DimensionHierarchy.Build(dimension, register.Values);
                     Require(paths.Single(x => x.Id == routerType.Id).Depth == 0 && paths.Single(x => x.Code == "FOUR").Path == "Router type / Fourth level", "moving a value to root preserves its descendants");
-                    await Act("NewValue"); await Act("CancelValue"); await Act("NewDimension");
-                    await Act("EditDimension", register.Dimensions.Single(x => x.Code == "DEP"));
-                    await Act("EditDimension", dimension);
+                    await Act("NewValue"); await Act("CancelValue"); await Act("NewDimension"); await Act("CancelDimensionEditor");
+                    await Act("OpenValues", register.Dimensions.Single(x => x.Code == "DEP"));
+                    await Act("OpenValues", dimension);
                     Require(root.ToHtmlString().Contains("Fourth level"), "switching dimensions and create/edit forms rerenders without EditContext errors");
                 }
             });

@@ -1,0 +1,197 @@
+@using TenantPlatform.Core.Dimensions
+@using TenantPlatform.Web.Services.Dimensions
+
+@if (IsOpen)
+{
+    <div class="modal-backdrop show"></div>
+    <div class="modal d-block"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="dimension-value-editor-title"
+         tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <EditForm @key="editModel"
+                          Model="editModel"
+                          OnValidSubmit="SubmitAsync"
+                          FormName="dimension-value-editor">
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5" id="dimension-value-editor-title">
+                            @L[IsEditing ? "DimensionEditValue" : "DimensionNewValue"]
+                        </h2>
+                        <button type="button"
+                                class="btn-close"
+                                aria-label="@L["Cancel"]"
+                                disabled="@submitting"
+                                @onclick="CancelAsync">
+                        </button>
+                    </div>
+
+                    <fieldset disabled="@submitting">
+                        <div class="modal-body">
+                            @if (!string.IsNullOrWhiteSpace(Error))
+                            {
+                                <div class="alert alert-danger" role="alert">@L[Error]</div>
+                            }
+
+                            <ValidationSummary class="text-danger" />
+
+                            <div class="mb-3">
+                                <label class="form-label" for="dimension-value-name">@L["Name"]</label>
+                                <InputText id="dimension-value-name"
+                                           class="form-control"
+                                           @bind-Value="editModel.Name"
+                                           maxlength="200"
+                                           required />
+                                <ValidationMessage For="() => editModel.Name" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="dimension-value-code">@L["DimensionCode"]</label>
+                                <InputText id="dimension-value-code"
+                                           class="form-control"
+                                           @bind-Value="editModel.Code"
+                                           maxlength="50"
+                                           required />
+                                <ValidationMessage For="() => editModel.Code" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="dimension-value-parent">@L["DimensionParent"]</label>
+                                <InputSelect id="dimension-value-parent"
+                                             class="form-select"
+                                             @bind-Value="editModel.ParentId">
+                                    <option value="">@L["DimensionRoot"]</option>
+                                    @foreach (var parent in AllowedParentOptions)
+                                    {
+                                        <option value="@parent.Id">@parent.Path</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="() => editModel.ParentId" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="dimension-value-sort-order">@L["DimensionSortOrder"]</label>
+                                <InputNumber id="dimension-value-sort-order"
+                                             class="form-control"
+                                             @bind-Value="editModel.SortOrder"
+                                             min="0" />
+                                <ValidationMessage For="() => editModel.SortOrder" class="text-danger" />
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <InputCheckbox id="dimension-value-active"
+                                               class="form-check-input"
+                                               @bind-Value="editModel.IsActive" />
+                                <label class="form-check-label" for="dimension-value-active">@L["DimensionActive"]</label>
+                            </div>
+
+                            <p class="small text-muted mb-0">@L["DimensionMoveNotice"]</p>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="CancelAsync">
+                                @L["Cancel"]
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                @if (submitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                }
+                                @L["Save"]
+                            </button>
+                        </div>
+                    </fieldset>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private DimensionValue editModel = new();
+    private DimensionValue? copiedFrom;
+    private bool wasOpen;
+    private bool submitting;
+
+    [Parameter]
+    public DimensionValue? Value { get; set; }
+
+    [Parameter]
+    public bool IsEditing { get; set; }
+
+    [Parameter]
+    public bool IsOpen { get; set; }
+
+    [Parameter]
+    public string? Error { get; set; }
+
+    [Parameter]
+    public IEnumerable<DimensionValueOption> ParentOptions { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<DimensionValue> OnSave { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private IEnumerable<DimensionValueOption> AllowedParentOptions =>
+        DimensionHierarchy.AllowedParents(ParentOptions, IsEditing ? editModel.Id : null);
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen && (!wasOpen || !ReferenceEquals(copiedFrom, Value)))
+        {
+            editModel = Copy(Value);
+            copiedFrom = Value;
+            submitting = false;
+        }
+
+        wasOpen = IsOpen;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (submitting)
+        {
+            return;
+        }
+
+        submitting = true;
+        try
+        {
+            await OnSave.InvokeAsync(Copy(editModel));
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private Task CancelAsync()
+    {
+        if (submitting)
+        {
+            return Task.CompletedTask;
+        }
+
+        editModel = new();
+        copiedFrom = null;
+        return OnCancel.InvokeAsync();
+    }
+
+    private static DimensionValue Copy(DimensionValue? source) => source is null
+        ? new DimensionValue()
+        : new DimensionValue
+        {
+            Id = source.Id,
+            AccountId = source.AccountId,
+            DimensionId = source.DimensionId,
+            ParentId = source.ParentId,
+            Name = source.Name,
+            Code = source.Code,
+            IsActive = source.IsActive,
+            SortOrder = source.SortOrder,
+            Revision = source.Revision
+        };
+}

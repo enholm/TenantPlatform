@@ -2546,6 +2546,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingInvalidTerms" xml:space="preserve"><value>Kontrollera villkoren: 1–600 hela månader, ränta 0–100 %, eller referensräntans namn och marginal mellan −100 och 100 procentenheter. Välj betalningsfrekvens separat.</value></data>
   <data name="LeasingVatAmount" xml:space="preserve"><value>Momsbelopp</value></data>
   <data name="Dimensions" xml:space="preserve"><value>Dimensioner</value></data>
+  <data name="Dimension" xml:space="preserve"><value>Dimension</value></data>
   <data name="DimensionCode" xml:space="preserve"><value>Kod</value></data>
   <data name="DimensionActive" xml:space="preserve"><value>Aktiv</value></data>
   <data name="DimensionInactive" xml:space="preserve"><value>Inaktiv</value></data>

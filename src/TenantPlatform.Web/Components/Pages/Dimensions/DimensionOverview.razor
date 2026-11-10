@@ -1,0 +1,74 @@
+@using TenantPlatform.Core.Dimensions
+
+<section class="card">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="h5 mb-0">@L["Dimensions"]</h2>
+            <button type="button" class="btn btn-primary" @onclick="OnCreate">
+                @L["DimensionNew"]
+            </button>
+        </div>
+
+        @if (Dimensions.Count == 0)
+        {
+            <div class="text-center text-muted border rounded py-4 px-3" role="status">
+                <p class="mb-0">@L["ProcessingEmpty"]</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var dimension in Dimensions)
+                {
+                    var selected = dimension.Id == SelectedDimensionId;
+                    <div class="col-12 col-md-6 col-xl-4" @key="dimension.Id">
+                        <article class="card h-100 @(selected ? "border-primary" : string.Empty)"
+                                 aria-current="@(selected ? "true" : null)">
+                            <div class="card-body d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                    <button type="button"
+                                            class="btn btn-link stretched-link text-start text-decoration-none p-0 flex-grow-1"
+                                            @onclick="() => OnSelect.InvokeAsync(dimension)">
+                                        <span class="d-block fw-semibold">@dimension.Name</span>
+                                        <span class="d-block small text-muted">@dimension.Code</span>
+                                    </button>
+                                    <span class="badge @(dimension.IsActive ? "text-bg-success" : "text-bg-secondary")">
+                                        @L[dimension.IsActive ? "DimensionActive" : "DimensionInactive"]
+                                    </span>
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(dimension.Description))
+                                {
+                                    <p class="small text-muted mb-3">@dimension.Description</p>
+                                }
+                            </div>
+                        </article>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<Dimension> Dimensions { get; set; } = [];
+
+    [Parameter]
+    public Guid? SelectedDimensionId { get; set; }
+
+    [Parameter]
+    public EventCallback OnCreate { get; set; }
+
+    [Parameter]
+    public EventCallback<Dimension> OnSelect { get; set; }
+
+    [Parameter]
+    public EventCallback<Dimension> OnEdit { get; set; }
+
+    [Parameter]
+    public EventCallback<Dimension> OnRules { get; set; }
+
+    [Parameter]
+    public EventCallback<Dimension> OnValues { get; set; }
+}

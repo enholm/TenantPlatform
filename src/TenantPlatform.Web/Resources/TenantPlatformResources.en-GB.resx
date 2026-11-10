@@ -2510,6 +2510,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingInvalidTerms" xml:space="preserve"><value>Check terms: 1–600 whole months, interest 0–100%, or reference rate name and margin between −100 and 100 percentage points. Select payment frequency separately.</value></data>
   <data name="LeasingVatAmount" xml:space="preserve"><value>VAT amount</value></data>
   <data name="Dimensions" xml:space="preserve"><value>Dimensions</value></data>
+  <data name="Dimension" xml:space="preserve"><value>Dimension</value></data>
   <data name="DimensionCode" xml:space="preserve"><value>Code</value></data>
   <data name="DimensionActive" xml:space="preserve"><value>Active</value></data>
   <data name="DimensionInactive" xml:space="preserve"><value>Inactive</value></data>

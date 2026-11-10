@@ -2546,6 +2546,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="LeasingInvalidTerms" xml:space="preserve"><value>Kontroller vilkårene: 1–600 hele måneder, rente 0–100 %, eller navn på referanserente og margin mellom −100 og 100 prosentpoeng. Velg betalingshyppighet separat.</value></data>
   <data name="LeasingVatAmount" xml:space="preserve"><value>Mva-beløp</value></data>
   <data name="Dimensions" xml:space="preserve"><value>Dimensjoner</value></data>
+  <data name="Dimension" xml:space="preserve"><value>Dimensjon</value></data>
   <data name="DimensionCode" xml:space="preserve"><value>Kode</value></data>
   <data name="DimensionActive" xml:space="preserve"><value>Aktiv</value></data>
   <data name="DimensionInactive" xml:space="preserve"><value>Inaktiv</value></data>

@@ -1,0 +1,116 @@
+@using TenantPlatform.Web.Services.Dimensions
+
+<section class="card">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="h5 mb-0">
+                @L["DimensionValues"]
+                @if (!string.IsNullOrWhiteSpace(DimensionName))
+                {
+                    <span> · @DimensionName</span>
+                }
+            </h2>
+            <button type="button"
+                    class="btn btn-outline-primary"
+                    disabled="@IsBusy"
+                    aria-label="@L["DimensionNewValue"]"
+                    @onclick="OnCreate">
+                @L["DimensionNewValue"]
+            </button>
+        </div>
+
+        <label class="form-label" for="dimension-value-search">@L["DimensionSearch"]</label>
+        <input id="dimension-value-search"
+               type="search"
+               class="form-control mb-3"
+               disabled="@IsBusy"
+               @bind="search"
+               @bind:event="oninput" />
+
+        @if (FilteredValues.Count == 0)
+        {
+            <div class="text-center text-muted border rounded py-4 px-3" role="status">
+                <p class="mb-0">@L["ProcessingEmpty"]</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <caption class="visually-hidden">@L["DimensionValues"]</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">@L["Name"]</th>
+                            <th scope="col">@L["DimensionCode"]</th>
+                            <th scope="col">@L["Status"]</th>
+                            <th scope="col" class="visually-hidden">@L["Actions"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var value in FilteredValues)
+                        {
+                            <tr @key="value.Id">
+                                <td>
+                                    <span title="@value.Path"
+                                          style="padding-inline-start: @(value.Depth * 20)px">
+                                        @if (value.Depth > 0)
+                                        {
+                                            <span aria-hidden="true">↳ </span>
+                                        }
+                                        @value.Name
+                                    </span>
+                                </td>
+                                <td>@value.Code</td>
+                                <td>@L[value.IsActive ? "DimensionActive" : "DimensionInactive"]</td>
+                                <td class="text-end">
+                                    <div class="d-flex flex-wrap justify-content-end gap-1">
+                                        <button type="button"
+                                                class="btn btn-outline-primary btn-sm"
+                                                disabled="@IsBusy"
+                                                aria-label="@($"{L["AccountHierarchyAddChild"]}: {value.Name}")"
+                                                @onclick="() => OnCreateChild.InvokeAsync(value.Id)">
+                                            @L["AccountHierarchyAddChild"]
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm"
+                                                disabled="@IsBusy"
+                                                aria-label="@($"{L["Edit"]}: {value.Name}")"
+                                                @onclick="() => OnEdit.InvokeAsync(value.Id)">
+                                            @L["Edit"]
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private string search = string.Empty;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<DimensionValueOption> Values { get; set; } = [];
+
+    [Parameter]
+    public string? DimensionName { get; set; }
+
+    [Parameter]
+    public bool IsBusy { get; set; }
+
+    [Parameter]
+    public EventCallback OnCreate { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnCreateChild { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid> OnEdit { get; set; }
+
+    private IReadOnlyList<DimensionValueOption> FilteredValues => Values
+        .Where(value => value.Path.Contains(search, StringComparison.CurrentCultureIgnoreCase))
+        .ToList();
+}

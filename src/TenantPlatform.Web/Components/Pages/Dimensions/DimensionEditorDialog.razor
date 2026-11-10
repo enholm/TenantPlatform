@@ -1,0 +1,190 @@
+@using TenantPlatform.Core.Dimensions
+
+@if (IsOpen)
+{
+    <div class="modal-backdrop show"></div>
+    <div class="modal d-block"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="dimension-editor-title"
+         tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <EditForm @key="editModel"
+                          Model="editModel"
+                          OnValidSubmit="SubmitAsync"
+                          FormName="dimension-editor">
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5" id="dimension-editor-title">
+                            @L[IsEditing ? "DimensionEdit" : "DimensionNew"]
+                        </h2>
+                        <button type="button"
+                                class="btn-close"
+                                aria-label="@L["Cancel"]"
+                                disabled="@submitting"
+                                @onclick="CancelAsync">
+                        </button>
+                    </div>
+
+                    <fieldset disabled="@submitting">
+                        <div class="modal-body">
+                            @if (!string.IsNullOrWhiteSpace(Error))
+                            {
+                                <div class="alert alert-danger" role="alert">@L[Error]</div>
+                            }
+
+                            <ValidationSummary class="text-danger" />
+
+                            <div class="mb-3">
+                                <label class="form-label" for="dimension-name">@L["Name"]</label>
+                                <InputText id="dimension-name"
+                                           class="form-control"
+                                           @bind-Value="editModel.Name"
+                                           maxlength="200"
+                                           required />
+                                <ValidationMessage For="() => editModel.Name" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="dimension-code">@L["DimensionCode"]</label>
+                                <InputText id="dimension-code"
+                                           class="form-control"
+                                           @bind-Value="editModel.Code"
+                                           maxlength="50"
+                                           required />
+                                <ValidationMessage For="() => editModel.Code" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="dimension-description">@L["Description"]</label>
+                                <InputTextArea id="dimension-description"
+                                               class="form-control"
+                                               @bind-Value="editModel.Description"
+                                               maxlength="2000"
+                                               rows="3" />
+                                <ValidationMessage For="() => editModel.Description" class="text-danger" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="dimension-sort-order">@L["DimensionSortOrder"]</label>
+                                <InputNumber id="dimension-sort-order"
+                                             class="form-control"
+                                             @bind-Value="editModel.SortOrder"
+                                             min="0" />
+                                <ValidationMessage For="() => editModel.SortOrder" class="text-danger" />
+                            </div>
+
+                            <div class="form-check mb-2">
+                                <InputCheckbox id="dimension-active" class="form-check-input" @bind-Value="editModel.IsActive" />
+                                <label class="form-check-label" for="dimension-active">@L["DimensionActive"]</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <InputCheckbox id="dimension-multiple" class="form-check-input" @bind-Value="editModel.AllowMultiple" />
+                                <label class="form-check-label" for="dimension-multiple">@L["DimensionMultiple"]</label>
+                            </div>
+                            <div class="form-check">
+                                <InputCheckbox id="dimension-leaf-only" class="form-check-input" @bind-Value="editModel.LeafOnly" />
+                                <label class="form-check-label" for="dimension-leaf-only">@L["DimensionLeafOnly"]</label>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="CancelAsync">
+                                @L["Cancel"]
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                @if (submitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                }
+                                @L["Save"]
+                            </button>
+                        </div>
+                    </fieldset>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private Dimension editModel = new();
+    private Dimension? copiedFrom;
+    private bool wasOpen;
+    private bool submitting;
+
+    [Parameter]
+    public Dimension? Dimension { get; set; }
+
+    [Parameter]
+    public bool IsOpen { get; set; }
+
+    [Parameter]
+    public string? Error { get; set; }
+
+    [Parameter]
+    public EventCallback<Dimension> OnSave { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private bool IsEditing => Dimension is not null;
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen && (!wasOpen || !ReferenceEquals(copiedFrom, Dimension)))
+        {
+            editModel = Copy(Dimension);
+            copiedFrom = Dimension;
+            submitting = false;
+        }
+
+        wasOpen = IsOpen;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (submitting)
+        {
+            return;
+        }
+
+        submitting = true;
+        try
+        {
+            await OnSave.InvokeAsync(Copy(editModel));
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private Task CancelAsync()
+    {
+        if (submitting)
+        {
+            return Task.CompletedTask;
+        }
+
+        editModel = new();
+        copiedFrom = null;
+        return OnCancel.InvokeAsync();
+    }
+
+    private static Dimension Copy(Dimension? source) => source is null
+        ? new Dimension()
+        : new Dimension
+        {
+            Id = source.Id,
+            AccountId = source.AccountId,
+            Name = source.Name,
+            Code = source.Code,
+            Description = source.Description,
+            IsActive = source.IsActive,
+            AllowMultiple = source.AllowMultiple,
+            LeafOnly = source.LeafOnly,
+            SortOrder = source.SortOrder,
+            Revision = source.Revision
+        };
+}
