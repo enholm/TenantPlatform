@@ -16,7 +16,7 @@ namespace TenantPlatform.Infrastructure.Initialization;
 
 // TODO: fikse så det blir en upsert og ikke bare insert av seed data. Se SeedBuildingsAsync for eksempel på upsert
 
-public static class DemoDataInitializer
+public static partial class DemoDataInitializer
 {
 
     public static async Task InitializeAsync(
@@ -61,6 +61,7 @@ public static class DemoDataInitializer
             await SeedLoginAccountsAsync(dbContext, passwordService, cancellationToken);
 
             await SeedMagidaAsync(dbContext, passwordService, cancellationToken);
+            await SeedMagidaLeasingAsync(dbContext, cancellationToken);
 
             await dbContext.SaveChangesAsync(cancellationToken);
     }

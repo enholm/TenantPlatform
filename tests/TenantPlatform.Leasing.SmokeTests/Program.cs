@@ -10,6 +10,8 @@ using TenantPlatform.Core.Leasing;
 using TenantPlatform.Core.Organizations;
 using TenantPlatform.Infrastructure.Agreements;
 using TenantPlatform.Infrastructure.Auditing;
+using TenantPlatform.Infrastructure.Authentication;
+using TenantPlatform.Infrastructure.Initialization;
 using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
@@ -319,6 +321,7 @@ try
     await OrderChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
     await PaymentChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
     await LifecycleChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
+    await DemoSeedChecks.Run(factory);
     Console.WriteLine("All leasing PostgreSQL smoke checks passed.");
 }
 finally

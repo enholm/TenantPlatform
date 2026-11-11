@@ -776,6 +776,8 @@ For en vanlig leveranse er følgende kontrolliste et nyttig sluttpunkt:
 
 Denne veiledningen er kontrollert mot skjermbildene under [Components/Pages/Leasing](../src/TenantPlatform.Web/Components/Pages/Leasing) og tjenestene under [Services/Leasing](../src/TenantPlatform.Web/Services/Leasing). Den beskriver nåværende funksjonalitet, ikke en plan for fremtidige funksjoner.
 
+I Development opprettes leasingdemodata for kontoen **Magida** av [DemoDataInitializer](../src/TenantPlatform.Infrastructure/Initialization/DemoDataInitializer.cs): fem rammeavtaler, fem anskaffelser uten ramme og fire rammetilknyttede anskaffelser, med dimensjoner, utstyr og betalingsplaner. Seeden bruker stabile ID-er og kan kjøres på nytt uten å opprette de samme leasingradene flere ganger. Oppstart utenfor Development laster ikke demodata.
+
 Mer detaljerte regler og tekniske avgrensninger finnes i:
 
 - [Bestillinger og reservasjoner](leasing-orders.md)

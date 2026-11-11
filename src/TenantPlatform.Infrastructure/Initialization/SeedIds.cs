@@ -22,6 +22,21 @@ public static class SeedIds
     public static Guid MagidaAgreementLine(int number) => MagidaId(16, number);
     public static Guid MagidaLineVersion(int number) => MagidaId(17, number);
     public static Guid MagidaPriceVersion(int number) => MagidaId(18, number);
+    public static Guid MagidaLeasingOrganization(int number) => MagidaId(19, number);
+    public static Guid MagidaDimension(int number) => MagidaId(20, number);
+    public static Guid MagidaDimensionValue(int number) => MagidaId(21, number);
+    public static Guid MagidaLeasingFramework(int number) => MagidaId(22, number);
+    public static Guid MagidaLeasingAcquisition(int number) => MagidaId(23, number);
+    public static Guid MagidaLeasingItem(int number) => MagidaId(24, number);
+    public static Guid MagidaLeasingDimensionSelection(int number) => MagidaId(25, number);
+    public static Guid MagidaFinancingRevision(int number) => MagidaId(26, number);
+    public static Guid MagidaPaymentPlan(int number) => MagidaId(27, number);
+    public static Guid MagidaInstallment(int number) => MagidaId(28, number);
+    public static Guid MagidaPlanTerm(int number) => MagidaId(29, number);
+    public static Guid MagidaLeasingHistory(int number) => MagidaId(30, number);
+    public static Guid MagidaLifecycle(int number) => MagidaId(31, number);
+    public static Guid MagidaEquipment(int number) => MagidaId(32, number);
+    public static Guid MagidaPaymentEvent(int number) => MagidaId(33, number);
 
     private static Guid MagidaId(int entityKind, int number) =>
         Guid.Parse($"b0000000-{entityKind:x4}-0000-0000-{number:x12}");
