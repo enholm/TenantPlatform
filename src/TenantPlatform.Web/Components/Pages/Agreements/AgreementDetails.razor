@@ -63,6 +63,21 @@ else if (details is not null)
         @if (details.IndexSetupNeedsReview) { <div class="alert alert-warning">@L["SimpleIndexReview"]</div> }
         <strong>@L["FinanceDirection"]:</strong> @(details.Direction.HasValue ? L[$"FinanceDirection{details.Direction}"] : L["FinanceUnclassified"]) · @details.Currency
         <a class="btn btn-outline-primary ms-2" href="@($"/agreements/{Id}/lines")">@L["FinanceLinesAndForecast"]</a>
+        @if (lines is not null)
+        {
+            @if (lines.Lines.Count == 0) { <p class="mt-3 mb-0">@L["FinanceNoLines"]</p> }
+            else
+            {
+                <div class="table-responsive mt-3"><table class="table table-hover mb-0">
+                <thead><tr><th>@L["Name"]</th><th>@L["FinanceFirstPayable"]</th><th>@L["FinanceFrequency"]</th><th>@L["FinanceQuantity"]</th><th>@L["FinanceUnitPrice"]</th></tr></thead>
+                <tbody>@foreach (var line in lines.Lines.OrderBy(x => x.Versions[0].Name))
+                {
+                    var latest = line.Versions[0];
+                    var price = line.Prices[0];
+                    <tr><td>@latest.Name</td><td>@latest.FirstPayableDate.ToString("d")</td><td>@L[$"FinanceFrequency{latest.Frequency}"]</td><td>@price.Quantity</td><td>@price.UnitPrice @lines.Currency</td></tr>
+                }</tbody></table></div>
+            }
+        }
     </div></div>
     <div id="agreement-notice"><AgreementNoticePanel Details="details" Changed="LoadAsync" /></div>
     <div id="agreement-followup"><AgreementFollowupPanel AgreementId="Id" ParentRevision="details.Revision" Changed="LoadAsync" /></div>
@@ -127,6 +142,7 @@ else if (details is not null)
     private readonly CancellationTokenSource lifetime = new();
     private AgreementDetailsDto? details;
     private AgreementOptionsDto? options;
+    private AgreementLinesDto? lines;
     private Guid accountId, memberId;
     private bool loading = true, busy;
     private string? error, description;
@@ -136,7 +152,7 @@ else if (details is not null)
     private AgreementAccessLevel level = AgreementAccessLevel.Read;
     protected override async Task OnParametersSetAsync()
     {
-        loading = true; details = null; options = null; error = null;
+        loading = true; details = null; options = null; lines = null; error = null;
         if (UserContext.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; }
         accountId = id;
         await RunAsync(LoadAsync);
@@ -146,6 +162,7 @@ else if (details is not null)
     {
         details = await AgreementsService.GetAsync(accountId, Id, lifetime.Token);
         options = details.CanManageAccess ? await AgreementsService.GetOptionsAsync(accountId, Id, lifetime.Token) : null;
+        lines = await AgreementsService.GetLinesAsync(accountId, Id, lifetime.Token);
     }
     private void SelectFile(InputFileChangeEventArgs args) => file = args.File;
     private Task UploadAsync() => RunAsync(async () =>
