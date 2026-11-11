@@ -2443,6 +2443,8 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingAcquisitionFrom" xml:space="preserve"><value>Acquisitions from (inclusive)</value></data>
   <data name="LeasingAcquisitionTo" xml:space="preserve"><value>Acquisitions until (inclusive)</value></data>
   <data name="LeasingLimit" xml:space="preserve"><value>Maximum amount</value></data>
+  <data name="LeasingLimitNet" xml:space="preserve"><value>Limit excluding VAT</value></data>
+  <data name="LeasingLimitVat" xml:space="preserve"><value>VAT on limit</value></data>
   <data name="LeasingIncludesVat" xml:space="preserve"><value>Limit includes VAT</value></data>
   <data name="LeasingPurchaseDate" xml:space="preserve"><value>Purchase date / lease start</value></data>
   <data name="LeasingFinanced" xml:space="preserve"><value>Financed amount</value></data>
@@ -2474,7 +2476,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingCapacity" xml:space="preserve"><value>Limit utilisation</value></data>
   <data name="LeasingUsed" xml:space="preserve"><value>Used amount</value></data>
   <data name="LeasingAvailable" xml:space="preserve"><value>Available amount</value></data>
-  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Registered acquisitions and active remaining reservations consume capacity. Drafts, interest and leasing fees do not. Leasing payments do not release capacity.</value></data>
+  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Capacity is checked against the total including VAT. The limit is entered as a net amount and VAT. Registered acquisitions and active remaining reservations consume capacity. Drafts, interest and leasing fees do not. Leasing payments do not release capacity.</value></data>
   <data name="LeasingPeriodHelp" xml:space="preserve"><value>The acquisition window constrains purchase dates. Each acquisition has its own lease period continuing after the acquisition window closes.</value></data>
   <data name="LeasingDocuments" xml:space="preserve"><value>Documents</value></data>
   <data name="LeasingNoDocuments" xml:space="preserve"><value>No documents yet.</value></data>
@@ -3177,6 +3179,9 @@ This is a reminder, not a termination or renewal.</value>
 <data name="LifeColumnVat" xml:space="preserve"><value>VAT</value></data>
 <data name="LifeColumnGross" xml:space="preserve"><value>Gross</value></data>
 <data name="LifeColumnLimit" xml:space="preserve"><value>Limit</value></data>
+<data name="LifeColumnLimitNet" xml:space="preserve"><value>Limit excluding VAT</value></data>
+<data name="LifeColumnLimitVat" xml:space="preserve"><value>VAT on limit</value></data>
+<data name="LifeColumnGrossLimit" xml:space="preserve"><value>Limit including VAT</value></data>
 <data name="LifeColumnUsed" xml:space="preserve"><value>Used</value></data>
 <data name="LifeColumnReserved" xml:space="preserve"><value>Reserved</value></data>
 <data name="LifeColumnAvailable" xml:space="preserve"><value>Available</value></data>

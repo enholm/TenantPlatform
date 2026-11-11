@@ -61,7 +61,7 @@ Ansvarlig mottar varsel i applikasjonen. Ekstra mottakere må velges eksplisitt 
 | Rapport | Grunnlag og beløp |
 | --- | --- |
 | Avtaleoversikt | Rammeavtaler og tilgjengelige anskaffelser; ansvarlig, finansieringsselskap, opprinnelig/avtalt slutt, frister og livsløp. Kjøpsverdier er eksplisitt merket. |
-| Rammeutnyttelse | Samme kapasitet som rammekontroll: maks, benyttet, reservert og tilgjengelig. Summer holdes adskilt både på valuta og netto-/bruttogrunnlag. Ingen historiske saldoøyeblikksbilder rekonstrueres. |
+| Rammeutnyttelse | Samme kapasitet som rammekontroll: netto- og mva-grense vises hver for seg, mens maks, benyttet, reservert og tilgjengelig kontrolleres på samlet beløp inkl. mva. Summer holdes adskilt per valuta. Ingen historiske saldoøyeblikksbilder rekonstrueres. |
 | Anskaffelser og dimensjoner | `LeasingAllocationCalculator` brukes én gang per fordelingsrad. Felles/flervalgsklassifisering er merking og multipliserer ikke beløpet. Bevarte navn/stier brukes, ikke utstyrets nåværende plassering. Mangelfull klassifisering og krediteringer/reverseringer uten fordelingsgrunnlag vises separat. |
 | Planlagte betalinger | Bare aktiv planversjon. Terminperiode, forfall, kildebeløp, finansieringsgrunnlag, versjon og vurderingsstatus. Manglende planer er egne rader; datofilter kan utelate disse udaterte radene, så dashboardet viser også en egen teller for manglende planer. |
 | Fakturakontroll | Forventning fra aktiv plan og netto fakturert etter godkjente kreditnotaer/reverseringer. Samme statusberegning og toleranse som fase 5. Uallokert dokumentrest vises én gang per dokument uten konstruert anskaffelseskobling. |

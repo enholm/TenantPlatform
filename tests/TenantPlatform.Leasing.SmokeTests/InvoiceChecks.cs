@@ -32,7 +32,7 @@ static class InvoiceChecks
             var http = new FakeHttp();
             var interpreter = new InvoiceDocumentInterpreter(new HttpClient(http), storage, Options.Create(new LeasingInvoiceInterpretationOptions { PdfTextExecutable = "" }), Options.Create(new AgreementAnalysisOptions()));
             var processor = new LeasingInvoiceProcessor(factory, interpreter, new Clock());
-            var frame = new LeasingFramework { Name = "Invoice test frame", Number = "INV-FRAME", OwnerUserId = adminId, FinanceOrganizationId = party, AcquisitionFrom = new(2027,1,1), AcquisitionTo = new(2027,12,31), Limit = 100000 };
+            var frame = new LeasingFramework { Name = "Invoice test frame", Number = "INV-FRAME", OwnerUserId = adminId, FinanceOrganizationId = party, AcquisitionFrom = new(2027,1,1), AcquisitionTo = new(2027,12,31), LimitNet = 100000, LimitVat = 25000 };
             var frameId = await admin.SaveFrameworkAsync(account, null, frame, "");
             var purchase = await admin.NewAcquisitionAsync(account, frameId); purchase.Name = "Manual purchase"; purchase.Reference = "PO"; purchase.OwnerUserId = ownerId;
             purchase.SupplierOrganizationId = party; purchase.PurchaseDate = new(2027,2,1); purchase.InvoiceNumber = "Legacy reference"; purchase.InvoiceDate = new(2027,2,1); purchase.Status = LeasingAcquisitionStatus.Registered; purchase.FinancedAmount = 80000;

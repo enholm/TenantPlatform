@@ -78,8 +78,10 @@ public sealed class LeasingLimitChange
     public Guid Id { get; set; }
     public Guid AccountId { get; set; }
     public Guid FrameworkId { get; set; }
-    public decimal PreviousLimit { get; set; }
-    public decimal NewLimit { get; set; }
+    public decimal PreviousLimitNet { get; set; }
+    public decimal PreviousLimitVat { get; set; }
+    public decimal NewLimitNet { get; set; }
+    public decimal NewLimitVat { get; set; }
     public string Reason { get; set; } = "";
     public string? DocumentReference { get; set; }
     public Guid ProposedByUserId { get; set; }

@@ -10,13 +10,13 @@
 @if(error!=null) { <p class="alert alert-danger">@L[error]</p> }
 @if(data is {} d)
 {
-    var o=d.Order; var reserved=LeasingOrderCalculator.Reserved(o,d.Framework.IncludesVat);
+    var o=d.Order; var reserved=LeasingOrderCalculator.Reserved(o,true);
     <p>@L["PurchaseOrderHelp"]</p>
     <p><span class="leasing-status">@L[$"OrderStatus{o.Status}"]</span> · @L[LeasingService.FulfillmentKey(o)] · <a href="@($"/leasing/frameworks/{o.FrameworkId}")">@d.Framework.Name</a></p>
     <div class="row g-3 mb-4"><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h6">@L["LeasingDetails"]</h2><dl class="leasing-amounts">
         <dt>@L["LeasingSupplier"]</dt><dd>@Name(o.SupplierOrganizationId)</dd><dt>@L["LeasingOwner"]</dt><dd>@Name(o.OwnerUserId)</dd><dt>@L["OrderDate"]</dt><dd>@o.OrderDate.ToString("dd.MM.yyyy")</dd><dt>@L["OrderExpected"]</dt><dd>@o.ExpectedDate?.ToString("dd.MM.yyyy")</dd>
-    </dl></div></section></div><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h6">@L["LeasingCapacity"] · @o.Currency · @L[d.Framework.IncludesVat ? "LeasingGross" : "LeasingNet"]</h2><dl class="leasing-amounts">
-        <dt>@L["LeasingLimit"]</dt><dd>@d.Capacity.Limit.ToString("N2")</dd><dt>@L["LeasingUsed"]</dt><dd>@d.Capacity.Used.ToString("N2")</dd><dt>@L["OrderReserved"]</dt><dd>@d.Capacity.Reserved.ToString("N2")</dd><dt>@L["LeasingAvailable"]</dt><dd class="fw-semibold">@d.Capacity.Available.ToString("N2")</dd>
+    </dl></div></section></div><div class="col-lg-6"><section class="card h-100"><div class="card-body"><h2 class="h6">@L["LeasingCapacity"] · @o.Currency · @L["LeasingGross"]</h2><dl class="leasing-amounts">
+        <dt>@L["LifeColumnGrossLimit"]</dt><dd>@d.Capacity.Limit.ToString("N2")</dd><dt>@L["LeasingUsed"]</dt><dd>@d.Capacity.Used.ToString("N2")</dd><dt>@L["OrderReserved"]</dt><dd>@d.Capacity.Reserved.ToString("N2")</dd><dt>@L["LeasingAvailable"]</dt><dd class="fw-semibold">@d.Capacity.Available.ToString("N2")</dd>
     </dl></div></section></div></div>
     @if(d.NeedsReview) { <p class="alert alert-warning">@L["OrderNeedsReview"]</p> }
     <div class="d-flex flex-wrap gap-2 mb-3">@if(d.CanEdit) { <a class="btn btn-outline-primary" href="@($"/leasing/purchase-orders/{Id}/edit")">@L["Edit"]</a> }
@@ -26,7 +26,7 @@
     @foreach(var line in o.Lines.OrderBy(x=>x.Position))
     {
         var links=d.Realizations.Where(x=>x.OrderLineId==line.Id&&!x.Reversed).ToList();
-        <tr><td>@line.Description<br/>@line.ItemNumber</td><td>@L[$"OrderMethod{line.Method}"]</td><td>@line.Quantity @line.Unit</td><td>@line.Fulfilled.ToString("0.####")</td><td>@((line.Scope-line.Fulfilled).ToString("0.####")) @if(line.Unreserved>0) { <span class="text-danger">@L["OrderUnreserved"]: @line.Unreserved</span> }</td><td>@((o.Status==LeasingOrderStatus.Approved?(d.Framework.IncludesVat?LeasingOrderCalculator.Remaining(line).Gross:LeasingOrderCalculator.Remaining(line).Net):0).ToString("N2"))</td><td>@links.Sum(x=>x.ActualNet).ToString("N2") / @links.Sum(x=>x.ActualNet-x.ApprovedNet).ToString("N2")</td></tr>
+        <tr><td>@line.Description<br/>@line.ItemNumber</td><td>@L[$"OrderMethod{line.Method}"]</td><td>@line.Quantity @line.Unit</td><td>@line.Fulfilled.ToString("0.####")</td><td>@((line.Scope-line.Fulfilled).ToString("0.####")) @if(line.Unreserved>0) { <span class="text-danger">@L["OrderUnreserved"]: @line.Unreserved</span> }</td><td>@((o.Status==LeasingOrderStatus.Approved?LeasingOrderCalculator.Remaining(line).Gross:0).ToString("N2"))</td><td>@links.Sum(x=>x.ActualNet).ToString("N2") / @links.Sum(x=>x.ActualNet-x.ApprovedNet).ToString("N2")</td></tr>
     }
     </tbody></table></div>
     @if(catalog!=null) { @foreach(var line in o.Lines) { <LeasingClassificationView Item="@LeasingService.OrderClassificationPreview(line,catalog)" Catalog="catalog" /> } }
@@ -84,8 +84,8 @@
     private string Name(Guid id)=>options?.Parties.Concat(options.Owners).FirstOrDefault(x=>x.Id==id)?.Name??id.ToString();
     protected override async Task OnParametersSetAsync() { if(User.Current.CurrentAccountId is not Guid a) { Navigation.NavigateTo("/access-denied"); return; } account=a; await Run(Load); }
     private async Task Load() { data=await Service.GetOrderAsync(account,Id); options=await Service.OptionsAsync(account); catalog=await Service.ClassificationCatalogAsync(account); candidates=await Service.OrderLinkCandidatesAsync(account,Id); delivery=new(){OrderId=Id,Revision=data.Order.Revision}; actionRequest=Guid.NewGuid(); link=null; linkId=null; }
-    private decimal ProposalReserved(LeasingOrder proposal) { try { return LeasingService.ProposedReservation(data!.Order,proposal,data.Framework.IncludesVat); } catch { return 0; } }
-    private decimal ReopenAvailable() { var copy=JsonSerializer.Deserialize<LeasingOrder>(JsonSerializer.Serialize(data!.Order))!; foreach(var l in copy.Lines) l.Unreserved=0; return data.Capacity.Available+LeasingOrderCalculator.Reserved(data.Order,data.Framework.IncludesVat)-LeasingOrderCalculator.Reserved(copy,data.Framework.IncludesVat); }
+    private decimal ProposalReserved(LeasingOrder proposal) { try { return LeasingService.ProposedReservation(data!.Order,proposal); } catch { return 0; } }
+    private decimal ReopenAvailable() { var copy=JsonSerializer.Deserialize<LeasingOrder>(JsonSerializer.Serialize(data!.Order))!; foreach(var l in copy.Lines) l.Unreserved=0; return data.Capacity.Available+LeasingOrderCalculator.Reserved(data.Order,true)-LeasingOrderCalculator.Reserved(copy,true); }
     private Task Action(LeasingOrderStatus status)=>Run(async()=>{ await Service.OrderActionAsync(account,Id,data!.Order.Revision,status,reason,actionRequest); await Load(); });
     private Task Reopen()=>Run(async()=>{ await Service.ReopenOrderAsync(account,Id,data!.Order.Revision,reason,actionRequest); await Load(); });
     private async Task LoadLink() { link=linkId.HasValue?(await Service.GetAsync(account,linkId.Value,false)).Acquisition:null; delivery=new(){OrderId=Id,Revision=data!.Order.Revision}; }

@@ -79,7 +79,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         if (kind == "frameworks") acquisitions = acquisitions.Where(x => false);
         // Project a common shape before paging; no financial totals from inaccessible agreements.
         var frows = frameworks.Select(x => new { x.Id, Framework = true, x.Name, Number = x.Number, Status = (int)x.Status,
-            x.OwnerUserId, Start = x.AcquisitionFrom, End = x.AcquisitionTo, x.Currency, Amount = x.Limit });
+            x.OwnerUserId, Start = x.AcquisitionFrom, End = x.AcquisitionTo, x.Currency, Amount = x.LimitNet + x.LimitVat });
         var arows = acquisitions.Select(x => new { x.Id, Framework = false, x.Name, Number = x.Reference, Status = (int)x.Status,
             x.OwnerUserId, Start = x.PurchaseDate, End = x.EndDate, x.Currency, Amount = x.GrossTotal - x.CreditNetTotal - x.CreditVatTotal - x.ReversedNetTotal - x.ReversedVatTotal });
         var query = frows.Concat(arows);
@@ -126,7 +126,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
             a == null ? null : await db.Organizations.Where(x => x.AccountId == account && x.Id == a.SupplierOrganizationId).Select(x => x.Name).SingleAsync(ct),
             a?.FrameworkId == null ? null : await db.LeasingFrameworks.Where(x => x.AccountId == account && x.Id == a.FrameworkId).Select(x => x.Name).SingleAsync(ct),
             f == null ? 0 : (await Capacity(db, f, ct)).Used,
-            f != null ? await Frameworks(db, account, user, admin).AnyAsync(x => x.Id == id, ct) : a?.Status != LeasingAcquisitionStatus.Cancelled && await Acquisitions(db, account, user, admin).AnyAsync(x => x.Id == id, ct), children, documents, history, referenceNames, f == null ? 0 : await Reserved(db, account, f.Id, f.IncludesVat, ct));
+            f != null ? await Frameworks(db, account, user, admin).AnyAsync(x => x.Id == id, ct) : a?.Status != LeasingAcquisitionStatus.Cancelled && await Acquisitions(db, account, user, admin).AnyAsync(x => x.Id == id, ct), children, documents, history, referenceNames, f == null ? 0 : await Reserved(db, account, f.Id, true, ct));
     }
 
     public async Task<LeasingAcquisition> NewAcquisitionAsync(Guid account, Guid? frameworkId, CancellationToken ct = default)
@@ -166,21 +166,29 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         await References(db, account, input.FinanceOrganizationId, input.OwnerUserId, ct);
         ValidateCommon(input.Name, input.Number, input.Currency, input.Notes, input.Terms);
         if (!Enum.IsDefined(input.Status) || input.AcquisitionFrom == default || input.AcquisitionTo < input.AcquisitionFrom ||
-            input.Limit < 0 || input.Limit > 1000000000000m || !Precision(input.Limit, 2)) throw new LeasingValidationException("LeasingInvalidFramework");
+            input.LimitNet < 0 || input.LimitVat < 0 || input.LimitNet > 1000000000000m ||
+            input.LimitVat > 1000000000000m ||
+            !Precision(input.LimitNet, 2) || !Precision(input.LimitVat, 2))
+            throw new LeasingValidationException("LeasingInvalidFramework");
+        var limit = input.LimitNet + input.LimitVat;
+        if (limit > 1000000000000m) throw new LeasingValidationException("LeasingInvalidFramework");
         var registered = await db.LeasingAcquisitions.AsNoTracking().Where(x => x.AccountId == account && x.FrameworkId == entity.Id &&
             x.Status == LeasingAcquisitionStatus.Registered).ToListAsync(ct);
         if (registered.Any(x => x.Currency != input.Currency || x.FinanceOrganizationId != input.FinanceOrganizationId ||
-            !LeasingCalculator.InPeriod(x.PurchaseDate, input.AcquisitionFrom, input.AcquisitionTo)) ||
-            (registered.Count > 0 && entity.IncludesVat != input.IncludesVat)) throw new LeasingValidationException("LeasingFrameworkConflict");
-        if (id.HasValue && entity.Limit != input.Limit) throw new LeasingValidationException("LeasingLimitProposalRequired");
-        if (await db.LeasingOrders.AnyAsync(x => x.AccountId == account && x.FrameworkId == entity.Id, ct) && (entity.Currency != input.Currency || entity.IncludesVat != input.IncludesVat)) throw new LeasingValidationException("LeasingFrameworkConflict");
-        if (LeasingCalculator.Used(registered, input.IncludesVat) + await Reserved(db, account, entity.Id, input.IncludesVat, ct) > input.Limit) throw new LeasingValidationException("LeasingLimitExceeded");
+            !LeasingCalculator.InPeriod(x.PurchaseDate, input.AcquisitionFrom, input.AcquisitionTo)))
+            throw new LeasingValidationException("LeasingFrameworkConflict");
+        if (id.HasValue && (entity.LimitNet != input.LimitNet || entity.LimitVat != input.LimitVat))
+            throw new LeasingValidationException("LeasingLimitProposalRequired");
+        if (await db.LeasingOrders.AnyAsync(x => x.AccountId == account && x.FrameworkId == entity.Id, ct) &&
+            entity.Currency != input.Currency) throw new LeasingValidationException("LeasingFrameworkConflict");
+        if (LeasingCalculator.Used(registered, true) + await Reserved(db, account, entity.Id, true, ct) > limit)
+            throw new LeasingValidationException("LeasingLimitExceeded");
         if(input.Status==LeasingFrameworkStatus.Finished)
         {
             if(!await authorization.CanApproveLeasingLifecycleAsync(ct))throw new UnauthorizedAccessException();
             var closedIds=await db.LeasingLifecycles.Where(l=>l.AccountId==account&&l.Status==LeasingLifecycleStatus.Closed&&l.DocumentReviewComplete&&!l.PaymentPlanReviewRequired).Select(l=>l.AcquisitionId).ToListAsync(ct);
             var acquisitionIds=registered.Select(a=>a.Id).ToArray();
-            if(await Reserved(db,account,entity.Id,input.IncludesVat,ct)>0||registered.Any(a=>!closedIds.Contains(a.Id))||
+            if(await Reserved(db,account,entity.Id,true,ct)>0||registered.Any(a=>!closedIds.Contains(a.Id))||
                 await db.LeasingLifecycleEvents.AnyAsync(e=>e.AccountId==account&&acquisitionIds.Contains(e.AcquisitionId)&&e.Decision==LeasingLifecycleDecision.Pending,ct)||
                 await db.LeasingFollowups.AnyAsync(t=>t.AccountId==account&&(t.FrameworkId==entity.Id||t.AcquisitionId.HasValue&&acquisitionIds.Contains(t.AcquisitionId.Value))&&(t.Status==LeasingFollowupStatus.Open||t.Status==LeasingFollowupStatus.InProgress),ct))throw new LeasingValidationException("LifeFrameworkUnresolved");
         }
@@ -189,7 +197,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         entity.OwnerUserId = input.OwnerUserId; entity.AcquisitionFrom = input.AcquisitionFrom; entity.AcquisitionTo = input.AcquisitionTo;
         if (entity.CreditNotesReleaseLimit != input.CreditNotesReleaseLimit && await db.LeasingInvoices.AnyAsync(x => x.AccountId == account && x.Kind == LeasingInvoiceKind.CreditNote && x.Status == LeasingInvoiceStatus.Approved && db.LeasingAcquisitions.Any(a => a.AccountId == account && a.Id == x.AcquisitionId && a.FrameworkId == entity.Id), ct)) throw new LeasingValidationException("InvoiceCreditRuleLocked");
         entity.CreditNotesReleaseLimit = input.CreditNotesReleaseLimit;
-        entity.Limit = input.Limit; entity.Currency = input.Currency; entity.IncludesVat = input.IncludesVat;
+        entity.LimitNet = input.LimitNet; entity.LimitVat = input.LimitVat; entity.Currency = input.Currency;
         entity.Terms = input.Terms.Copy(); entity.Notes = input.Notes?.Trim(); entity.Status = input.Status; entity.Revision = Guid.NewGuid();
         if (!id.HasValue) db.LeasingFrameworks.Add(entity);
         History(db, account, entity.Id, null, user, id.HasValue ? "Updated" : "Created", reason, before, Snapshot(entity));

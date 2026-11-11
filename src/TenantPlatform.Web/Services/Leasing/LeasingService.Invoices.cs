@@ -161,18 +161,20 @@ public sealed partial class LeasingService
             if (review.Data.Kind == LeasingInvoiceKind.CreditNote || review.Matches.SingleOrDefault(x => x.ReviewLineId == review.Data.Lines[i].ReviewId)?.ItemId == null)
             { changeNet += amounts.LineNet[i]; changeVat += amounts.LineVat[i]; }
         if (review.Data.Kind == LeasingInvoiceKind.CreditNote) { changeNet = -changeNet; changeVat = -changeVat; }
-        var used = f == null ? 0 : await db.LeasingAcquisitions.Where(x => x.AccountId == account && x.FrameworkId == f.Id && x.Status == LeasingAcquisitionStatus.Registered).SumAsync(x => f.IncludesVat ? x.GrossTotal - x.ReleasedNetTotal - x.ReleasedVatTotal : x.NetTotal - x.ReleasedNetTotal, ct);
-        var delta = review.Data.Kind == LeasingInvoiceKind.CreditNote && f?.CreditNotesReleaseLimit != true ? 0 : changeNet + (f?.IncludesVat == true ? changeVat : 0);
-        if (a.Status == LeasingAcquisitionStatus.Draft && review.Data.Kind == LeasingInvoiceKind.Invoice) delta += f?.IncludesVat == true ? a.GrossTotal : a.NetTotal;
-        decimal reserved = f == null ? 0 : await Reserved(db, account, f.Id, f.IncludesVat, ct), released = 0;
+        var used = f == null ? 0 : await db.LeasingAcquisitions.Where(x => x.AccountId == account && x.FrameworkId == f.Id && x.Status == LeasingAcquisitionStatus.Registered).SumAsync(x => x.GrossTotal - x.ReleasedNetTotal - x.ReleasedVatTotal, ct);
+        var delta = review.Data.Kind == LeasingInvoiceKind.CreditNote && f?.CreditNotesReleaseLimit != true ? 0 : changeNet + changeVat;
+        if (a.Status == LeasingAcquisitionStatus.Draft && review.Data.Kind == LeasingInvoiceKind.Invoice) delta += a.GrossTotal;
+        decimal reserved = f == null ? 0 : await Reserved(db, account, f.Id, true, ct), released = 0;
         if (review.OrderDelivery != null)
         {
             var o = await Orders(db, account, user, admin).AsNoTracking().Include(x => x.Lines).SingleOrDefaultAsync(x => x.Id == review.OrderDelivery.OrderId, ct) ?? throw new UnauthorizedAccessException();
             CheckRevision(o.Revision, review.OrderDelivery.Revision, true);
             var parts = review.Matches.Where(x => x.OrderLineId.HasValue && !x.ItemId.HasValue).Select(x => new OrderDeliveryLine { OrderLineId = x.OrderLineId!.Value, Scope = x.OrderScope }).ToList();
-            released = PreviewOrderRelease(o, new() { Lines = parts }, f?.IncludesVat == true);
+            released = PreviewOrderRelease(o, new() { Lines = parts });
         }
-        return new(current, changeNet + changeVat, current + changeNet + changeVat, used, used + (f == null ? 0 : delta), f?.Limit, f?.CreditNotesReleaseLimit, reserved, released);
+        return new(current, changeNet + changeVat, current + changeNet + changeVat, used,
+            used + (f == null ? 0 : delta), f == null ? null : f.LimitNet + f.LimitVat,
+            f?.CreditNotesReleaseLimit, reserved, released);
     }
     public async Task<Guid> ApproveInvoiceAsync(Guid account, Guid id, Guid revision, CancellationToken ct = default)
     {
@@ -299,7 +301,7 @@ public sealed partial class LeasingService
         {
             var f = await db.LeasingFrameworks.SingleAsync(x => x.AccountId == a.AccountId && x.Id == a.FrameworkId, ct);
             var others = await db.LeasingAcquisitions.Where(x => x.AccountId == a.AccountId && x.FrameworkId == f.Id && x.Id != a.Id && x.Status == LeasingAcquisitionStatus.Registered).ToListAsync(ct);
-            if (LeasingCalculator.Used(others.Append(a), f.IncludesVat) + await Reserved(db, a.AccountId, f.Id, f.IncludesVat, ct) > f.Limit) throw new LeasingValidationException("LeasingLimitExceeded");
+            if (LeasingCalculator.Used(others.Append(a), true) + await Reserved(db, a.AccountId, f.Id, true, ct) > f.LimitNet + f.LimitVat) throw new LeasingValidationException("LeasingLimitExceeded");
         }
     }
     public async Task ReverseInvoiceAsync(Guid account, Guid id, Guid revision, string reason, CancellationToken ct = default)

@@ -14,13 +14,13 @@ public sealed class LeasingFrameworkConfiguration : IEntityTypeConfiguration<Lea
         b.ToTable("leasing_frameworks", t =>
         {
             t.HasCheckConstraint("CK_leasing_framework_period", "\"AcquisitionTo\" >= \"AcquisitionFrom\"");
-            t.HasCheckConstraint("CK_leasing_framework_limit", "\"Limit\" >= 0");
+            t.HasCheckConstraint("CK_leasing_framework_limit", "\"LimitNet\" >= 0 AND \"LimitVat\" >= 0");
             t.HasCheckConstraint("CK_leasing_framework_status", "\"Status\" IN (1,2,3)");
         });
         b.HasKey(x => x.Id); b.HasAlternateKey(x => new { x.AccountId, x.Id });
         b.Property(x => x.Name).HasMaxLength(200); b.Property(x => x.Number).HasMaxLength(100);
         b.Property(x => x.Currency).HasMaxLength(3); b.Property(x => x.Notes).HasMaxLength(10000);
-        b.Property(x => x.Limit).HasPrecision(20, 2); b.Property(x => x.Revision).IsConcurrencyToken();
+        b.Property(x => x.LimitNet).HasPrecision(20, 2); b.Property(x => x.LimitVat).HasPrecision(20, 2); b.Property(x => x.Revision).IsConcurrencyToken();
         b.HasOne<Account>().WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<Organization>().WithMany().HasForeignKey(x => x.FinanceOrganizationId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<User>().WithMany().HasForeignKey(x => x.OwnerUserId).OnDelete(DeleteBehavior.Restrict);

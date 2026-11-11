@@ -54,10 +54,10 @@ try
     var storage = new MemoryStorage();
     LeasingService Service(Guid user) { var context = new Context(user, account); return new(factory, context, new TenantAuthorizationService(factory, context), storage, new Clock(), NullLogger<LeasingService>.Instance); }
     var admin = Service(adminId); var owner = Service(ownerId); var outsider = Service(outsiderId);
-    LeasingFramework Frame(decimal limit = 100, bool vat = false) => new()
+    LeasingFramework Frame(decimal limitNet = 100, decimal limitVat = 0) => new()
     {
         Name = "Test framework", Number = Guid.NewGuid().ToString("N"), OwnerUserId = adminId, FinanceOrganizationId = party,
-        AcquisitionFrom = new(2027, 1, 1), AcquisitionTo = new(2027, 12, 31), Limit = limit, IncludesVat = vat,
+        AcquisitionFrom = new(2027, 1, 1), AcquisitionTo = new(2027, 12, 31), LimitNet = limitNet, LimitVat = limitVat,
         Terms = new() { Months = 60, InterestKind = LeasingInterestKind.Reference, ReferenceRateName = "NIBOR 3 måneder", MarginPercentagePoints = 2, PaymentFrequency = LeasingPaymentFrequency.Yearly }
     };
     async Task<LeasingAcquisition> Purchase(Guid? f, decimal amount, DateOnly? date = null, LeasingAcquisitionStatus status = LeasingAcquisitionStatus.Registered)
@@ -65,7 +65,8 @@ try
         var a = await admin.NewAcquisitionAsync(account, f); a.Name = "Laptops"; a.Reference = Guid.NewGuid().ToString("N");
         a.SupplierOrganizationId = a.FinanceOrganizationId = party; a.OwnerUserId = ownerId; a.PurchaseDate = date ?? new(2027, 6, 1);
         a.InvoiceNumber = "INV-001"; a.InvoiceDate = a.PurchaseDate; a.FinancedAmount = Math.Max(.01m, decimal.Round(amount / 2, 2));
-        a.Items = [new() { Description = "Laptop", Quantity = 1, UnitPrice = amount, VatPercent = 25 }]; a.Status = status; return a;
+        var vatPercent = f.HasValue && (await ReadF(f.Value)).LimitVat > 0 ? 25m : 0m;
+        a.Items = [new() { Description = "Laptop", Quantity = 1, UnitPrice = amount, VatPercent = vatPercent }]; a.Status = status; return a;
     }
     async Task<LeasingAcquisition> Read(Guid id) => (await admin.GetAsync(account, id, false)).Acquisition!;
     async Task<LeasingFramework> ReadF(Guid id) => (await admin.GetAsync(account, id, true)).Framework!;
@@ -74,6 +75,10 @@ try
     var first = await admin.SaveAcquisitionAsync(account, null, await Purchase(framework, 40, new(2027, 1, 1)), "");
     var last = await admin.SaveAcquisitionAsync(account, null, await Purchase(framework, 60, new(2027, 12, 31)), "");
     Check(await Used(framework) == 100, "both inclusive purchase boundaries, exact capacity allowed; financed amount is separate");
+    var initialCapacity = await admin.GetLeasingReportAsync(account, LeasingReportKind.Capacity, new());
+    var initialTotal = initialCapacity.Totals.Single();
+    Check(initialTotal.LimitNet == 100 && initialTotal.LimitVat == 0 && initialTotal.Limit == 100 &&
+        initialTotal.Used == 100 && initialTotal.Basis == "", "capacity report sums explicit net/VAT limits without basis groups");
     var excess = await Purchase(framework, 1);
     await Reject(() => admin.SaveAcquisitionAsync(account, null, excess, ""), "LeasingLimitExceeded");
     foreach (var date in new[] { new DateOnly(2026, 12, 31), new DateOnly(2028, 1, 1) })
@@ -87,10 +92,10 @@ try
     edited.Items[0].UnitPrice = 30; await owner.SaveAcquisitionAsync(account, first, edited, "Correct purchase value");
     Check(await Used(framework) == 90 && (await Read(first)).Items[0].Id == lineId, "registered edit recalculates capacity and preserves item ID");
     await Reject(() => admin.SaveAcquisitionAsync(account, first, edited, "Stale save"), "LeasingConcurrency");
-    var fedit = await ReadF(framework); fedit.Limit = 89;
+    var fedit = await ReadF(framework); fedit.LimitNet = 89;
     await Reject(() => admin.SaveFrameworkAsync(account, framework, fedit, "Reduce"), "LeasingLimitProposalRequired");
-    fedit = await ReadF(framework); fedit.IncludesVat = true;
-    await Reject(() => admin.SaveFrameworkAsync(account, framework, fedit, "VAT basis"), "LeasingFrameworkConflict");
+    fedit = await ReadF(framework); fedit.LimitVat = 1;
+    await Reject(() => admin.SaveFrameworkAsync(account, framework, fedit, "Change VAT limit"), "LeasingLimitProposalRequired");
     fedit = await ReadF(framework); fedit.Currency = "EUR";
     await Reject(() => admin.SaveFrameworkAsync(account, framework, fedit, "Currency"), "LeasingFrameworkConflict");
     fedit = await ReadF(framework); fedit.AcquisitionFrom = new(2027, 1, 2);
@@ -115,17 +120,21 @@ try
     Check((await Read(first)).EndDate == new DateOnly(2032, 1, 1), "closed frameworks do not end existing leases");
     var standalone = await admin.SaveAcquisitionAsync(account, null, await Purchase(null, 25), "");
     Check((await Read(standalone)).FrameworkId == null, "standalone acquisition has no framework");
-    var grossFrame = await admin.SaveFrameworkAsync(account, null, Frame(125, true), "");
+    var grossFrame = await admin.SaveFrameworkAsync(account, null, Frame(100, 25), "");
     var grossLease = await admin.SaveAcquisitionAsync(account, null, await Purchase(grossFrame, 100), "");
     Check(await Used(grossFrame) == 125, "VAT-inclusive frame consumes gross purchase value");
+    var grossCapacity = await admin.GetLeasingReportAsync(account, LeasingReportKind.Capacity, new());
+    var grossRow = grossCapacity.Rows.Single(x => x.Id == grossFrame);
+    Check(grossRow.LimitNet == 100 && grossRow.LimitVat == 25 && grossRow.Limit == 125 &&
+        grossRow.Used == 125 && grossCapacity.Totals.Count == 1, "capacity report presents net/VAT detail and combines them for capacity");
     var tooMuch = await Purchase(grossFrame, .01m); await Reject(() => admin.SaveAcquisitionAsync(account, null, tooMuch, ""), "LeasingLimitExceeded");
     var target = await admin.SaveFrameworkAsync(account, null, Frame(20), "");
     var move = await Read(grossLease); move.FrameworkId = target;
     await Reject(() => admin.SaveAcquisitionAsync(account, grossLease, move, "Move"), "LeasingLimitExceeded");
     Check(await Used(grossFrame) == 125 && await Used(target) == 0, "failed move leaves original and target capacities unchanged");
-    var targetEdit = await ReadF(target); var limitRequest = Guid.NewGuid(); await admin.ProposeLimitAsync(account, target, targetEdit.Revision, 100, "Increase", null, limitRequest); await admin.ApproveLimitAsync(account, limitRequest);
+    var targetEdit = await ReadF(target); var limitRequest = Guid.NewGuid(); await admin.ProposeLimitAsync(account, target, targetEdit.Revision, 100, 25, "Increase", null, limitRequest); await admin.ApproveLimitAsync(account, limitRequest);
     await admin.SaveAcquisitionAsync(account, grossLease, move, "Move between frameworks");
-    Check(await Used(grossFrame) == 0 && await Used(target) == 100, "successful move updates both frames atomically");
+    Check(await Used(grossFrame) == 0 && await Used(target) == 125, "successful move updates both frames atomically");
     var badCurrency = await Purchase(target, 1); badCurrency.Currency = "EUR";
     await Reject(() => admin.SaveAcquisitionAsync(account, null, badCurrency, ""), "LeasingFrameworkCurrency");
     var datedEdit = await Read(first); datedEdit.PurchaseDate = new(2028, 1, 1);

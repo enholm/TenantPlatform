@@ -2479,6 +2479,8 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingAcquisitionFrom" xml:space="preserve"><value>Anskaffningar från och med</value></data>
   <data name="LeasingAcquisitionTo" xml:space="preserve"><value>Anskaffningar till och med</value></data>
   <data name="LeasingLimit" xml:space="preserve"><value>Maxbelopp</value></data>
+  <data name="LeasingLimitNet" xml:space="preserve"><value>Ram exkl. moms</value></data>
+  <data name="LeasingLimitVat" xml:space="preserve"><value>Moms på ram</value></data>
   <data name="LeasingIncludesVat" xml:space="preserve"><value>Rambeloppet inkluderar moms</value></data>
   <data name="LeasingPurchaseDate" xml:space="preserve"><value>Inköpsdatum / leasingstart</value></data>
   <data name="LeasingFinanced" xml:space="preserve"><value>Finansierat belopp</value></data>
@@ -2510,7 +2512,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingCapacity" xml:space="preserve"><value>Ramutnyttjande</value></data>
   <data name="LeasingUsed" xml:space="preserve"><value>Utnyttjat belopp</value></data>
   <data name="LeasingAvailable" xml:space="preserve"><value>Tillgängligt belopp</value></data>
-  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Registrerade anskaffningar och aktiva återstående reservationer använder ramen. Utkast, räntor och leasingavgifter gör det inte. Leasingbetalningar frigör inte ramen.</value></data>
+  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Ramutnyttjandet kontrolleras mot totalbeloppet inklusive moms. Gränsen anges som nettobelopp och moms. Registrerade anskaffningar och aktiva återstående reservationer använder ramen. Utkast, räntor och leasingavgifter gör det inte. Leasingbetalningar frigör inte ramen.</value></data>
   <data name="LeasingPeriodHelp" xml:space="preserve"><value>Anskaffningsperioden begränsar inköpsdatum. Varje anskaffning har en egen leasingperiod som fortsätter efter anskaffningsperiodens slut.</value></data>
   <data name="LeasingDocuments" xml:space="preserve"><value>Dokumentbilagor</value></data>
   <data name="LeasingNoDocuments" xml:space="preserve"><value>Inga dokumentbilagor ännu.</value></data>
@@ -3214,6 +3216,9 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
 <data name="LifeColumnVat" xml:space="preserve"><value>Moms</value></data>
 <data name="LifeColumnGross" xml:space="preserve"><value>Brutto</value></data>
 <data name="LifeColumnLimit" xml:space="preserve"><value>Maxram</value></data>
+<data name="LifeColumnLimitNet" xml:space="preserve"><value>Ram exkl. moms</value></data>
+<data name="LifeColumnLimitVat" xml:space="preserve"><value>Moms på ram</value></data>
+<data name="LifeColumnGrossLimit" xml:space="preserve"><value>Maxram inkl. moms</value></data>
 <data name="LifeColumnUsed" xml:space="preserve"><value>Utnyttjat</value></data>
 <data name="LifeColumnReserved" xml:space="preserve"><value>Reserverat</value></data>
 <data name="LifeColumnAvailable" xml:space="preserve"><value>Tillgängligt</value></data>

@@ -25,15 +25,15 @@ static class OrderChecks
         LeasingService Service(Guid user) { var context=new Context(user,account); return new(factory,context,new TenantAuthorizationService(factory,context),new MemoryStorage(),new Clock(),NullLogger<LeasingService>.Instance); }
         var admin=Service(adminId); var owner=Service(ownerId); var outsider=Service(outsiderId);
         async Task<Guid> Frame(decimal limit, bool vat=false, DateOnly? end=null)
-        { return await admin.SaveFrameworkAsync(account,null,new(){ Name="Orders",Number=Guid.NewGuid().ToString(),OwnerUserId=ownerId,FinanceOrganizationId=party,AcquisitionFrom=new(2027,1,1),AcquisitionTo=end??new(2028,12,31),Limit=limit,IncludesVat=vat,CreditNotesReleaseLimit=true },""); }
+        { var net=vat?limit/1.25m:limit; var tax=vat?limit-net:0; return await admin.SaveFrameworkAsync(account,null,new(){ Name="Orders",Number=Guid.NewGuid().ToString(),OwnerUserId=ownerId,FinanceOrganizationId=party,AcquisitionFrom=new(2027,1,1),AcquisitionTo=end??new(2028,12,31),LimitNet=net,LimitVat=tax,CreditNotesReleaseLimit=true },""); }
         async Task<OrderDetails> Read(Guid id)=>await admin.GetOrderAsync(account,id);
         async Task<LeasingDetails> Capacity(Guid id)=>await admin.GetAsync(account,id,true);
         async Task<Guid> Order(Guid f, decimal quantity=10, decimal price=10000, LeasingOrderMethod method=LeasingOrderMethod.Quantity)
-        { var request=Guid.NewGuid(); var input=new LeasingOrder {FrameworkId=f,SupplierOrganizationId=party,OwnerUserId=ownerId,OrderDate=new(2028,1,10),Lines=[new(){Description="Equipment",Quantity=quantity,UnitPrice=price,Method=method}]}; var id=await owner.SaveOrderAsync(account,null,input,"",request); Check(await owner.SaveOrderAsync(account,null,input,"",request)==id,"order creation retry"); return id; }
+        { var request=Guid.NewGuid(); var vat=(await Capacity(f)).Framework!.LimitVat>0?25m:0m; var input=new LeasingOrder {FrameworkId=f,SupplierOrganizationId=party,OwnerUserId=ownerId,OrderDate=new(2028,1,10),Lines=[new(){Description="Equipment",Quantity=quantity,UnitPrice=price,VatPercent=vat,Method=method}]}; var id=await owner.SaveOrderAsync(account,null,input,"",request); Check(await owner.SaveOrderAsync(account,null,input,"",request)==id,"order creation retry"); return id; }
         async Task Act(Guid id, LeasingOrderStatus status) { var o=(await Read(id)).Order; await admin.OrderActionAsync(account,id,o.Revision,status,"Test action",Guid.NewGuid()); }
         async Task Approve(Guid id) { await Act(id,LeasingOrderStatus.Pending); await Act(id,LeasingOrderStatus.Approved); }
         async Task<LeasingAcquisition> Purchase(Guid f, decimal quantity, decimal price)
-        { var a=await admin.NewAcquisitionAsync(account,f); a.Name="Purchase";a.Reference=Guid.NewGuid().ToString();a.SupplierOrganizationId=party;a.OwnerUserId=ownerId;a.PurchaseDate=new(2027,6,1);a.Status=LeasingAcquisitionStatus.Registered;a.Items=[new(){Description="Actual",Quantity=quantity,UnitPrice=price}];a.FinancedAmount=LeasingCalculator.Total(a.Items).Gross;return a; }
+        { var a=await admin.NewAcquisitionAsync(account,f); a.Name="Purchase";a.Reference=Guid.NewGuid().ToString();a.SupplierOrganizationId=party;a.OwnerUserId=ownerId;a.PurchaseDate=new(2027,6,1);a.Status=LeasingAcquisitionStatus.Registered;var vat=(await Capacity(f)).Framework!.LimitVat>0?25m:0m;a.Items=[new(){Description="Actual",Quantity=quantity,UnitPrice=price,VatPercent=vat}];a.FinancedAmount=LeasingCalculator.Total(a.Items).Gross;return a; }
         async Task<OrderDelivery> Delivery(Guid id, decimal scope, bool confirmed=true) { var o=(await Read(id)).Order; return new(){OrderId=id,Revision=o.Revision,VarianceConfirmed=confirmed,Lines=[new(){OrderLineId=o.Lines.Single().Id,ItemPosition=0,Scope=scope}]}; }
         async Task<Guid> Buy(Guid f, Guid order, decimal quantity, decimal price, decimal? scope=null) => await admin.SaveAcquisitionAsync(account,null,await Purchase(f,quantity,price),"",delivery:await Delivery(order,scope??quantity));
         var f=await Frame(104000); var order=await Order(f);
@@ -103,14 +103,14 @@ static class OrderChecks
         await Reject(()=>admin.ReopenOrderAsync(account,o4,(Read(o4).GetAwaiter().GetResult()).Order.Revision,"Reopen",Guid.NewGuid()),"LeasingLimitExceeded");
         d=await Read(o4);Check(d.Order.Lines.Single().Unreserved==.4m&&d.Capacity.Reserved==75000,"failed reopening leaves visible unreserved portion");
         var limitChange=Guid.NewGuid();var frame=(await Capacity(f3)).Framework!;
-        await admin.ProposeLimitAsync(account,f3,frame.Revision,200000,"More capacity","ref-001",limitChange);
-        Check((await Capacity(f3)).Framework!.Limit==125000,"limit proposal has no effect until approval");
+        await admin.ProposeLimitAsync(account,f3,frame.Revision,200000,50000,"More capacity","ref-001",limitChange);
+        Check((await Capacity(f3)).Framework!.LimitNet+(await Capacity(f3)).Framework!.LimitVat==125000,"limit proposal has no effect until approval");
         await admin.ApproveLimitAsync(account,limitChange);await admin.ApproveLimitAsync(account,limitChange);
         await admin.ReopenOrderAsync(account,o4,(await Read(o4)).Order.Revision,"Approved reopening",Guid.NewGuid());
         Check((await Read(o4)).Capacity.Reserved==125000 && LeasingService.ApprovedOrderValue(await Read(o4))==125000,"explicit reopening restores only reversed scope without inflating approved value");
         var reduce=Guid.NewGuid();frame=(await Capacity(f3)).Framework!;
-        await admin.ProposeLimitAsync(account,f3,frame.Revision,174999,"Too small",null,reduce);await Reject(()=>admin.ApproveLimitAsync(account,reduce),"LeasingLimitExceeded");
-        await Deny(()=>owner.ProposeLimitAsync(account,f3,frame.Revision,300000,"Forbidden",null,Guid.NewGuid()));
+        await admin.ProposeLimitAsync(account,f3,frame.Revision,139999,35000,"Too small",null,reduce);await Reject(()=>admin.ApproveLimitAsync(account,reduce),"LeasingLimitExceeded");
+        await Deny(()=>owner.ProposeLimitAsync(account,f3,frame.Revision,300000,75000,"Forbidden",null,Guid.NewGuid()));
         var expired=await Frame(100,end:new(2027,12,31));var expiredOrder=await Order(expired,1,100);await Act(expiredOrder,LeasingOrderStatus.Pending);await Reject(()=>Act(expiredOrder,LeasingOrderStatus.Approved),"LeasingOutsidePeriod");
         await admin.SaveAcquisitionAsync(account,null,await Purchase(expired,1,100),"");Check((await Capacity(expired)).Used==100,"late registration of in-period purchase remains allowed without order");
         // Concurrent approvals contend with both other reservations and ordinary purchases.
@@ -152,7 +152,7 @@ static class OrderChecks
         await using(var db=factory.CreateDbContext()) { var membership=await db.UserAccounts.SingleAsync(x=>x.AccountId==account&&x.UserId==outsiderId); db.UserAccountRoles.Add(new(){Id=Guid.NewGuid(),UserAccountId=membership.Id,Role=UserRole.LeasingOrderApprover});await db.SaveChangesAsync(); }
         var permissionOrder=await Order(f2,1,10);await Act(permissionOrder,LeasingOrderStatus.Pending);
         await outsider.OrderActionAsync(account,permissionOrder,(await Read(permissionOrder)).Order.Revision,LeasingOrderStatus.Approved,"Explicit approval role",Guid.NewGuid());
-        await Deny(()=>outsider.ProposeLimitAsync(account,f2,(Capacity(f2).GetAwaiter().GetResult()).Framework!.Revision,300000,"Different permission",null,Guid.NewGuid()));
+        await Deny(()=>outsider.ProposeLimitAsync(account,f2,(Capacity(f2).GetAwaiter().GetResult()).Framework!.Revision,300000,75000,"Different permission",null,Guid.NewGuid()));
         Check((await outsider.GetOrderAsync(account,permissionOrder)).Order.Status==LeasingOrderStatus.Approved,"order approval role works independently of limit permission");
         var readOnly=(await outsider.GetAsync(account,aid,false)).Acquisition!;await outsider.GetInvoiceAsync(account,inv1);
         await Deny(()=>outsider.SaveAcquisitionAsync(account,aid,readOnly,"Approval is not purchase edit permission"));

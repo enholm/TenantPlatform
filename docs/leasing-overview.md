@@ -684,7 +684,7 @@ Et vanlig vedlegg starter ikke fakturaimport, aktiverer ingen betalingsplan og g
 1. Åpne **Oversikt** og velg periode fra/til. Trykk **Søk** for å oppdatere tallene.
 2. Klikk nøkkeltall for aktive forhold, utløp, frister, oppgaver, manglende planer eller avvik for å se underliggende utvalg.
 3. Åpne rammeutnyttelse, planlagte betalinger eller fakturakontroll fra sammendragskortene.
-4. Kontroller valuta, netto-/bruttogrunnlag og antall rader med ufullstendig grunnlag før du bruker summene.
+4. Kontroller valuta og antall rader med ufullstendig grunnlag før du bruker summene. Rammegrenser viser netto og mva hver for seg; kapasitetskontrollen bruker summen inkl. mva.
 
 Periodevalget gjelder frister/utløp og planlagt forfall. Rammeutnyttelse og samlet fakturakontroll viser registrert grunnlag på lesetidspunktet. Null i et varselkort har nøytral farge. «Ingen rader i valgt utvalg» betyr ingen treff i utvalget, ikke nødvendigvis at kontoen mangler slike registreringer.
 
@@ -701,7 +701,7 @@ Periodevalget gjelder frister/utløp og planlagt forfall. Rammeutnyttelse og sam
 | Rapport | Bruk den til |
 | --- | --- |
 | Avtaleoversikt | Se rammeavtaler/anskaffelser, ansvarlig, finansieringsselskap, datoer, frister og status |
-| Rammeutnyttelse | Kontrollere maks, benyttet, reservert og tilgjengelig per valuta og mva-grunnlag |
+| Rammeutnyttelse | Kontrollere netto- og mva-grense samt samlet maks, benyttet, reservert og tilgjengelig per valuta |
 | Anskaffelser og dimensjoner | Undersøke kjøpsverdier og bevarte klassifiseringer/fordelingsrader |
 | Planlagte betalinger | Se forventede terminer fra aktiv plan, forfall, planversjon og vurderingsbehov |
 | Fakturakontroll | Sammenholde forventet og netto fakturert, avvik og uallokert rest |

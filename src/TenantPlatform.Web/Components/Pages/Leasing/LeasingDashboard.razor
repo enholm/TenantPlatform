@@ -27,7 +27,9 @@
             <div class="leasing-summary"><div class="leasing-summary-currency">@t.Currency @(t.Basis==""?"":L[t.Basis])</div><dl class="leasing-amounts">
             @if(entry.Key==LeasingReportKind.Capacity)
             {
-                <dt>@L["LifeColumnLimit"]</dt><dd>@t.Limit.ToString("N2")</dd>
+                <dt>@L["LeasingLimitNet"]</dt><dd>@t.LimitNet.ToString("N2")</dd>
+                <dt>@L["LeasingLimitVat"]</dt><dd>@t.LimitVat.ToString("N2")</dd>
+                <dt>@L["LifeColumnGrossLimit"]</dt><dd>@t.Limit.ToString("N2")</dd>
                 <dt>@L["LifeColumnUsed"]</dt><dd>@t.Used.ToString("N2")</dd>
                 <dt>@L["LifeColumnReserved"]</dt><dd>@t.Reserved.ToString("N2")</dd>
                 <dt>@L["LifeColumnAvailable"]</dt><dd class="@(t.Available<0?"text-danger-emphasis":"fw-semibold")">@t.Available.ToString("N2")</dd>

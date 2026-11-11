@@ -43,9 +43,9 @@ public sealed class LeasingFramework
     public Guid OwnerUserId { get; set; }
     public DateOnly AcquisitionFrom { get; set; }
     public DateOnly AcquisitionTo { get; set; }
-    public decimal Limit { get; set; }
+    public decimal LimitNet { get; set; }
+    public decimal LimitVat { get; set; }
     public string Currency { get; set; } = "NOK";
-    public bool IncludesVat { get; set; }
     public bool? CreditNotesReleaseLimit { get; set; }
     public LeasingTerms Terms { get; set; } = new();
     public string? Notes { get; set; }

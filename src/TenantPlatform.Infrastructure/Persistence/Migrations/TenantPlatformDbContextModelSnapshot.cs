@@ -2510,10 +2510,11 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("FinanceOrganizationId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IncludesVat")
-                        .HasColumnType("boolean");
+                    b.Property<decimal>("LimitNet")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
 
-                    b.Property<decimal>("Limit")
+                    b.Property<decimal>("LimitVat")
                         .HasPrecision(20, 2)
                         .HasColumnType("numeric(20,2)");
 
@@ -2551,7 +2552,7 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.ToTable("leasing_frameworks", null, t =>
                         {
-                            t.HasCheckConstraint("CK_leasing_framework_limit", "\"Limit\" >= 0");
+                            t.HasCheckConstraint("CK_leasing_framework_limit", "\"LimitNet\" >= 0 AND \"LimitVat\" >= 0");
 
                             t.HasCheckConstraint("CK_leasing_framework_period", "\"AcquisitionTo\" >= \"AcquisitionFrom\"");
 
@@ -3161,11 +3162,19 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("FrameworkId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("NewLimit")
+                    b.Property<decimal>("NewLimitNet")
                         .HasPrecision(20, 2)
                         .HasColumnType("numeric(20,2)");
 
-                    b.Property<decimal>("PreviousLimit")
+                    b.Property<decimal>("NewLimitVat")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<decimal>("PreviousLimitNet")
+                        .HasPrecision(20, 2)
+                        .HasColumnType("numeric(20,2)");
+
+                    b.Property<decimal>("PreviousLimitVat")
                         .HasPrecision(20, 2)
                         .HasColumnType("numeric(20,2)");
 

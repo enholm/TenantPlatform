@@ -8,7 +8,7 @@ using TenantPlatform.Core.Localization;
 namespace TenantPlatform.Web.Services.Leasing;
 public static class LeasingReportExport
 {
-    public static readonly string[] Columns=["Name","Reference","Finance","Owner","Currency","Status","Basis","PurchaseDate","EndDate","NoticeDate","ReturnDate","From","To","DueDate","InvoiceDate","EventDate","Net","Vat","Gross","Limit","Used","Reserved","Available","Expected","Invoiced","Difference","Unallocated","Version","NeedsReview","Dimensions","Serial","Location","Notes","OriginalEndDate","ClosedDate","ClosureKind","Quantity","BuyoutAmount","UnitReference"];
+    public static readonly string[] Columns=["Name","Reference","Finance","Owner","Currency","Status","Basis","PurchaseDate","EndDate","NoticeDate","ReturnDate","From","To","DueDate","InvoiceDate","EventDate","Net","Vat","Gross","LimitNet","LimitVat","Limit","Used","Reserved","Available","Expected","Invoiced","Difference","Unallocated","Version","NeedsReview","Dimensions","Serial","Location","Notes","OriginalEndDate","ClosedDate","ClosureKind","Quantity","BuyoutAmount","UnitReference"];
     public static object? Value(LeasingReportRow row,string column)=>typeof(LeasingReportRow).GetProperty(column)!.GetValue(row);
     public static string Text(object? value)=>value switch{null=>"",DateOnly d=>d.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture),decimal n=>n.ToString(CultureInfo.InvariantCulture),_=>Convert.ToString(value,CultureInfo.InvariantCulture)??""};
     public static string SafeText(string text)=>text.FirstOrDefault(c=>!char.IsWhiteSpace(c)&&!char.IsControl(c)) is '=' or '+' or '-' or '@'?"'"+text:text;

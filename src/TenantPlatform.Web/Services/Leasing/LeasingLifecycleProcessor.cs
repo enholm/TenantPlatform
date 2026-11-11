@@ -36,7 +36,7 @@ public sealed class LeasingLifecycleProcessor(IDbContextFactory<TenantPlatformDb
         foreach(var f in await db.LeasingFrameworks.AsNoTracking().Where(x=>x.AccountId==account&&x.Status!=LeasingFrameworkStatus.Finished).ToListAsync(ct))
         {
             Add(null,f.Id,LeasingFollowupKind.FrameworkEnd,f.AcquisitionTo,f.OwnerUserId);
-            if(f.AcquisitionTo<today){var orders=await db.LeasingOrders.AsNoTracking().Where(x=>x.AccountId==account&&x.FrameworkId==f.Id&&x.Status==LeasingOrderStatus.Approved).Include(x=>x.Lines).ToListAsync(ct);if(orders.Any(x=>LeasingOrderCalculator.Reserved(x,f.IncludesVat)>0))Add(null,f.Id,LeasingFollowupKind.OpenReservation,f.AcquisitionTo,f.OwnerUserId);}
+            if(f.AcquisitionTo<today){var orders=await db.LeasingOrders.AsNoTracking().Where(x=>x.AccountId==account&&x.FrameworkId==f.Id&&x.Status==LeasingOrderStatus.Approved).Include(x=>x.Lines).ToListAsync(ct);if(orders.Any(x=>LeasingOrderCalculator.Reserved(x,true)>0))Add(null,f.Id,LeasingFollowupKind.OpenReservation,f.AcquisitionTo,f.OwnerUserId);}
             if(!await LeasingLifecycleAccess.CanRead(db,account,f.OwnerUserId,null,f.Id,ct))Add(null,f.Id,LeasingFollowupKind.MissingOwner,null,null);
         }
         var existing=await db.LeasingFollowups.Where(x=>x.AccountId==account).ToListAsync(ct);

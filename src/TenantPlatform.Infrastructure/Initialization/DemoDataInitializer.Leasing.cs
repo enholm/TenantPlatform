@@ -20,7 +20,7 @@ public static partial class DemoDataInitializer
         MagidaLeaseItemSeed[] Items);
 
     private sealed record MagidaFrameworkSeed(
-        int Number, string Name, string NumberText, DateOnly From, DateOnly To, decimal Limit,
+        int Number, string Name, string NumberText, DateOnly From, DateOnly To, decimal LimitNet, decimal LimitVat,
         LeasingFrameworkStatus Status, int Months, LeasingPaymentFrequency Frequency, decimal AnnualRate);
 
     private static async Task SeedMagidaLeasingAsync(
@@ -137,19 +137,19 @@ public static partial class DemoDataInitializer
         var frameworkSeeds = new[]
         {
             new MagidaFrameworkSeed(1, "Nettverk og datasenter 2025–2028", "MAG-RAM-001",
-                new(2025, 1, 1), new(2028, 12, 31), 1800000m, LeasingFrameworkStatus.Open,
+                new(2025, 1, 1), new(2028, 12, 31), 1800000m, 450000m, LeasingFrameworkStatus.Open,
                 48, LeasingPaymentFrequency.Monthly, 4.95m),
             new MagidaFrameworkSeed(2, "Serverkapasitet 2025–2027", "MAG-RAM-002",
-                new(2025, 7, 1), new(2027, 12, 31), 1500000m, LeasingFrameworkStatus.Open,
+                new(2025, 7, 1), new(2027, 12, 31), 1200000m, 300000m, LeasingFrameworkStatus.Open,
                 36, LeasingPaymentFrequency.Quarterly, 5.20m),
             new MagidaFrameworkSeed(3, "Informasjonssikkerhet 2026–2030", "MAG-RAM-003",
-                new(2026, 1, 1), new(2030, 12, 31), 2000000m, LeasingFrameworkStatus.Open,
+                new(2026, 1, 1), new(2030, 12, 31), 2000000m, 500000m, LeasingFrameworkStatus.Open,
                 60, LeasingPaymentFrequency.HalfYearly, 5.35m),
             new MagidaFrameworkSeed(4, "Driftsutstyr 2024–2026", "MAG-RAM-004",
-                new(2024, 1, 1), new(2026, 6, 30), 900000m, LeasingFrameworkStatus.Closed,
+                new(2024, 1, 1), new(2026, 6, 30), 720000m, 180000m, LeasingFrameworkStatus.Closed,
                 36, LeasingPaymentFrequency.Yearly, 5.05m),
             new MagidaFrameworkSeed(5, "Tidligere serveravtale 2022–2024", "MAG-RAM-005",
-                new(2022, 1, 1), new(2024, 12, 31), 650000m, LeasingFrameworkStatus.Finished,
+                new(2022, 1, 1), new(2024, 12, 31), 650000m, 162500m, LeasingFrameworkStatus.Finished,
                 24, LeasingPaymentFrequency.Monthly, 4.75m)
         };
 
@@ -162,8 +162,8 @@ public static partial class DemoDataInitializer
             {
                 Id = id, AccountId = accountId, Name = seed.Name, Number = seed.NumberText,
                 FinanceOrganizationId = financeOrganizationId, OwnerUserId = ownerUserId,
-                AcquisitionFrom = seed.From, AcquisitionTo = seed.To, Limit = seed.Limit,
-                Currency = "NOK", IncludesVat = seed.Number % 2 == 0,
+                AcquisitionFrom = seed.From, AcquisitionTo = seed.To,
+                LimitNet = seed.LimitNet, LimitVat = seed.LimitVat, Currency = "NOK",
                 CreditNotesReleaseLimit = seed.Number % 2 == 0, Terms = terms,
                 Notes = "Demonstrasjonsramme med stabil seed-ID.", Status = seed.Status, Revision = id
             };

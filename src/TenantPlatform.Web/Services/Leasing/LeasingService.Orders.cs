@@ -6,8 +6,12 @@ using TenantPlatform.Web.Services.Agreements;
 
 namespace TenantPlatform.Web.Services.Leasing;
 
-public sealed record LeasingCapacity(decimal Limit, decimal Used, decimal Reserved)
+public sealed record LeasingCapacity(decimal LimitNet, decimal LimitVat, decimal UsedNet, decimal UsedVat,
+    decimal ReservedNet, decimal ReservedVat)
 {
+    public decimal Limit => LimitNet + LimitVat;
+    public decimal Used => UsedNet + UsedVat;
+    public decimal Reserved => ReservedNet + ReservedVat;
     public decimal Available => Limit - Used - Reserved;
 }
 public sealed class OrderDelivery
@@ -45,10 +49,16 @@ public sealed partial class LeasingService
         var orders = await db.LeasingOrders.AsNoTracking().Where(x => x.AccountId == account && x.FrameworkId == framework && x.Status == LeasingOrderStatus.Approved).Include(x => x.Lines).ToListAsync(ct);
         return orders.Sum(x => LeasingOrderCalculator.Reserved(x, vat));
     }
-    private static async Task<LeasingCapacity> Capacity(TenantPlatformDbContext db, LeasingFramework f, CancellationToken ct) => new(f.Limit,
-        await db.LeasingAcquisitions.Where(x => x.AccountId == f.AccountId && x.FrameworkId == f.Id && x.Status == LeasingAcquisitionStatus.Registered)
-            .SumAsync(x => f.IncludesVat ? x.GrossTotal - x.ReleasedNetTotal - x.ReleasedVatTotal : x.NetTotal - x.ReleasedNetTotal, ct),
-        await Reserved(db, f.AccountId, f.Id, f.IncludesVat, ct));
+    private static async Task<LeasingCapacity> Capacity(TenantPlatformDbContext db, LeasingFramework f, CancellationToken ct)
+    {
+        var acquisitions = db.LeasingAcquisitions.Where(x => x.AccountId == f.AccountId &&
+            x.FrameworkId == f.Id && x.Status == LeasingAcquisitionStatus.Registered);
+        var usedNet = await acquisitions.SumAsync(x => x.NetTotal - x.ReleasedNetTotal, ct);
+        var usedVat = await acquisitions.SumAsync(x => x.VatTotal - x.ReleasedVatTotal, ct);
+        return new(f.LimitNet, f.LimitVat, usedNet, usedVat,
+            await Reserved(db, f.AccountId, f.Id, false, ct),
+            await Reserved(db, f.AccountId, f.Id, true, ct));
+    }
     private static async Task CheckCapacity(TenantPlatformDbContext db, LeasingFramework f, CancellationToken ct)
     { if ((await Capacity(db, f, ct)).Available < 0) throw new LeasingValidationException("LeasingLimitExceeded"); }
     private async Task<DateOnly> OrderToday(TenantPlatformDbContext db, Guid account, CancellationToken ct) =>
@@ -86,7 +96,7 @@ public sealed partial class LeasingService
             await db.LeasingOrderEvents.AsNoTracking().Where(x => x.AccountId == account && x.OrderId == id).OrderByDescending(x => x.RecordedUtc).ToListAsync(ct),
             await db.LeasingInvoices.AsNoTracking().Where(x => x.AccountId == account && aids.Contains(x.AcquisitionId ?? Guid.Empty)).ToListAsync(ct),
             await db.LeasingDocuments.AsNoTracking().Where(x => x.AccountId == account && x.OrderId == id).ToListAsync(ct),
-            await authorization.CanApproveLeasingOrdersAsync(ct), o.Status == LeasingOrderStatus.Approved && LeasingOrderCalculator.Reserved(o, f.IncludesVat) > 0 &&
+            await authorization.CanApproveLeasingOrdersAsync(ct), o.Status == LeasingOrderStatus.Approved && LeasingOrderCalculator.Reserved(o, true) > 0 &&
                 (f.Status != LeasingFrameworkStatus.Open || await OrderToday(db, account, ct) > f.AcquisitionTo), documented, await Orders(db, account, user, admin).AnyAsync(x => x.Id == id, ct));
     }
     private async Task ValidateOrder(TenantPlatformDbContext db, Guid account, LeasingOrder input, LeasingOrder? original, CancellationToken ct)
@@ -273,7 +283,7 @@ public sealed partial class LeasingService
         if (!await Frameworks(db, account, user, admin || await authorization.CanChangeLeasingLimitAsync(ct)).AnyAsync(x => x.Id == framework, ct)) throw new UnauthorizedAccessException();
         return await db.LeasingLimitChanges.AsNoTracking().Where(x => x.AccountId == account && x.FrameworkId == framework).OrderByDescending(x => x.ProposedUtc).ToListAsync(ct);
     }
-    public async Task ProposeLimitAsync(Guid account, Guid framework, Guid revision, decimal limit, string reason, string? document, Guid request, CancellationToken ct = default)
+    public async Task ProposeLimitAsync(Guid account, Guid framework, Guid revision, decimal limitNet, decimal limitVat, string reason, string? document, Guid request, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (user, admin) = await Member(db, account, ct);
         if (!await authorization.CanChangeLeasingLimitAsync(ct)) throw new UnauthorizedAccessException();
@@ -281,8 +291,12 @@ public sealed partial class LeasingService
         if (await db.LeasingLimitChanges.AnyAsync(x => x.AccountId == account && x.Id == request && x.ProposedByUserId == user && x.FrameworkId == framework, ct)) return;
         var f = await db.LeasingFrameworks.SingleOrDefaultAsync(x => x.AccountId == account && x.Id == framework, ct) ?? throw new UnauthorizedAccessException();
         CheckRevision(f.Revision, revision, true); Reason(reason, true);
-        if (request == Guid.Empty || limit < 0 || limit > 1000000000000 || !Precision(limit, 2) || document?.Length > 500) throw new LeasingValidationException("LeasingInvalidFramework");
-        db.LeasingLimitChanges.Add(new() { Id = request, AccountId = account, FrameworkId = framework, PreviousLimit = f.Limit, NewLimit = limit,
+        if (request == Guid.Empty || limitNet < 0 || limitVat < 0 || limitNet > 1000000000000m ||
+            limitVat > 1000000000000m || limitNet + limitVat > 1000000000000m ||
+            !Precision(limitNet, 2) || !Precision(limitVat, 2) || document?.Length > 500)
+            throw new LeasingValidationException("LeasingInvalidFramework");
+        db.LeasingLimitChanges.Add(new() { Id = request, AccountId = account, FrameworkId = framework,
+            PreviousLimitNet = f.LimitNet, PreviousLimitVat = f.LimitVat, NewLimitNet = limitNet, NewLimitVat = limitVat,
             Reason = reason, DocumentReference = document, ProposedByUserId = user, ProposedUtc = clock.GetUtcNow() });
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
     }
@@ -294,8 +308,10 @@ public sealed partial class LeasingService
         var change = await db.LeasingLimitChanges.SingleOrDefaultAsync(x => x.AccountId == account && x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         if (change.ApprovedUtc.HasValue) return;
         var f = await db.LeasingFrameworks.SingleAsync(x => x.AccountId == account && x.Id == change.FrameworkId, ct);
-        if (f.Limit != change.PreviousLimit) throw new LeasingValidationException("LeasingConcurrency");
-        var before = Snapshot(f); f.Limit = change.NewLimit; f.Revision = Guid.NewGuid(); await CheckCapacity(db, f, ct);
+        if (f.LimitNet != change.PreviousLimitNet || f.LimitVat != change.PreviousLimitVat)
+            throw new LeasingValidationException("LeasingConcurrency");
+        var before = Snapshot(f); f.LimitNet = change.NewLimitNet; f.LimitVat = change.NewLimitVat;
+        f.Revision = Guid.NewGuid(); await CheckCapacity(db, f, ct);
         change.ApprovedByUserId = user; change.ApprovedUtc = clock.GetUtcNow();
         History(db, account, f.Id, null, user, "LimitApproved", change.Reason, before, Snapshot(f));
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);

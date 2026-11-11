@@ -57,7 +57,8 @@ public sealed class LeasingLimitChangeConfiguration : IEntityTypeConfiguration<L
     public void Configure(EntityTypeBuilder<LeasingLimitChange> b)
     {
         b.ToTable("leasing_limit_changes"); b.HasKey(x => x.Id);
-        b.Property(x => x.PreviousLimit).HasPrecision(20,2); b.Property(x => x.NewLimit).HasPrecision(20,2);
+        b.Property(x => x.PreviousLimitNet).HasPrecision(20,2); b.Property(x => x.PreviousLimitVat).HasPrecision(20,2);
+        b.Property(x => x.NewLimitNet).HasPrecision(20,2); b.Property(x => x.NewLimitVat).HasPrecision(20,2);
         b.Property(x => x.Reason).HasMaxLength(2000); b.Property(x => x.DocumentReference).HasMaxLength(500);
         b.HasOne<LeasingFramework>().WithMany().HasForeignKey(x => new { x.AccountId, x.FrameworkId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
     }

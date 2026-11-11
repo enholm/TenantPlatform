@@ -2479,6 +2479,8 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="LeasingAcquisitionFrom" xml:space="preserve"><value>Anskaffelser fra og med</value></data>
   <data name="LeasingAcquisitionTo" xml:space="preserve"><value>Anskaffelser til og med</value></data>
   <data name="LeasingLimit" xml:space="preserve"><value>Maksbeløp</value></data>
+  <data name="LeasingLimitNet" xml:space="preserve"><value>Ramme eks. mva</value></data>
+  <data name="LeasingLimitVat" xml:space="preserve"><value>Mva på ramme</value></data>
   <data name="LeasingIncludesVat" xml:space="preserve"><value>Rammebeløpet inkluderer mva</value></data>
   <data name="LeasingPurchaseDate" xml:space="preserve"><value>Kjøpsdato / leasingstart</value></data>
   <data name="LeasingFinanced" xml:space="preserve"><value>Finansiert beløp</value></data>
@@ -2510,7 +2512,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="LeasingCapacity" xml:space="preserve"><value>Rammeutnyttelse</value></data>
   <data name="LeasingUsed" xml:space="preserve"><value>Benyttet beløp</value></data>
   <data name="LeasingAvailable" xml:space="preserve"><value>Tilgjengelig beløp</value></data>
-  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Registrerte anskaffelser og aktive, gjenstående reservasjoner bruker ramme. Utkast, renter og leasinggebyrer bruker ikke ramme. Leasingbetalinger frigjør ikke ramme.</value></data>
+  <data name="LeasingCapacityHelp" xml:space="preserve"><value>Rammeutnyttelsen kontrolleres på samlet beløp inklusive mva. Grensen registreres som netto beløp og mva. Registrerte anskaffelser og aktive, gjenstående reservasjoner bruker ramme. Utkast, renter og leasinggebyrer bruker ikke ramme. Leasingbetalinger frigjør ikke ramme.</value></data>
   <data name="LeasingPeriodHelp" xml:space="preserve"><value>Anskaffelsesperioden begrenser kjøpsdatoen. Hver anskaffelse har egen leasingperiode som fortsetter etter at anskaffelsesperioden er over.</value></data>
   <data name="LeasingDocuments" xml:space="preserve"><value>Dokumentvedlegg</value></data>
   <data name="LeasingNoDocuments" xml:space="preserve"><value>Ingen dokumentvedlegg ennå.</value></data>
@@ -3213,6 +3215,9 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
 <data name="LifeColumnVat" xml:space="preserve"><value>Mva.</value></data>
 <data name="LifeColumnGross" xml:space="preserve"><value>Brutto</value></data>
 <data name="LifeColumnLimit" xml:space="preserve"><value>Maksramme</value></data>
+<data name="LifeColumnLimitNet" xml:space="preserve"><value>Ramme eks. mva</value></data>
+<data name="LifeColumnLimitVat" xml:space="preserve"><value>Mva på ramme</value></data>
+<data name="LifeColumnGrossLimit" xml:space="preserve"><value>Maksramme inkl. mva</value></data>
 <data name="LifeColumnUsed" xml:space="preserve"><value>Benyttet</value></data>
 <data name="LifeColumnReserved" xml:space="preserve"><value>Reservert</value></data>
 <data name="LifeColumnAvailable" xml:space="preserve"><value>Tilgjengelig</value></data>

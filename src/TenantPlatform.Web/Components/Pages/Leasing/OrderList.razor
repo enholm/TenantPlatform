@@ -12,7 +12,7 @@
 @foreach(var d in rows)
 {
     var o=d.Order;
-    <tr><td><a href="@($"/leasing/purchase-orders/{o.Id}")">@o.Number</a></td><td>@Name(o.SupplierOrganizationId) / @d.Framework.Name</td><td><span class="leasing-status">@L[$"OrderStatus{o.Status}"]</span></td><td>@L[LeasingService.FulfillmentKey(o)]</td><td class="leasing-numeric">@LeasingService.ApprovedOrderValue(d).ToString("N2") @o.Currency</td><td class="leasing-numeric">@LeasingOrderCalculator.Reserved(o,d.Framework.IncludesVat).ToString("N2")</td><td>@Name(o.OwnerUserId)<br />@o.OrderDate.ToString("dd.MM.yyyy") / @o.ExpectedDate?.ToString("dd.MM.yyyy")</td></tr>
+    <tr><td><a href="@($"/leasing/purchase-orders/{o.Id}")">@o.Number</a></td><td>@Name(o.SupplierOrganizationId) / @d.Framework.Name</td><td><span class="leasing-status">@L[$"OrderStatus{o.Status}"]</span></td><td>@L[LeasingService.FulfillmentKey(o)]</td><td class="leasing-numeric">@LeasingService.ApprovedOrderValue(d).ToString("N2") @o.Currency</td><td class="leasing-numeric">@LeasingOrderCalculator.Reserved(o,true).ToString("N2")</td><td>@Name(o.OwnerUserId)<br />@o.OrderDate.ToString("dd.MM.yyyy") / @o.ExpectedDate?.ToString("dd.MM.yyyy")</td></tr>
 }
 </tbody></table></div>
 </div>

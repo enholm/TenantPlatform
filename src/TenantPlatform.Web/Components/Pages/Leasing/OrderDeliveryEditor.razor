@@ -20,6 +20,6 @@
     [Parameter] public List<LeasingItem> Items { get; set; } = [];
     [Parameter] public bool Existing { get; set; }
     private OrderDeliveryLine Part(int position) { var line=Delivery.Lines.SingleOrDefault(x=>x.ItemPosition==position); if(line==null) { line=new(){ItemPosition=position}; Delivery.Lines.Add(line); } return line; }
-    private decimal Actual { get { try { var t=LeasingCalculator.Total(Items); return Details!.Framework.IncludesVat?t.Gross:t.Net; } catch { return 0; } } }
-    private decimal Release { get { try { return LeasingService.PreviewOrderRelease(Details!.Order, Delivery, Details.Framework.IncludesVat); } catch { return 0; } } }
+    private decimal Actual { get { try { return LeasingCalculator.Total(Items).Gross; } catch { return 0; } } }
+    private decimal Release { get { try { return LeasingService.PreviewOrderRelease(Details!.Order, Delivery); } catch { return 0; } } }
 }

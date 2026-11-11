@@ -45,7 +45,8 @@
         @if (f is not null)
         {
             <dt class="col-sm-5">@L["LeasingAcquisitionPeriod"]</dt><dd class="col-sm-7">@Date(f.AcquisitionFrom)–@Date(f.AcquisitionTo)</dd>
-            <dt class="col-sm-5">@L["LeasingVatBasis"]</dt><dd class="col-sm-7">@L[f.IncludesVat ? "LeasingGross" : "LeasingNet"]</dd>
+            <dt class="col-sm-5">@L["LeasingLimitNet"]</dt><dd class="col-sm-7">@f.LimitNet.ToString("N2") @currency</dd>
+            <dt class="col-sm-5">@L["LeasingLimitVat"]</dt><dd class="col-sm-7">@f.LimitVat.ToString("N2") @currency</dd>
         }
         else
         {
@@ -62,10 +63,10 @@
     @if (f is not null)
     {
         <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingCapacity"]</h2><div class="row g-3">
-            <div class="col-sm-4"><div>@L["LeasingLimit"]</div><strong class="fs-4">@f.Limit.ToString("N2") @currency</strong></div>
+            <div class="col-sm-4"><div>@L["LifeColumnGrossLimit"]</div><strong class="fs-4">@((f.LimitNet + f.LimitVat).ToString("N2")) @currency</strong></div>
             <div class="col-sm-4"><div>@L["LeasingUsed"]</div><strong class="fs-4">@data.Used.ToString("N2") @currency</strong></div>
             <div class="col-sm-4"><div>@L["OrderReserved"]</div><strong class="fs-4">@data.Reserved.ToString("N2") @currency</strong></div>
-            <div class="col-sm-4"><div>@L["LeasingAvailable"]</div><strong class="fs-4">@((f.Limit - data.Used - data.Reserved).ToString("N2")) @currency</strong></div>
+            <div class="col-sm-4"><div>@L["LeasingAvailable"]</div><strong class="fs-4">@((f.LimitNet + f.LimitVat - data.Used - data.Reserved).ToString("N2")) @currency</strong></div>
         </div><p class="small text-muted mt-3">@L["InvoiceCreditRule"] @L[f.CreditNotesReleaseLimit.HasValue ? (f.CreditNotesReleaseLimit.Value ? "Yes" : "No") : "DashboardUnspecified"]</p><p class="small text-muted mt-3 mb-0">@L["LeasingCapacityHelp"]</p></div></section>
         <LeasingLimitChanges Framework="f" Used="data.Used" Reserved="data.Reserved" Changed="Load" />
         <section class="card mb-3"><div class="card-body"><div class="d-flex flex-wrap justify-content-between gap-2 mb-3"><h2 class="h5">@L["LeasingAcquisitions"]</h2>
@@ -74,8 +75,8 @@
         @if (data.Acquisitions.Count == 0) { <p>@L["LeasingEmpty"]</p> }
         else
         {
-            <div class="table-responsive"><table class="table"><thead><tr><th>@L["Name"]</th><th>@L["Status"]</th><th>@L["LeasingPurchaseDate"]</th><th>@L["LeasingEndDate"]</th><th class="text-end">@L[f.IncludesVat ? "LeasingGross" : "LeasingNet"]</th></tr></thead><tbody>
-            @foreach (var child in data.Acquisitions) { <tr><td><a href="@($"/leasing/acquisitions/{child.Id}")">@child.Name</a></td><td>@L[$"LeasingStatus{child.Status}"]</td><td>@Date(child.PurchaseDate)</td><td>@Date(child.EndDate)</td><td class="text-end">@((f.IncludesVat ? child.GrossTotal : child.NetTotal).ToString("N2")) @currency</td></tr> }
+            <div class="table-responsive"><table class="table"><thead><tr><th>@L["Name"]</th><th>@L["Status"]</th><th>@L["LeasingPurchaseDate"]</th><th>@L["LeasingEndDate"]</th><th class="text-end">@L["LeasingGross"]</th></tr></thead><tbody>
+            @foreach (var child in data.Acquisitions) { <tr><td><a href="@($"/leasing/acquisitions/{child.Id}")">@child.Name</a></td><td>@L[$"LeasingStatus{child.Status}"]</td><td>@Date(child.PurchaseDate)</td><td>@Date(child.EndDate)</td><td class="text-end">@child.GrossTotal.ToString("N2") @currency</td></tr> }
             </tbody></table></div>
         }
         </div></section>

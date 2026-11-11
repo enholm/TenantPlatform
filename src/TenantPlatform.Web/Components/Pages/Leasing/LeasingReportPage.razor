@@ -16,7 +16,7 @@
 @if(data!=null){<p>@L["LifeGenerated"]: @data.GeneratedUtc · @L["LifeDateField"]: @L[$"LifeDate{applied.DateField}"] · @data.Count</p>
 @if(data.CanExport){<a class="btn btn-outline-primary m-1" href="@Export("csv")">CSV</a><a class="btn btn-outline-primary m-1" href="@Export("xlsx")">XLSX</a>}
 <div class="leasing-summary-grid my-3">@foreach(var t in data.Totals){<section class="card"><div class="card-body"><h2 class="h6">@t.Currency @(t.Basis==""?"":L[t.Basis])</h2><dl class="leasing-amounts">
-@if(data.Kind==LeasingReportKind.Capacity){<dt>@L["LifeColumnLimit"]</dt><dd>@t.Limit.ToString("N2")</dd><dt>@L["LifeColumnUsed"]</dt><dd>@t.Used.ToString("N2")</dd><dt>@L["LifeColumnReserved"]</dt><dd>@t.Reserved.ToString("N2")</dd><dt>@L["LifeColumnAvailable"]</dt><dd>@t.Available.ToString("N2")</dd>}
+@if(data.Kind==LeasingReportKind.Capacity){<dt>@L["LeasingLimitNet"]</dt><dd>@t.LimitNet.ToString("N2")</dd><dt>@L["LeasingLimitVat"]</dt><dd>@t.LimitVat.ToString("N2")</dd><dt>@L["LifeColumnGrossLimit"]</dt><dd>@t.Limit.ToString("N2")</dd><dt>@L["LifeColumnUsed"]</dt><dd>@t.Used.ToString("N2")</dd><dt>@L["LifeColumnReserved"]</dt><dd>@t.Reserved.ToString("N2")</dd><dt>@L["LifeColumnAvailable"]</dt><dd>@t.Available.ToString("N2")</dd>}
 else if(data.Kind==LeasingReportKind.Payments){<dt>@L["LifeColumnExpected"]</dt><dd>@t.Expected.ToString("N2")</dd>}
 else if(data.Kind==LeasingReportKind.InvoiceControl){<dt>@L["LifeColumnExpected"]</dt><dd>@t.Expected.ToString("N2")</dd><dt>@L["LifeColumnInvoiced"]</dt><dd>@t.Invoiced.ToString("N2")</dd><dt>@L["LifeColumnUnallocated"]</dt><dd>@t.Unallocated.ToString("N2")</dd>}
 else if(data.Kind!=LeasingReportKind.Equipment){<dt>@L["LifeColumnGross"]</dt><dd>@t.Gross.ToString("N2")</dd>}
@@ -27,14 +27,14 @@ else if(data.Kind!=LeasingReportKind.Equipment){<dt>@L["LifeColumnGross"]</dt><d
 bool allColumns;
 IEnumerable<string> VisibleColumns => allColumns ? LeasingReportExport.Columns : (data?.Kind ?? kind) switch
 {
-    LeasingReportKind.Capacity => ["Name","Finance","Currency","Basis","Limit","Used","Reserved","Available","From","To"],
+    LeasingReportKind.Capacity => ["Name","Finance","Currency","LimitNet","LimitVat","Limit","Used","Reserved","Available","From","To"],
     LeasingReportKind.Dimensions => ["Name","Reference","Currency","Net","Vat","Gross","Dimensions","NeedsReview","Notes"],
     LeasingReportKind.Payments => ["Name","Finance","Currency","From","To","DueDate","Expected","Version","NeedsReview"],
     LeasingReportKind.InvoiceControl => ["Name","Finance","Currency","DueDate","Expected","Invoiced","Difference","Unallocated","Status","NeedsReview"],
     LeasingReportKind.Equipment => ["Name","Reference","Serial","Location","Owner","Status","Quantity","EventDate","ClosedDate","ClosureKind"],
     _ => ["Name","Reference","Finance","Owner","Currency","PurchaseDate","EndDate","NoticeDate","ReturnDate","Status"]
 };
-static bool Numeric(string column) => column is "Net" or "Vat" or "Gross" or "Limit" or "Used" or "Reserved" or "Available" or "Expected" or "Invoiced" or "Difference" or "Unallocated" or "Quantity" or "BuyoutAmount";
+static bool Numeric(string column) => column is "Net" or "Vat" or "Gross" or "LimitNet" or "LimitVat" or "Limit" or "Used" or "Reserved" or "Available" or "Expected" or "Invoiced" or "Difference" or "Unallocated" or "Quantity" or "BuyoutAmount";
 
 [SupplyParameterFromQuery(Name="kind")]public int? QueryKind{get;set;}[SupplyParameterFromQuery(Name="filter")]public string? QueryFilter{get;set;}LeasingReportKind kind=LeasingReportKind.Agreements;LeasingReportFilter filter=new(),applied=new();LeasingReportResult? data;LeasingOptions? options;LeasingClassificationCatalog? dimensions;string? error;bool busy;int page=1;Guid account=>User.Current.CurrentAccountId??throw new UnauthorizedAccessException();
 IEnumerable<string> StatusKeys=>new[]{"LifeActive","PaymentNoPlan","PaymentPlanActive","LifeUnallocated"}.Concat(Enum.GetNames<LeasingLifecycleStatus>().Select(x=>"LifeStatus"+x)).Concat(Enum.GetNames<LeasingBillingStatus>().Select(x=>"PaymentBilling"+x)).Concat(Enum.GetNames<LeasingFrameworkStatus>().Select(x=>"LeasingStatus"+x));

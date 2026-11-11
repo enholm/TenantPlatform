@@ -45,26 +45,26 @@ public sealed partial class LeasingService
         // Reversed history is retained, but must not count twice after an explicit reopening.
         // Unreserved scope is still part of the approved order value, not active capacity usage.
         foreach (var line in pending.Lines) line.Unreserved = 0;
-        return d.Realizations.Where(x => !x.Reversed).Sum(x => x.ApprovedNet + (d.Framework.IncludesVat ? x.ApprovedVat : 0)) +
-            pending.Lines.Sum(x => d.Framework.IncludesVat ? LeasingOrderCalculator.Remaining(x).Gross : LeasingOrderCalculator.Remaining(x).Net);
+        return d.Realizations.Where(x => !x.Reversed).Sum(x => x.ApprovedNet + x.ApprovedVat) +
+            pending.Lines.Sum(x => LeasingOrderCalculator.Remaining(x).Gross);
     }
-    public static decimal ProposedReservation(LeasingOrder current, LeasingOrder proposed, bool vat)
+    public static decimal ProposedReservation(LeasingOrder current, LeasingOrder proposed)
     {
         var copy = JsonSerializer.Deserialize<LeasingOrder>(Snapshot(proposed))!; copy.Status = LeasingOrderStatus.Approved;
         foreach (var line in copy.Lines) { var old = current.Lines.SingleOrDefault(x => x.Id == line.Id); line.Fulfilled = old?.Fulfilled ?? 0; line.Unreserved = old?.Unreserved ?? 0; }
-        return LeasingOrderCalculator.Reserved(copy, vat);
+        return LeasingOrderCalculator.Reserved(copy, true);
     }
-    public static decimal PreviewOrderRelease(LeasingOrder order, OrderDelivery delivery, bool vat)
+    public static decimal PreviewOrderRelease(LeasingOrder order, OrderDelivery delivery)
     {
         var copy = JsonSerializer.Deserialize<LeasingOrder>(Snapshot(order))!;
-        var before = LeasingOrderCalculator.Reserved(copy, vat);
+        var before = LeasingOrderCalculator.Reserved(copy, true);
         foreach (var part in delivery.Lines.Where(x => x.OrderLineId != Guid.Empty))
         {
             var line = copy.Lines.Single(x => x.Id == part.OrderLineId);
             if (part.Scope <= 0 || part.Scope + line.Fulfilled + line.Unreserved > line.Scope) throw new LeasingValidationException("LeasingOrderOverDelivery");
             line.Fulfilled += part.Scope;
         }
-        return before - LeasingOrderCalculator.Reserved(copy, vat);
+        return before - LeasingOrderCalculator.Reserved(copy, true);
     }
     public async Task<List<LeasingAcquisition>> OrderLinkCandidatesAsync(Guid account, Guid order, CancellationToken ct = default)
     {

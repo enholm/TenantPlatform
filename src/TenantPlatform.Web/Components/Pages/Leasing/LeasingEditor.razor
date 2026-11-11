@@ -19,7 +19,7 @@
         <ValidationSummary />
         @if (!framework && delivery == null && capacity?.Framework is {} frame && a.FrameworkId == frame.Id)
         {
-            <p>@L["LeasingLimit"]: @frame.Limit.ToString("N2") · @L["LeasingUsed"]: @capacity.Used.ToString("N2") · @L["OrderReserved"]: @capacity.Reserved.ToString("N2") · @L["OrderAvailableAfter"]: @AvailableAfter().ToString("N2") @frame.Currency</p>
+            <p>@L["LifeColumnGrossLimit"]: @((frame.LimitNet + frame.LimitVat).ToString("N2")) · @L["LeasingUsed"]: @capacity.Used.ToString("N2") · @L["OrderReserved"]: @capacity.Reserved.ToString("N2") · @L["OrderAvailableAfter"]: @AvailableAfter().ToString("N2") @frame.Currency</p>
         }
         @if (order != null && delivery != null) { <OrderDeliveryEditor Details="order" Delivery="delivery" Items="a.Items" /> }
         <fieldset disabled="@busy">
@@ -51,8 +51,9 @@
                 <div class="col-md-3"><label for="lease-status" class="form-label">@L["Status"]</label><InputSelect id="lease-status" class="form-select" @bind-Value="f.Status">@foreach (var value in Enum.GetValues<LeasingFrameworkStatus>()) { <option value="@value">@L[$"LeasingStatus{value}"]</option> }</InputSelect></div>
                 <div class="col-md-3"><label for="lease-from" class="form-label">@L["LeasingAcquisitionFrom"]</label><InputDate id="lease-from" class="form-control" @bind-Value="f.AcquisitionFrom" /></div>
                 <div class="col-md-3"><label for="lease-to" class="form-label">@L["LeasingAcquisitionTo"]</label><InputDate id="lease-to" class="form-control" @bind-Value="f.AcquisitionTo" /></div>
-                <div class="col-md-4"><label for="lease-limit" class="form-label">@L["LeasingLimit"]</label><InputNumber id="lease-limit" class="form-control" @bind-Value="f.Limit" disabled="@Id.HasValue" min="0" step="0.01" /></div>
-                <div class="col-md-4 d-flex align-items-end"><div class="form-check"><InputCheckbox id="lease-vat-basis" class="form-check-input" @bind-Value="f.IncludesVat" /><label for="lease-vat-basis" class="form-check-label">@L["LeasingIncludesVat"]</label></div></div>
+                <div class="col-md-4"><label for="lease-limit-net" class="form-label">@L["LeasingLimitNet"]</label><InputNumber id="lease-limit-net" class="form-control" @bind-Value="f.LimitNet" disabled="@Id.HasValue" min="0" step="0.01" /></div>
+                <div class="col-md-4"><label for="lease-limit-vat" class="form-label">@L["LeasingLimitVat"]</label><InputNumber id="lease-limit-vat" class="form-control" @bind-Value="f.LimitVat" disabled="@Id.HasValue" min="0" step="0.01" /></div>
+                <div class="col-md-4"><div class="form-label">@L["LifeColumnGrossLimit"]</div><p class="form-control-plaintext">@((f.LimitNet + f.LimitVat).ToString("N2")) @Currency</p></div>
             }
             else
             {
@@ -201,11 +202,11 @@
         {
             var totals = LeasingCalculator.Total(a.Items);
             var previous = savedAcquisition?.Status == LeasingAcquisitionStatus.Registered && savedAcquisition.FrameworkId == frame.Id
-                ? (frame.IncludesVat ? savedAcquisition.GrossTotal - savedAcquisition.ReleasedNetTotal - savedAcquisition.ReleasedVatTotal : savedAcquisition.NetTotal - savedAcquisition.ReleasedNetTotal) : 0;
-            var next = a.Status == LeasingAcquisitionStatus.Registered ? (frame.IncludesVat ? totals.Gross - a.ReleasedNetTotal - a.ReleasedVatTotal : totals.Net - a.ReleasedNetTotal) : 0;
-            return frame.Limit - capacity.Used - capacity.Reserved + previous - next;
+                ? savedAcquisition.GrossTotal - savedAcquisition.ReleasedNetTotal - savedAcquisition.ReleasedVatTotal : 0;
+            var next = a.Status == LeasingAcquisitionStatus.Registered ? totals.Gross - a.ReleasedNetTotal - a.ReleasedVatTotal : 0;
+            return frame.LimitNet + frame.LimitVat - capacity.Used - capacity.Reserved + previous - next;
         }
-        catch (ArgumentOutOfRangeException) { return frame.Limit - capacity.Used - capacity.Reserved; }
+        catch (ArgumentOutOfRangeException) { return frame.LimitNet + frame.LimitVat - capacity.Used - capacity.Reserved; }
     }
     private void DeliveryItemChanged(LeasingItem item)
     {
