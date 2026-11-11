@@ -30,7 +30,7 @@
         @if(a is not null)
         {
             <a href="@($"/leasing/acquisitions/{Id}/payments")"><i class="bi bi-wallet2" aria-hidden="true"></i> @L["PaymentDetails"]</a>
-            <a href="@($"/leasing/equipment?acquisition={Id}")"><i class="bi bi-box-seam" aria-hidden="true"></i> @L["LifeEquipment"]</a>
+            <a href="@($"/leasing/equipment?acquisition={Id}&source=acquisition")"><i class="bi bi-box-seam" aria-hidden="true"></i> @L["LifeEquipment"]</a>
             <a href="@($"/leasing/acquisitions/{Id}/lifecycle")"><i class="bi bi-clock-history" aria-hidden="true"></i> @L["LifeLifecycle"]</a>
         }
         <a href="@SectionLink("leasing-documents")"><i class="bi bi-files" aria-hidden="true"></i> @L["LeasingDocuments"]</a>

@@ -9,7 +9,11 @@
 <h1>@L["LifeLifecycle"] – @data?.Acquisition.Name</h1><p>@L["LifeFinancialSeparation"]</p>
 @if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
 @if(data!=null){
-<div class="d-flex gap-2"><a href="@($"/leasing/acquisitions/{Id}")">@L["LeasingAcquisition"]</a><a href="@($"/leasing/acquisitions/{Id}/payments")">@L["PaymentDetails"]</a><a href="@($"/leasing/equipment?acquisition={Id}")">@L["LifeEquipment"]</a></div>
+<nav class="leasing-subnav" aria-label="@L["LeasingDetails"]">
+    <a href="@($"/leasing/acquisitions/{Id}")"><i class="bi bi-grid" aria-hidden="true"></i> @L["LeasingAcquisition"]</a>
+    <a href="@($"/leasing/acquisitions/{Id}/payments")"><i class="bi bi-wallet2" aria-hidden="true"></i> @L["PaymentDetails"]</a>
+    <a href="@($"/leasing/equipment?acquisition={Id}&source=acquisition")"><i class="bi bi-box-seam" aria-hidden="true"></i> @L["LifeEquipment"]</a>
+</nav>
 <p><strong>@L[$"LifeStatus{data.Lifecycle.Status}"]</strong> · @L["LifeOriginalEnd"]: @data.Lifecycle.OriginalEndDate · @L["LifeAgreedEnd"]: @data.Lifecycle.AgreedEndDate · @L["LifeClosedDate"]: @data.Lifecycle.ClosedDate</p>
 <p>@L["LifeNoticeDate"]: @(data.Lifecycle.NoticeDate?.ToString("dd.MM.yyyy")??L["DashboardUnspecified"]) · @L[$"LifeNotice{data.Lifecycle.NoticeBasis}"] @data.Lifecycle.NoticeCount</p>
 @if(data.Lifecycle.PaymentPlanReviewRequired){<p class="alert alert-warning">@L["LifePlanIncomplete"]</p>}
