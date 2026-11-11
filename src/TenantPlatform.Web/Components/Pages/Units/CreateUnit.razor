@@ -36,14 +36,14 @@ else if (Model is not null)
         {
             <a href="@($"/buildings/{BuildingId.Value}")"
                class="text-decoration-none">
-                ← @L["Building"]
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> @L["Building"]
             </a>
         }
         else
         {
             <a href="/units"
                class="text-decoration-none">
-                ← @L["Units"]
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> @L["Units"]
             </a>
         }
     </div>
@@ -328,4 +328,3 @@ else if (Model is not null)
         public bool IsActive { get; set; } = true;
     }
 }
-

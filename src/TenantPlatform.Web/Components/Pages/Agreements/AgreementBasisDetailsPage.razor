@@ -8,8 +8,8 @@
 @using System.Text.Json
 
 <div class="page-workspace">
-<PageTitle>@L["ProcessingBasisDetails"]</PageTitle>@if (ReturnToApproval.HasDelegate) { <button class="btn btn-link ps-0" disabled="@busy" @onclick="() => ReturnToApproval.InvokeAsync()">@L["ApprovalReturn"]</button> }
-else { <a href="/agreements/bases">@L["ProcessingBases"]</a> }<h1>@L["ProcessingBasisDetails"]</h1><p>@L["ProcessingBasisHelp"]</p>
+<PageTitle>@L["ProcessingBasisDetails"]</PageTitle>@if (ReturnToApproval.HasDelegate) { <button class="page-back-link" disabled="@busy" @onclick="() => ReturnToApproval.InvokeAsync()"><i class="bi bi-arrow-left" aria-hidden="true"></i> @L["ApprovalReturn"]</button> }
+else { <a class="page-back-link" href="/agreements/bases"><i class="bi bi-arrow-left" aria-hidden="true"></i> @L["ProcessingBases"]</a> }<h1>@L["ProcessingBasisDetails"]</h1><p>@L["ProcessingBasisHelp"]</p>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (busy) { <p role="status">@L["Loading"]</p> }
 

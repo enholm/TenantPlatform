@@ -33,7 +33,7 @@ else if (Model is not null)
     <div class="mb-4">
         <a href="@($"/units/{Id}")"
            class="text-decoration-none">
-            ← @L["Unit"]
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> @L["Unit"]
         </a>
     </div>
 
@@ -340,4 +340,3 @@ else if (Model is not null)
         public bool IsActive { get; set; }
     }
 }
-

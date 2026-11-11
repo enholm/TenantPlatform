@@ -8,7 +8,7 @@
 @using System.Text.Json
 
 <div class="page-workspace">
-<PageTitle>@L["ProcessingGenerate"]</PageTitle><a href="@($"/agreements/{AgreementId}/lines")">@L["FinanceLinesAndForecast"]</a><h1>@L["ProcessingGenerate"]</h1><p>@L["ProcessingGenerationHelp"]</p>
+<PageTitle>@L["ProcessingGenerate"]</PageTitle><a class="page-back-link" href="@($"/agreements/{AgreementId}/lines")"><i class="bi bi-arrow-left" aria-hidden="true"></i> @L["FinanceLinesAndForecast"]</a><h1>@L["ProcessingGenerate"]</h1><p>@L["ProcessingGenerationHelp"]</p>
 @if (error is not null) { <div class="alert alert-danger" role="alert">@L[error]</div> }
 @if (busy) { <p role="status">@L["Loading"]</p> }
 

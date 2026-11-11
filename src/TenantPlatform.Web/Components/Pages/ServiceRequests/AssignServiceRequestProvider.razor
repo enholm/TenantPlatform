@@ -32,8 +32,8 @@ else if (request is null)
     </div>
 
     <a href="/portal/requests"
-       class="btn btn-outline-secondary">
-        @L["Back"]
+       class="page-back-link">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> @L["Back"]
     </a>
 }
 else if (!isAuthorized)
@@ -43,8 +43,8 @@ else if (!isAuthorized)
     </div>
 
     <a href="@($"/portal/requests/{Id}")"
-       class="btn btn-outline-secondary">
-        @L["Back"]
+       class="page-back-link">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> @L["Back"]
     </a>
 }
 else
@@ -52,7 +52,7 @@ else
     <div class="mb-4">
         <a href="@($"/portal/requests/{Id}")"
            class="text-decoration-none">
-            ← @L["BackToRequest"]
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> @L["BackToRequest"]
         </a>
     </div>
 

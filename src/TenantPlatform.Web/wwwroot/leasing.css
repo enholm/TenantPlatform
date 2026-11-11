@@ -50,7 +50,7 @@
 .leasing-amounts { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
 .leasing-amounts dd { overflow-wrap: anywhere; }
 /* Override the application's fixed blue links only inside Leasing. */
-.leasing-workspace a:not(.btn):not(.leasing-metric):not(.leasing-subnav a) { color: var(--bs-link-color); }
-.leasing-workspace a:not(.btn):not(.leasing-metric):not(.leasing-subnav a):hover { color: var(--bs-link-hover-color); }
+.leasing-workspace a:not(.btn):not(.leasing-metric):not(.leasing-subnav a):not(.text-decoration-none):not(.page-back-link) { color: var(--bs-link-color); }
+.leasing-workspace a:not(.btn):not(.leasing-metric):not(.leasing-subnav a):not(.text-decoration-none):not(.page-back-link):hover { color: var(--bs-link-hover-color); }
 .leasing-summary-grid { align-items: start; }
 .leasing-period { flex: 0 0 auto; max-width: 100%; }

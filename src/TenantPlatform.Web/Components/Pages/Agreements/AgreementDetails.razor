@@ -9,7 +9,7 @@
 
 <div class="page-workspace">
 <PageTitle>@(details?.Title ?? L["Agreements"])</PageTitle>
-<a href="/agreements">@L["Agreements"]</a>
+<a class="page-back-link" href="/agreements"><i class="bi bi-arrow-left" aria-hidden="true"></i> @L["Agreements"]</a>
 @if (error is not null) { <div class="alert alert-danger mt-3" role="alert">@L[error]</div> }
 @if (loading) { <p>@L["Loading"]</p> }
 else if (details is not null)

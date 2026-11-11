@@ -152,6 +152,30 @@ h1:focus {
 :is(.page-workspace, .leasing-workspace) :is(a,button,input,select,textarea,summary):focus-visible { outline: 3px solid var(--bs-primary); outline-offset: 3px; }
 :is(.page-workspace, .leasing-workspace) .badge, .leasing-status { font-weight: 500; border-radius: 2rem; padding: .35em .7em; }
 :is(.page-subnav, .leasing-subnav) { display: flex; flex-wrap: wrap; gap: .5rem; padding: .75rem; margin-bottom: 1.5rem; border: 1px solid var(--tp-surface-border); background: var(--bs-tertiary-bg); border-radius: .75rem; }
+:is(.mb-2, .mb-4) > a.text-decoration-none,
+.page-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .4rem .75rem;
+    border: 1px solid var(--tp-surface-border);
+    border-radius: .4rem;
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+    font: inherit;
+    text-decoration: none;
+}
+:is(.mb-2, .mb-4) > a.text-decoration-none:hover,
+.page-back-link:not(:disabled):hover {
+    background: var(--bs-secondary-bg);
+    color: var(--bs-body-color);
+}
+:is(.mb-2, .mb-4) > a.text-decoration-none:focus-visible,
+.page-back-link:focus-visible {
+    outline: 3px solid var(--bs-primary);
+    outline-offset: 3px;
+}
+.page-back-link { cursor: pointer; }
 :is(.page-subnav, .leasing-subnav) a { padding: .4rem .75rem; text-decoration: none; color: var(--bs-body-color); border-radius: .4rem; }
 :is(.page-subnav, .leasing-subnav) a:hover { background: var(--bs-secondary-bg); }
 :is(.page-workspace, .leasing-workspace) .leasing-disclosure { border: 1px solid var(--tp-surface-border); border-radius: .75rem; padding: 1rem; margin-bottom: 1rem; background: var(--tp-surface-bg); box-shadow: var(--tp-surface-shadow); }
@@ -165,8 +189,8 @@ h1:focus {
     .page-subnav { gap: .25rem; padding: .5rem; }
 }
 
-.page-workspace a:not(.btn):not(.page-subnav a) { color: var(--bs-link-color); }
-.page-workspace a:not(.btn):not(.page-subnav a):hover { color: var(--bs-link-hover-color); }
+.page-workspace a:not(.btn):not(.page-subnav a):not(.page-back-link) { color: var(--bs-link-color); }
+.page-workspace a:not(.btn):not(.page-subnav a):not(.page-back-link):hover { color: var(--bs-link-hover-color); }
 [data-bs-theme="dark"] :is(.page-workspace, .leasing-workspace) .btn-outline-primary {
     --bs-btn-color: #9ac7ff; --bs-btn-border-color: #9ac7ff;
     --bs-btn-hover-bg: #9ac7ff; --bs-btn-hover-color: #182c46; --bs-btn-hover-border-color: #9ac7ff;

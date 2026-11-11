@@ -12,7 +12,7 @@
 <h1>@L["BulkTitle"]</h1>
 <p>@L["BulkHelp"]</p>
 <p class="text-body-secondary">@L["ProcessingTaxExclusive"] · @L["BulkDraftOnly"]</p>
-<a href="/agreements/bases">@L["ProcessingBases"]</a>
+<a class="page-back-link" href="/agreements/bases"><i class="bi bi-arrow-left" aria-hidden="true"></i> @L["ProcessingBases"]</a>
 @if (error is not null) { <div class="alert alert-danger mt-3" role="alert">@L[error]</div> }
 @if (busy) { <p class="mt-3" role="status">@L[generating ? "BulkGenerating" : "Loading"]</p> }
 <PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("processing-filters", L["AgreementFilters"].Value), ("processing-selection", L["ProcessingPreview"].Value) })" />

@@ -10,7 +10,7 @@
 <p>@L["PaymentScopeHelp"]</p>
 @if(error!=null){<p class="alert alert-danger" role="alert">@L[error]</p>}
 @if(data!=null){
-<a href="@($"/leasing/acquisitions/{Id}")">@L["LeasingAcquisition"]</a>
+<a class="page-back-link" href="@($"/leasing/acquisitions/{Id}")"><i class="bi bi-arrow-left" aria-hidden="true"></i> @L["LeasingAcquisition"]</a>
 <section class="card my-3"><div class="card-body"><h2 class="h4">@L["PaymentFinancing"]</h2>
 <label>@L["PaymentAsOf"] <input class="form-control" type="date" @bind="asOf" /></label>
 @{var current=LeasingService.FinancingAt(data.Financing,asOf);}
