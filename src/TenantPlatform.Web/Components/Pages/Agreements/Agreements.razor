@@ -1,6 +1,7 @@
 @page "/agreements"
 @attribute [Authorize]
 @rendermode InteractiveServer
+@implements IDisposable
 @inject IAgreementService AgreementsService
 @inject ITenantAuthorizationService Authorization
 @inject ICurrentUserContextService UserContext
@@ -55,7 +56,8 @@
             </select>
             @if (filter.Attention.HasValue) { <p class="small text-muted mt-2">@L["DashboardFilterHelp"]</p> }
         </div>
-        <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary" @onclick="SearchAsync">@L["Search"]</button></div>
+        @if (result is not null) { <DimensionListFilterFields Catalog="result.DimensionFilters" Selections="filter.Dimensions" /> }
+        <div class="col-12 d-flex gap-2"><button class="btn btn-primary" @onclick="SearchAsync">@L["Search"]</button><button type="button" class="btn btn-outline-secondary" @onclick="ResetAsync">@L["Reset"]</button></div>
     </div></fieldset>
     </div></div>
 }
@@ -120,6 +122,8 @@ else if (result is not null)
     private AgreementPageDto? result;
     private bool busy = true, allowed, canCreate, error;
     private Guid accountId;
+    private CancellationTokenSource? loadCancellation;
+    private long loadVersion;
     protected override async Task OnInitializedAsync()
     {
         if (UserContext.Current.CurrentAccountId is not Guid id || !await Authorization.CanUseAgreementsAsync())
@@ -135,13 +139,27 @@ else if (result is not null)
     }
     private async Task LoadAsync()
     {
+        loadCancellation?.Cancel(); loadCancellation?.Dispose(); loadCancellation = new(); var version = ++loadVersion; var token = loadCancellation.Token;
         busy = true; error = false;
-        try { result = await AgreementsService.ListAsync(accountId, filter); filter.Page = result.Page; }
+        try
+        {
+            var next = await AgreementsService.ListAsync(accountId, filter, token);
+            if (version != loadVersion) return;
+            result = next; filter.Page = result.Page;
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (Exception) { error = true; result = null; }
-        finally { busy = false; }
+        finally { if (version == loadVersion) busy = false; }
     }
     private Task SearchAsync() { filter.Page = 1; return LoadAsync(); }
+    private Task ResetAsync()
+    {
+        filter.Search = null; filter.Status = null; filter.Type = null; filter.OwnerUserId = null; filter.Attention = null; filter.Dimensions.Clear(); filter.Page = 1;
+        if (!string.IsNullOrEmpty(Attention)) { Attention = null; Navigation.NavigateTo("/agreements", replace: true); return Task.CompletedTask; }
+        return LoadAsync();
+    }
     private Task PreviousAsync() { filter.Page--; return LoadAsync(); }
     private Task NextAsync() { filter.Page++; return LoadAsync(); }
+    public void Dispose() { loadCancellation?.Cancel(); loadCancellation?.Dispose(); }
 }

@@ -3246,4 +3246,6 @@ This is a reminder, not a termination or renewal.</value>
   <data name="LeasingAgreementDimensionUnavailable" xml:space="preserve"><value>The dimension or value is unavailable for new selections.</value></data>
   <data name="LeasingAgreementDimensionConfiguration" xml:space="preserve"><value>A required dimension has no valid selectable values.</value></data>
   <data name="LeasingAgreementDimensionsInherited" xml:space="preserve"><value>Dimension selections are inherited from the framework agreement and cannot be overridden.</value></data>
+  <data name="DimensionFilterHelp" xml:space="preserve"><value>Select one value per dimension. Active dimension filters use AND. Selecting a parent includes its descendants.</value></data>
+  <data name="DimensionFilterUnspecified" xml:space="preserve"><value>Not specified</value></data>
 </root>

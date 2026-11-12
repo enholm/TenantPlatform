@@ -2,6 +2,7 @@
 @inject ICurrentUserContextService User
 @inject ITenantAuthorizationService Authorization
 @inject NavigationManager Navigation
+@implements IDisposable
 
 <div class="leasing-workspace">
 <PageTitle>@Title</PageTitle>
@@ -17,18 +18,19 @@
 @if (allowed)
 {
     <div class="card mb-3"><div class="card-body"><fieldset disabled="@busy"><div class="row g-3">
-        <div class="col-md-4"><label for="leasing-search" class="form-label">@L["Search"]</label><input id="leasing-search" class="form-control" @bind="search" maxlength="200" /></div>
-        <div class="col-md-2"><label for="leasing-kind" class="form-label">@L["LeasingKind"]</label><select id="leasing-kind" class="form-select" @bind="kind">
+        <div class="col-md-4"><label for="leasing-search" class="form-label">@L["Search"]</label><input id="leasing-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
+        <div class="col-md-2"><label for="leasing-kind" class="form-label">@L["LeasingKind"]</label><select id="leasing-kind" class="form-select" @bind="filter.Kind" @bind:after="KindChanged">
             <option value="all">@L["AgreementAll"]</option><option value="frameworks">@L["LeasingFrameworks"]</option><option value="acquisitions">@L["LeasingAcquisitions"]</option><option value="orders">@L["LeasingOrders"]</option>
         </select></div>
-        <div class="col-md-2"><label for="leasing-status" class="form-label">@L["Status"]</label><select id="leasing-status" class="form-select" @bind="status">
+        <div class="col-md-2"><label for="leasing-status" class="form-label">@L["Status"]</label><select id="leasing-status" class="form-select" @bind="filter.Status">
             <option value="">@L["AgreementAll"]</option>
             @foreach (var value in Enum.GetNames<LeasingFrameworkStatus>().Concat(Enum.GetNames<LeasingAcquisitionStatus>())) { <option value="@value">@L[$"LeasingStatus{value}"]</option> }
         </select></div>
-        <div class="col-md-3"><label for="leasing-owner" class="form-label">@L["LeasingOwner"]</label><select id="leasing-owner" class="form-select" @bind="owner"><option value="">@L["AgreementAll"]</option>
+        <div class="col-md-3"><label for="leasing-owner" class="form-label">@L["LeasingOwner"]</label><select id="leasing-owner" class="form-select" @bind="filter.Owner"><option value="">@L["AgreementAll"]</option>
             @foreach (var value in options?.Owners ?? []) { <option value="@value.Id">@value.Name</option> }
         </select></div>
-        <div class="col-md-1 d-flex align-items-end"><button class="btn btn-primary" @onclick="Search">@L["Search"]</button></div>
+        @if (data is not null) { <DimensionListFilterFields Catalog="data.DimensionFilters" Selections="filter.Dimensions" /> }
+        <div class="col-12 d-flex gap-2"><button class="btn btn-primary" @onclick="Search">@L["Search"]</button><button type="button" class="btn btn-outline-secondary" @onclick="Reset">@L["Reset"]</button></div>
     </div></fieldset></div></div>
 }
 @if (busy) { <p role="status">@L["Loading"]</p> }
@@ -55,26 +57,42 @@ else if (data is not null)
 @code {
     [Parameter] public string ViewKind { get; set; } = "all";
     private Guid account; private bool busy = true, allowed, error;
-    private string? search, status; private string kind = "all"; private Guid? owner; private int page = 1;
+    private readonly LeasingListFilter filter = new();
     private LeasingOptions? options; private LeasingPage? data;
+    private CancellationTokenSource? loadCancellation; private long loadVersion;
     private string Title => L[ViewKind == "frameworks" ? "LeasingFrameworks" : ViewKind == "orders" ? "LeasingOrders" : "LeasingOverview"];
     protected override async Task OnParametersSetAsync()
     {
         if (User.Current.CurrentAccountId is not Guid id || !await Authorization.CanUseLeasingAsync()) { Navigation.NavigateTo("/access-denied"); return; }
         if (account != id) options = null;
         account = id; allowed = true;
-        kind = ViewKind == "frameworks" ? "frameworks" : ViewKind == "orders" ? "orders" : "all";
-        page = 1; await Load();
+        filter.Kind = ViewKind == "frameworks" ? "frameworks" : ViewKind == "orders" ? "orders" : "all";
+        filter.Dimensions.Clear(); filter.Page = 1; await Load();
     }
     private async Task Load()
     {
+        loadCancellation?.Cancel(); loadCancellation?.Dispose(); loadCancellation = new(); var version = ++loadVersion; var token = loadCancellation.Token;
         busy = true; error = false;
-        try { options ??= await Service.OptionsAsync(account); data = await Service.ListAsync(account, search, kind, status, owner, page); page = data.Page; }
+        try
+        {
+            options ??= await Service.OptionsAsync(account, token);
+            var next = await Service.ListAsync(account, filter, token);
+            if (version != loadVersion) return;
+            data = next; filter.Page = data.Page;
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (Exception) { error = true; }
-        finally { busy = false; }
+        finally { if (version == loadVersion) busy = false; }
     }
-    private Task Search() { page = 1; return Load(); }
-    private Task Previous() { page--; return Load(); }
-    private Task Next() { page++; return Load(); }
+    private Task Search() { filter.Page = 1; return Load(); }
+    private void KindChanged() { filter.Dimensions.Clear(); filter.Page = 1; }
+    private Task Reset()
+    {
+        filter.Search = null; filter.Status = null; filter.Owner = null; filter.Dimensions.Clear(); filter.Page = 1;
+        filter.Kind = ViewKind == "frameworks" ? "frameworks" : ViewKind == "orders" ? "orders" : "all"; return Load();
+    }
+    private Task Previous() { filter.Page--; return Load(); }
+    private Task Next() { filter.Page++; return Load(); }
+    public void Dispose() { loadCancellation?.Cancel(); loadCancellation?.Dispose(); }
 }

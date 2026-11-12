@@ -1,0 +1,53 @@
+@using TenantPlatform.Web.Services.Dimensions
+
+@if (Catalog.Dimensions.Count > 0)
+{
+    <div class="col-12">
+        <div class="row g-3">
+        @foreach (var dimension in Catalog.Dimensions)
+        {
+            var selection = Find(dimension.DimensionId);
+            <div class="col-lg-4 col-md-6" @key="dimension.DimensionId">
+                <label class="form-label" for="@Id(dimension.DimensionId)">@dimension.Name
+                    @if (dimension.IsHistorical) { <span class="small fw-normal">· @L["AgreementDimensionsHistorical"]</span> }
+                </label>
+                <select id="@Id(dimension.DimensionId)" class="form-select" value="@SelectedValue(selection)"
+                        @onchange="e => Changed(dimension.DimensionId, e.Value?.ToString())">
+                    <option value="">@L["AgreementAll"]</option>
+                    <option value="unspecified">@L["DimensionFilterUnspecified"]</option>
+                    @foreach (var value in dimension.Values)
+                    {
+                        <option value="@value.Id">@value.Path @if (value.IsHistorical) { <text>· @L["AgreementDimensionsHistorical"]</text> }</option>
+                    }
+                </select>
+                @if (!string.IsNullOrWhiteSpace(dimension.Description)) { <div class="form-text">@dimension.Description</div> }
+            </div>
+        }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public DimensionListFilterCatalog Catalog { get; set; } = new([]);
+    [Parameter, EditorRequired] public List<DimensionListFilterSelection> Selections { get; set; } = [];
+    private readonly string prefix = "dimension-filter-" + Guid.NewGuid().ToString("N");
+    private DimensionListFilterSelection? Find(Guid dimension) => Selections.SingleOrDefault(x => x.DimensionId == dimension);
+    private DimensionListFilterSelection Selection(Guid dimension)
+    {
+        var result = Find(dimension);
+        if (result is not null) return result;
+        result = new() { DimensionId = dimension }; Selections.Add(result); return result;
+    }
+    private static string SelectedValue(DimensionListFilterSelection? selection) => selection is null ? "" :
+        selection.IncludeUnspecified ? "unspecified" : selection.ValueId?.ToString() ?? "";
+    private void Changed(Guid dimension, string? input)
+    {
+        var existing = Find(dimension);
+        if (string.IsNullOrEmpty(input)) { if (existing is not null) Selections.Remove(existing); return; }
+        var selection = existing ?? Selection(dimension); selection.ValueIds.Clear();
+        selection.IncludeUnspecified = input == "unspecified";
+        selection.ValueId = !selection.IncludeUnspecified && Guid.TryParse(input, out var value) ? value : null;
+        if (!selection.IncludeUnspecified && !selection.ValueId.HasValue) Selections.Remove(selection);
+    }
+    private string Id(Guid dimension) => $"{prefix}-{dimension:N}";
+}

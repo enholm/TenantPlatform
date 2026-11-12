@@ -11,6 +11,7 @@ using TenantPlatform.Core.Leasing;
 using TenantPlatform.Web.Components.Pages.Agreements;
 using TenantPlatform.Web.Components.Pages.Dimensions;
 using TenantPlatform.Web.Components.Pages.Leasing;
+using TenantPlatform.Web.Components.Shared;
 using TenantPlatform.Web.Services.Agreements;
 using TenantPlatform.Web.Services.Dimensions;
 using TenantPlatform.Web.Services.Leasing;
@@ -31,10 +32,10 @@ static class ComponentChecks
         var services = new ServiceCollection().AddLogging().AddLocalization(o => o.ResourcesPath = "Resources");
         await using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
-        foreach (var (language, name, description, dimensionsHeading) in new[] {
-            ("nb-NO", "Norsk navn", "Norsk beskrivelse", "Dimensjoner"),
-            ("en-GB", "English name", "English description", "Dimensions"),
-            ("sv-SE", "Svenskt namn", "Svensk beskrivning", "Dimensioner") })
+        foreach (var (language, name, description, dimensionsHeading, unspecifiedLabel) in new[] {
+            ("nb-NO", "Norsk navn", "Norsk beskrivelse", "Dimensjoner", "Ikke angitt"),
+            ("en-GB", "English name", "English description", "Dimensions", "Not specified"),
+            ("sv-SE", "Svenskt namn", "Svensk beskrivning", "Dimensioner", "Inte angivet") })
         {
             CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(language);
             await renderer.Dispatcher.InvokeAsync(async () =>
@@ -54,6 +55,19 @@ static class ComponentChecks
                 var headings = language switch { "nb-NO" => ("På leasingavtalen", "På avtalelinjene"), "en-GB" => ("On the leasing agreement", "On agreement lines"), _ => ("På leasingavtalet", "På avtalsraderna") };
                 Verify.That(ruleHtml.Contains(headings.Item1) && ruleHtml.Contains(headings.Item2),
                     "Leasing administration distinguishes agreement and line rules: " + language);
+
+                var listFilterCatalog = new DimensionListFilterCatalog([
+                    new(dimension.Id, dimension.Code, name, description, false,
+                        [new(value.Id, null, value.Name, value.Code, "Parent / " + value.Name, 1, false)])]);
+                var listFilterSelections = new List<DimensionListFilterSelection>();
+                var listFilters = await renderer.RenderComponentAsync<DimensionListFilterFields>(Parameters(
+                    ("Catalog", listFilterCatalog), ("Selections", listFilterSelections)));
+                var listFilterHtml = Decode(listFilters.ToHtmlString());
+                Verify.That(!listFilterHtml.Contains("<h3") && !listFilterHtml.Contains("<p") && listFilterHtml.Contains(name) && listFilterHtml.Contains(description) &&
+                    listFilterHtml.Contains(unspecifiedLabel) && listFilterHtml.Contains("Parent / " + value.Name) &&
+                    listFilterHtml.Contains(dimension.Id.ToString("N")) && listFilterHtml.Contains(value.Id.ToString()) &&
+                    Occurrences(listFilterHtml, "class=\"form-select\"") == 1 && !listFilterHtml.Contains("form-check-input") && listFilterSelections.Count == 0,
+                    "shared list filter renders only the localized dimension label and dropdown: " + language);
 
                 var assignedValue = Guid.NewGuid();
                 var agreementOption = new AgreementDimensionOptionDto(dimension.Id, dimension.Code, name, description,
@@ -104,6 +118,24 @@ static class ComponentChecks
         CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("nb-NO");
         await renderer.Dispatcher.InvokeAsync(async () =>
         {
+            var filterSelections = new List<DimensionListFilterSelection>();
+            var filterCatalog = new DimensionListFilterCatalog([
+                new(dimension.Id, dimension.Code, "Norsk navn", "Norsk beskrivelse", false,
+                    [new(value.Id, null, value.Name, value.Code, "Parent / " + value.Name, 1, false)])]);
+            var filterHostState = new ComponentState(typeof(DimensionListFilterFields));
+            filterHostState.Parameters["Catalog"] = filterCatalog; filterHostState.Parameters["Selections"] = filterSelections;
+            _ = await renderer.RenderComponentAsync<ComponentHost>(Parameters(("State", filterHostState)));
+            var filterComponent = (DimensionListFilterFields)filterHostState.Component!;
+            var changed = typeof(DimensionListFilterFields).GetMethod("Changed", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            changed.Invoke(filterComponent, [dimension.Id, value.Id.ToString()]);
+            Verify.That(filterSelections.Single().ValueId == value.Id && !filterSelections.Single().IncludeUnspecified && filterSelections.Single().ValueIds.Count == 0,
+                "single dropdown stores exactly one concrete value without hidden legacy values");
+            changed.Invoke(filterComponent, [dimension.Id, "unspecified"]);
+            Verify.That(filterSelections.Single().ValueId is null && filterSelections.Single().IncludeUnspecified,
+                "single dropdown replaces the concrete value with not specified");
+            changed.Invoke(filterComponent, [dimension.Id, ""]);
+            Verify.That(filterSelections.Count == 0, "All removes the dimension criterion from filter state");
+
             var original = JsonSerializer.Serialize(dimension);
             Dimension? submitted = null;
             var state = new ComponentState(typeof(DimensionEditorDialog));

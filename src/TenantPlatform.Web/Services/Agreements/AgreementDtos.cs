@@ -1,4 +1,5 @@
 using TenantPlatform.Core.Agreements;
+using TenantPlatform.Web.Services.Dimensions;
 
 namespace TenantPlatform.Web.Services.Agreements;
 
@@ -63,7 +64,8 @@ public class AgreementDetailsDto : SaveAgreementRequest
 public record AgreementListItemDto(Guid Id, string Title, string CounterpartyName, AgreementType Type,
     AgreementStatus Status, Guid OwnerUserId, string OwnerName, DateOnly? EndDate, DateOnly? NoticeDeadline, bool IsArchived = false);
 public record AgreementOptionDto(Guid Id, string Name, Guid? BuildingId = null);
-public record AgreementPageDto(List<AgreementListItemDto> Items, int TotalCount, int Page, int PageSize, List<AgreementOptionDto> Owners);
+public record AgreementPageDto(List<AgreementListItemDto> Items, int TotalCount, int Page, int PageSize,
+    List<AgreementOptionDto> Owners, DimensionListFilterCatalog DimensionFilters);
 public class AgreementFilter
 {
     public AgreementAttention? Attention { get; set; }
@@ -71,6 +73,7 @@ public class AgreementFilter
     public AgreementStatus? Status { get; set; }
     public AgreementType? Type { get; set; }
     public Guid? OwnerUserId { get; set; }
+    public List<DimensionListFilterSelection> Dimensions { get; set; } = [];
     public int Page { get; set; } = 1;
 }
 public class AgreementOptionsDto

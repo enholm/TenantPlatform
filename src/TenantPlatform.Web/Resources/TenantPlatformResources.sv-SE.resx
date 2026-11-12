@@ -3283,4 +3283,6 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="LeasingAgreementDimensionUnavailable" xml:space="preserve"><value>Dimensionen eller värdet är inte tillgängligt för nya val.</value></data>
   <data name="LeasingAgreementDimensionConfiguration" xml:space="preserve"><value>En obligatorisk dimension saknar giltiga valbara värden.</value></data>
   <data name="LeasingAgreementDimensionsInherited" xml:space="preserve"><value>Dimensionsvalen ärvs från ramavtalet och kan inte åsidosättas.</value></data>
+  <data name="DimensionFilterHelp" xml:space="preserve"><value>Välj ett värde per dimension. Aktiva dimensionsfilter kombineras med OCH. Val av en förälder inkluderar dess underordnade värden.</value></data>
+  <data name="DimensionFilterUnspecified" xml:space="preserve"><value>Inte angivet</value></data>
 </root>

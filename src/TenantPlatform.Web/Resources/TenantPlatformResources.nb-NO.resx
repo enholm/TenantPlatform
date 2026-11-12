@@ -3282,4 +3282,6 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="LeasingAgreementDimensionUnavailable" xml:space="preserve"><value>Dimensjonen eller verdien er ikke tilgjengelig for nye valg.</value></data>
   <data name="LeasingAgreementDimensionConfiguration" xml:space="preserve"><value>En obligatorisk dimensjon mangler gyldige valgbare verdier.</value></data>
   <data name="LeasingAgreementDimensionsInherited" xml:space="preserve"><value>Dimensjonsvalgene arves fra rammeavtalen og kan ikke overstyres.</value></data>
+  <data name="DimensionFilterHelp" xml:space="preserve"><value>Velg én verdi per dimensjon. Aktive dimensjonsfiltre kombineres med OG. Valg av en forelder inkluderer etterkommere.</value></data>
+  <data name="DimensionFilterUnspecified" xml:space="preserve"><value>Ikke angitt</value></data>
 </root>

@@ -4,6 +4,7 @@ using TenantPlatform.Infrastructure.Agreements;
 using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
+using TenantPlatform.Web.Services.Dimensions;
 
 namespace TenantPlatform.Web.Services.Agreements;
 
@@ -63,6 +64,15 @@ public partial class AgreementService(
                             select new { u.Id, Name = u.FirstName + " " + u.LastName })
             .Distinct().OrderBy(x => x.Name)
             .Select(x => new AgreementOptionDto(x.Id, x.Name, null)).ToListAsync(cancellationToken);
+        var dimensionCatalog = await LoadAgreementListFilterCatalogAsync(db, accountId, visible, cancellationToken);
+        var dimensionPlan = DimensionListFilters.Plan(dimensionCatalog, filter.Dimensions);
+        foreach (var criterion in dimensionPlan)
+        {
+            var dimensionId = criterion.DimensionId; var valueIds = criterion.MatchingValueIds; var unspecified = criterion.IncludeUnspecified;
+            visible = visible.Where(agreement =>
+                (unspecified && !db.AgreementDimensionAssignments.Any(x => x.AccountId == accountId && x.AgreementId == agreement.Id && x.DimensionId == dimensionId)) ||
+                db.AgreementDimensionAssignments.Any(x => x.AccountId == accountId && x.AgreementId == agreement.Id && x.DimensionId == dimensionId && valueIds.Contains(x.ValueId)));
+        }
         var query = from a in visible
                     join org in db.Organizations on a.CounterpartyOrganizationId equals org.Id
                     join owner in db.Users on a.OwnerUserId equals owner.Id
@@ -84,7 +94,7 @@ public partial class AgreementService(
             .Select(x => new AgreementListItemDto(x.Agreement.Id, x.Agreement.Title, x.Counterparty, x.Agreement.Type,
                 x.Agreement.Status, x.Agreement.OwnerUserId, x.Owner, x.Agreement.EndDate, x.Agreement.NoticeDeadline, x.Agreement.IsArchived))
             .ToListAsync(cancellationToken);
-        return new(items, count, page, pageSize, owners);
+        return new(items, count, page, pageSize, owners, dimensionCatalog);
     }
 
     public async Task<AgreementDetailsDto> GetAsync(Guid accountId, Guid agreementId, CancellationToken cancellationToken = default)

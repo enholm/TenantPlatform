@@ -6,6 +6,7 @@ using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
 using TenantPlatform.Web.Services.Agreements;
+using TenantPlatform.Web.Services.Dimensions;
 
 namespace TenantPlatform.Web.Services.Leasing;
 
@@ -13,7 +14,16 @@ public sealed class LeasingValidationException(string key) : Exception(key);
 public sealed record LeasingOption(Guid Id, string Name);
 public sealed record LeasingOptions(List<LeasingOption> Parties, List<LeasingOption> Owners, List<LeasingOption> Frameworks, bool CanCreate, bool CanRegisterOrders = false);
 public sealed record LeasingRow(Guid Id, bool Framework, string Name, string Number, string Status, string Owner, DateOnly Start, DateOnly End, string Currency, decimal Amount);
-public sealed record LeasingPage(List<LeasingRow> Items, int Count, int Page, int PageSize);
+public sealed record LeasingPage(List<LeasingRow> Items, int Count, int Page, int PageSize, DimensionListFilterCatalog DimensionFilters);
+public sealed class LeasingListFilter
+{
+    public string? Search { get; set; }
+    public string Kind { get; set; } = "all";
+    public string? Status { get; set; }
+    public Guid? Owner { get; set; }
+    public int Page { get; set; } = 1;
+    public List<DimensionListFilterSelection> Dimensions { get; set; } = [];
+}
 public sealed record LeasingHistoryRow(DateTimeOffset RecordedUtc, string Actor, string Action, string Reason, string BeforeJson, string AfterJson);
 public sealed record LeasingDetails(LeasingFramework? Framework, LeasingAcquisition? Acquisition, string FinanceName,
     string OwnerName, string? SupplierName, string? FrameworkName, decimal Used, bool CanEdit,
@@ -54,30 +64,44 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
                 .Select(x => new LeasingOption(x.Id, x.Name)).ToListAsync(ct), admin, admin || await Frameworks(db, account, user, false).AnyAsync(ct));
     }
 
-    public async Task<LeasingPage> ListAsync(Guid account, string? search, string kind, string? status, Guid? owner, int page, CancellationToken ct = default)
+    public Task<LeasingPage> ListAsync(Guid account, string? search, string kind, string? status, Guid? owner, int page, CancellationToken ct = default) =>
+        ListAsync(account, new LeasingListFilter { Search = search, Kind = kind, Status = status, Owner = owner, Page = page }, ct);
+
+    public async Task<LeasingPage> ListAsync(Guid account, LeasingListFilter filter, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         var frameworkReader = admin || await authorization.CanChangeLeasingLimitAsync(ct);
         var frameworks = Frameworks(db, account, user, frameworkReader).AsNoTracking();
         var acquisitions = Acquisitions(db, account, user, admin).AsNoTracking();
-        if (kind == "orders") acquisitions = acquisitions.Where(x => x.FrameworkId == null);
-        if (owner.HasValue) { frameworks = frameworks.Where(x => x.OwnerUserId == owner); acquisitions = acquisitions.Where(x => x.OwnerUserId == owner); }
-        if (!string.IsNullOrWhiteSpace(search))
+        if (filter.Kind == "orders") acquisitions = acquisitions.Where(x => x.FrameworkId == null);
+        if (filter.Kind is "orders" or "acquisitions") frameworks = frameworks.Where(x => false);
+        if (filter.Kind == "frameworks") acquisitions = acquisitions.Where(x => false);
+        var dimensionCatalog = await LoadListDimensionFilters(db, account, frameworks, acquisitions, ct);
+        foreach (var criterion in DimensionListFilters.Plan(dimensionCatalog, filter.Dimensions))
         {
-            var term = search.Trim().ToLowerInvariant();
+            var dimensionId = criterion.DimensionId; var valueIds = criterion.MatchingValueIds; var unspecified = criterion.IncludeUnspecified;
+            frameworks = frameworks.Where(framework =>
+                (unspecified && !db.LeasingFrameworkDimensionAssignments.Any(x => x.AccountId == account && x.FrameworkId == framework.Id && x.DimensionId == dimensionId)) ||
+                db.LeasingFrameworkDimensionAssignments.Any(x => x.AccountId == account && x.FrameworkId == framework.Id && x.DimensionId == dimensionId && valueIds.Contains(x.ValueId)));
+            acquisitions = acquisitions.Where(acquisition =>
+                (unspecified && !db.LeasingAcquisitionDimensionAssignments.Any(x => x.AccountId == account && x.AcquisitionId == acquisition.Id && x.DimensionId == dimensionId)) ||
+                db.LeasingAcquisitionDimensionAssignments.Any(x => x.AccountId == account && x.AcquisitionId == acquisition.Id && x.DimensionId == dimensionId && valueIds.Contains(x.ValueId)));
+        }
+        if (filter.Owner.HasValue) { frameworks = frameworks.Where(x => x.OwnerUserId == filter.Owner.Value); acquisitions = acquisitions.Where(x => x.OwnerUserId == filter.Owner.Value); }
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var term = filter.Search.Trim().ToLowerInvariant();
             frameworks = frameworks.Where(x => x.Name.ToLower().Contains(term) || x.Number.ToLower().Contains(term));
             acquisitions = acquisitions.Where(x => x.Name.ToLower().Contains(term) || x.Reference.ToLower().Contains(term));
         }
-        if (!string.IsNullOrEmpty(status))
+        if (!string.IsNullOrEmpty(filter.Status))
         {
-            frameworks = Enum.TryParse<LeasingFrameworkStatus>(status, out var fs) && Enum.IsDefined(fs)
+            frameworks = Enum.TryParse<LeasingFrameworkStatus>(filter.Status, out var fs) && Enum.IsDefined(fs)
                 ? frameworks.Where(x => x.Status == fs) : frameworks.Where(x => false);
-            acquisitions = Enum.TryParse<LeasingAcquisitionStatus>(status, out var acs) && Enum.IsDefined(acs)
+            acquisitions = Enum.TryParse<LeasingAcquisitionStatus>(filter.Status, out var acs) && Enum.IsDefined(acs)
                 ? acquisitions.Where(x => x.Status == acs) : acquisitions.Where(x => false);
         }
-        if (kind is "orders" or "acquisitions") frameworks = frameworks.Where(x => false);
-        if (kind == "frameworks") acquisitions = acquisitions.Where(x => false);
         // Project a common shape before paging; no financial totals from inaccessible agreements.
         var frows = frameworks.Select(x => new { x.Id, Framework = true, x.Name, Number = x.Number, Status = (int)x.Status,
             x.OwnerUserId, Start = x.AcquisitionFrom, End = x.AcquisitionTo, x.Currency, Amount = x.LimitNet + x.LimitVat });
@@ -86,13 +110,13 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         var query = frows.Concat(arows);
         var count = await query.CountAsync(ct);
         const int size = 25;
-        page = Math.Clamp(page, 1, Math.Max(1, (count + size - 1) / size));
+        var page = Math.Clamp(filter.Page, 1, Math.Max(1, (count + size - 1) / size));
         var rows = await query.OrderBy(x => x.Name).ThenBy(x => x.Id).Skip((page - 1) * size).Take(size).ToListAsync(ct);
         var ids = rows.Select(x => x.OwnerUserId).Distinct().ToArray();
         var names = await db.Users.Where(x => ids.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.FirstName + " " + x.LastName, ct);
         return new(rows.Select(x => new LeasingRow(x.Id, x.Framework, x.Name, x.Number,
             x.Framework ? ((LeasingFrameworkStatus)x.Status).ToString() : ((LeasingAcquisitionStatus)x.Status).ToString(),
-            names.GetValueOrDefault(x.OwnerUserId, ""), x.Start, x.End, x.Currency, x.Amount)).ToList(), count, page, size);
+            names.GetValueOrDefault(x.OwnerUserId, ""), x.Start, x.End, x.Currency, x.Amount)).ToList(), count, page, size, dimensionCatalog);
     }
 
     public async Task<LeasingDetails> GetAsync(Guid account, Guid id, bool framework, CancellationToken ct = default)
