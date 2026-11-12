@@ -49,6 +49,42 @@ public sealed class LeasingDimensionRuleConfiguration : IEntityTypeConfiguration
         b.HasOne<Dimension>().WithMany().HasForeignKey(x => new { x.AccountId, x.DimensionId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
     }
 }
+public sealed class LeasingAgreementDimensionRuleConfiguration : IEntityTypeConfiguration<LeasingAgreementDimensionRule>
+{
+    public void Configure(EntityTypeBuilder<LeasingAgreementDimensionRule> b)
+    {
+        b.ToTable("leasing_agreement_dimension_rules", t => t.HasCheckConstraint("CK_leasing_agreement_dimension_rule_required", "NOT \"IsRequired\" OR \"IsEnabled\""));
+        b.HasKey(x => new { x.AccountId, x.DimensionId }); b.Property(x => x.Revision).IsConcurrencyToken();
+        b.HasOne<Dimension>().WithMany().HasForeignKey(x => new { x.AccountId, x.DimensionId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+public sealed class LeasingFrameworkDimensionAssignmentConfiguration : IEntityTypeConfiguration<LeasingFrameworkDimensionAssignment>
+{
+    public void Configure(EntityTypeBuilder<LeasingFrameworkDimensionAssignment> b)
+    {
+        b.ToTable("leasing_framework_dimension_assignments"); b.HasKey(x => x.Id);
+        b.HasIndex(x => new { x.AccountId, x.FrameworkId, x.DimensionId, x.ValueId }).IsUnique();
+        Snapshot(b);
+        b.HasOne<LeasingFramework>().WithMany(x => x.DimensionAssignments).HasForeignKey(x => new { x.AccountId, x.FrameworkId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<DimensionValue>().WithMany().HasForeignKey(x => new { x.AccountId, x.DimensionId, x.ValueId }).HasPrincipalKey(x => new { x.AccountId, x.DimensionId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+    }
+    internal static void Snapshot<T>(EntityTypeBuilder<T> b) where T : class
+    {
+        b.Property("DimensionName").HasMaxLength(200); b.Property("DimensionCode").HasMaxLength(50);
+        b.Property("ValueName").HasMaxLength(200); b.Property("ValueCode").HasMaxLength(50);
+    }
+}
+public sealed class LeasingAcquisitionDimensionAssignmentConfiguration : IEntityTypeConfiguration<LeasingAcquisitionDimensionAssignment>
+{
+    public void Configure(EntityTypeBuilder<LeasingAcquisitionDimensionAssignment> b)
+    {
+        b.ToTable("leasing_acquisition_dimension_assignments"); b.HasKey(x => x.Id);
+        b.HasIndex(x => new { x.AccountId, x.AcquisitionId, x.DimensionId, x.ValueId }).IsUnique();
+        LeasingFrameworkDimensionAssignmentConfiguration.Snapshot(b);
+        b.HasOne<LeasingAcquisition>().WithMany(x => x.DimensionAssignments).HasForeignKey(x => new { x.AccountId, x.AcquisitionId }).HasPrincipalKey(x => new { x.AccountId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<DimensionValue>().WithMany().HasForeignKey(x => new { x.AccountId, x.DimensionId, x.ValueId }).HasPrincipalKey(x => new { x.AccountId, x.DimensionId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+    }
+}
 public sealed class LeasingAllocationDimensionConfiguration : IEntityTypeConfiguration<LeasingAllocationDimension>
 {
     public void Configure(EntityTypeBuilder<LeasingAllocationDimension> b)

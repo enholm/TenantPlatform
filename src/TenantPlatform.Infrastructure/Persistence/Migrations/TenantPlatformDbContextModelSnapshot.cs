@@ -2116,6 +2116,84 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingAcquisitionDimensionAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AcquisitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DimensionCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("DimensionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DimensionName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ValueCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ValueId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ValueName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ValuePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "DimensionId", "ValueId");
+
+                    b.HasIndex("AccountId", "AcquisitionId", "DimensionId", "ValueId")
+                        .IsUnique();
+
+                    b.ToTable("leasing_acquisition_dimension_assignments", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingAgreementDimensionRule", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DimensionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("AccountId", "DimensionId");
+
+                    b.ToTable("leasing_agreement_dimension_rules", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_leasing_agreement_dimension_rule_required", "NOT \"IsRequired\" OR \"IsEnabled\"");
+                        });
+                });
+
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingAllocationDimension", b =>
                 {
                     b.Property<Guid>("AccountId")
@@ -2605,6 +2683,58 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("CK_leasing_framework_status", "\"Status\" IN (1,2,3)");
                         });
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingFrameworkDimensionAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DimensionCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("DimensionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DimensionName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("FrameworkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ValueCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ValueId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ValueName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ValuePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "DimensionId", "ValueId");
+
+                    b.HasIndex("AccountId", "FrameworkId", "DimensionId", "ValueId")
+                        .IsUnique();
+
+                    b.ToTable("leasing_framework_dimension_assignments", (string)null);
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingHistory", b =>
@@ -5497,6 +5627,33 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingAcquisitionDimensionAssignment", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingAcquisition", null)
+                        .WithMany("DimensionAssignments")
+                        .HasForeignKey("AccountId", "AcquisitionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Dimensions.DimensionValue", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "DimensionId", "ValueId")
+                        .HasPrincipalKey("AccountId", "DimensionId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingAgreementDimensionRule", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Dimensions.Dimension", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "DimensionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingAllocationDimension", b =>
                 {
                     b.HasOne("TenantPlatform.Core.Dimensions.Dimension", null)
@@ -5791,6 +5948,23 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         });
 
                     b.Navigation("Terms")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingFrameworkDimensionAssignment", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Leasing.LeasingFramework", null)
+                        .WithMany("DimensionAssignments")
+                        .HasForeignKey("AccountId", "FrameworkId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Dimensions.DimensionValue", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "DimensionId", "ValueId")
+                        .HasPrincipalKey("AccountId", "DimensionId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -6464,7 +6638,14 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingAcquisition", b =>
                 {
+                    b.Navigation("DimensionAssignments");
+
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingFramework", b =>
+                {
+                    b.Navigation("DimensionAssignments");
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Leasing.LeasingInvoice", b =>

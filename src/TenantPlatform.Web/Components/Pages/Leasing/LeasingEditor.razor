@@ -72,6 +72,10 @@
             @if (!framework) { <p>@L["LeasingEndDate"]: @EndDateText()</p> }
             <p class="small text-muted">@L["LeasingDateRule"]</p>
         </div></div>
+        @if (dimensionState is not null)
+        {
+            <LeasingAgreementDimensionEditor State="dimensionState" Existing="@Id.HasValue" />
+        }
         @if (!framework)
         {
             <div class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingItems"]</h2>
@@ -116,6 +120,7 @@
     private bool framework, ready, busy = true, wasRegistered; private Guid account; private string? error; private string reason = "";
     private LeasingFramework f = new(); private LeasingAcquisition a = new(); private LeasingOptions? options;
     private LeasingClassificationCatalog? catalog;
+    private LeasingAgreementDimensionEditState? dimensionState;
     private readonly Dictionary<LeasingItem, LeasingClassificationInput> classifications = new();
     private readonly HashSet<LeasingItem> dirty = [];
     private LeasingClassificationInput State(LeasingItem item) { if (!classifications.TryGetValue(item, out var value)) classifications[item] = value = LeasingClassificationInput.From(item); return value; }
@@ -144,14 +149,20 @@
                     a = details.Acquisition!; savedAcquisition = System.Text.Json.JsonSerializer.Deserialize<LeasingAcquisition>(System.Text.Json.JsonSerializer.Serialize(a)); a.Items = a.Items.OrderBy(x => x.Position).ToList(); wasRegistered = a.Status == LeasingAcquisitionStatus.Registered;
                     if (a.FrameworkId.HasValue && options.Frameworks.All(x => x.Id != a.FrameworkId)) options.Frameworks.Add(new(a.FrameworkId.Value, details.FrameworkName ?? ""));
                 }
+                dimensionState = new(details.AgreementDimensions);
             }
             else if (framework)
             {
                 if (!options.CanCreate) throw new UnauthorizedAccessException();
                 var defaults = await Service.NewAcquisitionAsync(account, null);
                 f = new() { OwnerUserId = User.Current.UserId, AcquisitionFrom = defaults.PurchaseDate, AcquisitionTo = defaults.PurchaseDate.AddYears(1).AddDays(-1) };
+                dimensionState = new(await Service.AgreementDimensionOptionsAsync(account));
             }
-            else a = OrderId.HasValue ? await Service.NewOrderAcquisitionAsync(account, OrderId.Value) : await Service.NewAcquisitionAsync(account, FrameworkId);
+            else
+            {
+                a = OrderId.HasValue ? await Service.NewOrderAcquisitionAsync(account, OrderId.Value) : await Service.NewAcquisitionAsync(account, FrameworkId);
+                dimensionState = new(await Service.AgreementDimensionOptionsAsync(account, inheritedFrameworkId: a.FrameworkId));
+            }
             if (!framework) catalog = await Service.ClassificationCatalogAsync(account);
             classifications.Clear(); dirty.Clear();
             if (!framework && !Id.HasValue && OrderId.HasValue)
@@ -179,9 +190,17 @@
     }
     private async Task FrameworkChanged()
     {
-        if (!a.FrameworkId.HasValue) return;
         busy = true; error = null;
-        try { var defaults = await Service.NewAcquisitionAsync(account, a.FrameworkId); a.FinanceOrganizationId = defaults.FinanceOrganizationId; a.Currency = defaults.Currency; a.Terms = defaults.Terms; capacity = await Service.GetAsync(account, a.FrameworkId.Value, true); }
+        try
+        {
+            if (!a.FrameworkId.HasValue)
+            {
+                capacity = null; dimensionState?.MakeEditable(); return;
+            }
+            var defaults = await Service.NewAcquisitionAsync(account, a.FrameworkId); a.FinanceOrganizationId = defaults.FinanceOrganizationId; a.Currency = defaults.Currency; a.Terms = defaults.Terms;
+            capacity = await Service.GetAsync(account, a.FrameworkId.Value, true);
+            dimensionState = new(await Service.AgreementDimensionOptionsAsync(account, inheritedFrameworkId: a.FrameworkId));
+        }
         catch (LeasingValidationException ex) { error = ex.Message; }
         catch (Exception) { error = "LeasingFailed"; }
         finally { busy = false; }
@@ -189,7 +208,16 @@
     private async Task Save()
     {
         if (busy) return; busy = true; error = null;
-        try { PrepareDelivery(); var id = framework ? await Service.SaveFrameworkAsync(account, Id, f, reason) : await Service.SaveAcquisitionAsync(account, Id, a, reason, classifications: a.Items.Select((item, index) => (item, index)).Where(x => dirty.Contains(x.item)).ToDictionary(x => x.index, x => State(x.item)), delivery: delivery); Navigation.NavigateTo($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{id}"); }
+        try
+        {
+            PrepareDelivery();
+            var id = framework
+                ? await Service.SaveFrameworkAsync(account, Id, f, reason, dimensionChanges: dimensionState?.Changes(!Id.HasValue))
+                : await Service.SaveAcquisitionAsync(account, Id, a, reason,
+                    classifications: a.Items.Select((item, index) => (item, index)).Where(x => dirty.Contains(x.item)).ToDictionary(x => x.index, x => State(x.item)),
+                    delivery: delivery, agreementDimensionChanges: a.FrameworkId.HasValue ? null : dimensionState?.Changes(!Id.HasValue));
+            Navigation.NavigateTo($"/leasing/{(framework ? "frameworks" : "acquisitions")}/{id}");
+        }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (LeasingValidationException ex) { error = ex.Message; }
         catch (Exception ex) { Logger.LogError(ex, "Could not save leasing record {RecordId} in account {AccountId}", Id, account); error = "LeasingFailed"; }

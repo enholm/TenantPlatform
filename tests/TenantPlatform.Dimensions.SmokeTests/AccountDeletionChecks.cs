@@ -14,7 +14,8 @@ static class AccountDeletionChecks
         // this tests the production deletion decision, never relational FK enforcement.
         foreach (var type in new[] { typeof(Dimension), typeof(DimensionValue), typeof(DimensionTranslation), typeof(DimensionHistory),
             typeof(AgreementDimensionRule), typeof(AgreementDimensionAssignment), typeof(AgreementDimensionHistory),
-            typeof(LeasingDimensionRule), typeof(LeasingDimensionSelection), typeof(LeasingAllocationDimension), typeof(LeasingAllocationRow) })
+            typeof(LeasingDimensionRule), typeof(LeasingAgreementDimensionRule), typeof(LeasingFrameworkDimensionAssignment),
+            typeof(LeasingAcquisitionDimensionAssignment), typeof(LeasingDimensionSelection), typeof(LeasingAllocationDimension), typeof(LeasingAllocationRow) })
         {
             var factory = new DeleteFactory(new DbContextOptionsBuilder<TenantPlatformDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
             var account = Guid.NewGuid(); var other = Guid.NewGuid();

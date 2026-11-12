@@ -3270,4 +3270,17 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="DashboardOpenNode" xml:space="preserve"><value>Visa gruppen {0}</value></data>
   <data name="DashboardContextReset" xml:space="preserve"><value>Grupperingen eller nivån är inte längre tillgänglig. Vyn har återgått till en tillgänglig toppnivå.</value></data>
   <data name="DashboardInvalidHierarchy" xml:space="preserve"><value>Dimensionshierarkin är ogiltig eller har ändrats. Ladda om vyn.</value></data>
+  <data name="LeasingDimensionsOnAgreement" xml:space="preserve"><value>På leasingavtalet</value></data>
+  <data name="LeasingDimensionsOnLines" xml:space="preserve"><value>På avtalsraderna</value></data>
+  <data name="DimensionEnabledLeasingAgreement" xml:space="preserve"><value>Tillgänglig</value></data>
+  <data name="DimensionRequiredLeasingAgreement" xml:space="preserve"><value>Obligatorisk vid registrering</value></data>
+  <data name="DimensionEnabledLeasingLines" xml:space="preserve"><value>Tillgänglig på avtalsrader</value></data>
+  <data name="DimensionRequiredLeasingLines" xml:space="preserve"><value>Obligatorisk vid registrering av avtalsrader</value></data>
+  <data name="LeasingAgreementDimensionsInheritedHelp" xml:space="preserve"><value>Dimensionerna styrs av ramavtalet och kan inte ändras på anskaffningen.</value></data>
+  <data name="LeasingAgreementDimensionInvalid" xml:space="preserve"><value>Välj giltiga dimensionsvärden för leasingavtalet.</value></data>
+  <data name="LeasingAgreementDimensionRequired" xml:space="preserve"><value>Fyll i alla obligatoriska dimensioner på leasingavtalet.</value></data>
+  <data name="LeasingAgreementDimensionSingle" xml:space="preserve"><value>Denna dimension tillåter bara ett val.</value></data>
+  <data name="LeasingAgreementDimensionUnavailable" xml:space="preserve"><value>Dimensionen eller värdet är inte tillgängligt för nya val.</value></data>
+  <data name="LeasingAgreementDimensionConfiguration" xml:space="preserve"><value>En obligatorisk dimension saknar giltiga valbara värden.</value></data>
+  <data name="LeasingAgreementDimensionsInherited" xml:space="preserve"><value>Dimensionsvalen ärvs från ramavtalet och kan inte åsidosättas.</value></data>
 </root>

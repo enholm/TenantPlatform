@@ -9,16 +9,32 @@
             <div role="alert" class="alert alert-danger">@L[Error]</div>
         }
 
-        <EditForm @key="Rule" Model="Rule" OnValidSubmit="SaveAsync" FormName="dimension-rule">
+        <EditForm @key="AgreementRule" Model="AgreementRule" OnValidSubmit="SaveAgreementAsync" FormName="leasing-agreement-dimension-rule">
             <fieldset disabled="@IsBusy">
+                <h3 class="h6">@L["LeasingDimensionsOnAgreement"]</h3>
                 <label class="d-block">
-                    <InputCheckbox @bind-Value="Rule.IsEnabled" /> @L["DimensionEnabledLeasing"]
-                </label>
-                <label class="d-block">
-                    <InputCheckbox @bind-Value="Rule.IsRequired" /> @L["DimensionRequired"]
+                    <InputCheckbox @bind-Value="AgreementRule.IsEnabled" @bind-Value:after="AgreementEnabledChanged" /> @L["DimensionEnabledLeasingAgreement"]
                 </label>
                 <label class="d-block mb-2">
-                    <InputCheckbox @bind-Value="Rule.AllowAllocation" /> @L["DimensionAllowAllocation"]
+                    <InputCheckbox @bind-Value="AgreementRule.IsRequired" @bind-Value:after="AgreementRequiredChanged" /> @L["DimensionRequiredLeasingAgreement"]
+                </label>
+                <button type="submit" class="btn btn-primary" disabled="@IsBusy">@L["Save"]</button>
+            </fieldset>
+        </EditForm>
+
+        <hr />
+
+        <EditForm @key="LineRule" Model="LineRule" OnValidSubmit="SaveLineAsync" FormName="leasing-line-dimension-rule">
+            <fieldset disabled="@IsBusy">
+                <h3 class="h6">@L["LeasingDimensionsOnLines"]</h3>
+                <label class="d-block">
+                    <InputCheckbox @bind-Value="LineRule.IsEnabled" /> @L["DimensionEnabledLeasingLines"]
+                </label>
+                <label class="d-block">
+                    <InputCheckbox @bind-Value="LineRule.IsRequired" /> @L["DimensionRequiredLeasingLines"]
+                </label>
+                <label class="d-block mb-2">
+                    <InputCheckbox @bind-Value="LineRule.AllowAllocation" /> @L["DimensionAllowAllocation"]
                 </label>
                 <button type="submit" class="btn btn-primary" disabled="@IsBusy">@L["Save"]</button>
             </fieldset>
@@ -28,10 +44,16 @@
 
 @code {
     [Parameter, EditorRequired]
-    public LeasingDimensionRule Rule { get; set; } = null!;
+    public LeasingDimensionRule LineRule { get; set; } = null!;
 
     [Parameter, EditorRequired]
-    public EventCallback OnSave { get; set; }
+    public LeasingAgreementDimensionRule AgreementRule { get; set; } = null!;
+
+    [Parameter, EditorRequired]
+    public EventCallback OnSaveLine { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback OnSaveAgreement { get; set; }
 
     [Parameter]
     public string? Error { get; set; }
@@ -39,5 +61,8 @@
     [Parameter]
     public bool IsBusy { get; set; }
 
-    private Task SaveAsync() => OnSave.InvokeAsync();
+    private void AgreementEnabledChanged() { if (!AgreementRule.IsEnabled) AgreementRule.IsRequired = false; }
+    private void AgreementRequiredChanged() { if (AgreementRule.IsRequired) AgreementRule.IsEnabled = true; }
+    private Task SaveLineAsync() => OnSaveLine.InvokeAsync();
+    private Task SaveAgreementAsync() => OnSaveAgreement.InvokeAsync();
 }

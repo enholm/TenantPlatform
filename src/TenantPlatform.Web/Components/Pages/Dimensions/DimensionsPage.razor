@@ -127,7 +127,9 @@ else
                     }
                     else if (activeTab == DetailTab.Rules)
                     {
-                        <DimensionRulesSection Rule="rule" OnSave="SaveRule" Error="@error" IsBusy="busy" />
+                        <DimensionRulesSection LineRule="rule" AgreementRule="leasingAgreementRule"
+                                               OnSaveLine="SaveRule" OnSaveAgreement="SaveLeasingAgreementRule"
+                                               Error="@error" IsBusy="busy" />
                     }
                     else if (activeTab == DetailTab.Agreements)
                     {
@@ -175,6 +177,8 @@ else
     private LeasingClassificationCatalog? catalog;
     private List<AgreementDimensionRuleDto> agreementRules = [];
     private AgreementDimensionRule agreementRule = new();
+    private List<LeasingAgreementDimensionRule> leasingAgreementRules = [];
+    private LeasingAgreementDimensionRule leasingAgreementRule = new();
     private Guid? dimensionId, valueId;
     private Guid account;
     private Dimension? dimensionInput;
@@ -209,6 +213,7 @@ else
     {
         register = await Service.GetAsync();
         catalog = await Leasing.ClassificationCatalogAsync(account);
+        leasingAgreementRules = await Leasing.GetAgreementDimensionRulesAsync(account);
         agreementRules = await Agreements.GetAgreementDimensionRulesAsync(account);
     }
 
@@ -227,6 +232,7 @@ else
     {
         dimensionId = value.Id;
         rule = Copy(catalog!.Dimensions.Single(x => x.Dimension.Id == value.Id).Rule);
+        LoadLeasingAgreementRule(value.Id);
         LoadAgreementRule(value.Id);
         activeTab = tab;
         CancelValue();
@@ -296,6 +302,15 @@ else
         await Leasing.SaveDimensionRuleAsync(account, rule);
         await Reload();
         rule = Copy(catalog!.Dimensions.Single(x => x.Dimension.Id == dimensionId).Rule);
+    });
+
+    private void LoadLeasingAgreementRule(Guid id) => leasingAgreementRule = Copy(leasingAgreementRules.Single(x => x.DimensionId == id));
+
+    private Task SaveLeasingAgreementRule() => Run(async () =>
+    {
+        await Leasing.SaveAgreementDimensionRuleAsync(account, Copy(leasingAgreementRule));
+        await Reload();
+        LoadLeasingAgreementRule(dimensionId!.Value);
     });
 
     private void LoadAgreementRule(Guid id)

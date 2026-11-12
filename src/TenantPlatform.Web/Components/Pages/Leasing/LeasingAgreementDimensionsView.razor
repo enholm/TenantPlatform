@@ -1,0 +1,19 @@
+<section class="card mb-3"><div class="card-body">
+    <h2 class="h5">@L["Dimensions"]</h2>
+    @if (Inherited) { <div class="alert alert-info" role="status">@L["LeasingAgreementDimensionsInheritedHelp"]</div> }
+    @if (!Options.Dimensions.Any(x => x.Values.Any(v => v.IsAssigned))) { <p>@L["AgreementNone"]</p> }
+    @foreach (var dimension in Options.Dimensions.Where(x => x.Values.Any(v => v.IsAssigned)))
+    {
+        <h3 class="h6" @key="dimension.DimensionId">@dimension.Name</h3>
+        <ul>
+        @foreach (var value in dimension.Values.Where(x => x.IsAssigned))
+        {
+            <li @key="value.Id">@value.Path @if (value.IsHistorical) { <span>· @L["AgreementDimensionsHistorical"]</span> }</li>
+        }
+        </ul>
+    }
+</div></section>
+@code {
+    [Parameter, EditorRequired] public LeasingAgreementDimensionOptions Options { get; set; } = null!;
+    [Parameter] public bool Inherited { get; set; }
+}

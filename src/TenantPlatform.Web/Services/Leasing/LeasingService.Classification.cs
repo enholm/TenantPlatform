@@ -9,6 +9,7 @@ namespace TenantPlatform.Web.Services.Leasing;
 public sealed partial class LeasingService
 {
     private static IQueryable<LeasingAcquisition> WithClassifications(IQueryable<LeasingAcquisition> query) => query
+        .Include(x => x.DimensionAssignments)
         .Include(x => x.Items).ThenInclude(x => x.DimensionSelections)
         .Include(x => x.Items).ThenInclude(x => x.AllocationRows)
         .Include(x => x.Items).ThenInclude(x => x.AllocationDimensions).AsSplitQuery();

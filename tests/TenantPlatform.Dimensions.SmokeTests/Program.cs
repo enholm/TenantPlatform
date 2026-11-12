@@ -10,6 +10,7 @@ CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultu
 LocalizationChecks.Run();
 await ServiceChecks.Run();
 await ComponentChecks.Run();
+await LeasingAgreementDimensionChecks.Run();
 await AccountDeletionChecks.Run();
 FinalModelChecks.Run();
 

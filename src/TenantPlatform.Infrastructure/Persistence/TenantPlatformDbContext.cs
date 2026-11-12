@@ -31,6 +31,9 @@ public class TenantPlatformDbContext : DbContext
     public DbSet<DimensionValue> DimensionValues => Set<DimensionValue>();
     public DbSet<DimensionHistory> DimensionHistory => Set<DimensionHistory>();
     public DbSet<LeasingDimensionRule> LeasingDimensionRules => Set<LeasingDimensionRule>();
+    public DbSet<LeasingAgreementDimensionRule> LeasingAgreementDimensionRules => Set<LeasingAgreementDimensionRule>();
+    public DbSet<LeasingFrameworkDimensionAssignment> LeasingFrameworkDimensionAssignments => Set<LeasingFrameworkDimensionAssignment>();
+    public DbSet<LeasingAcquisitionDimensionAssignment> LeasingAcquisitionDimensionAssignments => Set<LeasingAcquisitionDimensionAssignment>();
     public DbSet<LeasingAllocationDimension> LeasingAllocationDimensions => Set<LeasingAllocationDimension>();
     public DbSet<LeasingAllocationRow> LeasingAllocationRows => Set<LeasingAllocationRow>();
     public DbSet<LeasingDimensionSelection> LeasingDimensionSelections => Set<LeasingDimensionSelection>();

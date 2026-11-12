@@ -17,7 +17,8 @@ public sealed record LeasingPage(List<LeasingRow> Items, int Count, int Page, in
 public sealed record LeasingHistoryRow(DateTimeOffset RecordedUtc, string Actor, string Action, string Reason, string BeforeJson, string AfterJson);
 public sealed record LeasingDetails(LeasingFramework? Framework, LeasingAcquisition? Acquisition, string FinanceName,
     string OwnerName, string? SupplierName, string? FrameworkName, decimal Used, bool CanEdit,
-    List<LeasingAcquisition> Acquisitions, List<LeasingDocument> Documents, List<LeasingHistoryRow> History, Dictionary<Guid, string> ReferenceNames, decimal Reserved = 0);
+    List<LeasingAcquisition> Acquisitions, List<LeasingDocument> Documents, List<LeasingHistoryRow> History, Dictionary<Guid, string> ReferenceNames,
+    decimal Reserved, LeasingAgreementDimensionOptions AgreementDimensions);
 
 public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbContext> factory,
     ICurrentUserContextService context, ITenantAuthorizationService authorization, IAgreementDocumentStorage storage,
@@ -102,7 +103,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         var reportReader = await ReportReader(ct);
         var readAdmin = admin || reportReader || orderApprover || await authorization.CanChangeLeasingLimitAsync(ct);
         LeasingFramework? f = null; LeasingAcquisition? a = null;
-        if (framework) f = await db.LeasingFrameworks.Where(x => x.AccountId == account && (readAdmin || x.OwnerUserId == user || db.LeasingOrders.Any(o => o.AccountId == account && o.FrameworkId == x.Id && o.OwnerUserId == user))).AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
+        if (framework) f = await db.LeasingFrameworks.Where(x => x.AccountId == account && (readAdmin || x.OwnerUserId == user || db.LeasingOrders.Any(o => o.AccountId == account && o.FrameworkId == x.Id && o.OwnerUserId == user))).Include(x => x.DimensionAssignments).AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         else a = await WithClassifications(ReadAcquisitions(db, account, user, admin||reportReader, orderApprover).AsNoTracking()).SingleOrDefaultAsync(x => x.Id == id, ct) ?? throw new UnauthorizedAccessException();
         if (a != null) a.Items = a.Items.OrderBy(x => x.Position).ToList();
         var finance = f?.FinanceOrganizationId ?? a!.FinanceOrganizationId;
@@ -120,13 +121,17 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         foreach (var member in await db.UserAccounts.AsNoTracking().Where(x => x.AccountId == account)
             .Select(x => new { x.UserId, Name = x.User.FirstName + " " + x.User.LastName }).ToListAsync(ct)) referenceNames[member.UserId] = member.Name;
         foreach (var frame in await Frameworks(db, account, user, admin).AsNoTracking().Select(x => new { x.Id, x.Name }).ToListAsync(ct)) referenceNames[frame.Id] = frame.Name;
+        var agreementDimensions = await Options(db, account,
+            f is not null ? f.DimensionAssignments.Select(Selection).ToList() : a!.DimensionAssignments.Select(Selection).ToList(),
+            a?.FrameworkId.HasValue == true, a?.FrameworkId.HasValue == true, ct);
         return new(f, a,
             await db.Organizations.Where(x => x.AccountId == account && x.Id == finance).Select(x => x.Name).SingleAsync(ct),
             await db.Users.Where(x => x.Id == owner).Select(x => x.FirstName + " " + x.LastName).SingleAsync(ct),
             a == null ? null : await db.Organizations.Where(x => x.AccountId == account && x.Id == a.SupplierOrganizationId).Select(x => x.Name).SingleAsync(ct),
             a?.FrameworkId == null ? null : await db.LeasingFrameworks.Where(x => x.AccountId == account && x.Id == a.FrameworkId).Select(x => x.Name).SingleAsync(ct),
             f == null ? 0 : (await Capacity(db, f, ct)).Used,
-            f != null ? await Frameworks(db, account, user, admin).AnyAsync(x => x.Id == id, ct) : a?.Status != LeasingAcquisitionStatus.Cancelled && await Acquisitions(db, account, user, admin).AnyAsync(x => x.Id == id, ct), children, documents, history, referenceNames, f == null ? 0 : await Reserved(db, account, f.Id, true, ct));
+            f != null ? await Frameworks(db, account, user, admin).AnyAsync(x => x.Id == id, ct) : a?.Status != LeasingAcquisitionStatus.Cancelled && await Acquisitions(db, account, user, admin).AnyAsync(x => x.Id == id, ct), children, documents, history, referenceNames,
+            f == null ? 0 : await Reserved(db, account, f.Id, true, ct), agreementDimensions);
     }
 
     public async Task<LeasingAcquisition> NewAcquisitionAsync(Guid account, Guid? frameworkId, CancellationToken ct = default)
@@ -153,12 +158,13 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
     private static Task Lock(TenantPlatformDbContext db, Guid account, CancellationToken ct) =>
         db.Database.ExecuteSqlInterpolatedAsync($"SELECT 1 FROM accounts WHERE \"Id\" = {account} FOR UPDATE", ct);
 
-    public async Task<Guid> SaveFrameworkAsync(Guid account, Guid? id, LeasingFramework input, string reason, CancellationToken ct = default)
+    public async Task<Guid> SaveFrameworkAsync(Guid account, Guid? id, LeasingFramework input, string reason, CancellationToken ct = default,
+        List<LeasingAgreementDimensionPatch>? dimensionChanges = null)
     {
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(db, account, ct);
-        var entity = id.HasValue ? await Frameworks(db, account, user, admin).SingleOrDefaultAsync(x => x.Id == id, ct)
+        var entity = id.HasValue ? await Frameworks(db, account, user, admin).Include(x => x.DimensionAssignments).SingleOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new UnauthorizedAccessException() : new LeasingFramework { Id = Guid.NewGuid(), AccountId = account };
         if (!id.HasValue && !admin) throw new UnauthorizedAccessException();
         CheckRevision(entity.Revision, input.Revision, id.HasValue); Reason(reason, id.HasValue);
@@ -193,6 +199,8 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
                 await db.LeasingFollowups.AnyAsync(t=>t.AccountId==account&&(t.FrameworkId==entity.Id||t.AcquisitionId.HasValue&&acquisitionIds.Contains(t.AcquisitionId.Value))&&(t.Status==LeasingFollowupStatus.Open||t.Status==LeasingFollowupStatus.InProgress),ct))throw new LeasingValidationException("LifeFrameworkUnresolved");
         }
         var before = id.HasValue ? Snapshot(entity) : "{}";
+        var dimensionPlan = await PlanAgreementDimensions(db, account, entity.DimensionAssignments.Select(Selection).ToList(), dimensionChanges, !id.HasValue, ct);
+        if (dimensionPlan is not null) Replace(db, entity, dimensionPlan);
         entity.Name = input.Name.Trim(); entity.Number = input.Number.Trim(); entity.FinanceOrganizationId = input.FinanceOrganizationId;
         entity.OwnerUserId = input.OwnerUserId; entity.AcquisitionFrom = input.AcquisitionFrom; entity.AcquisitionTo = input.AcquisitionTo;
         if (entity.CreditNotesReleaseLimit != input.CreditNotesReleaseLimit && await db.LeasingInvoices.AnyAsync(x => x.AccountId == account && x.Kind == LeasingInvoiceKind.CreditNote && x.Status == LeasingInvoiceStatus.Approved && db.LeasingAcquisitions.Any(a => a.AccountId == account && a.Id == x.AcquisitionId && a.FrameworkId == entity.Id), ct)) throw new LeasingValidationException("InvoiceCreditRuleLocked");
@@ -201,21 +209,24 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         entity.Terms = input.Terms.Copy(); entity.Notes = input.Notes?.Trim(); entity.Status = input.Status; entity.Revision = Guid.NewGuid();
         if (!id.HasValue) db.LeasingFrameworks.Add(entity);
         History(db, account, entity.Id, null, user, id.HasValue ? "Updated" : "Created", reason, before, Snapshot(entity));
+        if (id.HasValue && dimensionPlan is not null) await PropagateFrameworkDimensions(db, entity, user, reason, ct);
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return entity.Id;
     }
 
-    public async Task<Guid> SaveAcquisitionAsync(Guid account, Guid? id, LeasingAcquisition input, string reason, CancellationToken ct = default, IReadOnlyDictionary<int, LeasingClassificationInput>? classifications = null, OrderDelivery? delivery = null)
+    public async Task<Guid> SaveAcquisitionAsync(Guid account, Guid? id, LeasingAcquisition input, string reason, CancellationToken ct = default, IReadOnlyDictionary<int, LeasingClassificationInput>? classifications = null, OrderDelivery? delivery = null,
+        List<LeasingAgreementDimensionPatch>? agreementDimensionChanges = null)
     {
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         await using var tx = await db.Database.BeginTransactionAsync(ct); await Lock(db, account, ct);
         if (delivery != null && await OrderRetry(db, account, delivery.OrderId, delivery.RequestId, user, "Realized", ct))
             return await db.LeasingOrderRealizations.Where(x => x.AccountId == account && x.OrderId == delivery.OrderId && x.RequestId == delivery.RequestId).Select(x => x.AcquisitionId).FirstAsync(ct);
-        var result = await SaveAcquisitionCore(db, account, user, admin, id, input, reason, ct, classifications, delivery: delivery);
+        var result = await SaveAcquisitionCore(db, account, user, admin, id, input, reason, ct, classifications, delivery: delivery, agreementDimensionChanges: agreementDimensionChanges);
         await tx.CommitAsync(ct); return result;
     }
     private async Task<Guid> SaveAcquisitionCore(TenantPlatformDbContext db, Guid account, Guid user, bool admin, Guid? id,
-        LeasingAcquisition input, string reason, CancellationToken ct, IReadOnlyDictionary<int, LeasingClassificationInput>? classifications = null, bool invoiceApproval = false, OrderDelivery? delivery = null)
+        LeasingAcquisition input, string reason, CancellationToken ct, IReadOnlyDictionary<int, LeasingClassificationInput>? classifications = null, bool invoiceApproval = false, OrderDelivery? delivery = null,
+        List<LeasingAgreementDimensionPatch>? agreementDimensionChanges = null)
     {
         var entity = id.HasValue ? await WithClassifications(Acquisitions(db, account, user, admin)).SingleOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new UnauthorizedAccessException() : new LeasingAcquisition { Id = Guid.NewGuid(), AccountId = account };
@@ -227,7 +238,7 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         LeasingFramework? framework = null;
         if (input.FrameworkId.HasValue)
         {
-            framework = await db.LeasingFrameworks.SingleOrDefaultAsync(x => x.AccountId == account && x.Id == input.FrameworkId, ct)
+            framework = await db.LeasingFrameworks.Include(x => x.DimensionAssignments).SingleOrDefaultAsync(x => x.AccountId == account && x.Id == input.FrameworkId, ct)
                 ?? throw new UnauthorizedAccessException();
             // A caller cannot attach a purchase to an inaccessible framework, even within the same tenant.
             if (!admin && framework.OwnerUserId != user && (!id.HasValue || entity.FrameworkId != framework.Id) &&
@@ -307,6 +318,15 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         var incomingIds = input.Items.Where(x => x.Id != Guid.Empty).Select(x => x.Id).ToList();
         if (incomingIds.Distinct().Count() != incomingIds.Count || incomingIds.Any(x => !oldIds.Contains(x))) throw new LeasingValidationException("LeasingInvalidLines");
         var before = id.HasValue ? Snapshot(entity) : "{}";
+        List<AgreementSelection>? agreementDimensionPlan;
+        if (framework is not null)
+        {
+            agreementDimensionPlan = InheritedPlan(entity.FrameworkId, framework.Id, !id.HasValue,
+                agreementDimensionChanges, framework.DimensionAssignments.Select(Selection).ToList());
+        }
+        else agreementDimensionPlan = await PlanAgreementDimensions(db, account,
+            entity.DimensionAssignments.Select(Selection).ToList(), agreementDimensionChanges, !id.HasValue, ct);
+        if (agreementDimensionPlan is not null) Replace(db, entity, agreementDimensionPlan);
         entity.FrameworkId = input.FrameworkId; entity.Name = input.Name.Trim(); entity.Reference = input.Reference.Trim();
         entity.SupplierOrganizationId = input.SupplierOrganizationId; entity.FinanceOrganizationId = input.FinanceOrganizationId;
         entity.OwnerUserId = input.OwnerUserId; entity.PurchaseDate = input.PurchaseDate; entity.EndDate = end;

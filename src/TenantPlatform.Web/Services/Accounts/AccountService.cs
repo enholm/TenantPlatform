@@ -172,6 +172,9 @@ public class AccountService : IAccountService
             await dbContext.AgreementDimensionAssignments.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
             await dbContext.AgreementDimensionHistory.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
             await dbContext.LeasingDimensionRules.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.LeasingAgreementDimensionRules.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.LeasingFrameworkDimensionAssignments.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.LeasingAcquisitionDimensionAssignments.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
             await dbContext.LeasingDimensionSelections.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
             await dbContext.LeasingAllocationDimensions.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
             await dbContext.LeasingAllocationRows.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken))

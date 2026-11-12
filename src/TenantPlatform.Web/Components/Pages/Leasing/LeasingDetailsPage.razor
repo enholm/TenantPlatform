@@ -60,6 +60,7 @@
     </dl>@if(a is not null){<details><summary class="small text-body-secondary">@L["InvoiceLegacyReference"]</summary><dl class="row mt-3">            <dt class="col-sm-5">@L["LeasingInvoiceNumber"]</dt><dd class="col-sm-7">@(a.InvoiceNumber ?? L["DashboardUnspecified"])</dd>
             <dt class="col-sm-5">@L["LeasingInvoiceDate"]</dt><dd class="col-sm-7">@(a.InvoiceDate?.ToString("dd.MM.yyyy") ?? L["DashboardUnspecified"])</dd></dl></details>}</div></section></div>
     <div class="col-lg-6"><section class="card"><div class="card-body"><h2 class="h5">@L[f is null ? "LeasingTerms" : "LeasingDefaultTerms"]</h2><LeasingTermsView Terms="@(f?.Terms ?? a!.Terms)" /><p class="text-muted small mt-3">@L["LeasingDateRule"]</p></div></section></div></div>
+    <LeasingAgreementDimensionsView Options="data.AgreementDimensions" Inherited="@(a?.FrameworkId.HasValue == true)" />
     @if (f is not null)
     {
         <section class="card mb-3"><div class="card-body"><h2 class="h5">@L["LeasingCapacity"]</h2><div class="row g-3">

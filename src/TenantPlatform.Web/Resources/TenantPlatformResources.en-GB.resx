@@ -3233,4 +3233,17 @@ This is a reminder, not a termination or renewal.</value>
   <data name="DashboardOpenNode" xml:space="preserve"><value>Open group {0}</value></data>
   <data name="DashboardContextReset" xml:space="preserve"><value>The grouping or level is no longer available. The view has returned to an available top level.</value></data>
   <data name="DashboardInvalidHierarchy" xml:space="preserve"><value>The dimension hierarchy is invalid or has changed. Reload the view.</value></data>
+  <data name="LeasingDimensionsOnAgreement" xml:space="preserve"><value>On the leasing agreement</value></data>
+  <data name="LeasingDimensionsOnLines" xml:space="preserve"><value>On agreement lines</value></data>
+  <data name="DimensionEnabledLeasingAgreement" xml:space="preserve"><value>Available</value></data>
+  <data name="DimensionRequiredLeasingAgreement" xml:space="preserve"><value>Required on registration</value></data>
+  <data name="DimensionEnabledLeasingLines" xml:space="preserve"><value>Available on agreement lines</value></data>
+  <data name="DimensionRequiredLeasingLines" xml:space="preserve"><value>Required when registering agreement lines</value></data>
+  <data name="LeasingAgreementDimensionsInheritedHelp" xml:space="preserve"><value>These dimensions are controlled by the framework agreement and cannot be changed on the acquisition.</value></data>
+  <data name="LeasingAgreementDimensionInvalid" xml:space="preserve"><value>Choose valid dimension values for the leasing agreement.</value></data>
+  <data name="LeasingAgreementDimensionRequired" xml:space="preserve"><value>Complete every required dimension on the leasing agreement.</value></data>
+  <data name="LeasingAgreementDimensionSingle" xml:space="preserve"><value>This dimension allows only one selection.</value></data>
+  <data name="LeasingAgreementDimensionUnavailable" xml:space="preserve"><value>The dimension or value is unavailable for new selections.</value></data>
+  <data name="LeasingAgreementDimensionConfiguration" xml:space="preserve"><value>A required dimension has no valid selectable values.</value></data>
+  <data name="LeasingAgreementDimensionsInherited" xml:space="preserve"><value>Dimension selections are inherited from the framework agreement and cannot be overridden.</value></data>
 </root>

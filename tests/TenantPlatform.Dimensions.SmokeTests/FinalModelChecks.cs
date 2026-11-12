@@ -33,12 +33,14 @@ static class FinalModelChecks
         Verify.That(values.GetForeignKeys().Any(f => f.PrincipalEntityType == values && f.Properties.Select(p => p.Name).SequenceEqual(new[] { "AccountId", "DimensionId", "ParentId" })), "generic parent FK is account and dimension aware");
         var migrations = db.GetService<IMigrationsAssembly>();
         var ordered = migrations.Migrations.OrderBy(x => x.Key).ToList();
-        var latest = migrations.CreateMigration(ordered.Last().Value, db.Database.ProviderName!);
-        Verify.That(ordered.Last().Key.EndsWith("_RemoveLegacyAgreementClassifications"), "legacy drop is after all additive migrations");
-        var up = latest.UpOperations;
+        var legacyIndex = ordered.FindIndex(x => x.Key.EndsWith("_RemoveLegacyAgreementClassifications"));
+        var legacy = migrations.CreateMigration(ordered[legacyIndex].Value, db.Database.ProviderName!);
+        Verify.That(legacyIndex > 0 && ordered.Skip(legacyIndex + 1).All(x => x.Key.EndsWith("_AddLeasingAgreementDimensions")),
+            "legacy drop remains after its additive replacement migrations; later additive features are allowed");
+        var up = legacy.UpOperations;
         Verify.That(up.Count == 8 && up.Take(2).All(x => x is DropForeignKeyOperation) && up.Skip(2).Take(2).All(x => x is DropIndexOperation) && up.Skip(4).Take(2).All(x => x is DropColumnOperation) && up.Skip(6).All(x => x is DropTableOperation), "new Up contains only two FKs, two indexes, two columns, then two tables");
         Verify.That(up.OfType<DropColumnOperation>().All(x => x.Table == "agreements") && up.OfType<DropColumnOperation>().Select(x => x.Name).Order().SequenceEqual(new[] { "GeographicAreaId", "OrganizationElementId" }) && up.OfType<DropTableOperation>().Select(x => x.Name).Order().SequenceEqual(new[] { "geographic_areas", "organization_elements" }), "drop operations target exactly the replaced classification schema");
-        Verify.That(!up.Any(x => x is SqlOperation or InsertDataOperation or UpdateDataOperation) && latest.DownOperations.Count == 12, "new migration has no backfill/copy SQL and Down reconstructs schema only");
+        Verify.That(!up.Any(x => x is SqlOperation or InsertDataOperation or UpdateDataOperation) && legacy.DownOperations.Count == 12, "legacy removal has no backfill/copy SQL and Down reconstructs schema only");
         var schema = new SchemaAudit();
         foreach (var entry in ordered)
         {
@@ -46,13 +48,17 @@ static class FinalModelChecks
             schema.Apply(migration.UpOperations, entry.Key);
         }
         schema.Compare(model.GetRelationalModel());
-        schema.Apply(latest.DownOperations, "new migration Down");
-        var previous = migrations.CreateMigration(ordered[^2].Value, db.Database.ProviderName!);
+        var rollback = new SchemaAudit();
+        foreach (var entry in ordered.Take(legacyIndex + 1))
+            rollback.Apply(migrations.CreateMigration(entry.Value, db.Database.ProviderName!).UpOperations, entry.Key);
+        rollback.Apply(legacy.DownOperations, "legacy migration Down");
+        var previous = migrations.CreateMigration(ordered[legacyIndex - 1].Value, db.Database.ProviderName!);
         var previousModel = db.GetService<IModelRuntimeInitializer>().Initialize(previous.TargetModel, designTime: true);
-        schema.Compare(previousModel.GetRelationalModel());
-        Verify.That(schema.HasTable("geographic_areas") && schema.HasTable("organization_elements"), "Down restores both table structures");
-        schema.Apply(latest.UpOperations, "new migration Up after Down");
-        schema.Compare(model.GetRelationalModel());
+        rollback.Compare(previousModel.GetRelationalModel());
+        Verify.That(rollback.HasTable("geographic_areas") && rollback.HasTable("organization_elements"), "Down restores both table structures");
+        rollback.Apply(legacy.UpOperations, "legacy migration Up after Down");
+        var legacyModel = db.GetService<IModelRuntimeInitializer>().Initialize(legacy.TargetModel, designTime: true);
+        rollback.Compare(legacyModel.GetRelationalModel());
         Verify.That(schema.DataSqlCount > 0, $"{ordered.Count} migrations inspected; {schema.DataSqlCount} historical data SQL operations classified, never executed");
         Verify.That(!db.Database.HasPendingModelChanges() && db.Database.GetDbConnection().State == System.Data.ConnectionState.Closed, "current snapshot matches final model with connection closed");
         var guard = db.GetService<IDbContextOptions>().FindExtension<CoreOptionsExtension>()!.Interceptors!

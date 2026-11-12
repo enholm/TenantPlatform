@@ -51,6 +51,7 @@ public sealed class LeasingFramework
     public string? Notes { get; set; }
     public LeasingFrameworkStatus Status { get; set; } = LeasingFrameworkStatus.Open;
     public Guid Revision { get; set; }
+    public List<LeasingFrameworkDimensionAssignment> DimensionAssignments { get; set; } = [];
 }
 
 public sealed class LeasingAcquisition
@@ -83,6 +84,7 @@ public sealed class LeasingAcquisition
     public LeasingAcquisitionStatus Status { get; set; } = LeasingAcquisitionStatus.Draft;
     public Guid Revision { get; set; }
     public List<LeasingItem> Items { get; set; } = [];
+    public List<LeasingAcquisitionDimensionAssignment> DimensionAssignments { get; set; } = [];
 }
 
 public sealed class LeasingItem

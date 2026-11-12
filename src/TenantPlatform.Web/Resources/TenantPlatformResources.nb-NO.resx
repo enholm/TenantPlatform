@@ -3269,4 +3269,17 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="DashboardOpenNode" xml:space="preserve"><value>Vis gruppen {0}</value></data>
   <data name="DashboardContextReset" xml:space="preserve"><value>Grupperingen eller nivået er ikke lenger tilgjengelig. Visningen er tilbakestilt til et tilgjengelig toppnivå.</value></data>
   <data name="DashboardInvalidHierarchy" xml:space="preserve"><value>Dimensjonshierarkiet er ugyldig eller har endret seg. Last visningen på nytt.</value></data>
+  <data name="LeasingDimensionsOnAgreement" xml:space="preserve"><value>På leasingavtalen</value></data>
+  <data name="LeasingDimensionsOnLines" xml:space="preserve"><value>På avtalelinjene</value></data>
+  <data name="DimensionEnabledLeasingAgreement" xml:space="preserve"><value>Tilgjengelig</value></data>
+  <data name="DimensionRequiredLeasingAgreement" xml:space="preserve"><value>Obligatorisk ved registrering</value></data>
+  <data name="DimensionEnabledLeasingLines" xml:space="preserve"><value>Tilgjengelig på avtalelinjer</value></data>
+  <data name="DimensionRequiredLeasingLines" xml:space="preserve"><value>Obligatorisk ved registrering av avtalelinjer</value></data>
+  <data name="LeasingAgreementDimensionsInheritedHelp" xml:space="preserve"><value>Dimensjonene styres av rammeavtalen og kan ikke endres på anskaffelsen.</value></data>
+  <data name="LeasingAgreementDimensionInvalid" xml:space="preserve"><value>Velg gyldige dimensjonsverdier for leasingavtalen.</value></data>
+  <data name="LeasingAgreementDimensionRequired" xml:space="preserve"><value>Fyll ut alle obligatoriske dimensjoner på leasingavtalen.</value></data>
+  <data name="LeasingAgreementDimensionSingle" xml:space="preserve"><value>Denne dimensjonen tillater bare ett valg.</value></data>
+  <data name="LeasingAgreementDimensionUnavailable" xml:space="preserve"><value>Dimensjonen eller verdien er ikke tilgjengelig for nye valg.</value></data>
+  <data name="LeasingAgreementDimensionConfiguration" xml:space="preserve"><value>En obligatorisk dimensjon mangler gyldige valgbare verdier.</value></data>
+  <data name="LeasingAgreementDimensionsInherited" xml:space="preserve"><value>Dimensjonsvalgene arves fra rammeavtalen og kan ikke overstyres.</value></data>
 </root>

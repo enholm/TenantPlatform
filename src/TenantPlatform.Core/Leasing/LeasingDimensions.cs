@@ -10,6 +10,40 @@ public sealed class LeasingDimensionRule
     public bool AllowAllocation { get; set; }
     public Guid Revision { get; set; }
 }
+public sealed class LeasingAgreementDimensionRule
+{
+    public Guid AccountId { get; set; }
+    public Guid DimensionId { get; set; }
+    public bool IsEnabled { get; set; }
+    public bool IsRequired { get; set; }
+    public Guid Revision { get; set; }
+}
+public sealed class LeasingFrameworkDimensionAssignment
+{
+    public Guid Id { get; set; }
+    public Guid AccountId { get; set; }
+    public Guid FrameworkId { get; set; }
+    public Guid DimensionId { get; set; }
+    public Guid ValueId { get; set; }
+    public string DimensionName { get; set; } = "";
+    public string DimensionCode { get; set; } = "";
+    public string ValueName { get; set; } = "";
+    public string ValueCode { get; set; } = "";
+    public string ValuePath { get; set; } = "";
+}
+public sealed class LeasingAcquisitionDimensionAssignment
+{
+    public Guid Id { get; set; }
+    public Guid AccountId { get; set; }
+    public Guid AcquisitionId { get; set; }
+    public Guid DimensionId { get; set; }
+    public Guid ValueId { get; set; }
+    public string DimensionName { get; set; } = "";
+    public string DimensionCode { get; set; } = "";
+    public string ValueName { get; set; } = "";
+    public string ValueCode { get; set; } = "";
+    public string ValuePath { get; set; } = "";
+}
 public enum LeasingAllocationMode { None = 0, Percent = 1, NetAmount = 2, Quantity = 3 }
 public sealed class LeasingAllocationDimension
 {
