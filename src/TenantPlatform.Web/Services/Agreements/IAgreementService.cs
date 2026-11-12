@@ -4,9 +4,14 @@ namespace TenantPlatform.Web.Services.Agreements;
 
 public interface IAgreementService
 {
+    Task<List<AgreementDimensionRuleDto>> GetAgreementDimensionRulesAsync(Guid accountId, CancellationToken ct = default);
+    Task SaveAgreementDimensionRuleAsync(Guid accountId, AgreementDimensionRule input, CancellationToken ct = default);
+    Task<AgreementDimensionOptionsDto> GetAgreementDimensionOptionsAsync(Guid accountId, Guid? agreementId = null, bool forEdit = false, CancellationToken ct = default);
+    Task<List<AgreementDimensionHistoryDto>> GetAgreementDimensionHistoryAsync(Guid accountId, Guid agreementId, CancellationToken ct = default);
     Task<AgreementAttentionDto> GetAttentionAsync(Guid accountId, CancellationToken ct = default);
     Task<AgreementDashboardList> GetDashboardContractsAsync(Guid accountId, CancellationToken ct = default);
-    Task<AgreementInsightsDto> GetInsightsAsync(Guid accountId, AgreementInsightDimension dimension, Guid? selected = null, CancellationToken ct = default);
+    Task<List<AgreementInsightDimensionOption>> GetInsightDimensionsAsync(Guid accountId, CancellationToken ct = default);
+    Task<AgreementInsightsDto> GetInsightsAsync(Guid accountId, AgreementInsightGrouping grouping, Guid? selected = null, CancellationToken ct = default);
     Task<AgreementBasisApprovalList> ListPendingBasisApprovalsAsync(Guid accountId, AgreementBasisApprovalFilter filter, CancellationToken ct = default);
     Task<List<AgreementBasisApprovalResult>> ApproveBasesAsync(Guid accountId, IReadOnlyList<AgreementBasisApprovalSelection> selection, CancellationToken ct = default);
     Task<List<AgreementBulkBasisOption>> GetBulkBasisOptionsAsync(Guid accountId, CancellationToken ct = default);

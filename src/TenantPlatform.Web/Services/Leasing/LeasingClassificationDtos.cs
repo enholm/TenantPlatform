@@ -4,7 +4,10 @@ using TenantPlatform.Web.Services.Dimensions;
 
 namespace TenantPlatform.Web.Services.Leasing;
 
-public sealed record LeasingDimensionOption(Dimension Dimension, LeasingDimensionRule Rule, List<DimensionValueOption> Values);
+public sealed record LeasingDimensionOption(Dimension Dimension, LeasingDimensionRule Rule, List<DimensionValueOption> Values, string? DefaultLanguage = null)
+{
+    public string DisplayName => DimensionLocalization.Name(Dimension, System.Globalization.CultureInfo.CurrentUICulture.Name, DefaultLanguage);
+}
 public sealed record LeasingClassificationCatalog(List<LeasingDimensionOption> Dimensions, bool CanManage);
 public sealed record LeasingDimensionChoice(Guid DimensionId, Guid ValueId);
 public sealed class LeasingAllocationInput

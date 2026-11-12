@@ -12,6 +12,7 @@ public sealed class Dimension
     public bool LeafOnly { get; set; } = true;
     public int SortOrder { get; set; }
     public Guid Revision { get; set; }
+    public List<DimensionTranslation> Translations { get; set; } = [];
 }
 public sealed class DimensionValue
 {

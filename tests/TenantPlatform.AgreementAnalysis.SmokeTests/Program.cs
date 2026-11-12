@@ -21,6 +21,8 @@ var connection = Environment.GetEnvironmentVariable("AGREEMENT_TEST_CONNECTION")
 var cs = new NpgsqlConnectionStringBuilder(connection);
 if (cs.Database != "tenant_agreement_tests") throw new InvalidOperationException("Use only tenant_agreement_tests.");
 var schema = "analysis_test_" + Guid.NewGuid().ToString("N");
+Console.WriteLine($"Test database: {cs.Database}");
+Console.WriteLine($"Test schema: {schema}");
 await using var setup = new NpgsqlConnection(connection);
 await setup.OpenAsync();
 await using (var command = new NpgsqlCommand($"CREATE SCHEMA \"{schema}\"", setup)) await command.ExecuteNonQueryAsync();
@@ -28,6 +30,7 @@ cs.SearchPath = schema;
 var factory = new TestFactory(new DbContextOptionsBuilder<TenantPlatformDbContext>().UseNpgsql(cs.ConnectionString)
     .AddInterceptors(new AuditSaveChangesInterceptor(new TestAuditContext())).Options);
 var root = Path.Combine(Path.GetTempPath(), schema);
+Console.WriteLine($"File fixtures: {root}");
 var storage = new TestStorage(new LocalAgreementDocumentStorage(Options.Create(new AgreementDocumentStorageOptions { RootPath = root, MaxFileSizeBytes = 1024 * 1024 })));
 var handler = new MockOpenAi();
 var client = new OpenAiContractAnalysisClient(new HttpClient(handler), Options.Create(new AgreementAnalysisOptions { ApiKey = "mock-only-key", Model = "mock-model" }), storage);
@@ -236,13 +239,17 @@ try
     Assert(!File.Exists(Path.Combine(root, orphan)) && saved.Files.All(x => File.Exists(Path.Combine(root, x.StorageKey))), "orphan recovery protects archive files");
     Console.WriteLine("All contract analysis smoke tests passed.");
 }
-finally
+catch
 {
-    NpgsqlConnection.ClearAllPools();
-    await using var drop = new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE", setup);
-    await drop.ExecuteNonQueryAsync();
-    if (Directory.Exists(root)) Directory.Delete(root, true);
+    Console.Error.WriteLine($"Test failed; schema and remaining fixtures preserved for diagnosis: {schema}; {root}");
+    throw;
 }
+NpgsqlConnection.ClearAllPools();
+await using (var drop = new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE", setup))
+    await drop.ExecuteNonQueryAsync();
+Console.WriteLine($"Test schema dropped: {schema}");
+if (Directory.Exists(root)) Directory.Delete(root, true);
+Console.WriteLine($"File fixtures cleaned: {root}");
 AgreementService Service(Guid user, Guid tenant)
 {
     var context = new TestUserContext(user, tenant);

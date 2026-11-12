@@ -38,6 +38,10 @@ public static class SeedIds
     public static Guid MagidaEquipment(int number) => MagidaId(32, number);
     public static Guid MagidaPaymentEvent(int number) => MagidaId(33, number);
 
+    // GEO/DEPT use Dimension numbers 3/4; 1/2 remain reserved for Leasing PROJ/EQUIP.
+    public static Guid MagidaDimensionTranslation(int number) => MagidaId(34, number);
+    public static Guid MagidaAgreementDimensionAssignment(int number) => MagidaId(35, number);
+
     private static Guid MagidaId(int entityKind, int number) =>
         Guid.Parse($"b0000000-{entityKind:x4}-0000-0000-{number:x12}");
 

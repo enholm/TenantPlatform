@@ -2368,31 +2368,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="EditLocation" xml:space="preserve"><value>Redigera plats</value></data>
   <data name="NoDepartments" xml:space="preserve"><value>Inga avdelningar är registrerade.</value></data>
   <data name="NoLocations" xml:space="preserve"><value>Inga platser är registrerade.</value></data>
-  <data name="AccountRegisterConfirmDelete" xml:space="preserve"><value>Vill du ta bort ”{0}”?</value></data>
-  <data name="AccountRegisterInvalidInput" xml:space="preserve"><value>Namn måste ha 1–200 tecken och beskrivning får ha högst 2000 tecken.</value></data>
-  <data name="AccountRegisterNotFound" xml:space="preserve"><value>Posten finns inte i valt konto. Uppdatera sidan.</value></data>
-  <data name="AccountRegisterSaveFailed" xml:space="preserve"><value>Åtgärden kunde inte slutföras. Försök igen.</value></data>
-  <data name="OrganizationElements" xml:space="preserve"><value>Organisationsstruktur</value></data>
-  <data name="GeographicAreas" xml:space="preserve"><value>Geografi</value></data>
-  <data name="OrganizationElementsDescription" xml:space="preserve"><value>Hantera organisationselement och underliggande element för valt konto.</value></data>
-  <data name="GeographicAreasDescription" xml:space="preserve"><value>Hantera geografiska områden och underområden för valt konto.</value></data>
-  <data name="CreateOrganizationElement" xml:space="preserve"><value>Skapa organisationselement</value></data>
-  <data name="EditOrganizationElement" xml:space="preserve"><value>Redigera organisationselement</value></data>
-  <data name="NoOrganizationElements" xml:space="preserve"><value>Inga organisationselement är registrerade.</value></data>
-  <data name="CreateGeographicArea" xml:space="preserve"><value>Skapa geografiskt område</value></data>
-  <data name="EditGeographicArea" xml:space="preserve"><value>Redigera geografiskt område</value></data>
-  <data name="NoGeographicAreas" xml:space="preserve"><value>Inga geografiska områden är registrerade.</value></data>
-  <data name="AccountHierarchyParent" xml:space="preserve"><value>Överordnat element</value></data>
-  <data name="AccountHierarchyRoot" xml:space="preserve"><value>Inget – översta nivån</value></data>
   <data name="AccountHierarchyAddChild" xml:space="preserve"><value>Lägg till underelement</value></data>
-  <data name="AccountHierarchyCycle" xml:space="preserve"><value>Ett element kan inte placeras under sig självt eller sina underelement.</value></data>
-  <data name="AccountHierarchyInvalidParent" xml:space="preserve"><value>Det överordnade elementet finns inte i valt konto. Uppdatera listan.</value></data>
-  <data name="AccountHierarchyHasChildren" xml:space="preserve"><value>Flytta eller ta bort underelementen innan du tar bort detta element.</value></data>
-  <data name="AgreementOrganizationElement" xml:space="preserve"><value>Organisationselement</value></data>
-  <data name="AgreementGeographicArea" xml:space="preserve"><value>Geografiskt område</value></data>
-  <data name="AgreementInvalidOrganizationElement" xml:space="preserve"><value>Välj ett aktivt organisationselement i valt konto.</value></data>
-  <data name="AgreementInvalidGeographicArea" xml:space="preserve"><value>Välj ett aktivt geografiskt område i valt konto.</value></data>
-  <data name="AccountHierarchyUsedByAgreement" xml:space="preserve"><value>Elementet används av ett avtal och kan inte tas bort. Du kan inaktivera det.</value></data>
   <data name="DashboardTitle" xml:space="preserve"><value>Dashboard</value></data>
   <data name="DashboardAttention" xml:space="preserve"><value>Behöver uppmärksamhet</value></data>
   <data name="DashboardContracts" xml:space="preserve"><value>Kontrakt</value></data>
@@ -2419,8 +2395,6 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="DashboardDimension" xml:space="preserve"><value>Gruppera efter</value></data>
   <data name="DashboardDimensionType" xml:space="preserve"><value>Avtalstyp</value></data>
   <data name="DashboardDimensionCounterparty" xml:space="preserve"><value>Avtalspart</value></data>
-  <data name="DashboardDimensionGeography" xml:space="preserve"><value>Geografi</value></data>
-  <data name="DashboardDimensionOrganization" xml:space="preserve"><value>Organisationsstruktur</value></data>
   <data name="DashboardHierarchyHelp" xml:space="preserve"><value>Valet omfattar underliggande element. Alla grupperar på högsta nivå; ett valt element grupperar på närmaste undernivå.</value></data>
   <data name="DashboardInsightsScope" xml:space="preserve"><value>Tillgängliga, ej arkiverade avtal, oavsett status.</value></data>
   <data name="DashboardNoInsights" xml:space="preserve"><value>Inga avtal i detta urval.</value></data>
@@ -3256,4 +3230,44 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
 <data name="AgreementResults" xml:space="preserve"><value>Resultat</value></data>
 <data name="AgreementPlacement" xml:space="preserve"><value>Placering</value></data>
 <data name="AgreementActions" xml:space="preserve"><value>Åtgärder</value></data>
+  <data name="DimensionFallbackName" xml:space="preserve"><value>Standardnamn</value></data>
+  <data name="DimensionFallbackDescription" xml:space="preserve"><value>Standardbeskrivning</value></data>
+  <data name="DimensionTranslations" xml:space="preserve"><value>Översättningar</value></data>
+  <data name="DimensionTranslationHelp" xml:space="preserve"><value>Tomma fält använder kontots standardspråk och därefter standardtexten. Dimensionskoden ändras inte med språket.</value></data>
+  <data name="DimensionInvalidTranslationLanguage" xml:space="preserve"><value>Välj ett språk som stöds för översättningen.</value></data>
+  <data name="DimensionDuplicateTranslationLanguage" xml:space="preserve"><value>Varje språk kan bara ha en översättning.</value></data>
+  <data name="AgreementDimensionInvalidSelection" xml:space="preserve"><value>Välj dimensioner och värden som tillhör detta konto och rätt dimension.</value></data>
+  <data name="AgreementDimensionDuplicatePatch" xml:space="preserve"><value>En dimension kan bara ändras en gång i samma begäran.</value></data>
+  <data name="AgreementDimensionDuplicateValue" xml:space="preserve"><value>Samma dimensionsvärde kan inte väljas flera gånger.</value></data>
+  <data name="AgreementDimensionRequired" xml:space="preserve"><value>Välj minst ett värde för varje obligatorisk dimension som registreras eller ändras.</value></data>
+  <data name="AgreementDimensionRequiredConfiguration" xml:space="preserve"><value>En obligatorisk dimension är inaktiv eller saknar aktiva valbara värden. Kontakta kontoadministratören.</value></data>
+  <data name="AgreementDimensionSingleSelection" xml:space="preserve"><value>Denna dimension tillåter endast ett valt värde.</value></data>
+  <data name="AgreementDimensionUnavailable" xml:space="preserve"><value>Dimensionen är inte tillgänglig för nya tilldelningar i Avtal.</value></data>
+  <data name="AgreementDimensionInactiveValue" xml:space="preserve"><value>Värdet eller ett överordnat värde är inaktivt och kan inte tilldelas på nytt.</value></data>
+  <data name="AgreementDimensionLeafOnly" xml:space="preserve"><value>Denna dimension tillåter bara nya tilldelningar till värden utan undervärden.</value></data>
+  <data name="DimensionAgreementRules" xml:space="preserve"><value>Användning i Avtal</value></data>
+  <data name="DimensionEnabledAgreements" xml:space="preserve"><value>Tillgänglig</value></data>
+  <data name="DimensionRequiredRegistration" xml:space="preserve"><value>Obligatorisk vid registrering</value></data>
+  <data name="AgreementDimensionsNoneAvailable" xml:space="preserve"><value>Inga dimensioner är tillgängliga.</value></data>
+  <data name="AgreementDimensionsMultipleHelp" xml:space="preserve"><value>Välj ett eller flera värden. Hela sökvägen visar placeringen i hierarkin.</value></data>
+  <data name="AgreementDimensionsSingleHelp" xml:space="preserve"><value>Välj ett värde. Hela sökvägen visar placeringen i hierarkin.</value></data>
+  <data name="AgreementDimensionsMissingExisting" xml:space="preserve"><value>Obligatoriskt värde saknas. Andra avtalsfält kan fortfarande ändras utan att lägga till ett val här.</value></data>
+  <data name="AgreementDimensionsMissingNew" xml:space="preserve"><value>Välj ett värde för att uppfylla registreringskravet.</value></data>
+  <data name="AgreementDimensionsExistingMultiple" xml:space="preserve"><value>Flera tidigare val är bevarade. Ett nytt enskilt val ersätter dem; du kan också ta bort val nedan.</value></data>
+  <data name="AgreementDimensionsHistorical" xml:space="preserve"><value>Historiskt – inte tillgängligt som nytt val</value></data>
+  <data name="AgreementDimensionsHistoricalHelp" xml:space="preserve"><value>Historiska val kan behållas eller tas bort. Efter borttagning kan de bara väljas igen om de blir tillgängliga i registret.</value></data>
+  <data name="AgreementDimensionsRemoveValue" xml:space="preserve"><value>Ta bort {1} från {0}</value></data>
+  <data name="AgreementDimensionHistoryTitle" xml:space="preserve"><value>Dimensionshistorik</value></data>
+  <data name="AgreementDimensionRecordedNames" xml:space="preserve"><value>Historiken visar namn och sökvägar som sparades vid ändringen. De kan skilja sig från dagens register.</value></data>
+  <data name="DashboardHierarchyContext" xml:space="preserve"><value>Hierarkikontext</value></data>
+  <data name="DashboardHierarchyTop" xml:space="preserve"><value>Toppnivå</value></data>
+  <data name="DashboardHierarchyBack" xml:space="preserve"><value>Tillbaka en nivå</value></data>
+  <data name="DashboardHistoricalNode" xml:space="preserve"><value>Historisk (inaktiv)</value></data>
+  <data name="DashboardUniqueTotal" xml:space="preserve"><value>Unika synliga avtal: {0}</value></data>
+  <data name="DashboardUniqueContext" xml:space="preserve"><value>Unika avtal i vald kontext: {0}</value></data>
+  <data name="DashboardGroupSum" xml:space="preserve"><value>Summa av visade grupper (procentunderlag): {0}</value></data>
+  <data name="DashboardOverlapHelp" xml:space="preserve"><value>Ett avtal kan ingå i flera visade grupper, men räknas bara en gång per grupp och i den unika totalen. Procenten använder summan av de visade grupperna.</value></data>
+  <data name="DashboardOpenNode" xml:space="preserve"><value>Visa gruppen {0}</value></data>
+  <data name="DashboardContextReset" xml:space="preserve"><value>Grupperingen eller nivån är inte längre tillgänglig. Vyn har återgått till en tillgänglig toppnivå.</value></data>
+  <data name="DashboardInvalidHierarchy" xml:space="preserve"><value>Dimensionshierarkin är ogiltig eller har ändrats. Ladda om vyn.</value></data>
 </root>

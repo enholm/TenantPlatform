@@ -2,6 +2,28 @@ namespace TenantPlatform.Core.Localization;
 
 public static class TranslationHelper
 {
+    // Field-wise, strict fallback for registers with stored fallback text.
+    // Select retains its existing English/first-row fallback for other consumers.
+    public static string? ResolveText<TTranslation>(
+        IEnumerable<TTranslation> translations,
+        Func<TTranslation, string> languageSelector,
+        Func<TTranslation, string?> textSelector,
+        string? requestedLanguage,
+        string? defaultLanguage,
+        string? fallbackText,
+        string? finalFallback = null)
+    {
+        var items = translations.ToList();
+        foreach (var language in new[] { requestedLanguage, defaultLanguage }
+                     .Select(LanguageHelper.NormalizeSupported).OfType<string>().Distinct())
+        {
+            var text = items.Where(x => string.Equals(languageSelector(x), language, StringComparison.OrdinalIgnoreCase))
+                .Select(textSelector).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+            if (text is not null) return text;
+        }
+        return !string.IsNullOrWhiteSpace(fallbackText) ? fallbackText : finalFallback;
+    }
+
     public static TTranslation? Select<TTranslation>(
         IEnumerable<TTranslation> translations,
         Func<TTranslation, string> languageSelector,

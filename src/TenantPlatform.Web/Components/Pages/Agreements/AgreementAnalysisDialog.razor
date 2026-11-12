@@ -99,16 +99,20 @@
                 @if (!AgreementId.HasValue)
                 {
                     <h3 class="fs-5">@L["AgreementCreate"]</h3>
-                    <EditForm Model="approval.Agreement"><AgreementFields Model="approval.Agreement" Options="options" HideCounterparty="true" OriginalForm="AgreementForm.FixedTerm" /></EditForm>
+                    <EditForm Model="approval.Agreement"><AgreementFields Model="approval.Agreement" Options="options" DimensionState="dimensionState" HideCounterparty="true" OriginalForm="AgreementForm.FixedTerm" /></EditForm>
                 }
-                else { <div class="alert alert-info">@L["AnalysisVersionHelp"]</div> }
+                else
+                {
+                    <div class="alert alert-info">@L["AnalysisVersionHelp"]</div>
+                    @if (dimensionState is not null) { <AgreementDimensionChoices State="dimensionState" Existing="true" /> }
+                }
             }
             </fieldset>
         }
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline-danger" disabled="@busy" @onclick="DiscardAsync">@L["AnalysisDiscard"]</button>
-            <button type="button" class="btn btn-primary" disabled="@(busy || draft?.Result is null || !approval.CounterpartyConfirmed || draft.Result.Documents.Any(x => !x.Processed))" @onclick="ApproveAsync">@L["AnalysisApprove"]</button>
+            <button type="button" class="btn btn-primary" disabled="@(busy || dimensionState is null || draft?.Result is null || !approval.CounterpartyConfirmed || draft.Result.Documents.Any(x => !x.Processed))" @onclick="ApproveAsync">@L["AnalysisApprove"]</button>
         </div>
     </div></div></div>
 }
@@ -117,6 +121,7 @@
     [Parameter] public EventCallback Saved { get; set; }
     private AnalysisDraftDto? draft;
     private AgreementOptionsDto? options;
+    private AgreementDimensionEditState? dimensionState;
     private ApproveAnalysisRequest approval = new();
     private List<AnalysisOrganizationDto> matches = [];
     private bool open, busy;
@@ -138,11 +143,20 @@
     private Task OpenAsync() => RunAsync(async () =>
     {
         open = true;
+        dimensionState = null;
         if (UserContext.Current.CurrentAccountId is not Guid id) throw new UnauthorizedAccessException();
         accountId = id;
         options = await AgreementService.GetOptionsAsync(accountId, AgreementId, lifetime.Token);
         draft = await AnalysisService.StartAnalysisDraftAsync(accountId, AgreementId, lifetime.Token);
         approval = new() { Agreement = new() { OwnerUserId = UserContext.Current.UserId, Form = AgreementForm.FixedTerm } };
+        if (AgreementId.HasValue)
+        {
+            var catalog = await AgreementService.GetAgreementDimensionOptionsAsync(accountId, AgreementId, true, lifetime.Token);
+            if (catalog.Revision != draft.AgreementRevision) throw new AgreementValidationException("AgreementConcurrencyConflict");
+            approval.Agreement.Revision = catalog.Revision;
+            dimensionState = new(catalog.Dimensions, catalog.Revision);
+        }
+        else dimensionState = new(options.Dimensions, approval.Agreement.Revision);
     });
     private Task UploadMainAsync(InputFileChangeEventArgs args) => UploadAsync(args, AgreementDocumentCategory.Contract);
     private Task UploadAttachmentsAsync(InputFileChangeEventArgs args) => UploadAsync(args, AgreementDocumentCategory.Attachment);
@@ -184,6 +198,8 @@
     });
     private Task ApproveAsync() => RunAsync(async () =>
     {
+        if (dimensionState is null) throw new AgreementValidationException("AgreementConcurrencyConflict");
+        dimensionState.ApplyTo(approval.Agreement);
         var id = await AnalysisService.ApproveAnalysisAsync(accountId, draft!.Id, approval, lifetime.Token);
         draft = null; open = false;
         if (AgreementId.HasValue) await Saved.InvokeAsync(); else Navigation.NavigateTo($"/agreements/{id}");

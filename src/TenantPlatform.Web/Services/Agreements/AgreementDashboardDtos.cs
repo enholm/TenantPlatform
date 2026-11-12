@@ -1,17 +1,32 @@
 using TenantPlatform.Core.Agreements;
-using TenantPlatform.Web.Services.AccountSettings;
 
 namespace TenantPlatform.Web.Services.Agreements;
 
 public enum AgreementAttention { Notice, Renewal, Expired }
-public enum AgreementInsightDimension { Type, Counterparty, Geography, Organization, Status, Owner }
+public enum AgreementInsightDimension { Type, Counterparty, Status, Owner }
+// Exactly one discriminator must be set; dimension identity is always a GUID, never a code/name.
+public sealed record AgreementInsightGrouping(AgreementInsightDimension? Fixed = null, Guid? DimensionId = null)
+{
+    public void Validate()
+    {
+        if (Fixed.HasValue == DimensionId.HasValue || Fixed.HasValue && !Enum.IsDefined(Fixed.Value) || DimensionId == Guid.Empty)
+            throw new ArgumentException("Invalid agreement insight grouping.");
+    }
+}
+public sealed record AgreementInsightDimensionOption(Guid Id, string Name);
+public enum AgreementInsightGroupKind { Fixed, Node, Direct, Unspecified }
+public sealed record AgreementInsightNode(Guid Id, Guid? ParentId, string Path, int Depth, bool IsActive);
 public sealed record AgreementAttentionDto(DateOnly Today, int Notice, int Renewal, int Expired);
 public sealed record AgreementDashboardItem(Guid Id, string Title, AgreementType Type, DateOnly? EndDate);
 public sealed record AgreementDashboardList(DateOnly Today, IReadOnlyList<AgreementDashboardItem> Items);
-public sealed record AgreementInsightGroup(string Key, string? Name, AgreementType? Type, int Count, bool Direct = false, AgreementStatus? Status = null);
-public sealed record AgreementInsightsDto(IReadOnlyList<AgreementInsightGroup> Groups, IReadOnlyList<AccountHierarchyRow> Options)
+public sealed record AgreementInsightGroup(string Key, string? Name, AgreementType? Type, int Count,
+    AgreementStatus? Status = null, AgreementInsightGroupKind Kind = AgreementInsightGroupKind.Fixed, Guid? NodeId = null);
+// TotalUniqueAgreements counts the authorized unarchived dataset; ContextUniqueAgreements counts a selected subtree (or the dataset at top level).
+public sealed record AgreementInsightsDto(IReadOnlyList<AgreementInsightGroup> Groups, IReadOnlyList<AgreementInsightNode> Options,
+    int TotalUniqueAgreements, int ContextUniqueAgreements, Guid? SelectedNodeId = null, bool AllowMultiple = false)
 {
-    public int Total => Groups.Sum(x => x.Count);
+    // Occurrences across displayed groups, not a unique agreement total. This is the percentage denominator.
+    public int GroupSum => Groups.Sum(x => x.Count);
 }
 
 public static class AgreementDashboardQueries
@@ -44,30 +59,4 @@ public static class AgreementDashboardQueries
             .ThenBy(x => x.EndDate < today ? null : x.NoticeDeadline)
             .ThenBy(x => x.Title).ThenBy(x => x.Id).Take(5);
 
-    public static IReadOnlyList<AgreementInsightGroup> GroupHierarchy(
-        IEnumerable<Guid?> assignments, IReadOnlyList<AccountHierarchyRow> rows, Guid? selected)
-    {
-        var byId = rows.ToDictionary(x => x.Id);
-        if (selected.HasValue && !byId.ContainsKey(selected.Value)) throw new UnauthorizedAccessException();
-        var keys = new List<(Guid? Id, bool Direct)>();
-        foreach (var id in assignments)
-        {
-            if (!id.HasValue || !byId.TryGetValue(id.Value, out var row))
-            {
-                if (!selected.HasValue) keys.Add((null, false));
-                continue;
-            }
-            if (!selected.HasValue) keys.Add((row.Ancestors.FirstOrDefault(row.Id), false));
-            else if (row.Id == selected) keys.Add((row.Id, true));
-            else
-            {
-                var path = row.Ancestors.Append(row.Id).ToList();
-                var parentIndex = path.IndexOf(selected.Value);
-                if (parentIndex >= 0) keys.Add((path[parentIndex + 1], false));
-            }
-        }
-        return keys.GroupBy(x => x).Select(g => new AgreementInsightGroup(
-            g.Key.Id?.ToString() ?? "missing", g.Key.Id.HasValue ? byId[g.Key.Id.Value].Path : null,
-            null, g.Count(), g.Key.Direct)).OrderByDescending(x => x.Count).ThenBy(x => x.Name).ToList();
-    }
 }

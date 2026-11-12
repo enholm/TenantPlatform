@@ -15,7 +15,7 @@ using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Web.Components.Pages.Dashboard;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
-using TenantPlatform.Web.Services.AccountSettings;
+using TenantPlatform.Core.Dimensions;
 using TenantPlatform.Web.Services.Agreements;
 
 CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("nb-NO");
@@ -41,15 +41,14 @@ Check(ordered.Select(x => x.Title).SequenceEqual(new[] { "Alpha", "Zulu", "Old",
 Check(AgreementReminderSchedule.Today(new DateTimeOffset(2026, 9, 24, 22, 30, 0, TimeSpan.Zero), "Europe/Oslo") == today, "calendar day uses account time zone near UTC midnight");
 Check(AgreementReminderSchedule.Today(new DateTimeOffset(2026, 10, 25, 0, 30, 0, TimeSpan.Zero), "Europe/Oslo") == new DateOnly(2026, 10, 25), "DST transition keeps correct calendar day");
 var root = Guid.NewGuid(); var child = Guid.NewGuid(); var leaf = Guid.NewGuid(); var other = Guid.NewGuid();
-var hierarchy = AccountRegisterHierarchy.Build(new[] { (root, (Guid?)null, "Asia"), (child, (Guid?)root, "Japan"), (leaf, (Guid?)child, "Tokyo"), (other, (Guid?)null, "Europe") });
-Guid?[] assignments = [root, child, leaf, leaf, other, null];
-var grouped = AgreementDashboardQueries.GroupHierarchy(assignments, hierarchy, null);
-Check(grouped.Sum(x => x.Count) == 6 && grouped.Single(x => x.Key == root.ToString()).Count == 4 && grouped.Single(x => x.Key == "missing").Count == 1, "All groups by root and keeps unassigned agreements");
-grouped = AgreementDashboardQueries.GroupHierarchy(assignments, hierarchy, root);
-Check(grouped.Sum(x => x.Count) == 4 && grouped.Single(x => x.Direct).Count == 1 && grouped.Single(x => x.Key == child.ToString()).Count == 3, "subtree groups by nearest child and separates direct assignments");
-Check(AgreementDashboardQueries.GroupHierarchy(assignments, hierarchy, leaf).Single() is { Count: 2, Direct: true }, "leaf selection shows its direct assignments");
-Check(AgreementDashboardQueries.GroupHierarchy([], hierarchy, root).Count == 0, "empty subtree result");
-try { AgreementDashboardQueries.GroupHierarchy(assignments, hierarchy, Guid.NewGuid()); throw new Exception("accepted foreign selection"); } catch (UnauthorizedAccessException) { }
+var dimensionId = Guid.NewGuid();
+var hierarchy = new List<DimensionValue>
+{
+    new() { Id = root, DimensionId = dimensionId, Name = "Asia", Code = "ROOT" },
+    new() { Id = child, DimensionId = dimensionId, ParentId = root, Name = "Japan", Code = "CHILD" },
+    new() { Id = leaf, DimensionId = dimensionId, ParentId = child, Name = "Tokyo", Code = "LEAF" },
+    new() { Id = other, DimensionId = dimensionId, Name = "Europe", Code = "OTHER" }
+};
 
 await using (var sql = new TenantPlatformDbContext(new DbContextOptionsBuilder<TenantPlatformDbContext>()
     .UseNpgsql("Host=localhost;Database=translation_only").Options))
@@ -72,13 +71,16 @@ await using (var db = factory.CreateDbContext())
     db.Users.AddRange(new User { Id = user, FirstName = "Anna", LastName = "Andersen", Email = "a@example.test", IsActive = true }, new User { Id = stranger, FirstName = "Bjørn", LastName = "Berg", Email = "b@example.test", IsActive = true });
     db.UserAccounts.Add(new UserAccount { Id = Guid.NewGuid(), AccountId = account, UserId = user });
     db.UserAccounts.Add(new UserAccount { Id = Guid.NewGuid(), AccountId = account, UserId = stranger });
-    db.GeographicAreas.AddRange(hierarchy.Select(x => new GeographicArea { Id = x.Id, AccountId = account, ParentId = x.Ancestors.LastOrDefault() is var p && p != Guid.Empty ? p : null, Name = x.Path.Split(" / ").Last() }));
-    db.OrganizationElements.AddRange(hierarchy.Select(x => new OrganizationElement { Id = x.Id, AccountId = account, ParentId = x.Ancestors.LastOrDefault() is var p && p != Guid.Empty ? p : null, Name = x.Path.Split(" / ").Last() }));
+    db.Dimensions.Add(new Dimension { Id = dimensionId, AccountId = account, Name = "Region", Code = "REG", LeafOnly = false });
+    db.AgreementDimensionRules.Add(new AgreementDimensionRule { AccountId = account, DimensionId = dimensionId, IsEnabled = true });
+    foreach (var node in hierarchy) { node.AccountId = account; db.DimensionValues.Add(node); }
     var party = new Organization { Id = Guid.NewGuid(), AccountId = account, Name = "Partner" }; db.Organizations.Add(party);
     foreach (var a in new[] { owned, granted, hidden, foreign })
     {
         a.AccountId = a == foreign ? foreignAccount : account; a.OwnerUserId = a == owned ? user : stranger;
-        a.GeographicAreaId = a == hidden ? other : leaf; a.OrganizationElementId = a.GeographicAreaId; a.CounterpartyOrganizationId = party.Id;
+        a.CounterpartyOrganizationId = party.Id;
+        if (a != foreign) db.AgreementDimensionAssignments.Add(new AgreementDimensionAssignment { Id = Guid.NewGuid(), AccountId = account,
+            AgreementId = a.Id, DimensionId = dimensionId, ValueId = a == hidden ? other : leaf });
         db.Agreements.Add(a);
     }
     db.AgreementAccess.Add(new AgreementAccess { Id = Guid.NewGuid(), AccountId = account, AgreementId = granted.Id, UserId = user, Level = AgreementAccessLevel.Read });
@@ -89,17 +91,16 @@ Check(attention is { Notice: 2, Renewal: 1, Expired: 1 } && attention.Today == t
 Check((await service.GetDashboardContractsAsync(account)).Items.Select(x => x.Id).SequenceEqual(new[] { owned.Id, granted.Id }), "service priority list respects access");
 foreach (var dimension in Enum.GetValues<AgreementInsightDimension>())
 {
-    var data = await service.GetInsightsAsync(account, dimension);
-    Check(data.Total == 2 && data.Groups.Sum(x => x.Count) == 2, $"{dimension} aggregation respects access without duplication");
+    var data = await service.GetInsightsAsync(account, new(dimension));
+    Check(data.TotalUniqueAgreements == 2 && data.Groups.Sum(x => x.Count) == 2, $"{dimension} aggregation respects access without duplication");
     if (dimension == AgreementInsightDimension.Owner)
         Check(data.Groups.Count == 2 && data.Groups.All(x => x.Count == 1) && data.Groups.Any(x => x.Name == "Anna Andersen"), "owners grouped by identity with names, inaccessible agreements excluded");
-    if (dimension is AgreementInsightDimension.Geography or AgreementInsightDimension.Organization)
-    {
-        Check(data.Options.Count == 3 && data.Options.All(x => x.Id != other), "hierarchy options expose only accessible branches and ancestors");
-        Check((await service.GetInsightsAsync(account, dimension, child)).Total == 2, "selected child includes descendants");
-        try { await service.GetInsightsAsync(account, dimension, other); throw new Exception("accepted hidden branch"); } catch (UnauthorizedAccessException) { }
-    }
+    Check(data.ContextUniqueAgreements == 2 && data.GroupSum == 2, "fixed grouping totals keep unique semantics");
 }
+var dynamicData = await service.GetInsightsAsync(account, new(DimensionId: dimensionId));
+Check(dynamicData.TotalUniqueAgreements == 2 && dynamicData.Options.Count == 3 && dynamicData.Options.All(x => x.Id != other), "dynamic hierarchy includes only accessible branches and ancestors");
+Check((await service.GetInsightsAsync(account, new(DimensionId: dimensionId), child)).ContextUniqueAgreements == 2, "selected child includes descendants");
+try { await service.GetInsightsAsync(account, new(DimensionId: dimensionId), other); throw new Exception("accepted hidden branch"); } catch (UnauthorizedAccessException) { }
 Check((await service.ListAsync(account, new AgreementFilter { Attention = AgreementAttention.Notice })).TotalCount == 2, "click-through filter matches attention count");
 try { await service.GetAttentionAsync(foreignAccount); throw new Exception("accepted foreign account"); } catch (UnauthorizedAccessException) { }
 await using (var db = factory.CreateDbContext())
@@ -108,18 +109,18 @@ await using (var db = factory.CreateDbContext())
     db.UserAccountRoles.Add(new UserAccountRole { Id = Guid.NewGuid(), UserAccountId = member.Id, Role = UserRole.AccountAdmin });
     await db.SaveChangesAsync();
 }
-Check((await service.GetInsightsAsync(account, AgreementInsightDimension.Type)).Total == 3, "account admin sees account agreements, never foreign account");
+Check((await service.GetInsightsAsync(account, new(AgreementInsightDimension.Type))).TotalUniqueAgreements == 3, "account admin sees account agreements, never foreign account");
 
 await using (var db = factory.CreateDbContext())
 {
     (await db.Agreements.SingleAsync(x => x.Id == hidden.Id)).Status = AgreementStatus.Draft;
     await db.SaveChangesAsync();
 }
-var statusGroups = await service.GetInsightsAsync(account, AgreementInsightDimension.Status);
+var statusGroups = await service.GetInsightsAsync(account, new(AgreementInsightDimension.Status));
 Check(statusGroups.Groups.Single(x => x.Status == AgreementStatus.Active).Count == 2 &&
     statusGroups.Groups.Single(x => x.Status == AgreementStatus.Draft).Count == 1, "status counts distinguish active and draft agreements");
-var ownerGroups = await service.GetInsightsAsync(account, AgreementInsightDimension.Owner);
-Check(ownerGroups.Groups.Single(x => x.Key == stranger.ToString()).Count == 2 && ownerGroups.Total == 3,
+var ownerGroups = await service.GetInsightsAsync(account, new(AgreementInsightDimension.Owner));
+Check(ownerGroups.Groups.Single(x => x.Key == stranger.ToString()).Count == 2 && ownerGroups.TotalUniqueAgreements == 3,
     "owner aggregation counts multiple agreements once each within account");
 
 var services = new ServiceCollection().AddLogging().AddLocalization(o => o.ResourcesPath = "Resources");
@@ -146,17 +147,17 @@ await renderer.Dispatcher.InvokeAsync(async () =>
         if (type == typeof(InsightsWidget))
         {
             Check(html.Contains("<table") && html.Contains("scope=\"row\"") && html.Contains("100,0") && html.Contains("for=\"dashboard-dimension\""), "chart has accessible figures and labelled native keyboard selector");
-            Check(html.Contains("Avtaleansvarlig") && html.Contains("value=\"Status\""), "status and agreement owner are available in dimension selector");
+            Check(html.Contains("Avtaleansvarlig") && html.Contains("value=\"fixed:Status\""), "status and agreement owner are available in dimension selector");
             foreach (var dimension in new[] { AgreementInsightDimension.Status, AgreementInsightDimension.Owner })
             {
-                type.GetField("dimension", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(host.Instance, dimension);
+                type.GetProperty("GroupingKey", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(host.Instance, $"fixed:{dimension}");
                 await (Task)type.GetMethod("DimensionChanged", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(host.Instance, null)!;
                 typeof(ComponentBase).GetMethod("StateHasChanged", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(host.Instance, null);
                 var changed = System.Net.WebUtility.HtmlDecode(output.ToHtmlString());
                 Check(changed.Contains(dimension == AgreementInsightDimension.Status ? "Utkast" : "Bjørn Berg") &&
                     changed.Contains("66,7") && !changed.Contains("id=\"dashboard-structure\""), "status/owner selection updates labels, percentages and chart without hierarchy filter");
             }
-            type.GetField("dimension", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(host.Instance, AgreementInsightDimension.Geography);
+            type.GetProperty("GroupingKey", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(host.Instance, $"dimension:{dimensionId}");
             await (Task)type.GetMethod("DimensionChanged", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(host.Instance, null)!;
             typeof(ComponentBase).GetMethod("StateHasChanged", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(host.Instance, null);
             html = System.Net.WebUtility.HtmlDecode(output.ToHtmlString());
@@ -193,12 +194,14 @@ foreach (var type in new[] { typeof(AttentionWidget), typeof(ContractsWidget), t
         Check(!html.Contains("Kunne ikke laste") && html.Contains("Ingen"), $"{type.Name} retry recovers to distinct empty state");
     });
 }
+await HierarchyChecks.Run(Check);
+await DynamicWidgetChecks.Run(Check);
 Console.WriteLine("Dashboard smoke checks passed (in-memory; no application database or migrations used).");
 
 sealed class Factory(DbContextOptions<TenantPlatformDbContext> options) : IDbContextFactory<TenantPlatformDbContext>
 { public TenantPlatformDbContext CreateDbContext() => new(options); }
-sealed class Context(Guid user, Guid account) : ICurrentUserContextService
-{ public CurrentUserContext Current { get; } = new() { UserId = user, CurrentAccountId = account, IsAuthenticated = true }; }
+sealed class Context(Guid user, Guid account, bool platformAdmin = false) : ICurrentUserContextService
+{ public CurrentUserContext Current { get; } = new() { UserId = user, CurrentAccountId = account, IsAuthenticated = true, IsPlatformAdmin = platformAdmin }; }
 sealed class Clock(DateTimeOffset now) : TimeProvider { public override DateTimeOffset GetUtcNow() => now; }
 sealed record HostState(Type Type, Guid AccountId) { public object? Instance { get; set; } }
 sealed class Host : ComponentBase
@@ -221,6 +224,7 @@ public class WidgetProxy : DispatchProxy
         nameof(IAgreementService.GetAttentionAsync) => attention.Task,
         nameof(IAgreementService.GetDashboardContractsAsync) => contracts.Task,
         nameof(IAgreementService.GetInsightsAsync) => insights.Task,
+        nameof(IAgreementService.GetInsightDimensionsAsync) => Task.FromResult(new List<AgreementInsightDimensionOption>()),
         _ => throw new NotSupportedException()
     };
     public void Fail()
@@ -232,6 +236,6 @@ public class WidgetProxy : DispatchProxy
     public void Empty(DateOnly today)
     {
         attention = new(); contracts = new(); insights = new();
-        attention.SetResult(new(today, 0, 0, 0)); contracts.SetResult(new(today, [])); insights.SetResult(new([], []));
+        attention.SetResult(new(today, 0, 0, 0)); contracts.SetResult(new(today, [])); insights.SetResult(new([], [], 0, 0));
     }
 }

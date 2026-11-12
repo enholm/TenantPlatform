@@ -1,0 +1,71 @@
+<section id="agreement-fields-dimensions" class="page-section">
+    <h2 class="h5">@L["Dimensions"]</h2>
+    @if (State.Dimensions.Count == 0)
+    {
+        <p class="text-body-secondary">@L["AgreementDimensionsNoneAvailable"]</p>
+    }
+    @foreach (var dimension in State.Dimensions)
+    {
+        var controlId = $"{prefix}-{dimension.DimensionId}";
+        var chosen = State.Selected(dimension.DimensionId);
+        <fieldset class="mb-3" @key="dimension.DimensionId" aria-describedby="@($"{controlId}-help")">
+            <legend class="fs-6 mb-1">@dimension.Name @if (dimension.IsRequired) { <span>· @L["DimensionRequiredRegistration"]</span> }</legend>
+            @if (!string.IsNullOrWhiteSpace(dimension.Description)) { <p class="small text-body-secondary mb-1">@dimension.Description</p> }
+            <p id="@($"{controlId}-help")" class="small text-body-secondary">@L[dimension.AllowMultiple ? "AgreementDimensionsMultipleHelp" : "AgreementDimensionsSingleHelp"]</p>
+            @if (dimension.IsRequired && chosen.Count == 0)
+            {
+                <p class="small text-warning-emphasis" role="status">@L[Existing ? "AgreementDimensionsMissingExisting" : "AgreementDimensionsMissingNew"]</p>
+            }
+            @if (!dimension.AllowMultiple)
+            {
+                @if (chosen.Count > 1) { <p class="small">@L["AgreementDimensionsExistingMultiple"]</p> }
+                <label class="form-label" for="@controlId">@L["DimensionChoices"] · @dimension.Name</label>
+                <select id="@controlId" class="form-select" value="@(chosen.Count == 1 ? chosen.Single().ToString() : "")"
+                        @onchange="e => SingleChanged(dimension.DimensionId, e)">
+                    <option value="">@L["AgreementNone"]</option>
+                    @foreach (var value in dimension.Values.Where(v => State.CanSelect(dimension.DimensionId, v.Id)))
+                    {
+                        <option value="@value.Id">@value.Path @(!value.Selectable ? $" ({L["AgreementDimensionsHistorical"]})" : "")</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <div class="border rounded p-2">
+                @foreach (var value in dimension.Values)
+                {
+                    <div class="form-check" @key="value.Id">
+                        <input id="@($"{controlId}-{value.Id}")" class="form-check-input" type="checkbox"
+                               checked="@State.IsSelected(dimension.DimensionId, value.Id)" disabled="@(!State.CanSelect(dimension.DimensionId, value.Id))"
+                               @onchange="e => Toggle(dimension.DimensionId, value.Id, e.Value is true)" />
+                        <label class="form-check-label" for="@($"{controlId}-{value.Id}")">@value.Path
+                            @if (!value.Selectable) { <span>· @L["AgreementDimensionsHistorical"]</span> }
+                        </label>
+                    </div>
+                }
+                </div>
+            }
+            @if (chosen.Count > 0)
+            {
+                <ul class="list-unstyled mt-2 mb-0">
+                @foreach (var value in dimension.Values.Where(v => chosen.Contains(v.Id)))
+                {
+                    <li class="d-flex flex-wrap align-items-center gap-2 mb-1" @key="value.Id">
+                        <span>@value.Path @if (!value.Selectable) { <span>· @L["AgreementDimensionsHistorical"]</span> }</span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" aria-label="@L["AgreementDimensionsRemoveValue", dimension.Name, value.Path]"
+                                @onclick="() => Toggle(dimension.DimensionId, value.Id, false)">@L["Remove"]</button>
+                    </li>
+                }
+                </ul>
+            }
+            @if (dimension.Values.Any(v => !v.Selectable)) { <p class="small text-body-secondary mt-1">@L["AgreementDimensionsHistoricalHelp"]</p> }
+        </fieldset>
+    }
+</section>
+@code {
+    [Parameter, EditorRequired] public AgreementDimensionEditState State { get; set; } = null!;
+    [Parameter] public bool Existing { get; set; }
+    private readonly string prefix = "agreement-dimension-" + Guid.NewGuid().ToString("N");
+    private void SingleChanged(Guid dimension, ChangeEventArgs e) => State.SetSingle(dimension, Guid.TryParse(e.Value?.ToString(), out var value) ? value : null);
+    private void Toggle(Guid dimension, Guid value, bool include) => State.Toggle(dimension, value, include);
+}

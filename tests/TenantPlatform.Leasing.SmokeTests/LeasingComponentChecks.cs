@@ -12,7 +12,7 @@ using TenantPlatform.Web.Services.Leasing;
 
 static class LeasingComponentChecks
 {
-    public static async Task Run(LeasingService service, Guid account, Guid user, Guid framework, Guid acquisition, TenantPlatform.Web.Services.Dimensions.DimensionService? dimensions = null)
+    public static async Task Run(LeasingService service, Guid account, Guid user, Guid framework, Guid acquisition, TenantPlatform.Web.Services.Dimensions.DimensionService? dimensions = null, TenantPlatform.Web.Services.Agreements.IAgreementService? agreements = null)
     {
         await Render(typeof(LeasingEditor), $"leasing/frameworks/{framework}/edit", framework, html =>
             Require(html.Contains("lease-from") && html.Contains("lease-to") && html.Contains("lease-limit") && html.Contains("Standardvilkår"), "framework editor has period, capacity and terms"));
@@ -38,6 +38,7 @@ static class LeasingComponentChecks
         {
             var services = new ServiceCollection().AddLogging().AddLocalization(x => x.ResourcesPath = "Resources");
             if (dimensions != null) services.AddSingleton(dimensions);
+            if (agreements != null) services.AddSingleton(agreements);
             services.AddSingleton(service); services.AddSingleton<ICurrentUserContextService>(new Context(user, account));
             services.AddSingleton<NavigationManager>(new TestNavigation(path)); services.AddSingleton<IJSRuntime>(new NoJs());
             await using var provider = services.BuildServiceProvider();

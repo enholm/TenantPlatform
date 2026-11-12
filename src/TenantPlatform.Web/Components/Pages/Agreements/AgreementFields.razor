@@ -17,21 +17,8 @@
             <option value="@Guid.Empty">@L["AgreementSelect"]</option>
             @foreach (var item in Options.Members) { <option value="@item.Id">@item.Name</option> }
         </InputSelect></div>
-        <div class="col-md-6"><label for="agreement-organization-element" class="form-label">@L["AgreementOrganizationElement"]</label>
-            <InputSelect id="agreement-organization-element" class="form-select" @bind-Value="Model.OrganizationElementId">
-                <option value="">@L["AgreementNone"]</option>
-                @foreach (var item in Options.OrganizationElements)
-                { <option value="@item.Id">@item.Name@(!item.IsActive ? $" ({L["Inactive"]})" : "")</option> }
-            </InputSelect>
-        </div>
-        <div class="col-md-6"><label for="agreement-geographic-area" class="form-label">@L["AgreementGeographicArea"]</label>
-            <InputSelect id="agreement-geographic-area" class="form-select" @bind-Value="Model.GeographicAreaId">
-                <option value="">@L["AgreementNone"]</option>
-                @foreach (var item in Options.GeographicAreas)
-                { <option value="@item.Id">@item.Name@(!item.IsActive ? $" ({L["Inactive"]})" : "")</option> }
-            </InputSelect>
-        </div>
 </div></section>
+@if (DimensionState is not null) { <AgreementDimensionChoices State="DimensionState" Existing="Existing" /> }
 <section id="agreement-fields-finance" class="page-section"><h2 class="h5">@L["FinanceLinesAndForecast"]</h2><div class="row g-3">
         <div class="col-md-6"><label for="finance-direction" class="form-label">@L["FinanceDirection"]</label><InputSelect id="finance-direction" class="form-select" @bind-Value="Model.Direction">
             <option value="">@L["FinanceUnclassified"]</option>
@@ -65,6 +52,7 @@
 @code {
     [Parameter, EditorRequired] public SaveAgreementRequest Model { get; set; } = default!;
     [Parameter, EditorRequired] public AgreementOptionsDto Options { get; set; } = default!;
+    [Parameter] public AgreementDimensionEditState? DimensionState { get; set; }
     [Parameter] public bool CanManage { get; set; } = true;
     [Parameter] public bool Existing { get; set; }
     [Parameter] public bool HideCounterparty { get; set; }

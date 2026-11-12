@@ -3,16 +3,20 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql;
 using TenantPlatform.Core.Accounts;
+using TenantPlatform.Core.Dimensions;
 using TenantPlatform.Core.Identity;
 using TenantPlatform.Infrastructure.Persistence;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
-using TenantPlatform.Web.Services.AccountSettings;
+using TenantPlatform.Web.Services.Dimensions;
 
+// PostgreSQL-only runner. Never executed by the offline Unified Dimensions phases.
 var connection = Environment.GetEnvironmentVariable("ACCOUNT_REGISTER_TEST_CONNECTION") ?? throw new Exception("Set ACCOUNT_REGISTER_TEST_CONNECTION.");
 var cs = new NpgsqlConnectionStringBuilder(connection);
 if (cs.Database != "tenant_account_register_tests") throw new Exception("Only the disposable tenant_account_register_tests database is allowed.");
 var schema = "register_test_" + Guid.NewGuid().ToString("N");
+Console.WriteLine($"Test database: {cs.Database}");
+Console.WriteLine($"Test schema: {schema}");
 await using var setup = new NpgsqlConnection(connection);
 await setup.OpenAsync();
 await using (var cmd = new NpgsqlCommand($"CREATE SCHEMA \"{schema}\"", setup)) await cmd.ExecuteNonQueryAsync();
@@ -20,174 +24,117 @@ try
 {
     cs.SearchPath = schema;
     var factory = new Factory(new DbContextOptionsBuilder<TenantPlatformDbContext>().UseNpgsql(cs.ConnectionString).Options);
-    var legacyAccount = Guid.NewGuid();
-    var legacyId = Guid.NewGuid();
+    // Bounded historical scenario: stop at the rename migration and query unmapped rows, not removed CLR entities.
     await using (var db = factory.CreateDbContext())
     {
-        Assert(!db.Database.HasPendingModelChanges(), "model matches snapshot");
-        var previousMigration = db.Database.GetMigrations().Single(x => x.EndsWith("_AddAccountDepartmentsAndLocations"));
-        await db.GetService<IMigrator>().MigrateAsync(previousMigration);
-        db.Accounts.Add(new Account { Id = legacyAccount, Name = "Existing account" });
-        await db.SaveChangesAsync();
-        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO departments (\"Id\", \"AccountId\", \"Name\", \"Description\", \"IsActive\") VALUES ({legacyId}, {legacyAccount}, 'Legacy department', 'Preserved', false)");
-        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO locations (\"Id\", \"AccountId\", \"Name\", \"Description\", \"IsActive\") VALUES ({legacyId}, {legacyAccount}, 'Legacy location', 'Preserved', true)");
+        Assert(!db.Database.HasPendingModelChanges(), "final model matches snapshot");
+        var old = db.Database.GetMigrations().Single(x => x.EndsWith("_AddAccountDepartmentsAndLocations"));
+        var rename = db.Database.GetMigrations().Single(x => x.EndsWith("_AddAccountRegisterHierarchies"));
+        await db.GetService<IMigrator>().MigrateAsync(old);
+        var account = Guid.NewGuid(); var id = Guid.NewGuid();
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO accounts (\"Id\", \"Name\", \"DefaultLanguage\", \"IsActive\") VALUES ({account}, 'Historical account', 'nb-NO', true)");
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO departments (\"Id\", \"AccountId\", \"Name\", \"Description\", \"IsActive\") VALUES ({id}, {account}, 'Historical department', 'Preserved', false)");
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO locations (\"Id\", \"AccountId\", \"Name\", \"Description\", \"IsActive\") VALUES ({id}, {account}, 'Historical location', 'Preserved', true)");
+        await db.GetService<IMigrator>().MigrateAsync(rename);
+        var department = await db.Database.SqlQueryRaw<HistoricalRegisterRow>("SELECT \"Id\", \"ParentId\", \"Description\", \"IsActive\" FROM organization_elements").SingleAsync();
+        var location = await db.Database.SqlQueryRaw<HistoricalRegisterRow>("SELECT \"Id\", \"ParentId\", \"Description\", \"IsActive\" FROM geographic_areas").SingleAsync();
+        Assert(department.Id == id && department.ParentId is null && department.Description == "Preserved" && !department.IsActive, "historical rename preserves department row at historical boundary");
+        Assert(location.Id == id && location.ParentId is null && location.Description == "Preserved" && location.IsActive, "historical rename preserves location row at historical boundary");
         await db.Database.MigrateAsync();
-        var legacyElement = await db.OrganizationElements.AsNoTracking().SingleAsync(x => x.AccountId == legacyAccount);
-        var legacyArea = await db.GeographicAreas.AsNoTracking().SingleAsync(x => x.AccountId == legacyAccount);
-        Assert(legacyElement.Id == legacyId && legacyElement.ParentId == null && legacyElement.Description == "Preserved" && !legacyElement.IsActive, "existing department preserved as root");
-        Assert(legacyArea.Id == legacyId && legacyArea.ParentId == null && legacyArea.Name == "Legacy location" && legacyArea.IsActive, "existing location preserved as root");
-        Assert(!(await db.Database.GetPendingMigrationsAsync()).Any(), "full migration chain applies");
-        foreach (var type in new[] { typeof(OrganizationElement), typeof(GeographicArea) })
-        {
-            var parentFk = db.Model.FindEntityType(type)!.GetForeignKeys().Single(x => x.PrincipalEntityType.ClrType == type);
-            var expectedName = parentFk.GetConstraintName()!;
-            await using var check = new NpgsqlCommand("SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON c.connamespace = n.oid WHERE n.nspname = @schema AND c.conname = @name", setup);
-            check.Parameters.AddWithValue("schema", schema);
-            check.Parameters.AddWithValue("name", expectedName);
-            Assert((long)(await check.ExecuteScalarAsync())! == 1, type.Name + ": FK name matches EF model");
-        }
+        Assert(!(await db.Database.GetPendingMigrationsAsync()).Any(), "full migration chain applies through intentional legacy drop");
     }
-    var account = Guid.NewGuid(); var otherAccount = Guid.NewGuid();
-    var admin = Guid.NewGuid(); var member = Guid.NewGuid(); var foreign = Guid.NewGuid();
+    var accountA = Guid.NewGuid(); var accountB = Guid.NewGuid(); var admin = Guid.NewGuid(); var member = Guid.NewGuid(); var foreign = Guid.NewGuid();
     await using (var db = factory.CreateDbContext())
     {
-        db.Accounts.AddRange(new Account { Id = account, Name = "A" }, new Account { Id = otherAccount, Name = "B" });
+        db.Accounts.AddRange(new Account { Id = accountA, Name = "A" }, new Account { Id = accountB, Name = "B" });
         foreach (var id in new[] { admin, member, foreign })
         {
-            db.Users.Add(new User { Id = id, FirstName = "Test", Email = $"{id}@example.test" });
-            var membership = new UserAccount { Id = Guid.NewGuid(), UserId = id, AccountId = id == foreign ? otherAccount : account };
+            db.Users.Add(new User { Id = id, Email = id + "@test", IsActive = true });
+            var membership = new UserAccount { Id = Guid.NewGuid(), UserId = id, AccountId = id == foreign ? accountB : accountA };
             db.UserAccounts.Add(membership);
             db.UserAccountRoles.Add(new UserAccountRole { Id = Guid.NewGuid(), UserAccountId = membership.Id, Role = id == member ? UserRole.TenantUser : UserRole.AccountAdmin });
         }
         await db.SaveChangesAsync();
     }
-    foreach (var location in new[] { false, true })
+    var context = new Context(admin, accountA);
+    var auth = new TenantAuthorizationService(factory, context);
+    var service = new DimensionService(factory, context, auth, TimeProvider.System);
+    var dimension = await service.SaveDimensionAsync(null, new() { Name = "  Classification  ", Code = " class ", LeafOnly = false });
+    var definition = (await service.GetAsync()).Dimensions.Single();
+    Assert(definition.Name == "Classification" && definition.Code == "CLASS" && definition.AccountId == accountA, "current Dimensions create normalizes and owns data");
+    var stale = System.Text.Json.JsonSerializer.Deserialize<Dimension>(System.Text.Json.JsonSerializer.Serialize(definition))!;
+    definition.IsActive = false; await service.SaveDimensionAsync(dimension, definition);
+    await Expect<DimensionValidationException>(() => service.SaveDimensionAsync(dimension, stale), "stale dimension revision rejected");
+    definition = (await service.GetAsync()).Dimensions.Single(); definition.IsActive = true; await service.SaveDimensionAsync(dimension, definition);
+    foreach (var input in new[] { new Dimension { Name = " ", Code = "BAD" }, new() { Name = new string('x', 201), Code = "BAD" }, new() { Name = "Valid", Code = "BAD", Description = new string('x', 2001) } })
+        await Expect<DimensionValidationException>(() => service.SaveDimensionAsync(null, input), "current register validates bounds");
+    var root = await service.SaveValueAsync(dimension, null, new() { DimensionId = dimension, Name = "Root", Code = "ROOT" });
+    var child = await service.SaveValueAsync(dimension, null, new() { DimensionId = dimension, ParentId = root, Name = "Child", Code = "CHILD" });
+    var leaf = await service.SaveValueAsync(dimension, null, new() { DimensionId = dimension, ParentId = child, Name = "Leaf", Code = "LEAF" });
+    async Task Move(Guid id, Guid? parent) { var value = (await service.GetAsync()).Values.Single(x => x.Id == id); value.ParentId = parent; await service.SaveValueAsync(dimension, id, value); }
+    await Expect<DimensionValidationException>(() => Move(root, leaf), "descendant cycle rejected");
+    await Expect<DimensionValidationException>(() => Move(child, child), "self cycle rejected");
+    await Expect<DimensionValidationException>(() => Move(child, Guid.NewGuid()), "missing parent rejected");
+    await Move(child, null);
+    Assert((await service.GetAsync()).Values.Single(x => x.Id == leaf).ParentId == child, "moving subtree retains descendants");
+    var foreignDimension = Guid.NewGuid(); var foreignValue = Guid.NewGuid();
+    await using (var db = factory.CreateDbContext())
     {
-        var context = new Context(admin, account);
-        var auth = new TenantAuthorizationService(factory, context);
-        var departments = new OrganizationElementService(factory, context, auth);
-        var locations = new GeographicAreaService(factory, context, auth);
-        Task Save(Guid? id, AccountRegisterInput input) => location ? locations.SaveAsync(id, input) : departments.SaveAsync(id, input);
-        Task Delete(Guid id) => location ? locations.DeleteAsync(id) : departments.DeleteAsync(id);
-        async Task<List<(Guid Id, Guid AccountId, string Name, string? Description, bool IsActive)>> Read() => location
-            ? (await locations.GetAllAsync()).Select(x => (x.Id, x.AccountId, x.Name, x.Description, x.IsActive)).ToList()
-            : (await departments.GetAllAsync()).Select(x => (x.Id, x.AccountId, x.Name, x.Description, x.IsActive)).ToList();
-        var label = location ? "geographic_areas" : "organization_elements";
-        await Save(null, new() { Name = "  Operations  ", Description = "  Description  " });
-        var item = (await Read()).Single();
-        Assert(item.AccountId == account && item.Name == "Operations" && item.Description == "Description" && item.IsActive, label + ": create and normalize");
-        await Save(item.Id, new() { Name = "Updated", Description = "  ", IsActive = false });
-        var updated = (await Read()).Single();
-        Assert(updated.Name == "Updated" && updated.Description == null && !updated.IsActive, label + ": edit and deactivate");
-        foreach (var input in new[] { new AccountRegisterInput { Name = " " }, new() { Name = new string('x', 201) }, new() { Name = "Valid", Description = new string('x', 2001) } })
-            await Expect<ArgumentException>(() => Save(null, input), label + ": invalid input rejected");
-        context.Current = new() { IsAuthenticated = true, UserId = foreign, CurrentAccountId = otherAccount };
-        Assert((await Read()).Count == 0, label + ": other account cannot list records");
-        await Expect<InvalidOperationException>(() => Save(item.Id, new() { Name = "Attack" }), label + ": cross-account edit rejected");
-        await Expect<InvalidOperationException>(() => Delete(item.Id), label + ": cross-account delete rejected");
-        await Save(null, new() { Name = "Other account" });
-        context.Current = new() { IsAuthenticated = true, UserId = member, CurrentAccountId = account };
-        await Expect<UnauthorizedAccessException>(async () => { await Read(); }, label + ": non-admin read rejected");
-        await Expect<UnauthorizedAccessException>(() => Save(null, new() { Name = "Attack" }), label + ": non-admin create rejected");
-        await Expect<UnauthorizedAccessException>(() => Save(item.Id, new() { Name = "Attack" }), label + ": non-admin edit rejected");
-        await Expect<UnauthorizedAccessException>(() => Delete(item.Id), label + ": non-admin delete rejected");
-        context.Current = new() { IsAuthenticated = true, IsPlatformAdmin = true, UserId = Guid.NewGuid(), CurrentAccountId = account };
-        await Expect<UnauthorizedAccessException>(async () => { await Read(); }, label + ": platform flag does not grant account maintenance");
-        context.Current = new() { IsAuthenticated = true, UserId = admin, CurrentAccountId = otherAccount };
-        await Expect<UnauthorizedAccessException>(async () => { await Read(); }, label + ": forged account context rejected");
-        context.Current = new() { IsAuthenticated = true, UserId = admin };
-        await Expect<UnauthorizedAccessException>(async () => { await Read(); }, label + ": missing account rejected");
-        context.Current = new() { UserId = admin, CurrentAccountId = account };
-        await Expect<UnauthorizedAccessException>(async () => { await Read(); }, label + ": anonymous access rejected");
-        context.Current = new() { IsAuthenticated = true, UserId = admin, CurrentAccountId = account };
-        Assert((await Read()).Single().Name == "Updated", label + ": foreign mutations left record unchanged");
-        // A root, child and grandchild can be moved without losing descendants.
-        await Save(null, new() { Name = "Child", ParentId = item.Id });
-        var child = (await Read()).Single(x => x.Name == "Child");
-        await Save(null, new() { Name = "Grandchild", ParentId = child.Id });
-        var grandchild = (await Read()).Single(x => x.Name == "Grandchild");
-        await Expect<AccountHierarchyException>(() => Save(item.Id, new() { Name = "Cycle", ParentId = grandchild.Id }), label + ": descendant cycle rejected");
-        await Expect<AccountHierarchyException>(() => Save(child.Id, new() { Name = "Self", ParentId = child.Id }), label + ": self-parent rejected");
-        await Expect<AccountHierarchyException>(() => Save(null, new() { Name = "Missing", ParentId = Guid.NewGuid() }), label + ": nonexistent parent rejected");
-        await Expect<AccountHierarchyException>(() => Save(null, new() { Name = "Foreign", ParentId = legacyId }), label + ": foreign parent rejected");
-        await Expect<AccountHierarchyException>(() => Delete(item.Id), label + ": cannot delete parent");
-        await Save(child.Id, new() { Name = "Child moved to root" });
-        var parentId = location
-            ? (await locations.GetAllAsync()).Single(x => x.Id == child.Id).ParentId
-            : (await departments.GetAllAsync()).Single(x => x.Id == child.Id).ParentId;
-        Assert(parentId == null, label + ": move to root");
-        var grandchildParent = location
-            ? (await locations.GetAllAsync()).Single(x => x.Id == grandchild.Id).ParentId
-            : (await departments.GetAllAsync()).Single(x => x.Id == grandchild.Id).ParentId;
-        Assert(grandchildParent == child.Id, label + ": moving subtree preserves child links");
-        await Delete(grandchild.Id);
-        await Delete(child.Id);
-
-        // Competing reparentings must not both pass validation and create a two-node cycle.
-        await Save(null, new() { Name = "Concurrent root" });
-        var concurrent = (await Read()).Single(x => x.Name == "Concurrent root");
-        async Task<bool> AttemptMove(Guid id, Guid parent)
-        {
-            try { await Save(id, new() { Name = "Concurrent", ParentId = parent }); return true; }
-            catch (AccountHierarchyException) { return false; }
-        }
-        var results = await Task.WhenAll(AttemptMove(item.Id, concurrent.Id), AttemptMove(concurrent.Id, item.Id));
-        Assert(results.Count(x => x) == 1, label + ": concurrent cycle prevented");
-        await Save(concurrent.Id, new() { Name = "Concurrent root" });
-        await Save(item.Id, new() { Name = "Original root" });
-        await Delete(concurrent.Id);
-        // The composite FK also protects account boundaries outside the application service.
-        await using (var db = factory.CreateDbContext())
-        {
-            if (location) db.GeographicAreas.Add(new GeographicArea { Id = Guid.NewGuid(), AccountId = account, Name = "Invalid", ParentId = legacyId });
-            else db.OrganizationElements.Add(new OrganizationElement { Id = Guid.NewGuid(), AccountId = account, Name = "Invalid", ParentId = legacyId });
-            await Expect<DbUpdateException>(() => db.SaveChangesAsync(), label + ": database rejects foreign parent");
-        }
-        await Delete(item.Id);
-        Assert((await Read()).Count == 0, label + ": delete");
-        await Expect<InvalidOperationException>(() => Delete(item.Id), label + ": stale ID rejected");
+        db.Dimensions.Add(new Dimension { Id = foreignDimension, AccountId = accountB, Name = "Foreign", Code = "FOREIGN" });
+        db.DimensionValues.Add(new DimensionValue { Id = foreignValue, AccountId = accountB, DimensionId = foreignDimension, Name = "Foreign parent", Code = "FOREIGN" });
+        await db.SaveChangesAsync();
     }
-    // Even an account with no remaining users cannot be deleted while register data remains.
-    foreach (var location in new[] { false, true })
+    await Expect<DimensionValidationException>(() => Move(child, foreignValue), "foreign parent rejected by current register");
+    context.Current = new() { IsAuthenticated = true, UserId = foreign, CurrentAccountId = accountB };
+    Assert((await service.GetAsync()).Dimensions.All(x => x.AccountId == accountB), "register listing isolates account");
+    await Expect<UnauthorizedAccessException>(() => service.SaveDimensionAsync(dimension, definition), "cross-account edit rejected");
+    foreach (var identity in new CurrentUserContext[]
     {
-        var isolatedAccount = Guid.NewGuid();
-        await using (var db = factory.CreateDbContext())
-        {
-            db.Accounts.Add(new Account { Id = isolatedAccount, Name = "Register-only account" });
-            if (location) db.GeographicAreas.Add(new GeographicArea { Id = Guid.NewGuid(), AccountId = isolatedAccount, Name = "Office" });
-            else db.OrganizationElements.Add(new OrganizationElement { Id = Guid.NewGuid(), AccountId = isolatedAccount, Name = "IT" });
-            await db.SaveChangesAsync();
-        }
-        var accountService = new TenantPlatform.Web.Services.Accounts.AccountService(factory);
-        Assert(!(await accountService.CanDeleteAccountAsync(isolatedAccount)).CanDelete,
-            location ? "locations prevent account deletion" : "departments prevent account deletion");
+        new() { IsAuthenticated = true, UserId = member, CurrentAccountId = accountA },
+        new() { IsAuthenticated = true, IsPlatformAdmin = true, UserId = member, CurrentAccountId = accountA },
+        new() { IsAuthenticated = true, UserId = admin, CurrentAccountId = accountB },
+        new() { IsAuthenticated = true, UserId = admin }, new() { UserId = admin, CurrentAccountId = accountA }
+    })
+    {
+        context.Current = identity;
+        await Expect<UnauthorizedAccessException>(() => service.GetAsync(), "non-admin/forged/missing/anonymous context cannot read administrative register");
+        await Expect<UnauthorizedAccessException>(() => service.SaveDimensionAsync(null, new() { Name = "Attack", Code = "ATTACK" }), "unauthorized create rejected");
+        await Expect<UnauthorizedAccessException>(() => service.SaveDimensionAsync(dimension, definition), "unauthorized edit rejected");
+        await Expect<UnauthorizedAccessException>(() => service.SaveValueAsync(dimension, child, new() { DimensionId = dimension, Name = "Attack", Code = "ATTACK" }), "unauthorized value edit rejected");
     }
-    var rootId = Guid.NewGuid(); var childId = Guid.NewGuid(); var leafId = Guid.NewGuid();
-    var hierarchy = AccountRegisterHierarchy.Build(new[] {
-        (leafId, (Guid?)childId, "Leaf"), (rootId, (Guid?)null, "Root"), (childId, (Guid?)rootId, "Child") });
-    Assert(hierarchy.Select(x => x.Id).SequenceEqual(new[] { rootId, childId, leafId }), "tree order places descendants after parent");
-    Assert(hierarchy[2].Depth == 2 && hierarchy[2].Path == "Root / Child / Leaf" && hierarchy[2].Ancestors.Contains(rootId), "tree depth, labels and parent exclusions");
-    var adminContext = new Context(admin, account);
-    var memberContext = new Context(member, account);
-    Assert((await new TenantAuthorizationService(factory, adminContext).GetNavigationPermissionsAsync()).CanManageAccountStructure, "admin menu permission");
-    Assert(!(await new TenantAuthorizationService(factory, memberContext).GetNavigationPermissionsAsync()).CanManageAccountStructure, "member menu permission hidden");
+    context.Current = new() { IsAuthenticated = true, UserId = admin, CurrentAccountId = accountA };
+    await Move(child, null); await Move(root, null);
+    async Task<bool> Attempt(Guid id, Guid parent) { try { await Move(id, parent); return true; } catch (DimensionValidationException) { return false; } }
+    var results = await Task.WhenAll(Attempt(root, child), Attempt(child, root));
+    Assert(results.Count(x => x) == 1, "serialized current-register reparenting prevents concurrent cycle");
+    await using (var db = factory.CreateDbContext())
+    {
+        db.DimensionValues.Add(new DimensionValue { Id = Guid.NewGuid(), AccountId = accountA, DimensionId = dimension, ParentId = foreignValue, Name = "Invalid", Code = "INVALID" });
+        await Expect<DbUpdateException>(() => db.SaveChangesAsync(), "account/dimension-aware FK rejects foreign parent outside service");
+    }
+    var isolated = Guid.NewGuid();
+    await using (var db = factory.CreateDbContext())
+    { db.Accounts.Add(new Account { Id = isolated }); db.Dimensions.Add(new Dimension { Id = Guid.NewGuid(), AccountId = isolated, Name = "Data", Code = "DATA" }); await db.SaveChangesAsync(); }
+    Assert(!(await new TenantPlatform.Web.Services.Accounts.AccountService(factory).CanDeleteAccountAsync(isolated)).CanDelete, "dimension-only account without users cannot be deleted");
+    Assert((await auth.GetNavigationPermissionsAsync()).CanManageAccountStructure, "admin navigation permission preserved");
+    context.Current = new() { IsAuthenticated = true, UserId = member, CurrentAccountId = accountA };
+    Assert(!(await auth.GetNavigationPermissionsAsync()).CanManageAccountStructure, "member cannot see register administration");
 }
-finally
+catch
 {
-    await using var cmd = new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE", setup);
-    await cmd.ExecuteNonQueryAsync();
+    Console.Error.WriteLine($"Test failed; schema preserved for diagnosis: {schema}");
+    throw;
 }
+await using (var drop = new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE", setup))
+    await drop.ExecuteNonQueryAsync();
+Console.WriteLine($"Test schema dropped: {schema}");
+Console.WriteLine("All account-register PostgreSQL smoke checks passed.");
 static void Assert(bool condition, string label) { if (!condition) throw new Exception("FAIL: " + label); Console.WriteLine("PASS: " + label); }
 static async Task Expect<T>(Func<Task> action, string label) where T : Exception
-{
-    try { await action(); } catch (T) { Console.WriteLine("PASS: " + label); return; }
-    throw new Exception("FAIL: " + label);
-}
+{ try { await action(); } catch (T) { Assert(true, label); return; } throw new Exception("FAIL: " + label); }
 sealed class Factory(DbContextOptions<TenantPlatformDbContext> options) : IDbContextFactory<TenantPlatformDbContext>
-{
-    public TenantPlatformDbContext CreateDbContext() => new(options);
-}
+{ public TenantPlatformDbContext CreateDbContext() => new(options); }
 sealed class Context(Guid user, Guid account) : ICurrentUserContextService
-{
-    public CurrentUserContext Current { get; set; } = new() { IsAuthenticated = true, UserId = user, CurrentAccountId = account };
-}
+{ public CurrentUserContext Current { get; set; } = new() { IsAuthenticated = true, UserId = user, CurrentAccountId = account }; }
+public sealed class HistoricalRegisterRow
+{ public Guid Id { get; set; } public Guid? ParentId { get; set; } public string? Description { get; set; } public bool IsActive { get; set; } }

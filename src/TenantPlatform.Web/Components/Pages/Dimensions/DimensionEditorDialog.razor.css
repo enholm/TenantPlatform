@@ -1,0 +1,20 @@
+::deep .dimension-editor-form,
+::deep .dimension-editor-fieldset {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+::deep .dimension-editor-fieldset {
+    min-inline-size: 0;
+}
+
+::deep .modal-body {
+    overflow-y: auto;
+}
+
+::deep .modal-footer {
+    flex: 0 0 auto;
+}

@@ -4,7 +4,7 @@
     { <p class="alert alert-warning mt-2">@L["LeasingMissingDimensions"]: @string.Join(", ", missing)</p> }
     <ul class="small mt-2">
         @foreach (var choice in Item.DimensionSelections.Where(x => x.AllocationRowId == null))
-        { <li>@choice.DimensionName (@choice.DimensionCode): @choice.ValuePath (@choice.ValueCode) @Inactive(choice)</li> }
+        { <li>@DisplayName(choice) (@choice.DimensionCode): @choice.ValuePath (@choice.ValueCode) @Inactive(choice)</li> }
     </ul>
     <p class="small">@L[$"LeasingAllocation{Item.AllocationMode}"]</p>
     @if (Item.AllocationMode != LeasingAllocationMode.None)
@@ -15,7 +15,7 @@
         @foreach (var row in Item.AllocationRows.OrderBy(x => x.Position))
         {
             var amount = result.Rows.SingleOrDefault(x => x.RowId == row.Id);
-            <tr><td>@foreach (var choice in Item.DimensionSelections.Where(x => x.AllocationRowId == row.Id)) { <div>@choice.DimensionName (@choice.DimensionCode): @choice.ValuePath (@choice.ValueCode) @Inactive(choice)</div> }</td><td>@row.InputValue.ToString("0.####")</td><td>@amount?.Percent?.ToString("N4")</td><td>@amount?.Quantity?.ToString("N4")</td><td>@amount?.Net.ToString("N2")</td><td>@amount?.Vat.ToString("N2")</td></tr>
+            <tr><td>@foreach (var choice in Item.DimensionSelections.Where(x => x.AllocationRowId == row.Id)) { <div>@DisplayName(choice) (@choice.DimensionCode): @choice.ValuePath (@choice.ValueCode) @Inactive(choice)</div> }</td><td>@row.InputValue.ToString("0.####")</td><td>@amount?.Percent?.ToString("N4")</td><td>@amount?.Quantity?.ToString("N4")</td><td>@amount?.Net.ToString("N2")</td><td>@amount?.Vat.ToString("N2")</td></tr>
         }
         </tbody></table></div>
         @if (!result.Complete) { <p class="text-danger">@L["LeasingInvalidAllocation"]</p> }
@@ -24,5 +24,9 @@
 @code {
     [Parameter, EditorRequired] public LeasingItem Item { get; set; } = null!;
     [Parameter] public LeasingClassificationCatalog? Catalog { get; set; }
+    // Current details use the localized catalog; history renders without a
+    // catalog and therefore retains the recorded snapshot name.
+    private string DisplayName(LeasingDimensionSelection choice) =>
+        Catalog?.Dimensions.SingleOrDefault(x => x.Dimension.Id == choice.DimensionId)?.DisplayName ?? choice.DimensionName;
     private string Inactive(LeasingDimensionSelection choice) => Catalog != null && Catalog.Dimensions.SingleOrDefault(x => x.Dimension.Id == choice.DimensionId)?.Values.SingleOrDefault(x => x.Id == choice.ValueId)?.IsActive != true ? L["DimensionInactive"] : "";
 }

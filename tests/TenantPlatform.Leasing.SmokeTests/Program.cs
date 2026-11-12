@@ -26,6 +26,8 @@ Check(LeasingCalculator.Line(new() { Quantity = 1, UnitPrice = 0.025m, VatPercen
 var cs = new NpgsqlConnectionStringBuilder(Environment.GetEnvironmentVariable("LEASING_TEST_CONNECTION") ?? throw new Exception("Set LEASING_TEST_CONNECTION to the disposable tenant_leasing_tests database."));
 if (cs.Database != "tenant_leasing_tests") throw new Exception("Only tenant_leasing_tests is allowed.");
 var schema = "leasing_" + Guid.NewGuid().ToString("N");
+Console.WriteLine($"Test database: {cs.Database}");
+Console.WriteLine($"Test schema: {schema}");
 await using var setup = new NpgsqlConnection(cs.ConnectionString); await setup.OpenAsync();
 await using (var command = new NpgsqlCommand($"CREATE SCHEMA \"{schema}\"", setup)) await command.ExecuteNonQueryAsync();
 try
@@ -325,7 +327,7 @@ try
     allocatedFramePurchase = await Read(grossLease);
     Check(await Used(target) == usedBefore && allocatedFramePurchase.FinancedAmount == financedBefore && allocatedFramePurchase.EndDate == endBefore && allocatedFramePurchase.Items.Count == 1,
         "cost allocation preserves framework utilization, financed amount, lease dates and original line count");
-    await LeasingComponentChecks.Run(admin, account, adminId, framework, standalone, dimensions);
+    await LeasingComponentChecks.Run(admin, account, adminId, framework, standalone, dimensions, new TenantPlatform.Web.Services.Agreements.AgreementService(factory, dimensionContext, new TenantAuthorizationService(factory, dimensionContext), null!, Microsoft.Extensions.Logging.Abstractions.NullLogger<TenantPlatform.Web.Services.Agreements.AgreementService>.Instance, new Clock()));
     await InvoiceChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
     await OrderChecks.Run(factory, account, adminId, ownerId, outsiderId, party, foreignAccount);
     await PaymentChecks.Run(factory, adminId, ownerId, outsiderId, foreignAccount);
@@ -333,10 +335,14 @@ try
     await DemoSeedChecks.Run(factory);
     Console.WriteLine("All leasing PostgreSQL smoke checks passed.");
 }
-finally
+catch
 {
-    await using var drop = new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE", setup); await drop.ExecuteNonQueryAsync();
+    Console.Error.WriteLine($"Test failed; schema preserved for diagnosis: {schema}");
+    throw;
 }
+await using (var drop = new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE", setup))
+    await drop.ExecuteNonQueryAsync();
+Console.WriteLine($"Test schema dropped: {schema}");
 static void Check(bool condition, string name) { if (!condition) throw new Exception("FAIL: " + name); Console.WriteLine("PASS: " + name); }
 static async Task Reject(Func<Task> action, string key) { try { await action(); throw new Exception("Expected " + key); } catch (LeasingValidationException ex) when (ex.Message == key) { Console.WriteLine("PASS rejection: " + key); } }
 static async Task Deny(Func<Task> action) { try { await action(); throw new Exception("Expected access denial"); } catch (UnauthorizedAccessException) { Console.WriteLine("PASS: access denied"); } }

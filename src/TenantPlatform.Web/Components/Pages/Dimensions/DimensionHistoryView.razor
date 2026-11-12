@@ -1,4 +1,5 @@
 @using System.Text.Json
+@if (IsAgreementRule) { <h3 class="h6">@L["DimensionAgreementRules"]</h3> }
 <dl class="small">
 @foreach (var field in Fields)
 {
@@ -8,7 +9,21 @@
     <dt>@L[field.Value]</dt><dd>@(result.ValueKind == JsonValueKind.True ? L["Yes"] : result.ValueKind == JsonValueKind.False ? L["No"] : result.ToString())</dd>
 }
 </dl>
+@if (Translations.ValueKind == JsonValueKind.Array)
+{
+    <h3 class="h6">@L["DimensionTranslations"]</h3>
+    @foreach (var translation in Translations.EnumerateArray())
+    {
+        <dl class="small">
+            <dt>@translation.GetProperty("LanguageCode").GetString()</dt>
+            <dd>@L["Name"]: @translation.GetProperty("Name").GetString()</dd>
+            <dd>@L["Description"]: @translation.GetProperty("Description").GetString()</dd>
+        </dl>
+    }
+}
 @code {
     [Parameter] public string Json { get; set; } = "{}";
-    private static readonly Dictionary<string,string> Fields = new() { ["Name"]="Name", ["Code"]="DimensionCode", ["Description"]="Description", ["Path"]="DimensionPath", ["IsActive"]="DimensionActive", ["AllowMultiple"]="DimensionMultiple", ["LeafOnly"]="DimensionLeafOnly", ["SortOrder"]="DimensionSortOrder", ["IsEnabled"]="DimensionEnabledLeasing", ["IsRequired"]="DimensionRequired", ["AllowAllocation"]="DimensionAllowAllocation" };
+    private bool IsAgreementRule => JsonSerializer.Deserialize<JsonElement>(Json).TryGetProperty("Module", out var module) && module.GetString() == "Agreements";
+    private JsonElement Translations => JsonSerializer.Deserialize<JsonElement>(Json).TryGetProperty("Translations", out var translations) ? translations : default;
+    private static readonly Dictionary<string,string> Fields = new() { ["Name"]="Name", ["Code"]="DimensionCode", ["Description"]="Description", ["Path"]="DimensionPath", ["IsActive"]="DimensionActive", ["AllowMultiple"]="DimensionMultiple", ["LeafOnly"]="DimensionLeafOnly", ["SortOrder"]="DimensionSortOrder", ["IsEnabled"]="DimensionEnabledLeasing", ["IsRequired"]="DimensionRequired", ["AllowAllocation"]="DimensionAllowAllocation", ["IsEnabledInAgreements"]="DimensionEnabledAgreements", ["IsRequiredAtRegistration"]="DimensionRequiredRegistration" };
 }

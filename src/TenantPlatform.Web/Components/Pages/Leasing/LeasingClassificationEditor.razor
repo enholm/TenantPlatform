@@ -21,7 +21,7 @@
             { <p class="alert alert-warning" role="status">@L["LeasingAllocationChooseDimension"]</p> }
             <fieldset class="mb-3"><legend class="fs-6">@L["LeasingVaryingDimensions"]</legend>
             @foreach (var dimension in Catalog.Dimensions.Where(x => CanAllocate(x) || Input.VaryingDimensions.Contains(x.Dimension.Id)))
-            { <label class="d-block"><input type="checkbox" checked="@Input.VaryingDimensions.Contains(dimension.Dimension.Id)" @onchange="e => Vary(dimension.Dimension.Id, e.Value is true)" /> @dimension.Dimension.Name</label> }
+            { <label class="d-block"><input type="checkbox" checked="@Input.VaryingDimensions.Contains(dimension.Dimension.Id)" @onchange="e => Vary(dimension.Dimension.Id, e.Value is true)" /> @dimension.DisplayName</label> }
             </fieldset>
             @foreach (var row in Input.Rows)
             {
@@ -53,8 +53,8 @@
     [Parameter, EditorRequired] public LeasingClassificationCatalog Catalog { get; set; } = null!;
     [Parameter] public EventCallback Changed { get; set; }
     private static bool CanAllocate(LeasingDimensionOption option) => option.Rule.IsEnabled && option.Rule.AllowAllocation && !option.Dimension.AllowMultiple && option.Dimension.IsActive;
-    private List<string> MissingRow(LeasingAllocationInput row) => Catalog.Dimensions.Where(d => Input.VaryingDimensions.Contains(d.Dimension.Id) && !row.Choices.Any(c => c.DimensionId == d.Dimension.Id)).Select(d => d.Dimension.Name).ToList();
-    private List<string> Missing => Catalog.Dimensions.Where(d => d.Rule.IsEnabled && d.Rule.IsRequired && (Input.VaryingDimensions.Contains(d.Dimension.Id) ? Input.Rows.Count == 0 || Input.Rows.Any(r => !r.Choices.Any(c => c.DimensionId == d.Dimension.Id)) : !Input.Common.Any(c => c.DimensionId == d.Dimension.Id))).Select(d => d.Dimension.Name).ToList();
+    private List<string> MissingRow(LeasingAllocationInput row) => Catalog.Dimensions.Where(d => Input.VaryingDimensions.Contains(d.Dimension.Id) && !row.Choices.Any(c => c.DimensionId == d.Dimension.Id)).Select(d => d.DisplayName).ToList();
+    private List<string> Missing => Catalog.Dimensions.Where(d => d.Rule.IsEnabled && d.Rule.IsRequired && (Input.VaryingDimensions.Contains(d.Dimension.Id) ? Input.Rows.Count == 0 || Input.Rows.Any(r => !r.Choices.Any(c => c.DimensionId == d.Dimension.Id)) : !Input.Common.Any(c => c.DimensionId == d.Dimension.Id))).Select(d => d.DisplayName).ToList();
     private LeasingAllocationResult? Result { get { try { return LeasingAllocationCalculator.Calculate(Input.Preview(Item)); } catch (Exception ex) when (ex is ArgumentOutOfRangeException or OverflowException) { return null; } } }
     private Task Notify() => Changed.InvokeAsync();
     private async Task ModeChanged(ChangeEventArgs e) { Input.Mode = Enum.Parse<LeasingAllocationMode>(e.Value!.ToString()!); if (Input.Mode == LeasingAllocationMode.None) { Input.Rows.Clear(); Input.VaryingDimensions.Clear(); } await Notify(); }

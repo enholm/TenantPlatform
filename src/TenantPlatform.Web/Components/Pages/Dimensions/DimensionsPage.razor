@@ -3,11 +3,14 @@
 @rendermode InteractiveServer
 @using TenantPlatform.Core.Dimensions
 @using TenantPlatform.Core.Leasing
+@using TenantPlatform.Core.Agreements
+@using TenantPlatform.Web.Services.Agreements
 @using TenantPlatform.Web.Services.Dimensions
 @using TenantPlatform.Web.Services.Leasing
 @using TenantPlatform.Web.Security.CurrentUserContext
 @inject DimensionService Service
 @inject LeasingService Leasing
+@inject IAgreementService Agreements
 @inject ICurrentUserContextService User
 @inject NavigationManager Navigation
 
@@ -31,6 +34,7 @@ else
         <div class="row g-3 align-items-start">
             <div class="col-12 col-xl-5">
                 <DimensionOverview Dimensions="register.Dimensions"
+                                   DefaultLanguage="@register.DefaultLanguage"
                                    SelectedDimensionId="dimensionId"
                                    OnCreate="NewDimension"
                                    OnSelect="SelectDimension"
@@ -58,7 +62,7 @@ else
                         <div class="card-header bg-body">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                                 <div>
-                                    <h2 class="h5 mb-0">@SelectedDimension.Name</h2>
+                                    <h2 class="h5 mb-0">@register.DisplayName(SelectedDimension)</h2>
                                     <span class="small text-muted">@SelectedDimension.Code</span>
                                 </div>
                                 <button type="button" class="btn btn-outline-secondary btn-sm"
@@ -84,6 +88,13 @@ else
                                     </button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button type="button" class="nav-link @(activeTab == DetailTab.Agreements ? "active" : null)"
+                                            role="tab" aria-selected="@(activeTab == DetailTab.Agreements)"
+                                            @onclick="() => activeTab = DetailTab.Agreements">
+                                        @L["DimensionAgreementRules"]
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button type="button" class="nav-link @(activeTab == DetailTab.Values ? "active" : null)"
                                             role="tab" aria-selected="@(activeTab == DetailTab.Values)"
                                             @onclick="() => activeTab = DetailTab.Values">
@@ -106,9 +117,9 @@ else
                         <section class="card">
                             <div class="card-body">
                                 <dl class="row mb-0">
-                                    <dt class="col-sm-4">@L["Name"]</dt><dd class="col-sm-8">@SelectedDimension.Name</dd>
+                                    <dt class="col-sm-4">@L["Name"]</dt><dd class="col-sm-8">@register.DisplayName(SelectedDimension)</dd>
                                     <dt class="col-sm-4">@L["DimensionCode"]</dt><dd class="col-sm-8">@SelectedDimension.Code</dd>
-                                    <dt class="col-sm-4">@L["Description"]</dt><dd class="col-sm-8">@SelectedDimension.Description</dd>
+                                    <dt class="col-sm-4">@L["Description"]</dt><dd class="col-sm-8">@register.DisplayDescription(SelectedDimension)</dd>
                                     <dt class="col-sm-4">@L["Status"]</dt><dd class="col-sm-8">@L[SelectedDimension.IsActive ? "DimensionActive" : "DimensionInactive"]</dd>
                                 </dl>
                             </div>
@@ -118,9 +129,13 @@ else
                     {
                         <DimensionRulesSection Rule="rule" OnSave="SaveRule" Error="@error" IsBusy="busy" />
                     }
+                    else if (activeTab == DetailTab.Agreements)
+                    {
+                        <AgreementDimensionRulesSection Rule="agreementRule" OnSave="SaveAgreementRule" Error="@error" IsBusy="busy" />
+                    }
                     else if (activeTab == DetailTab.Values)
                     {
-                        <DimensionValuesSection Values="Paths" DimensionName="SelectedDimension.Name" IsBusy="busy"
+                        <DimensionValuesSection Values="Paths" DimensionName="@register.DisplayName(SelectedDimension)" IsBusy="busy"
                                                 OnCreate="NewValue" OnCreateChild="NewChild" OnEdit="EditValue" />
                     }
                     else if (activeTab == DetailTab.History)
@@ -154,10 +169,12 @@ else
                             OnSave="SaveValue" OnCancel="CancelValue" />
 
 @code {
-    private enum DetailTab { Properties, Rules, Values, History }
+    private enum DetailTab { Properties, Rules, Agreements, Values, History }
 
     private DimensionRegister? register;
     private LeasingClassificationCatalog? catalog;
+    private List<AgreementDimensionRuleDto> agreementRules = [];
+    private AgreementDimensionRule agreementRule = new();
     private Guid? dimensionId, valueId;
     private Guid account;
     private Dimension? dimensionInput;
@@ -192,6 +209,7 @@ else
     {
         register = await Service.GetAsync();
         catalog = await Leasing.ClassificationCatalogAsync(account);
+        agreementRules = await Agreements.GetAgreementDimensionRulesAsync(account);
     }
 
     private void NewDimension()
@@ -209,6 +227,7 @@ else
     {
         dimensionId = value.Id;
         rule = Copy(catalog!.Dimensions.Single(x => x.Dimension.Id == value.Id).Rule);
+        LoadAgreementRule(value.Id);
         activeTab = tab;
         CancelValue();
     }
@@ -279,6 +298,20 @@ else
         rule = Copy(catalog!.Dimensions.Single(x => x.Dimension.Id == dimensionId).Rule);
     });
 
+    private void LoadAgreementRule(Guid id)
+    {
+        var saved = agreementRules.Single(x => x.DimensionId == id);
+        agreementRule = new AgreementDimensionRule { AccountId = account, DimensionId = id,
+            IsEnabled = saved.IsEnabled, IsRequired = saved.IsRequired, Revision = saved.Revision };
+    }
+
+    private Task SaveAgreementRule() => Run(async () =>
+    {
+        await Agreements.SaveAgreementDimensionRuleAsync(account, Copy(agreementRule));
+        await Reload();
+        LoadAgreementRule(dimensionId!.Value);
+    });
+
     private async Task Run(Func<Task> action)
     {
         if (busy) return;
@@ -288,6 +321,7 @@ else
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (DimensionValidationException ex) { error = ex.Message; }
         catch (LeasingValidationException ex) { error = ex.Message; }
+        catch (AgreementValidationException ex) { error = ex.Message; }
         catch (Exception) { error = "LeasingFailed"; }
         finally { busy = false; }
     }

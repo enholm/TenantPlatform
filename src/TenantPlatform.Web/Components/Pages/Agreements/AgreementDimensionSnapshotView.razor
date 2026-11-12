@@ -1,0 +1,15 @@
+@if (Sets.Count == 0) { <p>@L["AgreementNone"]</p> }
+@foreach (var set in Sets)
+{
+    <p class="mb-1" @key="set.DimensionId"><strong>@set.Name</strong> <span class="text-body-secondary">(@set.Code)</span></p>
+    @if (set.Values.Count == 0) { <p>@L["AgreementNone"]</p> }
+    else
+    {
+        <ul>
+        @foreach (var value in set.Values) { <li @key="value.ValueId">@value.Path <span class="text-body-secondary">(@value.Code)</span></li> }
+        </ul>
+    }
+}
+@code {
+    [Parameter, EditorRequired] public List<AgreementDimensionSetSnapshot> Sets { get; set; } = [];
+}

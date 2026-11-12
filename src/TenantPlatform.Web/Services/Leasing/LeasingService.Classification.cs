@@ -15,10 +15,12 @@ public sealed partial class LeasingService
 
     private static async Task<LeasingClassificationCatalog> Catalog(TenantPlatformDbContext db, Guid account, bool admin, CancellationToken ct)
     {
-        var dimensions = await db.Dimensions.AsNoTracking().Where(x => x.AccountId == account).OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ToListAsync(ct);
+        var dimensions = await db.Dimensions.AsNoTracking().Where(x => x.AccountId == account)
+            .Include(x => x.Translations.Where(t => t.AccountId == account)).OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ToListAsync(ct);
+        var defaultLanguage = await db.Accounts.AsNoTracking().Where(x => x.Id == account).Select(x => x.DefaultLanguage).SingleAsync(ct);
         var values = await db.DimensionValues.AsNoTracking().Where(x => x.AccountId == account).ToListAsync(ct);
         var rules = await db.LeasingDimensionRules.AsNoTracking().Where(x => x.AccountId == account).ToDictionaryAsync(x => x.DimensionId, ct);
-        return new(dimensions.Select(d => new LeasingDimensionOption(d, rules.GetValueOrDefault(d.Id) ?? new() { AccountId = account, DimensionId = d.Id }, DimensionHierarchy.Build(d, values))).ToList(), admin);
+        return new(dimensions.Select(d => new LeasingDimensionOption(d, rules.GetValueOrDefault(d.Id) ?? new() { AccountId = account, DimensionId = d.Id }, DimensionHierarchy.Build(d, values), defaultLanguage)).ToList(), admin);
     }
     public async Task<LeasingClassificationCatalog> ClassificationCatalogAsync(Guid account, CancellationToken ct = default)
     {
@@ -47,7 +49,7 @@ public sealed partial class LeasingService
         .Where(d => d.Rule.IsEnabled && d.Rule.IsRequired && (item.AllocationDimensions.Any(x => x.DimensionId == d.Dimension.Id)
             ? item.AllocationRows.Count == 0 || item.AllocationRows.Any(r => !item.DimensionSelections.Any(s => s.DimensionId == d.Dimension.Id && s.AllocationRowId == r.Id))
             : !item.DimensionSelections.Any(s => s.DimensionId == d.Dimension.Id && s.AllocationRowId == null)))
-        .Select(d => d.Dimension.Name).ToList();
+        .Select(d => d.DisplayName).ToList();
 
     private static void RemoveClassification(TenantPlatformDbContext db, LeasingItem item)
     {

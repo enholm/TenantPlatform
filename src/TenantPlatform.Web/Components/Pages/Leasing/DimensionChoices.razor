@@ -1,10 +1,10 @@
 @using TenantPlatform.Web.Services.Dimensions
 <div class="mb-3">
-    <label class="form-label" for="@id">@Option.Dimension.Name @(Option.Rule.IsRequired ? "*" : "")</label>
+    <label class="form-label" for="@id">@Option.DisplayName @(Option.Rule.IsRequired ? "*" : "")</label>
     <input id="@id" class="form-control form-control-sm mb-1" type="search" placeholder="@L["DimensionSearch"]" @bind="search" @bind:event="oninput" />
     @if (!Option.Dimension.AllowMultiple)
     {
-        <select class="form-select" aria-label="@Option.Dimension.Name" value="@Selected.FirstOrDefault(x => x.DimensionId == Option.Dimension.Id)?.ValueId" @onchange="Select">
+        <select class="form-select" aria-label="@Option.DisplayName" value="@Selected.FirstOrDefault(x => x.DimensionId == Option.Dimension.Id)?.ValueId" @onchange="Select">
             <option value="">@L["LeasingChoose"]</option>
             @foreach (var value in Values) { <option value="@value.Id" disabled="@(!value.Selectable)">@value.Path @(!value.IsActive ? L["DimensionInactive"] : "")</option> }
         </select>

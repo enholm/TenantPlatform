@@ -1,4 +1,5 @@
 @using TenantPlatform.Core.Dimensions
+@using TenantPlatform.Core.Localization
 
 @if (IsOpen)
 {
@@ -8,9 +9,10 @@
          aria-modal="true"
          aria-labelledby="dimension-editor-title"
          tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <EditForm @key="editModel"
+                          class="dimension-editor-form"
                           Model="editModel"
                           OnValidSubmit="SubmitAsync"
                           FormName="dimension-editor">
@@ -26,7 +28,7 @@
                         </button>
                     </div>
 
-                    <fieldset disabled="@submitting">
+                    <fieldset class="dimension-editor-fieldset" disabled="@submitting">
                         <div class="modal-body">
                             @if (!string.IsNullOrWhiteSpace(Error))
                             {
@@ -36,7 +38,7 @@
                             <ValidationSummary class="text-danger" />
 
                             <div class="mb-3">
-                                <label class="form-label" for="dimension-name">@L["Name"]</label>
+                                <label class="form-label" for="dimension-name">@L["DimensionFallbackName"]</label>
                                 <InputText id="dimension-name"
                                            class="form-control"
                                            @bind-Value="editModel.Name"
@@ -56,7 +58,7 @@
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label" for="dimension-description">@L["Description"]</label>
+                                <label class="form-label" for="dimension-description">@L["DimensionFallbackDescription"]</label>
                                 <InputTextArea id="dimension-description"
                                                class="form-control"
                                                @bind-Value="editModel.Description"
@@ -64,6 +66,59 @@
                                                rows="3" />
                                 <ValidationMessage For="() => editModel.Description" class="text-danger" />
                             </div>
+
+                            <fieldset class="mb-3" aria-describedby="dimension-translations-help">
+                                <legend class="fs-6">@L["DimensionTranslations"]</legend>
+                                <p id="dimension-translations-help" class="small text-muted">@L["DimensionTranslationHelp"]</p>
+                                <ul class="nav nav-tabs" role="tablist" aria-label="@L["DimensionTranslations"]">
+                                    @foreach (var language in SupportedLanguages.All)
+                                    {
+                                        var hasError = TranslationHasError(language.Code);
+                                        <li class="nav-item" role="presentation" @key="language.Code">
+                                            <button type="button"
+                                                    id="@($"dimension-tab-{language.Code}")"
+                                                    class="nav-link @(activeLanguage == language.Code ? "active" : null) @(hasError ? "text-danger" : null)"
+                                                    role="tab"
+                                                    aria-selected="@(activeLanguage == language.Code)"
+                                                    aria-controls="@($"dimension-panel-{language.Code}")"
+                                                    @onclick="() => SelectLanguage(language.Code)">
+                                                @language.DisplayName
+                                                @if (hasError)
+                                                {
+                                                    <span class="ms-1" aria-hidden="true">!</span>
+                                                    <span class="visually-hidden"> @L["DimensionInvalidInput"]</span>
+                                                }
+                                            </button>
+                                        </li>
+                                    }
+                                </ul>
+
+                                @{
+                                    var translation = editModel.Translations.Single(x => x.LanguageCode == activeLanguage);
+                                }
+                                <div id="@($"dimension-panel-{activeLanguage}")"
+                                     class="border border-top-0 rounded-bottom p-3"
+                                     role="tabpanel"
+                                     aria-labelledby="@($"dimension-tab-{activeLanguage}")"
+                                     @key="activeLanguage">
+                                    <div class="mb-3">
+                                        <label class="form-label" for="@($"dimension-name-{activeLanguage}")">@L["Name"]</label>
+                                        <InputText id="@($"dimension-name-{activeLanguage}")" class="form-control" maxlength="200" @bind-Value="translation.Name" />
+                                        @if (TranslationNameHasError(translation))
+                                        {
+                                            <div class="text-danger">@L["DimensionInvalidInput"]</div>
+                                        }
+                                    </div>
+                                    <div>
+                                        <label class="form-label" for="@($"dimension-description-{activeLanguage}")">@L["Description"]</label>
+                                        <InputTextArea id="@($"dimension-description-{activeLanguage}")" class="form-control" maxlength="2000" rows="3" @bind-Value="translation.Description" />
+                                        @if (TranslationDescriptionHasError(translation))
+                                        {
+                                            <div class="text-danger">@L["DimensionInvalidInput"]</div>
+                                        }
+                                    </div>
+                                </div>
+                            </fieldset>
 
                             <div class="mb-3">
                                 <label class="form-label" for="dimension-sort-order">@L["DimensionSortOrder"]</label>
@@ -112,6 +167,7 @@
     private Dimension? copiedFrom;
     private bool wasOpen;
     private bool submitting;
+    private string activeLanguage = SupportedLanguages.NbNo;
 
     [Parameter]
     public Dimension? Dimension { get; set; }
@@ -137,6 +193,7 @@
             editModel = Copy(Dimension);
             copiedFrom = Dimension;
             submitting = false;
+            activeLanguage = SupportedLanguages.NbNo;
         }
 
         wasOpen = IsOpen;
@@ -172,9 +229,26 @@
         return OnCancel.InvokeAsync();
     }
 
-    private static Dimension Copy(Dimension? source) => source is null
-        ? new Dimension()
-        : new Dimension
+    private void SelectLanguage(string languageCode) => activeLanguage = languageCode;
+
+    private bool TranslationHasError(string languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(Error))
+        {
+            return false;
+        }
+
+        var translation = editModel.Translations.Single(x => x.LanguageCode == languageCode);
+        return TranslationNameHasError(translation) || TranslationDescriptionHasError(translation);
+    }
+
+    private static bool TranslationNameHasError(DimensionTranslation translation) => translation.Name?.Length > 200;
+
+    private static bool TranslationDescriptionHasError(DimensionTranslation translation) => translation.Description?.Length > 2000;
+
+    private static Dimension Copy(Dimension? source)
+    {
+        var copy = source is null ? new Dimension() : new Dimension
         {
             Id = source.Id,
             AccountId = source.AccountId,
@@ -187,4 +261,15 @@
             SortOrder = source.SortOrder,
             Revision = source.Revision
         };
+        copy.Translations = SupportedLanguages.All.Select(language =>
+        {
+            var translation = source?.Translations.SingleOrDefault(x => x.LanguageCode == language.Code);
+            return new DimensionTranslation
+            {
+                Id = translation?.Id ?? Guid.Empty, AccountId = copy.AccountId, DimensionId = copy.Id,
+                LanguageCode = language.Code, Name = translation?.Name ?? "", Description = translation?.Description
+            };
+        }).ToList();
+        return copy;
+    }
 }

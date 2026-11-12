@@ -29,7 +29,7 @@ else if (details is not null)
             </div>
         }
     </div>
-<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("agreement-overview", L["FollowupContractData"].Value), ("agreement-finance", L["FinanceLinesAndForecast"].Value), ("agreement-notice", L["NoticeRules"].Value), ("agreement-followup", L["FollowupSection"].Value), ("agreement-analysis", L["AnalysisFindings"].Value), ("agreement-documents", L["AgreementDocuments"].Value) }.Concat(details.CanManageAccess && options is not null ? new (string Id, string Label)[] { ("agreement-access", L["AgreementAccess"].Value) } : []).ToArray())" />
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("agreement-overview", L["FollowupContractData"].Value), ("agreement-dimensions", L["Dimensions"].Value), ("agreement-finance", L["FinanceLinesAndForecast"].Value), ("agreement-notice", L["NoticeRules"].Value), ("agreement-followup", L["FollowupSection"].Value), ("agreement-analysis", L["AnalysisFindings"].Value), ("agreement-documents", L["AgreementDocuments"].Value) }.Concat(details.CanManageAccess && options is not null ? new (string Id, string Label)[] { ("agreement-access", L["AgreementAccess"].Value) } : []).ToArray())" />
     @if (details.IsArchived) { <div class="alert alert-secondary">@L["FollowupArchived"]</div> }
     <section id="agreement-overview" class="card mb-3"><div class="card-body"><h2 class="h5">@L["FollowupContractData"]</h2><dl class="row mb-0">
         <dt class="col-sm-4">@L["AgreementCounterparty"]</dt><dd class="col-sm-8">@details.CounterpartyName</dd>
@@ -48,8 +48,6 @@ else if (details is not null)
         <dt class="col-sm-4">@L["AgreementAutoRenew"]</dt><dd class="col-sm-8">@L[details.AutoRenew ? "Yes" : "No"]</dd>
         <dt class="col-sm-4">@L["AgreementRenewalMonths"]</dt><dd class="col-sm-8">@details.RenewalMonths</dd>
         }
-        <dt class="col-sm-4">@L["AgreementOrganizationElement"]</dt><dd class="col-sm-8">@(details.OrganizationElementName ?? L["AgreementNone"].Value)</dd>
-        <dt class="col-sm-4">@L["AgreementGeographicArea"]</dt><dd class="col-sm-8">@(details.GeographicAreaName ?? L["AgreementNone"].Value)</dd>
         <dt class="col-sm-4">@L["Building"]</dt><dd class="col-sm-8">@details.BuildingName</dd>
         <dt class="col-sm-4">@L["Unit"]</dt><dd class="col-sm-8">@details.UnitName</dd>
         <dt class="col-sm-4">@L["Description"]</dt><dd class="col-sm-8" style="white-space: pre-wrap">@details.Description</dd>
@@ -58,6 +56,7 @@ else if (details is not null)
         <dt class="col-sm-4">@L["AgreementUpdated"]</dt><dd class="col-sm-8">@details.UpdatedUtc.ToString("g") UTC · @details.UpdatedByName</dd>
     </dl><p class="text-body-secondary mt-3 mb-0">@L["AgreementPeriodHelp"]</p></div></section>
 
+    <AgreementDimensionsView Dimensions="details.Dimensions" History="details.DimensionHistory" />
     <div id="agreement-finance" class="card mb-3"><div class="card-body"><h2 class="h5">@L["FinanceLinesAndForecast"]</h2>
         <p><strong>@L["ProcessingIndex"]:</strong> @(details.IndexName ?? L["AgreementNone"].Value)</p>
         @if (details.IndexSetupNeedsReview) { <div class="alert alert-warning">@L["SimpleIndexReview"]</div> }

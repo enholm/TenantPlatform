@@ -1,0 +1,27 @@
+@using TenantPlatform.Core.Agreements
+<section class="card">
+    <div class="card-body">
+        <h2 class="h5">@L["DimensionAgreementRules"]</h2>
+        @if (Error is not null) { <div role="alert" class="alert alert-danger">@L[Error]</div> }
+        <EditForm @key="Rule" Model="Rule" OnValidSubmit="SaveAsync" FormName="agreement-dimension-rule">
+            <fieldset disabled="@IsBusy">
+                <label class="d-block" for="dimension-agreements-enabled">
+                    <InputCheckbox id="dimension-agreements-enabled" @bind-Value="Rule.IsEnabled" @bind-Value:after="EnabledChanged" /> @L["DimensionEnabledAgreements"]
+                </label>
+                <label class="d-block mb-2" for="dimension-agreements-required">
+                    <InputCheckbox id="dimension-agreements-required" @bind-Value="Rule.IsRequired" @bind-Value:after="RequiredChanged" /> @L["DimensionRequiredRegistration"]
+                </label>
+                <button type="submit" class="btn btn-primary" disabled="@IsBusy">@L["Save"]</button>
+            </fieldset>
+        </EditForm>
+    </div>
+</section>
+@code {
+    [Parameter, EditorRequired] public AgreementDimensionRule Rule { get; set; } = null!;
+    [Parameter, EditorRequired] public EventCallback OnSave { get; set; }
+    [Parameter] public string? Error { get; set; }
+    [Parameter] public bool IsBusy { get; set; }
+    private void EnabledChanged() { if (!Rule.IsEnabled) Rule.IsRequired = false; }
+    private void RequiredChanged() { if (Rule.IsRequired) Rule.IsEnabled = true; }
+    private Task SaveAsync() => OnSave.InvokeAsync();
+}

@@ -2,6 +2,16 @@ namespace TenantPlatform.Core.Localization;
 
 public static class LanguageHelper
 {
+    // Unlike Normalize, absence or an unknown language must not imply English.
+    public static string? NormalizeSupported(string? languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode)) return null;
+        var value = languageCode.Trim();
+        return new[] { "nb", "no", "sv", "en" }.Any(prefix =>
+            value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            ? Normalize(value) : null;
+    }
+
     public static string Normalize(string? languageCode)
     {
         if (string.IsNullOrWhiteSpace(languageCode))

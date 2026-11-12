@@ -1,0 +1,33 @@
+<section id="agreement-dimensions" class="card mb-3">
+    <div class="card-body">
+        <h2 class="h5">@L["Dimensions"]</h2>
+        @if (!Dimensions.Any(d => d.Values.Any(v => v.IsAssigned))) { <p>@L["AgreementNone"]</p> }
+        @foreach (var dimension in Dimensions.Where(d => d.Values.Any(v => v.IsAssigned)))
+        {
+            <h3 class="h6" @key="dimension.DimensionId">@dimension.Name</h3>
+            <ul>
+            @foreach (var value in dimension.Values.Where(v => v.IsAssigned))
+            {
+                <li @key="value.Id">@value.Path @if (value.IsHistorical) { <span>· @L["AgreementDimensionsHistorical"]</span> }</li>
+            }
+            </ul>
+        }
+        <h3 class="h6">@L["AgreementDimensionHistoryTitle"]</h3>
+        <p class="small text-body-secondary">@L["AgreementDimensionRecordedNames"]</p>
+        @if (History.Count == 0) { <p>@L["AgreementNone"]</p> }
+        @foreach (var entry in History.OrderByDescending(x => x.RecordedUtc))
+        {
+            <details class="border rounded p-2 mb-2" @key="entry.Id">
+                <summary>@entry.RecordedUtc.ToString("g") UTC · @entry.ActorName</summary>
+                <div class="row mt-2">
+                    <div class="col-md-6"><h4 class="h6">@L["LeasingBefore"]</h4><AgreementDimensionSnapshotView Sets="entry.Before" /></div>
+                    <div class="col-md-6"><h4 class="h6">@L["LeasingAfter"]</h4><AgreementDimensionSnapshotView Sets="entry.After" /></div>
+                </div>
+            </details>
+        }
+    </div>
+</section>
+@code {
+    [Parameter, EditorRequired] public List<AgreementDimensionOptionDto> Dimensions { get; set; } = [];
+    [Parameter, EditorRequired] public List<AgreementDimensionHistoryDto> History { get; set; } = [];
+}

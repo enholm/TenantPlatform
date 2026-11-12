@@ -41,7 +41,8 @@ public partial class AgreementService
     }
     private static AnalysisDraftDto DraftDto(AgreementAnalysis draft) => new(draft.Id,
         draft.Files.Where(x => !x.PendingDelete).OrderBy(x => x.Category).Select(x => new AnalysisFileDto(x.Id, x.FileName, x.Size, x.Category)).ToList(),
-        draft.OriginalResultJson is null ? null : JsonSerializer.Deserialize<ContractAnalysisResult>(draft.OriginalResultJson, ContractAnalysisJson.Options));
+        draft.OriginalResultJson is null ? null : JsonSerializer.Deserialize<ContractAnalysisResult>(draft.OriginalResultJson, ContractAnalysisJson.Options),
+        draft.ExpectedAgreementRevision);
 
     public async Task<AnalysisDraftDto> StartAnalysisDraftAsync(Guid accountId, Guid? agreementId, CancellationToken ct = default)
     {
@@ -229,6 +230,7 @@ public partial class AgreementService
             if (agreement.CounterpartyOrganizationId != organization.Id && await db.AgreementLines.AnyAsync(x => x.AccountId == accountId && x.AgreementId == agreement.Id && x.ActivatedUtc != null, ct))
                 throw new AgreementValidationException("FinanceAgreementLocked");
             agreement.CounterpartyOrganizationId = organization.Id;
+            await ApplyAgreementDimensionsAsync(db, accountId, agreement, request.Agreement.DimensionChanges, false, ct);
         }
         else
         {
@@ -238,6 +240,7 @@ public partial class AgreementService
             if (r.Form == AgreementForm.Legacy || r.BeginNewPeriod) throw new AgreementValidationException("NoticeChooseForm");
             r.Direction ??= r.Type == AgreementType.Supplier ? AgreementDirection.Cost : null;
             agreement = new Agreement { Id = Guid.NewGuid(), AccountId = accountId, CreatedUtc = Clock.GetUtcNow(), CreatedByUserId = userId, CurrentPeriodStartDate = r.StartDate };
+            await ApplyAgreementDimensionsAsync(db, accountId, agreement, r.DimensionChanges, true, ct);
             Apply(agreement, r);
             db.Agreements.Add(agreement);
             NoticeHistory(db, agreement, new AgreementNoticeSnapshot(), AgreementNoticeAction.RuleChanged);

@@ -2332,31 +2332,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="EditLocation" xml:space="preserve"><value>Edit location</value></data>
   <data name="NoDepartments" xml:space="preserve"><value>No departments registered.</value></data>
   <data name="NoLocations" xml:space="preserve"><value>No locations registered.</value></data>
-  <data name="AccountRegisterConfirmDelete" xml:space="preserve"><value>Delete “{0}”?</value></data>
-  <data name="AccountRegisterInvalidInput" xml:space="preserve"><value>Name must contain 1–200 characters and description cannot exceed 2000 characters.</value></data>
-  <data name="AccountRegisterNotFound" xml:space="preserve"><value>The entry was not found in the selected account. Refresh the page.</value></data>
-  <data name="AccountRegisterSaveFailed" xml:space="preserve"><value>The operation could not be completed. Please try again.</value></data>
-  <data name="OrganizationElements" xml:space="preserve"><value>Organizational structure</value></data>
-  <data name="GeographicAreas" xml:space="preserve"><value>Geography</value></data>
-  <data name="OrganizationElementsDescription" xml:space="preserve"><value>Manage organizational elements and their children for the selected account.</value></data>
-  <data name="GeographicAreasDescription" xml:space="preserve"><value>Manage geographic areas and subareas for the selected account.</value></data>
-  <data name="CreateOrganizationElement" xml:space="preserve"><value>Create organizational element</value></data>
-  <data name="EditOrganizationElement" xml:space="preserve"><value>Edit organizational element</value></data>
-  <data name="NoOrganizationElements" xml:space="preserve"><value>No organizational elements registered.</value></data>
-  <data name="CreateGeographicArea" xml:space="preserve"><value>Create geographic area</value></data>
-  <data name="EditGeographicArea" xml:space="preserve"><value>Edit geographic area</value></data>
-  <data name="NoGeographicAreas" xml:space="preserve"><value>No geographic areas registered.</value></data>
-  <data name="AccountHierarchyParent" xml:space="preserve"><value>Parent element</value></data>
-  <data name="AccountHierarchyRoot" xml:space="preserve"><value>None – top level</value></data>
   <data name="AccountHierarchyAddChild" xml:space="preserve"><value>Add child</value></data>
-  <data name="AccountHierarchyCycle" xml:space="preserve"><value>An element cannot be placed under itself or its descendants.</value></data>
-  <data name="AccountHierarchyInvalidParent" xml:space="preserve"><value>The parent element does not exist in the selected account. Refresh the list.</value></data>
-  <data name="AccountHierarchyHasChildren" xml:space="preserve"><value>Move or delete the children before deleting this element.</value></data>
-  <data name="AgreementOrganizationElement" xml:space="preserve"><value>Organizational element</value></data>
-  <data name="AgreementGeographicArea" xml:space="preserve"><value>Geographic area</value></data>
-  <data name="AgreementInvalidOrganizationElement" xml:space="preserve"><value>Select an active organizational element in the selected account.</value></data>
-  <data name="AgreementInvalidGeographicArea" xml:space="preserve"><value>Select an active geographic area in the selected account.</value></data>
-  <data name="AccountHierarchyUsedByAgreement" xml:space="preserve"><value>The element is used by an agreement and cannot be deleted. You can deactivate it.</value></data>
   <data name="DashboardTitle" xml:space="preserve"><value>Dashboard</value></data>
   <data name="DashboardAttention" xml:space="preserve"><value>Needs attention</value></data>
   <data name="DashboardContracts" xml:space="preserve"><value>Contracts</value></data>
@@ -2383,8 +2359,6 @@ This is a reminder, not a termination or renewal.</value>
   <data name="DashboardDimension" xml:space="preserve"><value>Group by</value></data>
   <data name="DashboardDimensionType" xml:space="preserve"><value>Agreement type</value></data>
   <data name="DashboardDimensionCounterparty" xml:space="preserve"><value>Counterparty</value></data>
-  <data name="DashboardDimensionGeography" xml:space="preserve"><value>Geography</value></data>
-  <data name="DashboardDimensionOrganization" xml:space="preserve"><value>Organisation structure</value></data>
   <data name="DashboardHierarchyHelp" xml:space="preserve"><value>The selection includes descendants. All groups by top level; a selected element groups by its immediate children.</value></data>
   <data name="DashboardInsightsScope" xml:space="preserve"><value>Accessible, non-archived agreements, regardless of status.</value></data>
   <data name="DashboardNoInsights" xml:space="preserve"><value>No agreements in this selection.</value></data>
@@ -3219,4 +3193,44 @@ This is a reminder, not a termination or renewal.</value>
 <data name="AgreementResults" xml:space="preserve"><value>Results</value></data>
 <data name="AgreementPlacement" xml:space="preserve"><value>Location</value></data>
 <data name="AgreementActions" xml:space="preserve"><value>Actions</value></data>
+  <data name="DimensionFallbackName" xml:space="preserve"><value>Fallback name</value></data>
+  <data name="DimensionFallbackDescription" xml:space="preserve"><value>Fallback description</value></data>
+  <data name="DimensionTranslations" xml:space="preserve"><value>Translations</value></data>
+  <data name="DimensionTranslationHelp" xml:space="preserve"><value>Empty fields use the account default language, then the fallback text. The dimension code does not change with language.</value></data>
+  <data name="DimensionInvalidTranslationLanguage" xml:space="preserve"><value>Choose a supported language for the translation.</value></data>
+  <data name="DimensionDuplicateTranslationLanguage" xml:space="preserve"><value>Each language can have only one translation.</value></data>
+  <data name="AgreementDimensionInvalidSelection" xml:space="preserve"><value>Choose dimensions and values belonging to this account and the correct dimension.</value></data>
+  <data name="AgreementDimensionDuplicatePatch" xml:space="preserve"><value>A dimension can only be changed once in the same request.</value></data>
+  <data name="AgreementDimensionDuplicateValue" xml:space="preserve"><value>The same dimension value cannot be selected more than once.</value></data>
+  <data name="AgreementDimensionRequired" xml:space="preserve"><value>Choose at least one value for each required dimension being registered or changed.</value></data>
+  <data name="AgreementDimensionRequiredConfiguration" xml:space="preserve"><value>A required dimension is inactive or has no active selectable values. Contact the account administrator.</value></data>
+  <data name="AgreementDimensionSingleSelection" xml:space="preserve"><value>This dimension allows only one selected value.</value></data>
+  <data name="AgreementDimensionUnavailable" xml:space="preserve"><value>The dimension is unavailable for new assignments in Agreements.</value></data>
+  <data name="AgreementDimensionInactiveValue" xml:space="preserve"><value>The value or one of its ancestors is inactive and cannot be newly assigned.</value></data>
+  <data name="AgreementDimensionLeafOnly" xml:space="preserve"><value>This dimension only allows new assignments to values without children.</value></data>
+  <data name="DimensionAgreementRules" xml:space="preserve"><value>Use in Agreements</value></data>
+  <data name="DimensionEnabledAgreements" xml:space="preserve"><value>Available</value></data>
+  <data name="DimensionRequiredRegistration" xml:space="preserve"><value>Required at registration</value></data>
+  <data name="AgreementDimensionsNoneAvailable" xml:space="preserve"><value>No dimensions are available.</value></data>
+  <data name="AgreementDimensionsMultipleHelp" xml:space="preserve"><value>Select one or more values. The full path shows the position in the hierarchy.</value></data>
+  <data name="AgreementDimensionsSingleHelp" xml:space="preserve"><value>Select one value. The full path shows the position in the hierarchy.</value></data>
+  <data name="AgreementDimensionsMissingExisting" xml:space="preserve"><value>A required value is missing. Other agreement fields can still be changed without adding a selection here.</value></data>
+  <data name="AgreementDimensionsMissingNew" xml:space="preserve"><value>Select a value to meet the registration requirement.</value></data>
+  <data name="AgreementDimensionsExistingMultiple" xml:space="preserve"><value>Multiple previous selections are retained. A new single selection replaces them; you can also remove selections below.</value></data>
+  <data name="AgreementDimensionsHistorical" xml:space="preserve"><value>Historical – unavailable as a new selection</value></data>
+  <data name="AgreementDimensionsHistoricalHelp" xml:space="preserve"><value>Historical selections can be retained or removed. Once removed, they can only be selected again if made available in the register.</value></data>
+  <data name="AgreementDimensionsRemoveValue" xml:space="preserve"><value>Remove {1} from {0}</value></data>
+  <data name="AgreementDimensionHistoryTitle" xml:space="preserve"><value>Dimension history</value></data>
+  <data name="AgreementDimensionRecordedNames" xml:space="preserve"><value>History shows names and paths recorded at the time of each change. They may differ from the current register.</value></data>
+  <data name="DashboardHierarchyContext" xml:space="preserve"><value>Hierarchy context</value></data>
+  <data name="DashboardHierarchyTop" xml:space="preserve"><value>Top level</value></data>
+  <data name="DashboardHierarchyBack" xml:space="preserve"><value>Back one level</value></data>
+  <data name="DashboardHistoricalNode" xml:space="preserve"><value>Historical (inactive)</value></data>
+  <data name="DashboardUniqueTotal" xml:space="preserve"><value>Unique visible agreements: {0}</value></data>
+  <data name="DashboardUniqueContext" xml:space="preserve"><value>Unique agreements in the selected context: {0}</value></data>
+  <data name="DashboardGroupSum" xml:space="preserve"><value>Sum of displayed groups (percentage denominator): {0}</value></data>
+  <data name="DashboardOverlapHelp" xml:space="preserve"><value>An agreement may appear in several displayed groups, but is counted once per group and in the unique total. Percentages use the sum of the displayed groups.</value></data>
+  <data name="DashboardOpenNode" xml:space="preserve"><value>Open group {0}</value></data>
+  <data name="DashboardContextReset" xml:space="preserve"><value>The grouping or level is no longer available. The view has returned to an available top level.</value></data>
+  <data name="DashboardInvalidHierarchy" xml:space="preserve"><value>The dimension hierarchy is invalid or has changed. Reload the view.</value></data>
 </root>

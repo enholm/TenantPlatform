@@ -29,7 +29,7 @@
                                     <button type="button"
                                             class="btn btn-link stretched-link text-start text-decoration-none p-0 flex-grow-1"
                                             @onclick="() => OnSelect.InvokeAsync(dimension)">
-                                        <span class="d-block fw-semibold">@dimension.Name</span>
+                                        <span class="d-block fw-semibold">@DimensionLocalization.Name(dimension, System.Globalization.CultureInfo.CurrentUICulture.Name, DefaultLanguage)</span>
                                         <span class="d-block small text-muted">@dimension.Code</span>
                                     </button>
                                     <span class="badge @(dimension.IsActive ? "text-bg-success" : "text-bg-secondary")">
@@ -37,9 +37,9 @@
                                     </span>
                                 </div>
 
-                                @if (!string.IsNullOrWhiteSpace(dimension.Description))
+                                @if (DimensionLocalization.Description(dimension, System.Globalization.CultureInfo.CurrentUICulture.Name, DefaultLanguage) is { Length: > 0 } description)
                                 {
-                                    <p class="small text-muted mb-3">@dimension.Description</p>
+                                    <p class="small text-muted mb-3">@description</p>
                                 }
                             </div>
                         </article>
@@ -53,6 +53,9 @@
 @code {
     [Parameter, EditorRequired]
     public IReadOnlyList<Dimension> Dimensions { get; set; } = [];
+
+    [Parameter]
+    public string? DefaultLanguage { get; set; }
 
     [Parameter]
     public Guid? SelectedDimensionId { get; set; }

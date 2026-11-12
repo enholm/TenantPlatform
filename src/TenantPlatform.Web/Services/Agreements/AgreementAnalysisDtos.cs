@@ -20,7 +20,7 @@ public record AnalysisCounterparty(string Name, string OrganizationNumber, strin
 public record ContractAnalysisResult(AnalysisCounterparty Counterparty, List<string> Parties,
     List<AnalysisDocumentResult> Documents, List<AnalysisFinding> Findings, List<string> Warnings);
 public record AnalysisFileDto(Guid Id, string FileName, long Size, AgreementDocumentCategory Category);
-public record AnalysisDraftDto(Guid Id, List<AnalysisFileDto> Files, ContractAnalysisResult? Result);
+public record AnalysisDraftDto(Guid Id, List<AnalysisFileDto> Files, ContractAnalysisResult? Result, Guid? AgreementRevision = null);
 public record AnalysisOrganizationDto(Guid Id, string Name, string? OrganizationNumber);
 public class ApproveAnalysisRequest
 {

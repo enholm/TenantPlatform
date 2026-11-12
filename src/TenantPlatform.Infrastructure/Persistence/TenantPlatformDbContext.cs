@@ -24,6 +24,10 @@ public class TenantPlatformDbContext : DbContext
     public DbSet<LeasingNotificationSettings> LeasingNotificationSettings => Set<LeasingNotificationSettings>();
     public DbSet<LeasingNotification> LeasingNotifications => Set<LeasingNotification>();
     public DbSet<Dimension> Dimensions => Set<Dimension>();
+    public DbSet<DimensionTranslation> DimensionTranslations => Set<DimensionTranslation>();
+    public DbSet<AgreementDimensionRule> AgreementDimensionRules => Set<AgreementDimensionRule>();
+    public DbSet<AgreementDimensionAssignment> AgreementDimensionAssignments => Set<AgreementDimensionAssignment>();
+    public DbSet<AgreementDimensionHistory> AgreementDimensionHistory => Set<AgreementDimensionHistory>();
     public DbSet<DimensionValue> DimensionValues => Set<DimensionValue>();
     public DbSet<DimensionHistory> DimensionHistory => Set<DimensionHistory>();
     public DbSet<LeasingDimensionRule> LeasingDimensionRules => Set<LeasingDimensionRule>();
@@ -82,8 +86,6 @@ public class TenantPlatformDbContext : DbContext
     {
     }
 
-    public DbSet<OrganizationElement> OrganizationElements => Set<OrganizationElement>();
-    public DbSet<GeographicArea> GeographicAreas => Set<GeographicArea>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Building> Buildings => Set<Building>();

@@ -13,11 +13,11 @@
 @if (loading) { <p>@L["Loading"]</p> }
 else if (options is not null)
 {
-<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("agreement-fields-overview", L["FollowupContractData"].Value), ("agreement-fields-finance", L["FinanceLinesAndForecast"].Value), ("agreement-fields-notice", L["NoticeRules"].Value), ("agreement-fields-location", L["AgreementPlacement"].Value), ("agreement-fields-terms", L["AgreementTerms"].Value) })" />
+<PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("agreement-fields-overview", L["FollowupContractData"].Value), ("agreement-fields-dimensions", L["Dimensions"].Value), ("agreement-fields-finance", L["FinanceLinesAndForecast"].Value), ("agreement-fields-notice", L["NoticeRules"].Value), ("agreement-fields-location", L["AgreementPlacement"].Value), ("agreement-fields-terms", L["AgreementTerms"].Value) })" />
     <EditForm Model="model" OnValidSubmit="SaveAsync">
     <ValidationSummary class="text-danger" />
     <fieldset disabled="@busy">
-        <AgreementFields Model="model" Options="options" CanManage="canManage" Existing="Id.HasValue" OriginalForm="originalForm" />
+        <AgreementFields Model="model" Options="options" DimensionState="dimensionState" CanManage="canManage" Existing="Id.HasValue" OriginalForm="originalForm" />
     <div class="page-form-actions"><button type="submit" class="btn btn-primary">@L["Save"]</button><a class="btn btn-outline-secondary" href="@(Id.HasValue ? $"/agreements/{Id}" : "/agreements")">@L["Cancel"]</a></div>
     </fieldset></EditForm>
 }
@@ -27,13 +27,18 @@ else if (options is not null)
     private SaveAgreementRequest model = new();
     private AgreementForm originalForm;
     private AgreementOptionsDto? options;
+    private AgreementDimensionEditState? dimensionState;
+    private Guid? loadedAccount, loadedId;
+    private bool initialized;
     private Guid accountId;
     private bool loading = true, busy, canManage;
     private string? error;
     protected override async Task OnParametersSetAsync()
     {
-        loading = true; options = null; error = null;
         if (UserContext.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; }
+        if (initialized && loadedAccount == id && loadedId == Id) return;
+        initialized = true; loadedAccount = id; loadedId = Id;
+        loading = true; options = null; dimensionState = null; error = null;
         accountId = id;
         try
         {
@@ -42,9 +47,11 @@ else if (options is not null)
                 var details = await AgreementsService.GetAsync(accountId, Id.Value);
                 if (!details.CanEdit) throw new UnauthorizedAccessException();
                 model = details; originalForm = details.Form; canManage = details.CanManageAccess;
+                dimensionState = new(details.Dimensions, details.Revision);
             }
             else { model = new() { OwnerUserId = UserContext.Current.UserId, Form = AgreementForm.FixedTerm }; originalForm = model.Form; canManage = true; }
             options = await AgreementsService.GetOptionsAsync(accountId, Id);
+            if (!Id.HasValue) dimensionState = new(options.Dimensions, model.Revision);
         }
         catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
         catch (Exception) { error = "AgreementOperationFailed"; }
@@ -57,6 +64,7 @@ else if (options is not null)
         try
         {
             var id = Id;
+            dimensionState!.ApplyTo(model);
             if (id.HasValue) await AgreementsService.UpdateAsync(accountId, id.Value, model);
             else id = await AgreementsService.CreateAsync(accountId, model);
             Navigation.NavigateTo($"/agreements/{id}");

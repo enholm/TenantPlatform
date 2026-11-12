@@ -164,8 +164,17 @@ public class AccountService : IAccountService
                 "AccountHasData");
         }
 
-        if (await dbContext.OrganizationElements.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
-            await dbContext.GeographicAreas.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken))
+        if (await dbContext.Dimensions.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.DimensionValues.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.DimensionTranslations.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.DimensionHistory.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.AgreementDimensionRules.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.AgreementDimensionAssignments.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.AgreementDimensionHistory.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.LeasingDimensionRules.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.LeasingDimensionSelections.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.LeasingAllocationDimensions.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken) ||
+            await dbContext.LeasingAllocationRows.AsNoTracking().AnyAsync(x => x.AccountId == accountId, cancellationToken))
         {
             return AccountDeleteCheckResult.NotAllowed("AccountHasData");
         }

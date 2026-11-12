@@ -46,72 +46,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.ToTable("accounts", (string)null);
                 });
 
-            modelBuilder.Entity("TenantPlatform.Core.Accounts.GeographicArea", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountId", "Name");
-
-                    b.HasIndex("AccountId", "ParentId");
-
-                    b.ToTable("geographic_areas", (string)null);
-                });
-
-            modelBuilder.Entity("TenantPlatform.Core.Accounts.OrganizationElement", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountId", "Name");
-
-                    b.HasIndex("AccountId", "ParentId");
-
-                    b.ToTable("organization_elements", (string)null);
-                });
-
             modelBuilder.Entity("TenantPlatform.Core.Agreements.Agreement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -162,9 +96,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.Property<int>("Form")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("GeographicAreaId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid?>("IndexId")
                         .HasColumnType("uuid");
 
@@ -185,9 +116,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.Property<int?>("NoticeUnit")
                         .HasColumnType("integer");
-
-                    b.Property<Guid?>("OrganizationElementId")
-                        .HasColumnType("uuid");
 
                     b.Property<Guid>("OwnerUserId")
                         .HasColumnType("uuid");
@@ -267,13 +195,9 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UpdatedByUserId");
 
-                    b.HasIndex("AccountId", "GeographicAreaId");
-
                     b.HasIndex("AccountId", "IndexId");
 
                     b.HasIndex("AccountId", "NoticeDeadline");
-
-                    b.HasIndex("AccountId", "OrganizationElementId");
 
                     b.HasIndex("AccountId", "OwnerUserId");
 
@@ -982,6 +906,95 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.HasIndex("AccountId", "DeadlineId", "CreatedUtc");
 
                     b.ToTable("agreement_deadline_history", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementDimensionAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AgreementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DimensionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ValueId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "DimensionId", "ValueId");
+
+                    b.HasIndex("AccountId", "AgreementId", "DimensionId", "ValueId")
+                        .IsUnique();
+
+                    b.ToTable("agreement_dimension_assignments", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementDimensionHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AfterJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("AgreementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BeforeJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("RecordedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("AccountId", "AgreementId", "RecordedUtc");
+
+                    b.ToTable("agreement_dimension_history", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementDimensionRule", b =>
+                {
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DimensionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("AccountId", "DimensionId");
+
+                    b.ToTable("agreement_dimension_rules", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_agreement_dimension_required_enabled", "NOT \"IsRequired\" OR \"IsEnabled\"");
+                        });
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementDocument", b =>
@@ -1758,6 +1771,40 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.HasIndex("AccountId", "DimensionId", "ValueId");
 
                     b.ToTable("dimension_history", (string)null);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Dimensions.DimensionTranslation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("DimensionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "DimensionId", "LanguageCode")
+                        .IsUnique();
+
+                    b.ToTable("dimension_translations", (string)null);
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Dimensions.DimensionValue", b =>
@@ -4638,36 +4685,6 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.ToTable("service_request_messages", (string)null);
                 });
 
-            modelBuilder.Entity("TenantPlatform.Core.Accounts.GeographicArea", b =>
-                {
-                    b.HasOne("TenantPlatform.Core.Accounts.Account", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TenantPlatform.Core.Accounts.GeographicArea", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId", "ParentId")
-                        .HasPrincipalKey("AccountId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict);
-                });
-
-            modelBuilder.Entity("TenantPlatform.Core.Accounts.OrganizationElement", b =>
-                {
-                    b.HasOne("TenantPlatform.Core.Accounts.Account", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TenantPlatform.Core.Accounts.OrganizationElement", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId", "ParentId")
-                        .HasPrincipalKey("AccountId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict);
-                });
-
             modelBuilder.Entity("TenantPlatform.Core.Agreements.Agreement", b =>
                 {
                     b.HasOne("TenantPlatform.Core.Accounts.Account", null)
@@ -4715,21 +4732,9 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("TenantPlatform.Core.Accounts.GeographicArea", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId", "GeographicAreaId")
-                        .HasPrincipalKey("AccountId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("TenantPlatform.Core.Agreements.AgreementIndex", null)
                         .WithMany()
                         .HasForeignKey("AccountId", "IndexId")
-                        .HasPrincipalKey("AccountId", "Id")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("TenantPlatform.Core.Accounts.OrganizationElement", null)
-                        .WithMany()
-                        .HasForeignKey("AccountId", "OrganizationElementId")
                         .HasPrincipalKey("AccountId", "Id")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
@@ -4994,6 +4999,49 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementDimensionAssignment", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Agreements.Agreement", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "AgreementId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Dimensions.DimensionValue", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "DimensionId", "ValueId")
+                        .HasPrincipalKey("AccountId", "DimensionId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementDimensionHistory", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Agreements.Agreement", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "AgreementId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementDimensionRule", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Dimensions.Dimension", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "DimensionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementDocument", b =>
                 {
                     b.HasOne("TenantPlatform.Core.Identity.User", null)
@@ -5238,6 +5286,16 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .HasForeignKey("AccountId", "DimensionId", "ValueId")
                         .HasPrincipalKey("AccountId", "DimensionId", "Id")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Dimensions.DimensionTranslation", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Dimensions.Dimension", null)
+                        .WithMany("Translations")
+                        .HasForeignKey("AccountId", "DimensionId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Dimensions.DimensionValue", b =>
@@ -6385,6 +6443,11 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TenantPlatform.Core.Agreements.AgreementLineVersion", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Dimensions.Dimension", b =>
+                {
+                    b.Navigation("Translations");
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Identity.User", b =>

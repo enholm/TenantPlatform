@@ -1,12 +1,8 @@
 # Leasing phases 1–4
 
-Run from the repository root:
+For the local phase-9 run, use the reviewed `tp_pg_smoke` function and sequence in [the phase-9 report](../../docs/features/unified-dimensions-phase-9.md). It sets `LEASING_TEST_CONNECTION` with hidden password input, without placing credentials in command history. Run Leasing only after the preceding AgreementAnalysis result has been reviewed.
 
-```sh
-LEASING_TEST_CONNECTION='Host=localhost;Username=...;Database=tenant_leasing_tests' dotnet run --project tests/TenantPlatform.Leasing.SmokeTests
-```
-
-The runner refuses any database name other than `tenant_leasing_tests`. It creates an isolated schema, applies the complete migration chain, seeds test-only records, checks the real PostgreSQL locking behaviour, and removes its own schema in `finally`. It never targets the application database. All database operations use the production `AuditSaveChangesInterceptor`, including full composite-key auditing for allocations. Phase-one document storage is a test double; phase-three import checks use real local validated storage in a disposable directory. Document metadata and access checks use PostgreSQL. Component checks render Blazor markup without a browser.
+The runner refuses any database name other than `tenant_leasing_tests`. It logs its database and unique `leasing_<GUID>` schema, applies the complete migration chain, seeds test-only records and checks real PostgreSQL locking behaviour. It removes only its own schema after successful completion; a failure preserves that schema and rethrows the original exception. Existing schemas are not removed to prepare a run. It never targets the application database. All database operations use the production `AuditSaveChangesInterceptor`, including full composite-key auditing for allocations. Phase-one document storage is a test double; phase-three import checks use real local validated storage in a disposable directory. The nested InvoiceChecks directory is removed in its own `finally`, including on failure. Document metadata and access checks use PostgreSQL. Component checks render Blazor markup without a browser. The provided phase-9 function disables optional `LEASING_UI_PREVIEW` output.
 
 Coverage: five-year anniversaries, month end/leap years, inclusive acquisition windows and backdated registration, exact/over-limit purchases, concurrent registrations, edits and stable line IDs, stale revisions, cancellation, moves across frameworks, VAT-inclusive/exclusive limits, standalone leases, copied terms, closed frameworks, negative lines, forged line IDs, tenant and owner authorization, documents, history, and rendered editor/detail components.
 

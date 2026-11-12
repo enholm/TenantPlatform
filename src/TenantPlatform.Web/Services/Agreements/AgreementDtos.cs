@@ -4,6 +4,8 @@ namespace TenantPlatform.Web.Services.Agreements;
 
 public class SaveAgreementRequest
 {
+    // Omitted/null means preserve. Each supplied patch is an explicit desired set.
+    public List<AgreementDimensionPatch>? DimensionChanges { get; set; }
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
     public AgreementDirection? Direction { get; set; }
@@ -27,8 +29,6 @@ public class SaveAgreementRequest
     public bool AutoRenew { get; set; }
     public int? RenewalMonths { get; set; }
     public string? Terms { get; set; }
-    public Guid? OrganizationElementId { get; set; }
-    public Guid? GeographicAreaId { get; set; }
     public Guid? BuildingId { get; set; }
     public Guid? UnitId { get; set; }
     public Guid Revision { get; set; }
@@ -36,6 +36,8 @@ public class SaveAgreementRequest
 
 public class AgreementDetailsDto : SaveAgreementRequest
 {
+    public List<AgreementDimensionOptionDto> Dimensions { get; set; } = [];
+    public List<AgreementDimensionHistoryDto> DimensionHistory { get; set; } = [];
     public bool IndexSetupNeedsReview { get; init; }
     public string? IndexName { get; init; }
     public DateOnly CurrentPeriodStartDate { get; init; }
@@ -46,8 +48,6 @@ public class AgreementDetailsDto : SaveAgreementRequest
     public Guid Id { get; init; }
     public string CounterpartyName { get; init; } = string.Empty;
     public string OwnerName { get; init; } = string.Empty;
-    public string? OrganizationElementName { get; init; }
-    public string? GeographicAreaName { get; init; }
     public string? BuildingName { get; init; }
     public string? UnitName { get; init; }
     public DateTimeOffset CreatedUtc { get; init; }
@@ -62,7 +62,7 @@ public class AgreementDetailsDto : SaveAgreementRequest
 
 public record AgreementListItemDto(Guid Id, string Title, string CounterpartyName, AgreementType Type,
     AgreementStatus Status, Guid OwnerUserId, string OwnerName, DateOnly? EndDate, DateOnly? NoticeDeadline, bool IsArchived = false);
-public record AgreementOptionDto(Guid Id, string Name, Guid? BuildingId = null, bool IsActive = true);
+public record AgreementOptionDto(Guid Id, string Name, Guid? BuildingId = null);
 public record AgreementPageDto(List<AgreementListItemDto> Items, int TotalCount, int Page, int PageSize, List<AgreementOptionDto> Owners);
 public class AgreementFilter
 {
@@ -75,8 +75,7 @@ public class AgreementFilter
 }
 public class AgreementOptionsDto
 {
-    public List<AgreementOptionDto> OrganizationElements { get; init; } = [];
-    public List<AgreementOptionDto> GeographicAreas { get; init; } = [];
+    public List<AgreementDimensionOptionDto> Dimensions { get; init; } = [];
     public List<AgreementOptionDto> Indices { get; init; } = [];
     public List<AgreementOptionDto> Counterparties { get; init; } = [];
     public List<AgreementOptionDto> Members { get; init; } = [];

@@ -98,7 +98,6 @@ public partial class AgreementService(
         }
         var names = await db.Users.Where(x => x.Id == a.OwnerUserId || x.Id == a.CreatedByUserId || x.Id == a.UpdatedByUserId)
             .ToDictionaryAsync(x => x.Id, x => x.FirstName + " " + x.LastName, cancellationToken);
-        var structure = await GetStructureOptionsAsync(db, accountId, a, true, cancellationToken);
         var details = new AgreementDetailsDto
         {
             Direction = a.Direction, Currency = a.Currency, IndexId = a.IndexId, IndexSetupNeedsReview = a.IndexSetupNeedsReview,
@@ -109,9 +108,6 @@ public partial class AgreementService(
             Form = a.Form, NoticeMode = a.NoticeMode, NoticeCount = a.NoticeCount, NoticeUnit = a.NoticeUnit,
             CurrentPeriodStartDate = a.CurrentPeriodStartDate,
             AutoRenew = a.AutoRenew, RenewalMonths = a.RenewalMonths, Terms = a.Terms,
-            OrganizationElementId = a.OrganizationElementId, GeographicAreaId = a.GeographicAreaId,
-            OrganizationElementName = structure.Elements.SingleOrDefault(x => x.Id == a.OrganizationElementId)?.Name,
-            GeographicAreaName = structure.Areas.SingleOrDefault(x => x.Id == a.GeographicAreaId)?.Name,
             BuildingId = a.BuildingId, UnitId = a.UnitId, Revision = a.Revision,
             CreatedUtc = a.CreatedUtc, UpdatedUtc = a.UpdatedUtc,
             OwnerName = names[a.OwnerUserId], CreatedByName = names[a.CreatedByUserId], UpdatedByName = names[a.UpdatedByUserId],
@@ -135,6 +131,8 @@ public partial class AgreementService(
                                     where g.AccountId == accountId && g.AgreementId == agreementId
                                     orderby u.FirstName, u.LastName
                                     select new AgreementAccessDto(u.Id, u.FirstName + " " + u.LastName, g.Level)).ToListAsync(cancellationToken);
+        details.Dimensions = await LoadAgreementDimensionOptionsAsync(db, accountId, a, cancellationToken);
+        details.DimensionHistory = await LoadAgreementDimensionHistoryAsync(db, accountId, a.Id, cancellationToken);
         await LoadNoticeAsync(db, a, details, cancellationToken);
         return details;
     }
@@ -145,10 +143,9 @@ public partial class AgreementService(
         Agreement? current = null;
         if (agreementId.HasValue) current = (await RequireAsync(db, accountId, agreementId.Value, true, false, cancellationToken)).Item1;
         else if (!(await RequireMemberAsync(db, accountId, cancellationToken)).Admin) throw new UnauthorizedAccessException();
-        var structure = await GetStructureOptionsAsync(db, accountId, current, false, cancellationToken);
         return new AgreementOptionsDto
         {
-            OrganizationElements = structure.Elements, GeographicAreas = structure.Areas,
+            Dimensions = await LoadAgreementDimensionOptionsAsync(db, accountId, current, cancellationToken),
             Indices = await db.AgreementIndexRecords.Where(x => x.AccountId == accountId).OrderBy(x => x.Name).Select(x => new AgreementOptionDto(x.Id, x.Name, null)).ToListAsync(cancellationToken),
             Counterparties = await db.Organizations.Where(x => x.AccountId == accountId).OrderBy(x => x.Name)
                 .Select(x => new AgreementOptionDto(x.Id, x.Name, null)).ToListAsync(cancellationToken),
@@ -164,6 +161,16 @@ public partial class AgreementService(
     public async Task<Guid> CreateAsync(Guid accountId, SaveAgreementRequest request, CancellationToken cancellationToken = default)
     {
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
+        if (!(await RequireMemberAsync(db, accountId, cancellationToken)).Admin) throw new UnauthorizedAccessException();
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await LockFinancialAsync(db, accountId, null, cancellationToken);
+        var id = await CreateAgreementCoreAsync(db, accountId, request, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return id;
+    }
+
+    private async Task<Guid> CreateAgreementCoreAsync(TenantPlatformDbContext db, Guid accountId, SaveAgreementRequest request, CancellationToken cancellationToken)
+    {
         var (userId, admin) = await RequireMemberAsync(db, accountId, cancellationToken);
         if (!admin) throw new UnauthorizedAccessException();
         await ValidateAsync(db, accountId, request, cancellationToken);
@@ -172,6 +179,7 @@ public partial class AgreementService(
             throw new AgreementValidationException("NoticeChooseForm");
         request.Direction ??= request.Type == AgreementType.Supplier ? AgreementDirection.Cost : null;
         a.CurrentPeriodStartDate = request.StartDate;
+        await ApplyAgreementDimensionsAsync(db, accountId, a, request.DimensionChanges, true, cancellationToken);
         Apply(a, request); Touch(a, userId);
         NoticeHistory(db, a, new AgreementNoticeSnapshot(), AgreementNoticeAction.RuleChanged);
         db.Agreements.Add(a);
@@ -186,10 +194,16 @@ public partial class AgreementService(
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         await LockFinancialAsync(db, accountId, agreementId, cancellationToken);
+        await UpdateAgreementCoreAsync(db, accountId, agreementId, request, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private async Task UpdateAgreementCoreAsync(TenantPlatformDbContext db, Guid accountId, Guid agreementId, SaveAgreementRequest request, CancellationToken cancellationToken)
+    {
         var (a, _, manage) = await RequireAsync(db, accountId, agreementId, true, false, cancellationToken);
         CheckRevision(a, request.Revision);
         if (!manage && request.OwnerUserId != a.OwnerUserId) throw new UnauthorizedAccessException();
-        await ValidateAsync(db, accountId, request, cancellationToken, a);
+        await ValidateAsync(db, accountId, request, cancellationToken);
         if (request.Form == AgreementForm.Legacy && a.Form != AgreementForm.Legacy)
             throw new AgreementValidationException("NoticeChooseForm");
         if ((a.Direction != request.Direction || a.Currency != request.Currency || a.CounterpartyOrganizationId != request.CounterpartyOrganizationId) &&
@@ -220,6 +234,7 @@ public partial class AgreementService(
                 last is null ? a.StartDate : today > a.StartDate ? today : a.StartDate);
         }
         var previousOwner = a.OwnerUserId;
+        await ApplyAgreementDimensionsAsync(db, accountId, a, request.DimensionChanges, false, cancellationToken);
         Apply(a, request); Touch(a, userContext.Current.UserId);
         NoticeHistory(db, a, before, request.BeginNewPeriod ? AgreementNoticeAction.PeriodStarted : AgreementNoticeAction.RuleChanged);
         await AgreementDeadlineSynchronizer.SynchronizeAsync(db, a, Clock.GetUtcNow(), userContext.Current.UserId, cancellationToken);
@@ -235,7 +250,6 @@ public partial class AgreementService(
             }
         }
         await SaveAsync(db, cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task SetAccessAsync(Guid accountId, Guid agreementId, Guid userId, AgreementAccessLevel? level, Guid revision, CancellationToken cancellationToken = default)
@@ -336,13 +350,11 @@ public partial class AgreementService(
         a.StartDate = r.StartDate; a.EndDate = r.EndDate; a.NoticeDeadline = r.NoticeDeadline;
         a.RenewalDate = r.RenewalDate;
         a.AutoRenew = r.AutoRenew; a.RenewalMonths = r.AutoRenew ? r.RenewalMonths : null; a.Terms = r.Terms?.Trim();
-        a.OrganizationElementId = r.OrganizationElementId; a.GeographicAreaId = r.GeographicAreaId;
         a.BuildingId = r.BuildingId; a.UnitId = r.UnitId;
         AgreementNoticeRules.Apply(a, r);
     }
-    private static async Task ValidateAsync(TenantPlatformDbContext db, Guid accountId, SaveAgreementRequest r, CancellationToken ct, Agreement? existing = null)
+    private static async Task ValidateAsync(TenantPlatformDbContext db, Guid accountId, SaveAgreementRequest r, CancellationToken ct)
     {
-        await ValidateStructureAsync(db, accountId, r, existing, ct);
         if (r.IndexId.HasValue && !await db.AgreementIndexRecords.AnyAsync(x => x.AccountId == accountId && x.Id == r.IndexId, ct))
             throw new AgreementValidationException("FinanceInvalidReference");
         if ((r.Direction.HasValue && !Enum.IsDefined(r.Direction.Value)) ||
