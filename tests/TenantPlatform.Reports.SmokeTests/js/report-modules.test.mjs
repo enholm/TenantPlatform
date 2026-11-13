@@ -130,19 +130,28 @@ globalThis.addEventListener = (name, callback) => windowListeners.set(name, call
 globalThis.removeEventListener = (name, callback) => {
     if (windowListeners.get(name) === callback) windowListeners.delete(name);
 };
+globalThis.innerWidth = 1200;
+globalThis.innerHeight = 800;
 const gridModule = await moduleFrom("src/TenantPlatform.Web/wwwroot/js/report-grid.js");
 const listeners = new Map();
 const styleValues = new Map([
     ["--report-grid-column", "1"], ["--report-grid-row", "1"],
     ["--report-grid-width", "6"], ["--report-grid-height", "4"]
 ]);
+const itemClasses = new Set();
 const item = {
     dataset: { reportCardId: "11111111111111111111111111111111" },
     style: {
         getPropertyValue: name => styleValues.get(name),
         setProperty: (name, value) => styleValues.set(name, String(value))
     },
-    classList: { add() {}, remove() {} },
+    classList: {
+        add: value => itemClasses.add(value),
+        remove: value => itemClasses.delete(value),
+        contains: value => itemClasses.has(value)
+    },
+    closest: selector => selector === ".report-grid-item" ? item : null,
+    setPointerCapture() {}, hasPointerCapture: () => false, releasePointerCapture() {},
     getBoundingClientRect() {
         const width = Number(styleValues.get("--report-grid-width"));
         const height = Number(styleValues.get("--report-grid-height"));
@@ -150,15 +159,20 @@ const item = {
         return { width: width * columnTrack + (width - 1) * 16, height: height * 48 + (height - 1) * 16 };
     }
 };
-const handle = {
-    resize: false,
+const resizeHandle = {
     closest(selector) {
-        if (selector.includes("report-drag-handle")) return this;
+        if (selector === ".report-resize-handle" || selector.includes("button")) return this;
         if (selector === ".report-grid-item") return item;
         return null;
     },
-    classList: { contains: value => value === "report-resize-handle" && handle.resize },
-    setPointerCapture() {}
+    setPointerCapture() {}, hasPointerCapture: () => false, releasePointerCapture() {}
+};
+const action = {
+    closest(selector) {
+        if (selector === ".report-grid-item") return item;
+        if (selector.includes("button")) return this;
+        return null;
+    }
 };
 const grid = {
     isReportGrid: true,
@@ -170,42 +184,62 @@ const grid = {
     contains: () => true,
     getBoundingClientRect: () => ({ width: 1200, height: 640, left: 0, top: 0 })
 };
-const commits = [];
-const adapter = gridModule.create(grid, { invokeMethodAsync: (...args) => { commits.push(args); } }, 4, 12, 3, 3, 12);
+const callbacks = [];
+const adapter = gridModule.create(grid, { invokeMethodAsync: (...args) => {
+    callbacks.push(args);
+    if (args[0] === "SelectCard" && args[1]) itemClasses.add("report-grid-item-selected");
+} }, 4, 12, 3, 3, 12);
+const commits = () => callbacks.filter(x => x[0] === "CommitLayout");
+const gridSelections = () => callbacks.filter(x => x[0] === "SelectCard");
 const gridObserver = observers.at(-1);
 assert.equal(Number.parseFloat(styleValues.get("--report-grid-row-pitch")), 64,
     "published row pitch combines the resolved 48px track and 16px gap");
 assert.ok(Math.abs(Number.parseFloat(styleValues.get("--report-grid-column-pitch")) - (1200 + 16) / 12) < 0.01,
     "published column pitch combines responsive track width and gap");
-const startEvent = { button: 0, pointerId: 7, clientX: 0, clientY: 0, target: handle, preventDefault() {} };
+const startEvent = { button: 0, pointerId: 7, pointerType: "mouse", clientX: 0, clientY: 0, target: item, preventDefault() {} };
 listeners.get("pointerdown")(startEvent);
-listeners.get("pointermove")({ pointerId: 7, clientX: 200, clientY: 96 });
-await listeners.get("pointerup")({ pointerId: 7, clientX: 200, clientY: 96 });
-assert.deepEqual(commits[0].slice(0, 7), ["CommitLayout", item.dataset.reportCardId, 3, 3, 6, 4, 4],
-    "pointer gesture snaps once and commits one generation-bound layout update");
+await listeners.get("pointerup")({ pointerId: 7, clientX: 0, clientY: 0 });
+assert.equal(gridSelections().length, 1, "pointerdown selects the card by stable id");
+assert.equal(commits().length, 0, "a click without movement does not commit layout");
 
-handle.resize = true;
+listeners.get("pointerdown")({ ...startEvent, pointerId: 8 });
+listeners.get("pointermove")({ pointerId: 8, clientX: 4, clientY: 3, preventDefault() {} });
+await listeners.get("pointerup")({ pointerId: 8, clientX: 4, clientY: 3 });
+assert.equal(commits().length, 0, "movement below the explicit threshold does not start drag");
+
+listeners.get("pointerdown")({ ...startEvent, pointerId: 9 });
+listeners.get("pointermove")({ pointerId: 9, clientX: 200, clientY: 96, preventDefault() {} });
+await listeners.get("pointerup")({ pointerId: 9, clientX: 200, clientY: 96 });
+assert.deepEqual(commits()[0].slice(0, 7), ["CommitLayout", item.dataset.reportCardId, 3, 3, 6, 4, 4],
+    "drag from the card surface snaps once and commits one generation-bound layout update");
+
 const resetItem = () => {
     styleValues.set("--report-grid-column", "1"); styleValues.set("--report-grid-row", "1");
     styleValues.set("--report-grid-width", "6"); styleValues.set("--report-grid-height", "4");
 };
 const resize = async (pointerId, clientX, clientY) => {
     resetItem();
-    listeners.get("pointerdown")({ ...startEvent, pointerId });
-    listeners.get("pointermove")({ pointerId, clientX, clientY });
+    listeners.get("pointerdown")({ ...startEvent, target: resizeHandle, pointerId });
+    listeners.get("pointermove")({ pointerId, clientX, clientY, preventDefault() {} });
     await listeners.get("pointerup")({ pointerId, clientX, clientY });
-    return commits.at(-1);
+    return commits().at(-1);
 };
-let resized = await resize(8, 0, 64);
+let resized = await resize(10, 0, 64);
 assert.equal(resized[5], 5, "one complete row pitch increases height by one row");
-resized = await resize(9, 0, 192);
+resized = await resize(11, 0, 192);
 assert.equal(resized[5], 7, "three complete row pitches increase height by three rows");
-resized = await resize(10, 0, 20);
+resized = await resize(12, 0, 20);
 assert.equal(resized[5], 4, "small vertical movement does not produce a large height jump");
-resized = await resize(11, 0, -64);
+resized = await resize(13, 0, -64);
 assert.equal(resized[5], 3, "upward movement snaps by one row and respects the minimum height");
-resized = await resize(12, (1200 + 16) / 12, 0);
+resized = await resize(14, (1200 + 16) / 12, 0);
 assert.equal(resized[4], 7, "one horizontal column pitch retains the existing one-column resize behavior");
+
+const beforeAction = commits().length;
+listeners.get("pointerdown")({ ...startEvent, target: action, pointerId: 15 });
+listeners.get("pointermove")({ pointerId: 15, clientX: 200, clientY: 96, preventDefault() {} });
+await listeners.get("pointerup")({ pointerId: 15, clientX: 200, clientY: 96 });
+assert.equal(commits().length, beforeAction, "card commands do not start card drag");
 
 const narrowGrid = {
     ...grid, offsetWidth: 600,
@@ -219,14 +253,50 @@ assert.ok(narrowGeometry.columnPitch < wideGeometry.columnPitch && narrowGeometr
     "column geometry follows the actual canvas width");
 
 resetItem();
-listeners.get("pointerdown")({ ...startEvent, pointerId: 13 });
-listeners.get("pointermove")({ pointerId: 13, clientX: 1200, clientY: 1000 });
-listeners.get("pointercancel")({ pointerId: 13 });
+listeners.get("pointerdown")({ ...startEvent, target: resizeHandle, pointerId: 16 });
+listeners.get("pointermove")({ pointerId: 16, clientX: 1200, clientY: 1000, preventDefault() {} });
+listeners.get("pointercancel")({ pointerId: 16 });
 assert.equal(styleValues.get("--report-grid-width"), "6", "pointercancel restores pre-gesture width");
 assert.equal(styleValues.get("--report-grid-height"), "4", "pointercancel restores pre-gesture height");
+
+const paletteListeners = new Map();
+const paletteStyles = new Map();
+const paletteClasses = new Set();
+const paletteHandle = {
+    addEventListener: (name, callback) => paletteListeners.set(name, callback),
+    removeEventListener: (name, callback) => { if (paletteListeners.get(name) === callback) paletteListeners.delete(name); },
+    setPointerCapture() {}, hasPointerCapture: () => false, releasePointerCapture() {}
+};
+const palette = {
+    querySelector: () => paletteHandle,
+    getBoundingClientRect: () => ({ left: Number.parseFloat(paletteStyles.get("left")) || 900,
+        top: Number.parseFloat(paletteStyles.get("top")) || 80, width: 260, height: 140 }),
+    style: {
+        get left() { return paletteStyles.get("left") || ""; },
+        get top() { return paletteStyles.get("top") || ""; },
+        set left(value) { paletteStyles.set("left", value); },
+        set top(value) { paletteStyles.set("top", value); },
+        set inset(value) { paletteStyles.set("inset", value); },
+        removeProperty: name => paletteStyles.delete(name)
+    },
+    classList: { add: value => paletteClasses.add(value), remove: value => paletteClasses.delete(value) }
+};
+const paletteAdapter = gridModule.createPalette(palette);
+const layoutBeforePalette = new Map(styleValues);
+paletteListeners.get("pointerdown")({ button: 0, pointerId: 20, clientX: 950, clientY: 100, preventDefault() {} });
+paletteListeners.get("pointermove")({ pointerId: 20, clientX: 4000, clientY: 4000, preventDefault() {} });
+paletteListeners.get("pointerup")({ pointerId: 20 });
+assert.equal(paletteStyles.get("left"), "932px", "palette drag remains inside the viewport width");
+assert.equal(paletteStyles.get("top"), "652px", "palette drag remains inside the viewport height");
+assert.deepEqual(styleValues, layoutBeforePalette, "palette drag does not change report layout");
+paletteAdapter.reset();
+assert.equal(paletteStyles.has("left"), false, "accessible palette reset removes the local position");
+paletteAdapter.dispose();
+
 adapter.dispose();
 assert.equal(listeners.size, 0, "grid dispose removes all pointer listeners");
-assert.equal(windowListeners.size, 0, "grid dispose removes the Escape listener");
+assert.equal(paletteListeners.size, 0, "palette dispose removes all pointer listeners");
+assert.equal(windowListeners.size, 0, "adapters dispose their window listeners");
 assert.equal(gridObserver.disconnected, true, "grid dispose disconnects its geometry ResizeObserver");
 
 console.log("Report JS module checks passed (ECharts lifecycle and pointer-grid mock harness; no real browser rendering)." );

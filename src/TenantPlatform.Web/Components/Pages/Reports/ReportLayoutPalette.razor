@@ -1,0 +1,115 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@using TenantPlatform.Web.Services.Reports
+
+<aside class="report-layout-palette" @ref="paletteElement" aria-labelledby="report-layout-palette-title">
+    <div class="report-layout-palette-header">
+        <button type="button" class="report-palette-drag-handle" aria-label="@L["ReportPaletteMove"]" title="@L["ReportPaletteMove"]">
+            <i class="bi bi-grip-horizontal" aria-hidden="true"></i>
+        </button>
+        <strong id="report-layout-palette-title">@L["ReportPaletteTitle"]</strong>
+        <button type="button" class="btn btn-link btn-sm report-palette-reset" @onclick="ResetPositionAsync">
+            @L["ReportPaletteReset"]
+        </button>
+    </div>
+    <p class="small text-body-secondary mb-2 report-palette-selection" tabindex="-1" @ref="focusTarget">
+        @(Disabled ? L["ReportPaletteNoSelection"] : L["ReportPaletteSelected", Name])
+    </p>
+    <div class="report-palette-section" aria-label="@L["ReportPaletteCardActions"]">
+        <span class="report-palette-section-label">@L["ReportPaletteCardActions"]</span>
+        <div class="report-palette-card-actions">
+            <div class="d-flex flex-wrap gap-1">
+                <button type="button" class="btn btn-outline-primary btn-sm" disabled="@Disabled" @onclick="OnEdit">@L["Edit"]</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnDuplicate">@L["Duplicate"]</button>
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm report-palette-delete" disabled="@Disabled" @onclick="OnDelete">@L["Delete"]</button>
+        </div>
+        <label class="form-label mb-0 mt-2" for="report-palette-target">@L["ReportMoveToPage"]</label>
+        <select id="report-palette-target" class="form-select form-select-sm" value=""
+                disabled="@(Disabled || TargetPages.Count == 0)" @onchange="MoveToPageAsync">
+            <option value="">@L["ReportChoose"]</option>
+            @foreach (var target in TargetPages) { <option value="@target.Id">@target.Name</option> }
+        </select>
+    </div>
+    <div class="report-palette-section" aria-label="@L["ReportPaletteLayoutActions"]">
+        <span class="report-palette-section-label">@L["ReportPaletteLayoutActions"]</span>
+        <div class="d-flex flex-wrap gap-1">
+            <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnMoveUp" aria-label="@L["ReportMoveUp", Name]">↑</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnMoveDown" aria-label="@L["ReportMoveDown", Name]">↓</button>
+            <ReportLayoutKeyboardControls Name="Name" Disabled="Disabled"
+                OnNarrower="OnNarrower" OnWider="OnWider" OnShorter="OnShorter" OnTaller="OnTaller" />
+        </div>
+    </div>
+</aside>
+
+@code {
+    [Parameter] public string Name { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public IReadOnlyList<ReportPageSummaryDto> TargetPages { get; set; } = [];
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback OnDuplicate { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback<Guid> OnMoveToPage { get; set; }
+    [Parameter] public EventCallback OnMoveUp { get; set; }
+    [Parameter] public EventCallback OnMoveDown { get; set; }
+    [Parameter] public EventCallback OnNarrower { get; set; }
+    [Parameter] public EventCallback OnWider { get; set; }
+    [Parameter] public EventCallback OnShorter { get; set; }
+    [Parameter] public EventCallback OnTaller { get; set; }
+
+    private ElementReference paletteElement;
+    private ElementReference focusTarget;
+    private IJSObjectReference? module;
+    private IJSObjectReference? adapter;
+    private bool disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || disposed) return;
+        try
+        {
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/report-grid.js");
+            adapter = await module.InvokeAsync<IJSObjectReference>("createPalette", paletteElement);
+        }
+        catch (InvalidOperationException) { }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    private async Task ResetPositionAsync()
+    {
+        if (adapter is null) return;
+        try { await adapter.InvokeVoidAsync("reset"); }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    private async Task MoveToPageAsync(ChangeEventArgs args)
+    {
+        if (Disabled || !Guid.TryParse(args.Value?.ToString(), out var targetId) ||
+            TargetPages.All(x => x.Id != targetId)) return;
+        await OnMoveToPage.InvokeAsync(targetId);
+    }
+
+    public async Task FocusAsync()
+    {
+        try { await focusTarget.FocusAsync(); }
+        catch (InvalidOperationException) { }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed) return;
+        disposed = true;
+        try
+        {
+            if (adapter is not null) { await adapter.InvokeVoidAsync("dispose"); await adapter.DisposeAsync(); }
+            if (module is not null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+        catch (ObjectDisposedException) { }
+    }
+}

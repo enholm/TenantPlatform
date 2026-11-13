@@ -1023,3 +1023,26 @@ En providerfeil ble rettet: semantisk uendret `jsonb` ble tidligere sammenlignet
 Full Leasing PostgreSQL-smoke er ikke PASS: runneren stopper i en eksisterende kostnadsfordelingstest som forventer 25 % VAT selv om dens frittstående purchase-helper lager 0 % VAT. Feilen er diagnostisert og skilt fra rapportmodulen; testen ble ikke endret for å få grønt resultat. Full actual-app treeflyt, to samtidige browsersesjoner, circuit disconnect/reconnect, full språk-/tilgjengelighets-/browsermatrise, fysisk touch og komplett ytelses/query-count-matrise er fortsatt ikke gjennomført.
 
 Steg 9 og hele funksjonen skal derfor ikke beskrives som fullt verifisert. Samlet status er **klar for neste leveransesteg med dokumenterte begrensninger**, ikke «alle akseptansekriterier PASS».
+
+## 27. Senere UI-justering — valgt kort og felles oppsettspalett
+
+Status 13. november 2026: **KILDEIMPLEMENTASJON FERDIG OG MÅLRETTET DATABASEFRITT NETTLESERVERIFISERT.** Dette er en etterfølgende interaksjonsjustering av redigeringsmodus og endrer ikke Steg 9-statusen, rapportdefinisjoner, lagringsmodell eller databaseverifikasjon.
+
+- Redigeringsmodus har nå ett valgt kort identifisert med stabil `ClientId`. `ReportCardSelectionState` er bare midlertidig UI-tilstand, påvirker ikke `ReportWorkspaceState.IsDirty`, lagres ikke og ryddes ved sletting, flytting til annen side, Avbryt, lagring, modusbytte, parameterbytte og dispose. Tomt canvas fjerner valget, og Enter/Space kan velge et fokusert kort.
+- Det gamle drahåndtaket er fjernet. Musedrag starter fra kortflaten først etter en eksplisitt 6 CSS-pikslers terskel. Knapper, lenker, skjemaelementer og resize-håndtak er unntatt. Touch beholder vanlig scrolling og krever 450 ms langt trykk før kortdrag; bevegelse før aktivering avbryter dragkandidaten.
+- Bare valgt kort viser resize-håndtak og markeringsramme. Eksisterende piksel-/gridberegning, vertikal resize, snapping, kollisjon, Escape, pointercancel, generation-vern og én layoutcallback ved fullført gest er bevart.
+- Rediger, dupliser, slett, flytt til annen tillatt rapportside og eksisterende flytte-/størrelseskommandoer ligger samlet i én lokalisert, fixed verktøypalett. Kortene inneholder ikke lenger egne handlingsknapper eller sidevelgere. Rediger gjenbruker samme editor og beholder valget; duplisering bruker workspace-reglene og velger kopiens nye ID; sletting og sideflytting rydder valget og flytter fokus til paletten. Sideflytting bruker fortsatt autorisert sideoppslag og atomisk workspace-lagring/Avbryt.
+- Paletten kan flyttes via eget håndtak, klampes til viewport, korrigeres ved resize og tilbakestilles. Under 768 px bruker den en fast kompakt plassering med intern scrolling ved behov. Palettplassering og kortvalg er lokal UI-tilstand og endrer verken arbeidskopi eller rapportkjøring.
+- `report-grid.js` har én delt gestlås for kortdrag, resize og palettdrag. Dispose og generation-skifte avbryter aktive/påbegynte kortgester; palettdrag ryddes separat og kan ikke mutere rapportlayouten.
+
+### 27.1 Faktisk verifikasjon
+
+| Kontroll | Resultat | Evidens/begrensning |
+|---|---|---|
+| `TenantPlatform.Reports.SmokeTests` | PASS, 286 kontroller | Databasefri InMemory/ren logikk/`HtmlRenderer`. Komponentkontroller dekker valgt markup, resize bare på valgt kort, stable/stale selection callbacks, alle paletthandlinger og tillatte målsider. Workspace-kontroller dekker korrekt ID etter omrekkefølge, uavhengig kopi med nytt valg, rydding ved sletting/sideflytting og full Avbryt. |
+| `node tests/TenantPlatform.Reports.SmokeTests/js/report-modules.test.mjs` | PASS | Mock-harness dekker valg med stabil ID, klikk og bevegelse under terskel uten layoutcommit, kortflatedrag, kontrollunntak, resizegeometri, pointercancel, palettgrenser/reset og at palettdrag ikke endrer layout. Dette er ikke faktisk browser-rendering. |
+| `node tests/TenantPlatform.Reports.SmokeTests/browser/run-browser-harness.mjs` | PASS, Chrome 157.0.8103.78 | Faktisk headless Chrome: 78 kontroller ved `1440×913` og 67 ved `500×757`. Dekker mus, tastatur og syntetisk touch, drag over diagramflate, terskel, horisontal/vertikal resize, selection/clear, kort uten handlingskontroller, alle paletthandlinger mot stabil ID etter omrekkefølge, kopi-valg, fokus/rydding, palettflytting/reset/scroll/resize, smal plassering, Escape/pointercancel/dispose og uendret view mode. |
+| `dotnet build TenantPlatform.sln --no-restore` | PASS | 0 feil; eksisterende NU1902/NU1903 for `System.Security.Cryptography.Pkcs` 10.0.0 består. |
+| `git diff --check` | PASS | Ingen whitespace-feil etter justeringen. |
+
+Den isolerte harnessen starter ikke apphost, Blazor InteractiveServer eller database. Fysisk touch/stylus, full skjermlesermatrise og faktisk circuit-/navigasjonslivssyklus er fortsatt ikke verifisert av denne justeringen. Redigeringskortene viser fortsatt dagens redigeringsinnhold; en eventuell levende, passiv forhåndsvisning i redigeringsmodus er ikke implementert her.

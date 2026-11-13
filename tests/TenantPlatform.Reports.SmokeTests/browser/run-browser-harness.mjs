@@ -40,6 +40,7 @@ const routes = new Map([
     ["/app.css", join(root, "src/TenantPlatform.Web/wwwroot/app.css")],
     ["/report-chart.css", join(root, "src/TenantPlatform.Web/Components/Pages/Reports/ReportChart.razor.css")],
     ["/report-grid.css", join(root, "src/TenantPlatform.Web/Components/Pages/Reports/ReportGrid.razor.css")],
+    ["/report-palette.css", join(root, "src/TenantPlatform.Web/Components/Pages/Reports/ReportLayoutPalette.razor.css")],
     ["/report-tree-chart.css", join(root, "src/TenantPlatform.Web/Components/Pages/Reports/ReportTreeChart.razor.css")],
     ["/js/report-charts.js", join(root, "src/TenantPlatform.Web/wwwroot/js/report-charts.js")],
     ["/js/report-grid.js", join(root, "src/TenantPlatform.Web/wwwroot/js/report-grid.js")],

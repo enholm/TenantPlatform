@@ -3421,4 +3421,15 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="SavedFilterSaveFailed" xml:space="preserve"><value>Filtret kunde inte sparas.</value></data>
   <data name="SavedFilterSaved" xml:space="preserve"><value>Filtret har sparats.</value></data>
   <data name="MessageBannerClose" xml:space="preserve"><value>Stäng meddelande</value></data>
+  <data name="ReportSelectCard" xml:space="preserve"><value>Välj rapportkort</value></data>
+  <data name="ReportCardSelected" xml:space="preserve"><value>Rapportkort valt.</value></data>
+  <data name="ReportCardSelectionCleared" xml:space="preserve"><value>Valet av rapportkort har tagits bort.</value></data>
+  <data name="ReportPaletteTitle" xml:space="preserve"><value>Layoutverktyg</value></data>
+  <data name="ReportPaletteMove" xml:space="preserve"><value>Flytta layoutverktyg</value></data>
+  <data name="ReportPaletteReset" xml:space="preserve"><value>Återställ placering</value></data>
+  <data name="ReportPaletteNoSelection" xml:space="preserve"><value>Välj ett rapportkort för att ändra layouten.</value></data>
+  <data name="ReportPaletteSelected" xml:space="preserve"><value>Valt kort: {0}</value></data>
+  <data name="ReportPaletteActions" xml:space="preserve"><value>Flytta och ändra storlek på valt rapportkort</value></data>
+  <data name="ReportPaletteCardActions" xml:space="preserve"><value>Kortåtgärder</value></data>
+  <data name="ReportPaletteLayoutActions" xml:space="preserve"><value>Placering och storlek</value></data>
 </root>

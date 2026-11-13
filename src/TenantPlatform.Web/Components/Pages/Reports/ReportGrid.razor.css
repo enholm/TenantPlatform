@@ -34,10 +34,25 @@
     position: relative;
 }
 
+.report-layout-grid-editable > .report-grid-item {
+    cursor: grab;
+    touch-action: pan-x pan-y;
+}
+
+.report-layout-grid-editable > .report-grid-item:focus-visible {
+    outline: 3px solid var(--bs-primary);
+    outline-offset: 3px;
+}
+
+.report-grid-item-selected {
+    outline: 3px solid var(--bs-primary);
+    outline-offset: 3px;
+    z-index: 2;
+}
+
 .report-grid-content,
 .report-grid-content > ::deep * { height: 100%; min-height: 0; }
 
-.report-drag-handle,
 .report-resize-handle {
     position: absolute;
     z-index: 4;
@@ -53,9 +68,8 @@
     touch-action: none;
 }
 
-.report-drag-handle { top: .5rem; left: .5rem; cursor: grab; }
 .report-resize-handle { right: .5rem; bottom: .5rem; cursor: nwse-resize; }
-.report-grid-item.report-grid-gesture { outline: 3px solid var(--bs-primary); outline-offset: 2px; z-index: 3; }
+.report-grid-item.report-grid-gesture { outline: 3px solid var(--bs-primary); outline-offset: 3px; z-index: 3; cursor: grabbing; user-select: none; }
 .report-grid-item.report-grid-gesture-cancelled { outline-color: var(--bs-warning); }
 
 @media (max-width: 767.98px) {

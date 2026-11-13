@@ -63,47 +63,18 @@ function renderGrid(element, editable) {
     for (const item of fixture.initial) {
         const card = document.createElement("article");
         card.className = "report-grid-item";
+        if (editable && item === fixture.initial[1]) card.classList.add("report-grid-item-selected");
         card.dataset.reportCardId = compact(item.clientId);
+        if (editable) card.tabIndex = 0;
         setLayout(card, item);
-        if (editable) {
-            const drag = document.createElement("button");
-            drag.type = "button";
-            drag.className = "report-drag-handle";
-            drag.setAttribute("aria-label", `Move ${item.sortOrder + 1}`);
-            drag.textContent = "↕";
-            drag.setPointerCapture = () => {};
-            card.append(drag);
-        }
         const content = document.createElement("div");
         content.className = "report-grid-content grid-card";
-        const action = document.createElement("button");
-        action.type = "button";
-        action.className = "btn btn-outline-primary btn-sm content-action";
-        action.textContent = "Card action";
         const chartSurface = document.createElement("div");
         chartSurface.className = "chart-surface";
         chartSurface.textContent = "Chart surface";
-        content.append(action, chartSurface);
-        if (editable) {
-            const keyboard = document.createElement("div");
-            keyboard.className = "btn-group keyboard-layout";
-            keyboard.setAttribute("role", "group");
-            keyboard.setAttribute("aria-label", "Resize card with keyboard controls");
-            const move = document.createElement("button");
-            move.type = "button";
-            move.className = "btn btn-outline-secondary btn-sm keyboard-move";
-            move.setAttribute("aria-label", "Move card earlier");
-            move.textContent = "↑";
-            const wider = document.createElement("button");
-            wider.type = "button";
-            wider.className = "btn btn-outline-secondary btn-sm keyboard-wider";
-            wider.setAttribute("aria-label", "Make card wider");
-            wider.textContent = "↔+";
-            keyboard.append(move, wider);
-            content.append(keyboard);
-        }
+        content.append(chartSurface);
         card.append(content);
-        if (editable) {
+        if (editable && item === fixture.initial[1]) {
             const resize = document.createElement("button");
             resize.type = "button";
             resize.className = "report-resize-handle";
@@ -270,10 +241,35 @@ async function gridChecks() {
     renderGrid(editGrid, true);
     renderGrid(viewGrid, false);
     const callbacks = [];
+    const selections = [];
     let generation = fixture.currentGeneration;
+    const selectCard = id => {
+        for (const item of editGrid.querySelectorAll(".report-grid-item")) {
+            item.classList.remove("report-grid-item-selected");
+            item.removeAttribute("aria-current");
+            item.querySelector(".report-resize-handle")?.remove();
+        }
+        if (!id) return;
+        const selected = card(editGrid, id);
+        selected.classList.add("report-grid-item-selected");
+        selected.setAttribute("aria-current", "true");
+        const resize = document.createElement("button");
+        resize.type = "button";
+        resize.className = "report-resize-handle";
+        resize.setAttribute("aria-label", "Resize selected card");
+        resize.textContent = "↘";
+        selected.append(resize);
+    };
     const dotnet = {
         async invokeMethodAsync(name, id, column, row, width, height, callbackGeneration) {
             callbacks.push({ name, id, column, row, width, height, generation: callbackGeneration });
+            if (name === "SelectCard") {
+                const selectionGeneration = column;
+                if (selectionGeneration !== generation) return;
+                selections.push(id);
+                selectCard(id);
+                return;
+            }
             if (callbackGeneration !== generation) return;
             const target = card(editGrid, id);
             let output = { column, row, width, height };
@@ -289,8 +285,7 @@ async function gridChecks() {
     adapters.push(adapter);
     const second = card(editGrid, fixture.initial[1].clientId);
     const first = card(editGrid, fixture.initial[0].clientId);
-    const drag = second.querySelector(".report-drag-handle");
-    const resize = second.querySelector(".report-resize-handle");
+    const commits = () => callbacks.filter(x => x.name === "CommitLayout");
 
     await wait(60);
     const geometry = gridModule.measureGridGeometry(editGrid, 12);
@@ -310,6 +305,7 @@ async function gridChecks() {
         const resizeFromInitial = async (pointerId, deltaX, deltaY, initialLayout = null) => {
             resetGrid(editGrid);
             if (initialLayout) setLayout(second, initialLayout);
+            const resize = second.querySelector(".report-resize-handle");
             const before = second.getBoundingClientRect();
             const startX = before.right - 10;
             const startY = before.bottom - 10;
@@ -340,6 +336,7 @@ async function gridChecks() {
         const scrollStart = second.getBoundingClientRect();
         const scrollX = scrollStart.right - 10;
         const scrollY = scrollStart.bottom - 10;
+        const resize = second.querySelector(".report-resize-handle");
         pointer(resize, "pointerdown", { pointerId: 45, clientX: scrollX, clientY: scrollY });
         scrollHost.scrollTop = geometry.rowPitch;
         await wait(20);
@@ -365,13 +362,46 @@ async function gridChecks() {
             "narrow single-column presentation does not show a misleading desktop dot grid");
     }
 
+    check(editGrid.querySelectorAll(".report-grid-item-selected").length === 1 &&
+        editGrid.querySelectorAll(".report-resize-handle").length === 1 &&
+        !first.querySelector(".report-resize-handle"),
+    "only one card is selected and only that card has a resize handle");
+
+    const beforeClick = commits().length;
+    pointer(first, "pointerdown", { pointerId: 5, clientX: 100, clientY: 100 });
+    pointer(first, "pointerup", { pointerId: 5, clientX: 100, clientY: 100 });
+    await wait(20);
+    check(selections.at(-1) === compact(fixture.initial[0].clientId) && first.classList.contains("report-grid-item-selected"),
+        "pointer click selects a card by stable id");
+    check(commits().length === beforeClick, "click without movement does not change layout");
+    editGrid.append(first);
+    check(first.classList.contains("report-grid-item-selected") && selections.at(-1) === compact(fixture.initial[0].clientId),
+        "selection remains attached to the stable id after DOM reordering");
+    editGrid.insertBefore(first, second);
+
+    editGrid.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    await wait(20);
+    check(selections.at(-1) === null && editGrid.querySelectorAll(".report-grid-item-selected").length === 0,
+        "clicking empty canvas clears selection");
+    pointer(second, "pointerdown", { pointerId: 6, clientX: 400, clientY: 30 });
+    pointer(second, "pointerup", { pointerId: 6, clientX: 400, clientY: 30 });
+    await wait(20);
+
+    const beforeThreshold = commits().length;
+    pointer(second.querySelector(".chart-surface"), "pointerdown", { pointerId: 7, clientX: 400, clientY: 30 });
+    pointer(editGrid, "pointermove", { pointerId: 7, clientX: 404, clientY: 33 });
+    pointer(editGrid, "pointerup", { pointerId: 7, clientX: 404, clientY: 33 });
+    await wait(20);
+    check(commits().length === beforeThreshold, "movement below the CSS-pixel threshold does not start drag");
+
     resetGrid(editGrid);
-    pointer(drag, "pointerdown", { pointerId: 11, clientX: 400, clientY: 30 });
+    const chartSurface = second.querySelector(".chart-surface");
+    pointer(chartSurface, "pointerdown", { pointerId: 11, clientX: 400, clientY: 30 });
     pointer(editGrid, "pointermove", { pointerId: 11, clientX: 400 - columnWidth * 6, clientY: 30 });
     pointer(editGrid, "pointerup", { pointerId: 11, clientX: 400 - columnWidth * 6, clientY: 30 });
     await wait(20);
-    check(callbacks.at(-1)?.column === 1 && callbacks.at(-1)?.id === compact(fixture.initial[1].clientId),
-        "mouse drag snaps to the requested grid column");
+    check(commits().at(-1)?.column === 1 && commits().at(-1)?.id === compact(fixture.initial[1].clientId),
+        "mouse drag from chart content selects and snaps the correct card");
     equal(layout(second), { column: 1, row: 1, width: 6, height: 4 },
         "preferred moved card keeps its snapped position");
     equal(layout(first), { column: 7, row: 1, width: 6, height: 4 },
@@ -379,6 +409,7 @@ async function gridChecks() {
 
     resetGrid(editGrid);
     setLayout(second, { column: 1, row: 1, width: 6, height: 4 });
+    let resize = second.querySelector(".report-resize-handle");
     pointer(resize, "pointerdown", { pointerId: 12, clientX: 100, clientY: 100 });
     pointer(editGrid, "pointermove", { pointerId: 12, clientX: 5000, clientY: 5000 });
     pointer(editGrid, "pointerup", { pointerId: 12, clientX: 5000, clientY: 5000 });
@@ -395,39 +426,33 @@ async function gridChecks() {
     "resize clamps to the minimum interactive size");
 
     resetGrid(editGrid);
-    const beforeCancel = callbacks.length;
-    pointer(drag, "pointerdown", { pointerId: 14, clientX: 400, clientY: 30 });
+    const beforeCancel = commits().length;
+    pointer(chartSurface, "pointerdown", { pointerId: 14, clientX: 400, clientY: 30 });
     pointer(editGrid, "pointermove", { pointerId: 14, clientX: 100, clientY: 140 });
-    globalThis.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }));
+    editGrid.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Escape" }));
     equal(layout(second), { column: 7, row: 1, width: 6, height: 4 },
         "Escape restores the pre-gesture layout");
-    check(callbacks.length === beforeCancel, "Escape does not commit a layout callback");
-    pointer(drag, "pointerdown", { pointerId: 15, clientX: 400, clientY: 30 });
+    check(commits().length === beforeCancel, "Escape does not commit a layout callback");
+    pointer(chartSurface, "pointerdown", { pointerId: 15, clientX: 400, clientY: 30 });
     pointer(editGrid, "pointermove", { pointerId: 15, clientX: 100, clientY: 140 });
     pointer(editGrid, "pointercancel", { pointerId: 15, clientX: 100, clientY: 140 });
     equal(layout(second), { column: 7, row: 1, width: 6, height: 4 },
         "pointercancel restores the pre-gesture layout");
-    check(callbacks.length === beforeCancel, "pointercancel does not commit a layout callback");
+    check(commits().length === beforeCancel, "pointercancel does not commit a layout callback");
 
-    const contentCallbackCount = callbacks.length;
-    const action = second.querySelector(".content-action");
-    const chartSurface = second.querySelector(".chart-surface");
-    for (const target of [action, chartSurface]) {
-        pointer(target, "pointerdown", { pointerId: 16, clientX: 200, clientY: 200 });
-        pointer(target, "pointermove", { pointerId: 16, clientX: 40, clientY: 40 });
-        pointer(target, "pointerup", { pointerId: 16, clientX: 40, clientY: 40 });
-    }
-    check(callbacks.length === contentCallbackCount,
-        "chart and card-action pointer activity does not start dragging");
-    check(getComputedStyle(second.querySelector(".grid-card")).touchAction !== "none" &&
-        getComputedStyle(drag).touchAction === "none",
-    "touch-action restriction is limited to drag and resize handles");
+    check([...editGrid.querySelectorAll(".report-grid-item")].every(item =>
+        item.querySelectorAll("button:not(.report-resize-handle),select").length === 0),
+    "editable cards contain no edit, duplicate, delete or cross-page controls");
+    check(getComputedStyle(second).touchAction !== "none" &&
+        getComputedStyle(second.querySelector(".report-resize-handle")).touchAction === "none",
+    "ordinary touch can scroll while the explicit resize handle owns its gesture");
     const scrollHost = document.querySelector("#scroll-host");
     scrollHost.scrollTop = 120;
     check(scrollHost.scrollTop === 120, "content outside handles remains scrollable");
 
-    check(viewGrid.querySelectorAll(".report-drag-handle,.report-resize-handle").length === 0,
-        "view mode renders no drag or resize handles");
+    check(viewGrid.querySelectorAll(".report-grid-item-selected,.report-resize-handle").length === 0 &&
+        [...viewGrid.querySelectorAll(".report-grid-item")].every(x => x.tabIndex < 0),
+        "view mode renders no selection, edit focus target or resize handle");
     const viewBefore = layout(card(viewGrid, fixture.initial[1].clientId));
     pointer(card(viewGrid, fixture.initial[1].clientId), "pointerdown", { pointerId: 20, clientX: 400, clientY: 30 });
     pointer(viewGrid, "pointermove", { pointerId: 20, clientX: 50, clientY: 100 });
@@ -435,39 +460,137 @@ async function gridChecks() {
     equal(layout(card(viewGrid, fixture.initial[1].clientId)), viewBefore,
         "view mode receives no layout mutation");
 
+    first.focus();
+    first.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Enter" }));
+    await wait(20);
+    check(first.classList.contains("report-grid-item-selected"), "keyboard activation selects the focused report card");
+    selectCard(compact(fixture.initial[1].clientId));
+
     resetGrid(editGrid);
-    const moveButton = second.querySelector(".keyboard-move");
-    const widerButton = second.querySelector(".keyboard-wider");
+    const palette = document.querySelector("#layout-palette");
+    const paletteAction = document.querySelector("#palette-action");
+    const paletteEdit = document.querySelector("#palette-edit");
+    const paletteDuplicate = document.querySelector("#palette-duplicate");
+    const paletteDelete = document.querySelector("#palette-delete");
+    const paletteTarget = document.querySelector("#palette-target");
+    const paletteSelection = document.querySelector("#palette-selection");
+    const paletteHandle = palette.querySelector(".report-palette-drag-handle");
+    const paletteAdapter = gridModule.createPalette(palette);
+    adapters.push(paletteAdapter);
+    const moveButton = paletteAction;
+    const widerButton = document.querySelector("#palette-reset");
+    widerButton.addEventListener("click", () => paletteAdapter.reset());
+    const actionTargets = [];
+    const selectedStableId = () => editGrid.querySelector(".report-grid-item-selected")?.dataset.reportCardId ?? null;
+    paletteEdit.addEventListener("click", () => actionTargets.push({ action: "edit", id: selectedStableId() }));
+    paletteDuplicate.addEventListener("click", () => {
+        const source = editGrid.querySelector(".report-grid-item-selected");
+        actionTargets.push({ action: "duplicate", id: source?.dataset.reportCardId ?? null });
+        if (!source) return;
+        const copy = source.cloneNode(true);
+        copy.dataset.reportCardId = "cccccccccccccccccccccccccccccccc";
+        copy.querySelector(".report-resize-handle")?.remove();
+        editGrid.append(copy);
+        selectCard(copy.dataset.reportCardId);
+    });
+    paletteDelete.addEventListener("click", () => {
+        const selected = editGrid.querySelector(".report-grid-item-selected");
+        actionTargets.push({ action: "delete", id: selected?.dataset.reportCardId ?? null });
+        selected?.remove();
+        selectCard(null);
+        paletteSelection.focus();
+    });
+    paletteTarget.addEventListener("change", () => {
+        if (!paletteTarget.value) return;
+        actionTargets.push({ action: "move", id: selectedStableId(), target: paletteTarget.value });
+        selectCard(null);
+        paletteSelection.focus();
+        paletteTarget.value = "";
+    });
     moveButton.addEventListener("click", () => {
         for (const item of fixture.keyboardMoveUp) setLayout(card(editGrid, item.clientId), item);
         document.querySelector("#layout-status").textContent = "Layout updated by keyboard";
     });
-    widerButton.addEventListener("click", () => {
+    const paletteResize = document.createElement("button");
+    paletteResize.type = "button";
+    paletteResize.className = "btn btn-outline-secondary btn-sm";
+    paletteResize.textContent = "Wider";
+    palette.append(paletteResize);
+    paletteResize.addEventListener("click", () => {
         for (const item of fixture.keyboardWider) setLayout(card(editGrid, item.clientId), item);
         document.querySelector("#layout-status").textContent = "Layout resized by keyboard";
     });
+    const selectedBeforePalette = editGrid.querySelector(".report-grid-item-selected")?.dataset.reportCardId;
     moveButton.focus();
     moveButton.click();
     equal(layout(second), layout(cardFor(fixture.keyboardMoveUp, fixture.initial[1].clientId)),
         "keyboard move control applies the production working-copy fixture");
-    widerButton.focus();
-    widerButton.click();
+    paletteResize.focus();
+    paletteResize.click();
     equal(layout(second), layout(cardFor(fixture.keyboardWider, fixture.initial[1].clientId)),
         "keyboard resize control applies the production working-copy fixture");
-    const focusStyle = getComputedStyle(widerButton);
-    check(document.activeElement === widerButton && (focusStyle.boxShadow !== "none" || focusStyle.outlineStyle !== "none"),
-        "keyboard layout control retains visible focus");
+    const focusStyle = getComputedStyle(paletteResize);
+    check(document.activeElement === paletteResize && (focusStyle.boxShadow !== "none" || focusStyle.outlineStyle !== "none"),
+        "palette keyboard action retains visible focus");
+    check(editGrid.querySelector(".report-grid-item-selected")?.dataset.reportCardId === selectedBeforePalette,
+        "palette actions retain the selected card");
     check(document.querySelector("#layout-status").textContent.includes("keyboard"),
         "keyboard layout action publishes a status message");
+
+    selectCard(compact(fixture.initial[1].clientId));
+    editGrid.append(second);
+    paletteEdit.click();
+    check(actionTargets.at(-1)?.action === "edit" && actionTargets.at(-1)?.id === compact(fixture.initial[1].clientId),
+        "palette edit resolves the selected stable id after DOM reordering");
+    paletteDuplicate.click();
+    check(actionTargets.at(-1)?.id === compact(fixture.initial[1].clientId) &&
+        selectedStableId() === "cccccccccccccccccccccccccccccccc",
+        "palette duplicate targets the selected card and selects the independent copy");
+    paletteDelete.click();
+    check(actionTargets.at(-1)?.id === "cccccccccccccccccccccccccccccccc" && !selectedStableId() &&
+        document.activeElement === paletteSelection,
+        "palette delete removes the selected copy, clears selection and restores palette focus");
+    selectCard(compact(fixture.initial[1].clientId));
+    paletteTarget.value = "allowed-target";
+    paletteTarget.dispatchEvent(new Event("change", { bubbles: true }));
+    check(actionTargets.at(-1)?.action === "move" && actionTargets.at(-1)?.id === compact(fixture.initial[1].clientId) &&
+        actionTargets.at(-1)?.target === "allowed-target" && !selectedStableId(),
+        "palette side selector targets the selected card, exposes only its allowed target and clears selection");
+    selectCard(compact(fixture.initial[1].clientId));
+
+    const layoutBeforePaletteDrag = layout(second);
+    const paletteBefore = palette.getBoundingClientRect();
+    pointer(paletteHandle, "pointerdown", { pointerId: 24, clientX: paletteBefore.left + 10, clientY: paletteBefore.top + 10 });
+    pointer(paletteHandle, "pointermove", { pointerId: 24, clientX: innerWidth + 500, clientY: innerHeight + 500 });
+    pointer(paletteHandle, "pointerup", { pointerId: 24, clientX: innerWidth + 500, clientY: innerHeight + 500 });
+    const paletteAfter = palette.getBoundingClientRect();
+    if (innerWidth >= 768) {
+        check(paletteAfter.right <= innerWidth - 7 && paletteAfter.bottom <= innerHeight - 7,
+            "movable palette is clamped inside the viewport");
+        scrollTo(0, 300);
+        await wait(20);
+        check(Math.abs(palette.getBoundingClientRect().top - paletteAfter.top) < 1,
+            "fixed palette remains visible while the page scrolls");
+        scrollTo(0, 0);
+        globalThis.dispatchEvent(new Event("resize"));
+        check(palette.getBoundingClientRect().right <= innerWidth - 7, "viewport resize reclamps palette position");
+    } else {
+        check(getComputedStyle(paletteHandle).display === "none" && getComputedStyle(palette).position === "fixed",
+            "narrow view uses a fixed compact palette without free-move handle");
+    }
+    equal(layout(second), layoutBeforePaletteDrag, "palette drag does not mutate report layout");
+    widerButton.click();
+    if (innerWidth >= 768) check(!palette.style.left && !palette.style.top, "reset action restores default palette placement");
 
     resetGrid(editGrid);
     const layoutExecutionMarker = globalThis.echarts.getInstanceByDom(document.querySelector("#bar-chart"));
     const chartIdBeforeLayout = layoutExecutionMarker.id;
-    pointer(drag, "pointerdown", { pointerId: 30, pointerType: "touch", clientX: 400, clientY: 30 });
+    pointer(chartSurface, "pointerdown", { pointerId: 30, pointerType: "touch", clientX: 400, clientY: 30 });
+    await wait(480);
     pointer(editGrid, "pointermove", { pointerId: 30, pointerType: "touch", clientX: 400 - columnWidth, clientY: 30 });
     pointer(editGrid, "pointerup", { pointerId: 30, pointerType: "touch", clientX: 400 - columnWidth, clientY: 30 });
     await wait(20);
-    check(callbacks.at(-1)?.column === 6, "synthetic touch pointer follows the same snapped drag path");
+    check(commits().at(-1)?.column === 6, "long-press synthetic touch follows the snapped drag path");
     check(globalThis.echarts.getInstanceByDom(document.querySelector("#bar-chart")).id === chartIdBeforeLayout,
         "layout changes do not recreate or rerun chart rendering");
 
@@ -484,13 +607,13 @@ async function gridChecks() {
         "responsive presentation does not overwrite stored desktop widths");
 
     resetGrid(editGrid);
-    const staleCount = callbacks.length;
-    pointer(drag, "pointerdown", { pointerId: 31, clientX: 400, clientY: 30 });
+    const staleCount = commits().length;
+    pointer(chartSurface, "pointerdown", { pointerId: 31, clientX: 400, clientY: 30 });
     pointer(editGrid, "pointermove", { pointerId: 31, clientX: 100, clientY: 90 });
     adapter.dispose();
     pointer(editGrid, "pointerup", { pointerId: 31, clientX: 100, clientY: 90 });
     await wait(20);
-    check(callbacks.length === staleCount && !second.classList.contains("report-grid-gesture"),
+    check(commits().length === staleCount && !second.classList.contains("report-grid-gesture"),
         "disposing edit mode cancels the gesture and rejects its late callback");
 
     generation++;
@@ -520,8 +643,8 @@ document.body.dataset.testStatus = failures === 0 ? "passed" : "failed";
 document.body.dataset.testChecks = String(checks);
 document.body.dataset.testFailures = String(failures);
 document.title = failures === 0
-    ? `PASS (${checks}) Step 7 browser harness`
-    : `FAIL (${failures}/${checks}) Step 7 browser harness`;
+    ? `PASS (${checks}) report browser harness`
+    : `FAIL (${failures}/${checks}) report browser harness`;
 await fetch("/complete", {
     method: "POST",
     headers: { "content-type": "application/json" },

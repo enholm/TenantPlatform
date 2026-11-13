@@ -49,6 +49,35 @@ static class WorkspaceChecks
         var beforeConflict = state.BuildRequest();
         Check.That(state.IsDirty && beforeConflict.Pages.Single().Cards.Single(x => x.Id == edited.Id).Name == "Locally edited",
             "a rejected save can retain the complete local working copy for explicit conflict handling");
+
+        var actionState = new ReportWorkspaceState();
+        actionState.Begin(first);
+        actionState.AddSnapshot(second);
+        var selection = new ReportCardSelectionState();
+        var originalId = actionState.Page(first.Id).Cards[0].ClientId;
+        selection.Select(first.Id, originalId);
+        actionState.MoveCardInPage(first.Id, originalId, 1);
+        Check.That(selection.Resolve(actionState.Pages)?.ClientId == originalId,
+            "palette card reference follows the stable id after workspace reordering");
+        var original = selection.Resolve(actionState.Pages)!;
+        var copy = actionState.DuplicateCard(first.Id, originalId, "Copy");
+        selection.Select(first.Id, copy.ClientId);
+        Check.That(copy.ClientId != originalId && copy.Id is null && selection.Resolve(actionState.Pages)?.ClientId == copy.ClientId &&
+            !ReferenceEquals(original.Definition.Filters, copy.Definition.Filters),
+            "palette duplication creates an independent working-copy card and selects its new identity");
+        actionState.DeleteCard(first.Id, copy.ClientId);
+        if (selection.Matches(first.Id, copy.ClientId)) selection.Clear();
+        Check.That(!selection.HasSelection && actionState.Page(first.Id).Cards.All(x => x.ClientId != copy.ClientId),
+            "palette deletion removes the selected copy and clears selection");
+        selection.Select(first.Id, originalId);
+        actionState.MoveCard(first.Id, second.Id, originalId);
+        if (selection.Matches(first.Id, originalId)) selection.Clear();
+        Check.That(!selection.HasSelection && actionState.Page(second.Id).Cards.Any(x => x.ClientId == originalId),
+            "palette cross-page move targets the stable selected card and clears source-page selection");
+        actionState.Cancel();
+        Check.That(!actionState.IsDirty && actionState.Page(first.Id).Cards.Any(x => x.ClientId == originalId) &&
+            actionState.Page(second.Id).Cards.Count == 0,
+            "full cancel still reverses palette duplication, deletion, reorder and cross-page movement");
     }
 
     private static ReportPageDto Page(string name, int cards)

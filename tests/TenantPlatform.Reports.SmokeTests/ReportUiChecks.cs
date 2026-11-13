@@ -69,21 +69,29 @@ static class ReportUiChecks
                 ["Items"] = new List<ReportGridItem> { item }, ["ItemTemplate"] = template, ["Editable"] = false
             }));
             var callbackCount = 0;
+            Guid? selectedId = null;
             var gridState = new ReportGridTestState
             {
                 Items = [item], Template = template, Editable = true, Generation = 9,
-                Changed = EventCallback.Factory.Create<ReportGridLayoutChange>(new object(), _ => callbackCount++)
+                SelectedClientId = item.ClientId,
+                Changed = EventCallback.Factory.Create<ReportGridLayoutChange>(new object(), _ => callbackCount++),
+                SelectionChanged = EventCallback.Factory.Create<Guid?>(new object(), id => selectedId = id)
             };
             var editable = await renderer.RenderComponentAsync<ReportGridTestHost>(ParameterView.FromDictionary(
                 new Dictionary<string, object?> { ["State"] = gridState }));
             var readOnlyHtml = readOnly.ToHtmlString();
             var editableHtml = editable.ToHtmlString();
-            Check.That(!readOnlyHtml.Contains("report-drag-handle") && !readOnlyHtml.Contains("report-resize-handle") &&
-                editableHtml.Contains("report-drag-handle") && editableHtml.Contains("report-resize-handle") &&
+            Check.That(!readOnlyHtml.Contains("report-resize-handle") && !readOnlyHtml.Contains("aria-current=\"true\"") &&
+                !editableHtml.Contains("report-drag-handle") && editableHtml.Contains("report-resize-handle") &&
+                editableHtml.Contains("aria-current=\"true\"") && editableHtml.Contains("tabindex=\"0\"") &&
                 editableHtml.Contains("type=\"button\"") && editableHtml.Contains("aria-label"),
-                "grid renders pointer handles only in edit mode with keyboard-focusable accessible buttons");
+                "edit grid exposes one selected keyboard-focusable card and resize only for that card");
             await gridState.Component!.CommitLayout(item.ClientId.ToString("N"), 2, 2, 6, 4, 8);
             Check.That(callbackCount == 0, "stale layout callback is rejected before it can mutate a newer workspace");
+            await gridState.Component.SelectCard(item.ClientId.ToString("N"), 8);
+            Check.That(selectedId is null, "stale selection callback is rejected before it can select in a newer workspace");
+            await gridState.Component.SelectCard(item.ClientId.ToString("N"), 9);
+            Check.That(selectedId == item.ClientId, "selection callback preserves the stable card id");
 
             var keyboard = await renderer.RenderComponentAsync<ReportLayoutKeyboardControls>(
                 ParameterView.FromDictionary(new Dictionary<string, object?> { ["Name"] = "Card" }));
@@ -91,6 +99,22 @@ static class ReportUiChecks
             Check.That(keyboardHtml.Contains("role=\"group\"") &&
                 Occurrences(keyboardHtml, "type=\"button\"") == 4 && Occurrences(keyboardHtml, "aria-label") >= 5,
                 "keyboard resize alternative renders four labelled non-submit controls");
+
+            var palette = await renderer.RenderComponentAsync<ReportLayoutPalette>(
+                ParameterView.FromDictionary(new Dictionary<string, object?>
+                {
+                    ["Name"] = "Card", ["Disabled"] = true,
+                    ["TargetPages"] = new List<ReportPageSummaryDto>
+                    {
+                        new(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), Guid.NewGuid(), "Allowed target",
+                            Guid.NewGuid(), 0, DateTimeOffset.UtcNow)
+                    }
+                }));
+            var paletteHtml = palette.ToHtmlString();
+            Check.That(paletteHtml.Contains("report-layout-palette") && paletteHtml.Contains("report-palette-drag-handle") &&
+                paletteHtml.Contains("Allowed target") && paletteHtml.Contains("value=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"") &&
+                Occurrences(paletteHtml, "disabled") == 10 && Occurrences(paletteHtml, "type=\"button\"") == 11,
+                "shared palette renders all card actions, allowed target pages and disabled commands without a selection");
         });
         CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("nb-NO");
     }
@@ -185,7 +209,9 @@ sealed class ReportGridTestState
     public RenderFragment<ReportGridItem> Template { get; init; } = null!;
     public bool Editable { get; init; }
     public long Generation { get; init; }
+    public Guid? SelectedClientId { get; init; }
     public EventCallback<ReportGridLayoutChange> Changed { get; init; }
+    public EventCallback<Guid?> SelectionChanged { get; init; }
     public ReportGrid? Component { get; set; }
 }
 
@@ -200,7 +226,9 @@ sealed class ReportGridTestHost : ComponentBase
         builder.AddAttribute(3, "Editable", State.Editable);
         builder.AddAttribute(4, "Generation", State.Generation);
         builder.AddAttribute(5, "OnLayoutChanged", State.Changed);
-        builder.AddComponentReferenceCapture(6, value => State.Component = (ReportGrid)value);
+        builder.AddAttribute(6, "SelectedClientId", State.SelectedClientId);
+        builder.AddAttribute(7, "OnSelectionChanged", State.SelectionChanged);
+        builder.AddComponentReferenceCapture(8, value => State.Component = (ReportGrid)value);
         builder.CloseComponent();
     }
 }

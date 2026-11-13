@@ -7,22 +7,21 @@
      data-report-grid-generation="@Generation">
     @foreach (var item in NormalizedItems)
     {
-        <div class="report-grid-item"
+        var selected = Editable && SelectedClientId == item.ClientId;
+        <div class="report-grid-item @(selected ? "report-grid-item-selected" : "")"
              data-report-card-id="@item.ClientId.ToString("N")"
              style="--report-grid-column:@item.Column;--report-grid-row:@item.Row;--report-grid-width:@item.Width;--report-grid-height:@item.Height"
+             tabindex="@(Editable ? "0" : null)"
+             aria-current="@(selected ? "true" : null)"
+             aria-label="@(Editable ? L["ReportSelectCard"].Value : null)"
              @key="item.ClientId">
-            @if (Editable)
-            {
-                <button type="button" class="report-drag-handle" aria-label="@L["ReportDragCard"]" title="@L["ReportDragCard"]">
-                    <i class="bi bi-arrows-move" aria-hidden="true"></i>
-                </button>
-            }
             <div class="report-grid-content">@ItemTemplate(item)</div>
-            @if (Editable)
+            @if (selected)
             {
                 <button type="button" class="report-resize-handle" aria-label="@L["ReportResizeCard"]" title="@L["ReportResizeCard"]">
                     <i class="bi bi-arrows-angle-expand" aria-hidden="true"></i>
                 </button>
+                <span class="visually-hidden">@L["ReportCardSelected"]</span>
             }
         </div>
     }
@@ -37,7 +36,9 @@
     [Parameter, EditorRequired] public RenderFragment<ReportGridItem> ItemTemplate { get; set; } = null!;
     [Parameter] public bool Editable { get; set; }
     [Parameter] public long Generation { get; set; }
+    [Parameter] public Guid? SelectedClientId { get; set; }
     [Parameter] public EventCallback<ReportGridLayoutChange> OnLayoutChanged { get; set; }
+    [Parameter] public EventCallback<Guid?> OnSelectionChanged { get; set; }
 
     private ElementReference gridElement;
     private IJSObjectReference? module;
@@ -82,6 +83,21 @@
             !Guid.TryParseExact(clientId, "N", out var id) || Items.All(x => x.ClientId != id)) return;
         await OnLayoutChanged.InvokeAsync(new(id, column, row, width, height, generation));
         status = L["ReportLayoutUpdated"].Value;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task SelectCard(string? clientId, long generation)
+    {
+        if (disposed || !Editable || generation != Generation) return;
+        Guid? id = null;
+        if (clientId is not null)
+        {
+            if (!Guid.TryParseExact(clientId, "N", out var parsed) || Items.All(x => x.ClientId != parsed)) return;
+            id = parsed;
+        }
+        await OnSelectionChanged.InvokeAsync(id);
+        status = id.HasValue ? L["ReportCardSelected"].Value : L["ReportCardSelectionCleared"].Value;
         await InvokeAsync(StateHasChanged);
     }
 

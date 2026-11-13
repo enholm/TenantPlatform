@@ -66,36 +66,14 @@ else if (page is not null)
                 <div class="card-body">
                     @if (draftPage.Cards.Count == 0) { <p class="text-body-secondary">@L["ReportPageEmpty"]</p> }
                     <ReportGrid Items="@DraftGridItems(draftPage)" Editable="true" Generation="workspaceGeneration"
+                                SelectedClientId="@(selection.PageId == draftPage.Id ? selection.CardId : null)"
+                                OnSelectionChanged="cardId => SelectCard(draftPage.Id, cardId)"
                                 OnLayoutChanged="change => ApplyLayout(draftPage.Id, change)">
                         <ItemTemplate Context="gridItem">
                         @{ var card = draftPage.Cards.Single(x => x.ClientId == gridItem.ClientId); }
                         <article class="card h-100 report-edit-card" @key="card.ClientId">
                             <div class="card-body overflow-auto">
-                            <div class="d-flex flex-wrap justify-content-between gap-2">
                                 <strong>@card.Name</strong>
-                                <div class="d-flex flex-wrap gap-1">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => MoveOrder(draftPage.Id, card.ClientId, -1)" aria-label="@L["ReportMoveUp", card.Name]">↑</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => MoveOrder(draftPage.Id, card.ClientId, 1)" aria-label="@L["ReportMoveDown", card.Name]">↓</button>
-                                    <ReportLayoutKeyboardControls Name="card.Name"
-                                        OnNarrower="() => ResizeCard(draftPage.Id, card.ClientId, -1, 0)"
-                                        OnWider="() => ResizeCard(draftPage.Id, card.ClientId, 1, 0)"
-                                        OnShorter="() => ResizeCard(draftPage.Id, card.ClientId, 0, -1)"
-                                        OnTaller="() => ResizeCard(draftPage.Id, card.ClientId, 0, 1)" />
-                                    <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => EditCard(draftPage.Id, card)">@L["Edit"]</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => DuplicateCard(draftPage.Id, card.ClientId, card.Name)">@L["Duplicate"]</button>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => workspace.DeleteCard(draftPage.Id, card.ClientId)">@L["Delete"]</button>
-                                </div>
-                            </div>
-                            @if (summaries.Any(x => x.Id != draftPage.Id))
-                            {
-                                <div class="input-group input-group-sm mt-2">
-                                    <label class="input-group-text" for="@($"move-{card.ClientId:N}")">@L["ReportMoveToPage"]</label>
-                                    <select id="@($"move-{card.ClientId:N}")" class="form-select" value="" @onchange="e => MoveToPageAsync(draftPage.Id, card.ClientId, e.Value?.ToString())">
-                                        <option value="">@L["ReportChoose"]</option>
-                                        @foreach (var target in summaries.Where(x => x.Id != draftPage.Id)) { <option value="@target.Id">@target.Name</option> }
-                                    </select>
-                                </div>
-                            }
                             </div>
                         </article>
                         </ItemTemplate>
@@ -104,6 +82,12 @@ else if (page is not null)
                 </div>
             </section>
         }
+        <ReportLayoutPalette @ref="layoutPalette" Name="@(SelectedCard?.Name ?? string.Empty)" Disabled="@(SelectedCard is null)"
+            TargetPages="PaletteTargetPages" OnEdit="EditSelected" OnDuplicate="DuplicateSelected"
+            OnDelete="DeleteSelectedAsync" OnMoveToPage="MoveSelectedToPageAsync"
+            OnMoveUp="() => MoveSelected(-1)" OnMoveDown="() => MoveSelected(1)"
+            OnNarrower="() => ResizeSelected(-1, 0)" OnWider="() => ResizeSelected(1, 0)"
+            OnShorter="() => ResizeSelected(0, -1)" OnTaller="() => ResizeSelected(0, 1)" />
         <p class="small text-body-secondary">@L["ReportWorkspaceSaveHelp"]</p>
         <p class="visually-hidden" aria-live="polite">@layoutStatus</p>
         <div class="sticky-actions d-flex justify-content-end gap-2">
@@ -128,9 +112,11 @@ else if (page is not null)
 @code {
     [Parameter] public Guid ReportPageId { get; set; }
     private readonly ReportWorkspaceState workspace = new();
+    private readonly ReportCardSelectionState selection = new();
     private ReportPageDto? page;
     private IReadOnlyList<ReportPageSummaryDto> summaries = [];
     private Guid accountId, editorPageId;
+    private ReportLayoutPalette? layoutPalette;
     private ReportCardDraft? editorCard;
     private string? loadError, operationError;
     private bool busy, editing, conflict, deleting, editorOpen, editorNew;
@@ -149,18 +135,64 @@ else if (page is not null)
     private async Task LoadAsync(CancellationToken ct = default)
     {
         busy = true; loadError = null; operationError = null;
-        try { page = await Pages.GetAsync(accountId, ReportPageId, ct); summaries = await Pages.ListAsync(accountId, ct); editing = false; workspaceGeneration++; }
+        try { page = await Pages.GetAsync(accountId, ReportPageId, ct); summaries = await Pages.ListAsync(accountId, ct); editing = false; ClearSelection(); workspaceGeneration++; }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (UnauthorizedAccessException) { loadError = "ReportPageUnavailable"; }
         catch { loadError = "ReportPagesLoadFailed"; }
         finally { busy = false; }
     }
 
-    private void BeginEdit() { if (page is null) return; workspace.Begin(page); workspaceGeneration++; editing = true; conflict = false; operationError = null; }
-    private void CancelEdit() { if (editorOpen) return; workspace.Cancel(); workspaceGeneration++; editing = false; conflict = false; }
+    private void BeginEdit() { if (page is null) return; workspace.Begin(page); ClearSelection(); workspaceGeneration++; editing = true; conflict = false; operationError = null; }
+    private void CancelEdit() { if (editorOpen) return; workspace.Cancel(); ClearSelection(); workspaceGeneration++; editing = false; conflict = false; }
     private void MoveOrder(Guid pageId, Guid cardId, int direction) { workspace.MoveCardInPage(pageId, cardId, direction); layoutStatus = L["ReportLayoutUpdated"]; }
     private void ResizeCard(Guid pageId, Guid cardId, int width, int height) { workspace.ResizeCard(pageId, cardId, width, height); layoutStatus = L["ReportLayoutUpdated"]; }
-    private void DuplicateCard(Guid pageId, Guid cardId, string name) => workspace.DuplicateCard(pageId, cardId, $"{name} {L["ReportCopySuffix"]}");
+    private ReportCardDraft? SelectedCard => selection.Resolve(workspace.Pages);
+    private IReadOnlyList<ReportPageSummaryDto> PaletteTargetPages => selection.PageId is Guid pageId
+        ? summaries.Where(x => x.Id != pageId).ToList()
+        : [];
+
+    private Task SelectCard(Guid pageId, Guid? cardId)
+    {
+        if (!editing || cardId is null)
+        {
+            ClearSelection();
+            return Task.CompletedTask;
+        }
+        if (workspace.Page(pageId).Cards.All(x => x.ClientId != cardId)) return Task.CompletedTask;
+        selection.Select(pageId, cardId.Value);
+        return Task.CompletedTask;
+    }
+
+    private void ClearSelection() => selection.Clear();
+    private void MoveSelected(int direction)
+    {
+        if (selection.PageId is not Guid pageId || selection.CardId is not Guid cardId) return;
+        MoveOrder(pageId, cardId, direction);
+    }
+    private void ResizeSelected(int width, int height)
+    {
+        if (selection.PageId is not Guid pageId || selection.CardId is not Guid cardId) return;
+        ResizeCard(pageId, cardId, width, height);
+    }
+    private void EditSelected()
+    {
+        if (selection.PageId is not Guid pageId || SelectedCard is not { } card) return;
+        EditCard(pageId, card);
+    }
+    private void DuplicateSelected()
+    {
+        if (selection.PageId is not Guid pageId || SelectedCard is not { } card) return;
+        var copy = workspace.DuplicateCard(pageId, card.ClientId, $"{card.Name} {L["ReportCopySuffix"]}");
+        selection.Select(pageId, copy.ClientId);
+    }
+    private async Task DeleteSelectedAsync()
+    {
+        if (selection.PageId is not Guid pageId || selection.CardId is not Guid cardId) return;
+        workspace.DeleteCard(pageId, cardId);
+        ClearSelection();
+        await InvokeAsync(StateHasChanged);
+        if (layoutPalette is not null) await layoutPalette.FocusAsync();
+    }
 
     private async Task AddCardAsync(Guid pageId)
     {
@@ -193,16 +225,27 @@ else if (page is not null)
         editorOpen = false; editorCard = null; return Task.CompletedTask;
     }
 
-    private async Task MoveToPageAsync(Guid sourceId, Guid cardId, string? targetText)
+    private async Task MoveSelectedToPageAsync(Guid targetId)
     {
-        if (!Guid.TryParse(targetText, out var targetId)) return;
+        if (selection.PageId is not Guid sourceId || selection.CardId is not Guid cardId) return;
+        if (!await MoveToPageAsync(sourceId, cardId, targetId)) return;
+        await InvokeAsync(StateHasChanged);
+        if (layoutPalette is not null) await layoutPalette.FocusAsync();
+    }
+
+    private async Task<bool> MoveToPageAsync(Guid sourceId, Guid cardId, Guid targetId)
+    {
+        if (targetId == sourceId || summaries.All(x => x.Id != targetId)) return false;
         try
         {
             if (!workspace.Pages.Any(x => x.Id == targetId)) workspace.AddSnapshot(await Pages.GetAsync(accountId, targetId));
             workspace.MoveCard(sourceId, targetId, cardId);
+            if (selection.Matches(sourceId, cardId)) ClearSelection();
+            return true;
         }
         catch (UnauthorizedAccessException) { operationError = "ReportPageUnavailable"; }
         catch { operationError = "ReportPagesLoadFailed"; }
+        return false;
     }
 
     private async Task SaveAsync()
@@ -212,7 +255,7 @@ else if (page is not null)
         try
         {
             var saved = await Pages.SaveWorkspaceAsync(accountId, workspace.BuildRequest());
-            workspace.ApplySaved(saved); page = saved.Single(x => x.Id == ReportPageId); workspaceGeneration++; editing = false;
+            workspace.ApplySaved(saved); page = saved.Single(x => x.Id == ReportPageId); ClearSelection(); workspaceGeneration++; editing = false;
         }
         catch (ReportPageConflictException) { conflict = true; }
         catch (ReportPageValidationException ex) { operationError = ex.Message; }
@@ -255,5 +298,5 @@ else if (page is not null)
         layoutStatus = L["ReportLayoutUpdated"];
         return Task.CompletedTask;
     }
-    public void Dispose() { lifetime?.Cancel(); lifetime?.Dispose(); }
+    public void Dispose() { ClearSelection(); lifetime?.Cancel(); lifetime?.Dispose(); }
 }

@@ -3384,4 +3384,15 @@ This is a reminder, not a termination or renewal.</value>
   <data name="SavedFilterSaveFailed" xml:space="preserve"><value>The filter could not be saved.</value></data>
   <data name="SavedFilterSaved" xml:space="preserve"><value>The filter has been saved.</value></data>
   <data name="MessageBannerClose" xml:space="preserve"><value>Close message</value></data>
+  <data name="ReportSelectCard" xml:space="preserve"><value>Select report card</value></data>
+  <data name="ReportCardSelected" xml:space="preserve"><value>Report card selected.</value></data>
+  <data name="ReportCardSelectionCleared" xml:space="preserve"><value>Report card selection cleared.</value></data>
+  <data name="ReportPaletteTitle" xml:space="preserve"><value>Layout tools</value></data>
+  <data name="ReportPaletteMove" xml:space="preserve"><value>Move layout tools</value></data>
+  <data name="ReportPaletteReset" xml:space="preserve"><value>Reset position</value></data>
+  <data name="ReportPaletteNoSelection" xml:space="preserve"><value>Select a report card to change its layout.</value></data>
+  <data name="ReportPaletteSelected" xml:space="preserve"><value>Selected card: {0}</value></data>
+  <data name="ReportPaletteActions" xml:space="preserve"><value>Move and resize the selected report card</value></data>
+  <data name="ReportPaletteCardActions" xml:space="preserve"><value>Card actions</value></data>
+  <data name="ReportPaletteLayoutActions" xml:space="preserve"><value>Position and size</value></data>
 </root>

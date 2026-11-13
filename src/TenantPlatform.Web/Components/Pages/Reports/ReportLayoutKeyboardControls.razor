@@ -1,12 +1,13 @@
 <div class="btn-group" role="group" aria-label="@L["ReportResizeKeyboardGroup", Name]">
-    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="OnNarrower" aria-label="@L["ReportResizeNarrower", Name]">↔−</button>
-    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="OnWider" aria-label="@L["ReportResizeWider", Name]">↔+</button>
-    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="OnShorter" aria-label="@L["ReportResizeShorter", Name]">↕−</button>
-    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="OnTaller" aria-label="@L["ReportResizeTaller", Name]">↕+</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnNarrower" aria-label="@L["ReportResizeNarrower", Name]">↔−</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnWider" aria-label="@L["ReportResizeWider", Name]">↔+</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnShorter" aria-label="@L["ReportResizeShorter", Name]">↕−</button>
+    <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnTaller" aria-label="@L["ReportResizeTaller", Name]">↕+</button>
 </div>
 
 @code {
     [Parameter, EditorRequired] public string Name { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; }
     [Parameter] public EventCallback OnNarrower { get; set; }
     [Parameter] public EventCallback OnWider { get; set; }
     [Parameter] public EventCallback OnShorter { get; set; }

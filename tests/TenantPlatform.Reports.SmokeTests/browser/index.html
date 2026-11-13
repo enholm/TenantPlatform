@@ -3,11 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TenantPlatform Step 7 browser harness</title>
+    <title>TenantPlatform report browser harness</title>
     <link rel="stylesheet" href="/bootstrap.css">
     <link rel="stylesheet" href="/app.css">
     <link rel="stylesheet" href="/report-chart.css">
     <link rel="stylesheet" href="/report-grid.css">
+    <link rel="stylesheet" href="/report-palette.css">
     <link rel="stylesheet" href="/report-tree-chart.css">
     <style>
         body { padding: 1rem; }
@@ -27,7 +28,7 @@
     </style>
 </head>
 <body data-test-status="running">
-    <h1>Step 7 browser harness</h1>
+    <h1>Report browser harness</h1>
     <p id="environment"></p>
     <ol id="results" aria-live="polite"></ol>
 
@@ -50,6 +51,32 @@
         <h2>Read-only grid</h2>
         <div id="view-grid" class="report-layout-grid"></div>
     </section>
+
+    <aside id="layout-palette" class="report-layout-palette" aria-label="Layout tools">
+        <div class="report-layout-palette-header">
+            <button type="button" class="report-palette-drag-handle" aria-label="Move layout tools">⠿</button>
+            <strong>Layout tools</strong>
+            <button type="button" id="palette-reset" class="btn btn-link btn-sm report-palette-reset">Reset position</button>
+        </div>
+        <p id="palette-selection" tabindex="-1">Selected card: 2</p>
+        <div class="report-palette-section">
+            <div class="report-palette-card-actions">
+                <div class="d-flex gap-1">
+                    <button type="button" id="palette-edit" class="btn btn-outline-primary btn-sm">Edit</button>
+                    <button type="button" id="palette-duplicate" class="btn btn-outline-secondary btn-sm">Duplicate</button>
+                </div>
+                <button type="button" id="palette-delete" class="btn btn-outline-danger btn-sm report-palette-delete">Delete</button>
+            </div>
+            <select id="palette-target" class="form-select form-select-sm">
+                <option value="">Choose</option>
+                <option value="allowed-target">Allowed target</option>
+            </select>
+        </div>
+        <div class="report-palette-section">
+            <button type="button" id="palette-action" class="btn btn-outline-secondary btn-sm">Move</button>
+            <button type="button" id="palette-resize" class="btn btn-outline-secondary btn-sm">Wider</button>
+        </div>
+    </aside>
 
     <script type="module" src="/browser-harness.js"></script>
 </body>
