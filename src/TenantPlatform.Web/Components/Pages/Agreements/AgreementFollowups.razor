@@ -17,7 +17,7 @@
 {
 <PageSectionNavigation Sections="@(new (string Id, string Label)[] { ("agreement-filters", L["AgreementFilters"].Value), ("agreement-results", L["AgreementResults"].Value) })" />
     <div id="agreement-filters" class="card mb-3">
-        <div class="card-body"><h2 class="h5">@L["AgreementFilters"]</h2>
+        <div class="card-body">
             <SavedFilterTabs AccountId="accountId" Page="SavedFilterPage.AgreementFollowUp" Disabled="busy"
                              CaptureCriteria="CaptureCriteria" OnApplyCriteria="ApplySavedAsync"
                              OnEditCriteria="EditSavedAsync" OnSearch="SearchAsync">

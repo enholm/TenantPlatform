@@ -81,6 +81,20 @@ static class UiChecks
             await InvokeAsync(component, "SaveAsync");
             Check.That(savedFilters.LastCreated is { Name: "New filter", Criteria: "{\"captured\":true}" },
                 "new save captures the current unsent filter state");
+            Check.That((string?)Get(component, "messageKey") == "SavedFilterSaved",
+                "a successful save shows its confirmation");
+            InvokeWithTab(component, "Saved");
+            Check.That(Get(component, "messageKey") is null && Get(component, "activeTab")?.ToString() == "Saved",
+                "switching to saved filters clears the save confirmation");
+            InvokeWithTab(component, "Filter");
+            Check.That(Get(component, "messageKey") is null,
+                "the cleared confirmation stays hidden after returning to the filter tab");
+            Invoke(component, "OpenSave");
+            Set(component, "saveMode", "new");
+            Set(component, "newName", "Another filter");
+            await InvokeAsync(component, "SaveAsync");
+            Check.That((string?)Get(component, "messageKey") == "SavedFilterSaved",
+                "a later successful save shows a new confirmation");
         });
     }
 
@@ -95,6 +109,12 @@ static class UiChecks
 
     private static void Invoke(SavedFilterTabs component, string name) =>
         typeof(SavedFilterTabs).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(component, null);
+
+    private static void InvokeWithTab(SavedFilterTabs component, string tab)
+    {
+        var method = typeof(SavedFilterTabs).GetMethod("SelectTab", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        method.Invoke(component, [Enum.Parse(method.GetParameters()[0].ParameterType, tab)]);
+    }
 
     private static Task InvokeAsync(SavedFilterTabs component, string name) =>
         (Task)typeof(SavedFilterTabs).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(component, null)!;

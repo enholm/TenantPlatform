@@ -7,12 +7,12 @@
     <li class="nav-item" role="presentation">
         <button type="button" class="nav-link @(activeTab == Tab.Filter ? "active" : null)" role="tab"
                 id="@filterTabId" aria-controls="@filterPanelId" aria-selected="@(activeTab == Tab.Filter)"
-                @onclick="() => activeTab = Tab.Filter">@L["SavedFilterFilterTab"]</button>
+                @onclick="() => SelectTab(Tab.Filter)">@L["SavedFilterFilterTab"]</button>
     </li>
     <li class="nav-item" role="presentation">
         <button type="button" class="nav-link @(activeTab == Tab.Saved ? "active" : null)" role="tab"
                 id="@savedTabId" aria-controls="@savedPanelId" aria-selected="@(activeTab == Tab.Saved)"
-                @onclick="() => activeTab = Tab.Saved">@L["SavedFilterSavedTab"]</button>
+                @onclick="() => SelectTab(Tab.Saved)">@L["SavedFilterSavedTab"]</button>
     </li>
 </ul>
 
@@ -152,6 +152,13 @@ else
 
     private Task SearchAsync() { messageKey = null; return OnSearch.InvokeAsync(); }
     private Task ResetAsync() { selectedId = null; editPrepared = false; messageKey = null; return OnReset.InvokeAsync(); }
+
+    private void SelectTab(Tab tab)
+    {
+        activeTab = tab;
+        if (!messageError && messageKey == "SavedFilterSaved")
+            messageKey = null;
+    }
 
     private async Task ApplySelectedAsync()
     {
