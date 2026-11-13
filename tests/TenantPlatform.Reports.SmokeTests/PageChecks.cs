@@ -158,7 +158,14 @@ static class PageChecks
         left.DateBasis == right.DateBasis && left.Metric == right.Metric &&
         left.Aggregation == right.Aggregation && left.Grouping == right.Grouping &&
         left.TimeGrouping == right.TimeGrouping && left.Visualization == right.Visualization &&
-        left.DisplayJson == right.DisplayJson;
+        JsonEquivalent(left.DisplayJson, right.DisplayJson);
+
+    private static bool JsonEquivalent(string left, string right)
+    {
+        using var leftDocument = System.Text.Json.JsonDocument.Parse(left);
+        using var rightDocument = System.Text.Json.JsonDocument.Parse(right);
+        return System.Text.Json.JsonElement.DeepEquals(leftDocument.RootElement, rightDocument.RootElement);
+    }
 
     private static async Task RemoveAgreementAccessAsync(Fixture f)
     {

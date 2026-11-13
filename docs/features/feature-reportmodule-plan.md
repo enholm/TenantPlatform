@@ -1,8 +1,8 @@
 # Rapportmodul — kartlegging og konkret implementasjonsplan
 
-Dato: 13. november 2026. Status: **STEG 1–8 KILDEIMPLEMENTERT — STEG 7–8 MÅLRETTET DATABASEFRITT NETTLESERVERIFISERT — samlet PostgreSQL-/InteractiveServer-verifikasjon gjenstår**.
+Dato: 13. november 2026. Status: **STEG 1–8 KILDEIMPLEMENTERT — STEG 9 DELVIS GJENNOMFØRT MED POSTGRESQL OG FAKTISK INTERACTIVESERVER/CHROME — full verifikasjonsmatrise gjenstår**.
 
-Dette dokumentet konkretiserer [featurebeskrivelsen](feature-reportmodule.md) mot gjeldende kodebase. Den opprinnelige kartleggingen var databasefri og uten kodeendringer. Steg 1–5 er senere kildeimplementert som beskrevet i kapittel 17–22. Steg 3 har schema-, migrasjons- og snapshotendringer i kildekoden, men migrasjonen er ikke anvendt mot noen database. Ingen rapport-UI, applikasjonsinstans eller ekstern tjeneste er startet.
+Dette dokumentet konkretiserer [featurebeskrivelsen](feature-reportmodule.md) mot gjeldende kodebase. Den opprinnelige kartleggingen og Steg 1–8-kjøringene var databasefrie der de historiske kapitlene sier det. Den senere, isolerte PostgreSQL-/InteractiveServer-verifikasjonen står i kapittel 26 og [feature-reportmodule-verification.md](feature-reportmodule-verification.md); den endrer ikke de historiske kjøringsresultatene.
 
 ## 1. Grunnlag, avgrensning og hovedkonklusjon
 
@@ -1010,4 +1010,16 @@ Den isolerte nettleserharnessen kjøres på nytt fra repo-roten med `node tests/
 - Headless Chrome-harnessen verifiserer faktisk ECharts-rendering og responsive CSS-bredder, men ikke en full browser-/tilgjengelighetsmatrise, fysisk touch/stylus, pikselperfeksjon eller manuell skjermleserbruk. Automatisk path-utvidelse er kontrollert gjennom tjenestepath og komponentlogikk, ikke gjennom en faktisk InteractiveServer-sesjon.
 - Ingen nye økonomiske regler, dagperiodisering, valutakonvertering, Leasing-linje-/kostnadsfordelingsdimensjoner, deling eller startsidefunksjon er innført.
 
-Steg 8 er **kildeferdig og tilstrekkelig målrettet databasefritt verifisert til å gå videre til Steg 9**, med de uttrykkelige begrensningene over. Neste avgrensede oppgave er Steg 9: samlet verifikasjon og leveranserapport, der PostgreSQL/provider, InteractiveServer og større datamengder behandles som eksplisitte verifikasjonsspor og ikke som implisitte PASS.
+Steg 8 er **kildeferdig og tilstrekkelig målrettet databasefritt verifisert til å gå videre til Steg 9**, med de uttrykkelige begrensningene over. Den senere Steg-9-verifikasjonen er dokumentert i kapittel 26 og [feature-reportmodule-verification.md](feature-reportmodule-verification.md).
+
+## 26. Faktisk resultat for Steg 9 — samlet verifikasjon
+
+Status 13. november 2026: **DELVIS GJENNOMFØRT.** Kildeimplementasjonen fra Steg 1–8 er bevart. Senere runtimeverifikasjon har anvendt hele migrasjonskjeden og rapportmigrasjonens down/up i en isolert PostgreSQL 17.10-klynge, kjørt Reports-fixturen gjennom Npgsql (288 PASS) og kjørt faktisk publisert Blazor InteractiveServer med Chrome 157 på desktop og smal viewport (25 PASS per viewport).
+
+Detaljert miljø, kommandoer, datamengde, avstemming, queryplanstikkprøver, feilrettelser, regresjonsresultater og matrisen for alle 14 akseptansekriterier står i [feature-reportmodule-verification.md](feature-reportmodule-verification.md).
+
+En providerfeil ble rettet: semantisk uendret `jsonb` ble tidligere sammenlignet som tekst og kunne feilaktig kreve modultilgang etter PostgreSQL-normalisering. Målrettet PostgreSQL-regresjon består. To ugyldige InMemory-fixture-referanser og en bytebasert JSON-testforventning ble også korrigert uten produksjonsregelendring.
+
+Full Leasing PostgreSQL-smoke er ikke PASS: runneren stopper i en eksisterende kostnadsfordelingstest som forventer 25 % VAT selv om dens frittstående purchase-helper lager 0 % VAT. Feilen er diagnostisert og skilt fra rapportmodulen; testen ble ikke endret for å få grønt resultat. Full actual-app treeflyt, to samtidige browsersesjoner, circuit disconnect/reconnect, full språk-/tilgjengelighets-/browsermatrise, fysisk touch og komplett ytelses/query-count-matrise er fortsatt ikke gjennomført.
+
+Steg 9 og hele funksjonen skal derfor ikke beskrives som fullt verifisert. Samlet status er **klar for neste leveransesteg med dokumenterte begrensninger**, ikke «alle akseptansekriterier PASS».

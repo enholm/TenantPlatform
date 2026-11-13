@@ -298,13 +298,28 @@ public sealed class ReportPageService(
         var probe = new ReportCard();
         ApplyGrouping(probe, definition);
         return existing.Module == definition.Module && existing.DefinitionVersion == definition.DefinitionVersion &&
-            existing.FiltersJson == filtersJson && existing.PeriodRule == definition.Period.Rule &&
+            JsonEquivalent(existing.FiltersJson, filtersJson) && existing.PeriodRule == definition.Period.Rule &&
             existing.CustomFrom == definition.Period.CustomFrom && existing.CustomTo == definition.Period.CustomTo &&
             existing.DateBasisId == definition.DateBasis?.ToString() && existing.MetricId == definition.Metric?.ToString() &&
             existing.AggregationId == definition.Aggregation?.ToString() && existing.GroupingKind == probe.GroupingKind &&
             existing.GroupingKey == probe.GroupingKey && existing.GroupingScope == probe.GroupingScope &&
             existing.GroupingDimensionId == probe.GroupingDimensionId && existing.TimeGrouping == probe.TimeGrouping &&
-            existing.Visualization == definition.Visualization && existing.DisplayJson == definition.DisplayJson;
+            existing.Visualization == definition.Visualization &&
+            JsonEquivalent(existing.DisplayJson, definition.DisplayJson);
+    }
+
+    private static bool JsonEquivalent(string left, string right)
+    {
+        try
+        {
+            using var leftDocument = JsonDocument.Parse(left);
+            using var rightDocument = JsonDocument.Parse(right);
+            return JsonElement.DeepEquals(leftDocument.RootElement, rightDocument.RootElement);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     private static ReportPageDto Map(ReportPage page, IReadOnlyList<ReportCard> cards) => new(

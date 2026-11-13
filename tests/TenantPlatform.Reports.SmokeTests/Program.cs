@@ -28,7 +28,10 @@ if (args.Contains("--browser-fixtures", StringComparer.Ordinal))
 }
 
 CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("nb-NO");
-var fixture = new Fixture();
+var postgresConnection = Environment.GetEnvironmentVariable("REPORT_TEST_CONNECTION");
+var fixture = new Fixture(postgresConnection);
+if (fixture.IsPostgres)
+    await PostgresChecks.PrepareAsync(fixture);
 await fixture.SeedAsync();
 await AgreementChecks.RunAsync(fixture);
 await LeasingChecks.RunAsync(fixture);
@@ -42,7 +45,15 @@ WorkspaceChecks.Run();
 ChartLayoutChecks.Run();
 await ReportUiChecks.RunAsync();
 await PageChecks.RunAsync(fixture);
-Console.WriteLine($"Report module smoke checks passed ({Check.Count} checks; pure date logic and EF InMemory only; no PostgreSQL translation, database connection or app startup).");
+if (fixture.IsPostgres)
+{
+    await PostgresChecks.VerifyAsync(fixture);
+    Console.WriteLine($"Report module PostgreSQL smoke checks passed ({Check.Count} checks; isolated disposable database; no app startup).");
+}
+else
+{
+    Console.WriteLine($"Report module smoke checks passed ({Check.Count} checks; pure date logic and EF InMemory only; no PostgreSQL translation, database connection or app startup).");
+}
 
 static class AgreementChecks
 {
@@ -260,6 +271,7 @@ sealed class Fixture
     public Guid DimensionOne { get; } = Guid.NewGuid();
     public Guid DimensionTwo { get; } = Guid.NewGuid();
     public Guid HistoricalDimension { get; } = Guid.NewGuid();
+    public Guid ForeignDimension { get; } = Guid.NewGuid();
     public Guid Root { get; } = Guid.NewGuid();
     public Guid Child { get; } = Guid.NewGuid();
     public Guid Grandchild { get; } = Guid.NewGuid();
@@ -285,11 +297,23 @@ sealed class Fixture
     public Guid StandaloneEquipment { get; } = Guid.NewGuid();
     private readonly InMemoryDatabaseRoot root = new();
     private readonly string database = Guid.NewGuid().ToString();
+    private readonly string? postgresConnection;
+
+    public Fixture(string? postgresConnection = null)
+    {
+        this.postgresConnection = string.IsNullOrWhiteSpace(postgresConnection) ? null : postgresConnection;
+    }
+
+    public bool IsPostgres => postgresConnection is not null;
 
     public TenantPlatformDbContext Open()
     {
-        var options = new DbContextOptionsBuilder<TenantPlatformDbContext>()
-            .UseInMemoryDatabase(database, root).Options;
+        var builder = new DbContextOptionsBuilder<TenantPlatformDbContext>();
+        if (postgresConnection is null)
+            builder.UseInMemoryDatabase(database, root);
+        else
+            builder.UseNpgsql(postgresConnection);
+        var options = builder.Options;
         return new(options);
     }
 
@@ -394,7 +418,7 @@ sealed class Fixture
             DimensionEntity(DimensionOne, Account, "GEO", "Geografi", true),
             DimensionEntity(DimensionTwo, Account, "DEP", "Avdeling", true),
             DimensionEntity(HistoricalDimension, Account, "OLD", "Historisk", false),
-            DimensionEntity(Guid.NewGuid(), ForeignAccount, "FOREIGN", "Foreign", true));
+            DimensionEntity(ForeignDimension, ForeignAccount, "FOREIGN", "Foreign", true));
         db.DimensionValues.AddRange(
             Value(Root, Account, DimensionOne, null, "Norge"),
             Value(Child, Account, DimensionOne, Root, "Øst"),
@@ -402,7 +426,7 @@ sealed class Fixture
             Value(DepartmentA, Account, DimensionTwo, null, "A"),
             Value(DepartmentB, Account, DimensionTwo, null, "B"),
             Value(HistoricalValue, Account, HistoricalDimension, null, "Utgått", false),
-            Value(ForeignValue, ForeignAccount, Guid.NewGuid(), null, "Foreign"));
+            Value(ForeignValue, ForeignAccount, ForeignDimension, null, "Foreign"));
         db.AgreementDimensionRules.AddRange(
             AgreementRule(DimensionOne, true), AgreementRule(DimensionTwo, true), AgreementRule(HistoricalDimension, false));
         db.LeasingAgreementDimensionRules.AddRange(
@@ -567,15 +591,18 @@ sealed class Fixture
             Quantity = 1, UnitPrice = unitPrice, ActorUserId = Admin
         };
     }
-    private static LeasingFramework Framework(Guid id, Guid account, string name, string number, Guid owner, LeasingFrameworkStatus status) => new()
+    private LeasingFramework Framework(Guid id, Guid account, string name, string number, Guid owner, LeasingFrameworkStatus status) => new()
     {
         Id = id, AccountId = account, Name = name, Number = number, OwnerUserId = owner,
+        FinanceOrganizationId = account == Account ? PartyA : ForeignParty,
         AcquisitionFrom = new(2026, 1, 1), AcquisitionTo = new(2027, 1, 1), Currency = "NOK", Status = status, Revision = Guid.NewGuid()
     };
-    private static LeasingAcquisition Acquisition(Guid id, Guid account, Guid? framework, string name, string reference,
+    private LeasingAcquisition Acquisition(Guid id, Guid account, Guid? framework, string name, string reference,
         Guid owner, LeasingAcquisitionStatus status) => new()
     {
         Id = id, AccountId = account, FrameworkId = framework, Name = name, Reference = reference, OwnerUserId = owner,
+        SupplierOrganizationId = account == Account ? PartyA : ForeignParty,
+        FinanceOrganizationId = account == Account ? PartyA : ForeignParty,
         PurchaseDate = new(2026, 1, 1), EndDate = new(2027, 1, 1), Currency = "NOK", Status = status, Revision = Guid.NewGuid()
     };
     private static void PurchaseValues(LeasingAcquisition acquisition, decimal net, decimal vat,

@@ -306,6 +306,7 @@ static class LeasingExecutionChecks
             {
                 Id = id, AccountId = f.Account, Name = $"scope-limit-{i:D4}",
                 Reference = $"scope-limit-{i:D4}", OwnerUserId = f.Admin,
+                SupplierOrganizationId = f.PartyA, FinanceOrganizationId = f.PartyA,
                 PurchaseDate = new(2026, 2, 1), EndDate = new(2027, 2, 1),
                 Currency = "NOK", Status = LeasingAcquisitionStatus.Registered,
                 NetTotal = 1, GrossTotal = 1, Revision = Guid.NewGuid()
