@@ -127,7 +127,7 @@ h1:focus {
 }
 
 /* Shared contract and leasing presentation. */
-.page-workspace { max-width: 1600px; margin-inline: auto; padding-bottom: 2rem; color: var(--bs-body-color); line-height: 1.55; }
+.page-workspace { max-width: 2600px; margin-inline: auto; padding-bottom: 2rem; color: var(--bs-body-color); line-height: 1.55; }
 .page-section { padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--tp-surface-border); border-radius: .8rem; background: var(--tp-surface-bg); box-shadow: var(--tp-surface-shadow); }
 .page-form-actions { display: flex; flex-wrap: wrap; gap: .75rem; padding-block: 1rem; border-top: 1px solid var(--bs-border-color); }
 :is(.page-workspace, .leasing-workspace) [id] { scroll-margin-top: 5rem; }

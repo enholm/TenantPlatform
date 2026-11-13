@@ -16,7 +16,13 @@ const flushFrames = () => {
 };
 globalThis.matchMedia = () => ({ matches: true });
 globalThis.document = { documentElement: {} };
-globalThis.getComputedStyle = () => ({ getPropertyValue: name => name === "--report-grid-row-height" ? "48" : "" });
+globalThis.getComputedStyle = element => element?.isReportGrid ? {
+    display: "grid",
+    columnGap: "16px",
+    rowGap: "16px",
+    gridAutoRows: "48px",
+    getPropertyValue: name => name === "--report-grid-row-height" ? "3rem" : ""
+} : ({ getPropertyValue: () => "" });
 
 const observers = [];
 globalThis.ResizeObserver = class {
@@ -136,7 +142,13 @@ const item = {
         getPropertyValue: name => styleValues.get(name),
         setProperty: (name, value) => styleValues.set(name, String(value))
     },
-    classList: { add() {}, remove() {} }
+    classList: { add() {}, remove() {} },
+    getBoundingClientRect() {
+        const width = Number(styleValues.get("--report-grid-width"));
+        const height = Number(styleValues.get("--report-grid-height"));
+        const columnTrack = (1200 - 11 * 16) / 12;
+        return { width: width * columnTrack + (width - 1) * 16, height: height * 48 + (height - 1) * 16 };
+    }
 };
 const handle = {
     resize: false,
@@ -149,28 +161,72 @@ const handle = {
     setPointerCapture() {}
 };
 const grid = {
+    isReportGrid: true,
+    offsetWidth: 1200,
+    offsetHeight: 640,
+    style: { setProperty: (name, value) => styleValues.set(name, value) },
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: (name, callback) => { if (listeners.get(name) === callback) listeners.delete(name); },
     contains: () => true,
-    getBoundingClientRect: () => ({ width: 1200 })
+    getBoundingClientRect: () => ({ width: 1200, height: 640, left: 0, top: 0 })
 };
 const commits = [];
 const adapter = gridModule.create(grid, { invokeMethodAsync: (...args) => { commits.push(args); } }, 4, 12, 3, 3, 12);
+const gridObserver = observers.at(-1);
+assert.equal(Number.parseFloat(styleValues.get("--report-grid-row-pitch")), 64,
+    "published row pitch combines the resolved 48px track and 16px gap");
+assert.ok(Math.abs(Number.parseFloat(styleValues.get("--report-grid-column-pitch")) - (1200 + 16) / 12) < 0.01,
+    "published column pitch combines responsive track width and gap");
 const startEvent = { button: 0, pointerId: 7, clientX: 0, clientY: 0, target: handle, preventDefault() {} };
 listeners.get("pointerdown")(startEvent);
 listeners.get("pointermove")({ pointerId: 7, clientX: 200, clientY: 96 });
-await listeners.get("pointerup")({ pointerId: 7 });
+await listeners.get("pointerup")({ pointerId: 7, clientX: 200, clientY: 96 });
 assert.deepEqual(commits[0].slice(0, 7), ["CommitLayout", item.dataset.reportCardId, 3, 3, 6, 4, 4],
     "pointer gesture snaps once and commits one generation-bound layout update");
 
 handle.resize = true;
-listeners.get("pointerdown")({ ...startEvent, pointerId: 8 });
-listeners.get("pointermove")({ pointerId: 8, clientX: 1200, clientY: 1000 });
-listeners.get("pointercancel")({ pointerId: 8 });
+const resetItem = () => {
+    styleValues.set("--report-grid-column", "1"); styleValues.set("--report-grid-row", "1");
+    styleValues.set("--report-grid-width", "6"); styleValues.set("--report-grid-height", "4");
+};
+const resize = async (pointerId, clientX, clientY) => {
+    resetItem();
+    listeners.get("pointerdown")({ ...startEvent, pointerId });
+    listeners.get("pointermove")({ pointerId, clientX, clientY });
+    await listeners.get("pointerup")({ pointerId, clientX, clientY });
+    return commits.at(-1);
+};
+let resized = await resize(8, 0, 64);
+assert.equal(resized[5], 5, "one complete row pitch increases height by one row");
+resized = await resize(9, 0, 192);
+assert.equal(resized[5], 7, "three complete row pitches increase height by three rows");
+resized = await resize(10, 0, 20);
+assert.equal(resized[5], 4, "small vertical movement does not produce a large height jump");
+resized = await resize(11, 0, -64);
+assert.equal(resized[5], 3, "upward movement snaps by one row and respects the minimum height");
+resized = await resize(12, (1200 + 16) / 12, 0);
+assert.equal(resized[4], 7, "one horizontal column pitch retains the existing one-column resize behavior");
+
+const narrowGrid = {
+    ...grid, offsetWidth: 600,
+    getBoundingClientRect: () => ({ width: 600, height: 640, left: 0, top: 0 })
+};
+const wideGeometry = gridModule.measureGridGeometry(grid, 12);
+const narrowGeometry = gridModule.measureGridGeometry(narrowGrid, 12);
+assert.equal(wideGeometry.rowPitch, narrowGeometry.rowPitch,
+    "row geometry remains stable across canvas widths");
+assert.ok(narrowGeometry.columnPitch < wideGeometry.columnPitch && narrowGeometry.columnTrack > 0,
+    "column geometry follows the actual canvas width");
+
+resetItem();
+listeners.get("pointerdown")({ ...startEvent, pointerId: 13 });
+listeners.get("pointermove")({ pointerId: 13, clientX: 1200, clientY: 1000 });
+listeners.get("pointercancel")({ pointerId: 13 });
 assert.equal(styleValues.get("--report-grid-width"), "6", "pointercancel restores pre-gesture width");
 assert.equal(styleValues.get("--report-grid-height"), "4", "pointercancel restores pre-gesture height");
 adapter.dispose();
 assert.equal(listeners.size, 0, "grid dispose removes all pointer listeners");
 assert.equal(windowListeners.size, 0, "grid dispose removes the Escape listener");
+assert.equal(gridObserver.disconnected, true, "grid dispose disconnects its geometry ResizeObserver");
 
 console.log("Report JS module checks passed (ECharts lifecycle and pointer-grid mock harness; no real browser rendering)." );

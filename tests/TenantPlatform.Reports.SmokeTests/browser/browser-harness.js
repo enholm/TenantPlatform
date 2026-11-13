@@ -293,7 +293,79 @@ async function gridChecks() {
     const resize = second.querySelector(".report-resize-handle");
 
     await wait(60);
-    const columnWidth = editGrid.getBoundingClientRect().width / 12;
+    const geometry = gridModule.measureGridGeometry(editGrid, 12);
+    const columnWidth = geometry.columnPitch;
+    const publishedColumnPitch = Number.parseFloat(editGrid.style.getPropertyValue("--report-grid-column-pitch"));
+    const publishedRowPitch = Number.parseFloat(editGrid.style.getPropertyValue("--report-grid-row-pitch"));
+    check(Math.abs(publishedColumnPitch - geometry.columnPitch) < .5 && Math.abs(publishedRowPitch - geometry.rowPitch) < .5,
+        "grid publishes the same responsive geometry for pointer snapping and the edit canvas");
+    if (innerWidth >= 768) {
+        const editDots = getComputedStyle(editGrid, "::before");
+        const viewDots = getComputedStyle(viewGrid, "::before");
+        check(editDots.backgroundImage !== "none" && editDots.pointerEvents === "none" && viewDots.backgroundImage === "none",
+            "dot grid is pointer-transparent and appears only on the editable desktop canvas");
+        check(Math.abs(second.getBoundingClientRect().left - first.getBoundingClientRect().left - 6 * geometry.columnPitch) < 1,
+            "dot and card column positions use the same measured pitch");
+
+        const resizeFromInitial = async (pointerId, deltaX, deltaY, initialLayout = null) => {
+            resetGrid(editGrid);
+            if (initialLayout) setLayout(second, initialLayout);
+            const before = second.getBoundingClientRect();
+            const startX = before.right - 10;
+            const startY = before.bottom - 10;
+            pointer(resize, "pointerdown", { pointerId, clientX: startX, clientY: startY });
+            pointer(editGrid, "pointermove", { pointerId, clientX: startX + deltaX, clientY: startY + deltaY });
+            pointer(editGrid, "pointerup", { pointerId, clientX: startX + deltaX, clientY: startY + deltaY });
+            await wait(20);
+            return { before, after: second.getBoundingClientRect(), pointerY: startY + deltaY, startY };
+        };
+
+        let edge = await resizeFromInitial(40, 0, geometry.rowPitch);
+        check(layout(second).height === 5 &&
+            Math.abs((edge.after.bottom - edge.pointerY) - (edge.before.bottom - edge.startY)) < 1,
+            "one row pitch adds one row and keeps the lower card edge aligned with the pointer snap");
+        await resizeFromInitial(41, 0, geometry.rowPitch * 3);
+        check(layout(second).height === 7, "three row pitches add exactly three rows");
+        await resizeFromInitial(42, 0, geometry.rowPitch * .35);
+        check(layout(second).height === 4, "small vertical movement does not cause a height jump");
+        await resizeFromInitial(43, 0, -geometry.rowPitch * 8);
+        check(layout(second).height === 3, "upward resize snaps and clamps to the minimum height");
+        await resizeFromInitial(44, geometry.columnPitch, 0,
+            { column: 1, row: 1, width: 6, height: 4 });
+        check(layout(second).width === 7, "horizontal resize still advances by one column pitch");
+
+        resetGrid(editGrid);
+        const scrollHost = document.querySelector("#scroll-host");
+        scrollHost.scrollTop = 0;
+        const scrollStart = second.getBoundingClientRect();
+        const scrollX = scrollStart.right - 10;
+        const scrollY = scrollStart.bottom - 10;
+        pointer(resize, "pointerdown", { pointerId: 45, clientX: scrollX, clientY: scrollY });
+        scrollHost.scrollTop = geometry.rowPitch;
+        await wait(20);
+        pointer(editGrid, "pointermove", { pointerId: 45, clientX: scrollX, clientY: scrollY });
+        check(layout(second).height === 5,
+            "scrolling during resize contributes in grid coordinates without changing pointer CSS pixels");
+        pointer(editGrid, "pointercancel", { pointerId: 45, clientX: scrollX, clientY: scrollY });
+        scrollHost.scrollTop = 0;
+        equal(layout(second), layout(cardFor(fixture.initial, fixture.initial[1].clientId)),
+            "pointercancel after scrolling restores the starting layout");
+
+        const originalPitch = publishedColumnPitch;
+        editGrid.style.width = "72%";
+        await wait(120);
+        const resizedPitch = Number.parseFloat(editGrid.style.getPropertyValue("--report-grid-column-pitch"));
+        check(resizedPitch < originalPitch &&
+            Math.abs(resizedPitch - gridModule.measureGridGeometry(editGrid, 12).columnPitch) < .5,
+            "dot and pointer geometry update together when the canvas width changes");
+        editGrid.style.width = "100%";
+        await wait(120);
+    } else {
+        check(getComputedStyle(editGrid, "::before").display === "none",
+            "narrow single-column presentation does not show a misleading desktop dot grid");
+    }
+
+    resetGrid(editGrid);
     pointer(drag, "pointerdown", { pointerId: 11, clientX: 400, clientY: 30 });
     pointer(editGrid, "pointermove", { pointerId: 11, clientX: 400 - columnWidth * 6, clientY: 30 });
     pointer(editGrid, "pointerup", { pointerId: 11, clientX: 400 - columnWidth * 6, clientY: 30 });
