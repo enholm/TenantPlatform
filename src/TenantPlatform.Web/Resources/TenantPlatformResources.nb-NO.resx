@@ -3459,4 +3459,22 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ReportTreeAgreementLineStatusActive" xml:space="preserve"><value>Aktiv</value></data>
   <data name="ReportTreeAgreementLineStatusEnded" xml:space="preserve"><value>Avsluttet</value></data>
   <data name="ReportTreeAgreementLineStatusDeactivated" xml:space="preserve"><value>Deaktivert</value></data>
+  <data name="SavedFilterFilterTab" xml:space="preserve"><value>Filter</value></data>
+  <data name="SavedFilterSavedTab" xml:space="preserve"><value>Lagrede filter</value></data>
+  <data name="SavedFilterSave" xml:space="preserve"><value>Lagre</value></data>
+  <data name="SavedFilterEmpty" xml:space="preserve"><value>Du har ingen lagrede filter for denne siden.</value></data>
+  <data name="SavedFilterChoose" xml:space="preserve"><value>Lagret filter</value></data>
+  <data name="SavedFilterChoosePlaceholder" xml:space="preserve"><value>Velg et lagret filter</value></data>
+  <data name="SavedFilterSaveTitle" xml:space="preserve"><value>Lagre filter</value></data>
+  <data name="SavedFilterCreateNew" xml:space="preserve"><value>Opprett et nytt lagret filter</value></data>
+  <data name="SavedFilterOverwrite" xml:space="preserve"><value>Overskriv et eksisterende lagret filter</value></data>
+  <data name="SavedFilterNameRequired" xml:space="preserve"><value>Oppgi et navn på filteret.</value></data>
+  <data name="SavedFilterNameTooLong" xml:space="preserve"><value>Navnet kan ikke være lengre enn 200 tegn.</value></data>
+  <data name="SavedFilterNameExists" xml:space="preserve"><value>Du har allerede et filter med dette navnet på denne siden. Velg overskriving eller bruk et annet navn.</value></data>
+  <data name="SavedFilterSelectionRequired" xml:space="preserve"><value>Velg filteret som skal overskrives.</value></data>
+  <data name="SavedFilterPageInvalid" xml:space="preserve"><value>Filtersiden er ugyldig.</value></data>
+  <data name="SavedFilterCriteriaInvalid" xml:space="preserve"><value>Filterkriteriene er ugyldige eller kan ikke gjenopprettes.</value></data>
+  <data name="SavedFilterLoadFailed" xml:space="preserve"><value>Lagrede filter kunne ikke lastes.</value></data>
+  <data name="SavedFilterSaveFailed" xml:space="preserve"><value>Filteret kunne ikke lagres.</value></data>
+  <data name="SavedFilterSaved" xml:space="preserve"><value>Filteret er lagret.</value></data>
 </root>

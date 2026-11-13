@@ -3365,4 +3365,22 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ReportTreeAgreementLineStatusActive" xml:space="preserve"><value>Active</value></data>
   <data name="ReportTreeAgreementLineStatusEnded" xml:space="preserve"><value>Ended</value></data>
   <data name="ReportTreeAgreementLineStatusDeactivated" xml:space="preserve"><value>Deactivated</value></data>
+  <data name="SavedFilterFilterTab" xml:space="preserve"><value>Filter</value></data>
+  <data name="SavedFilterSavedTab" xml:space="preserve"><value>Saved filters</value></data>
+  <data name="SavedFilterSave" xml:space="preserve"><value>Save</value></data>
+  <data name="SavedFilterEmpty" xml:space="preserve"><value>You have no saved filters for this page.</value></data>
+  <data name="SavedFilterChoose" xml:space="preserve"><value>Saved filter</value></data>
+  <data name="SavedFilterChoosePlaceholder" xml:space="preserve"><value>Select a saved filter</value></data>
+  <data name="SavedFilterSaveTitle" xml:space="preserve"><value>Save filter</value></data>
+  <data name="SavedFilterCreateNew" xml:space="preserve"><value>Create a new saved filter</value></data>
+  <data name="SavedFilterOverwrite" xml:space="preserve"><value>Overwrite an existing saved filter</value></data>
+  <data name="SavedFilterNameRequired" xml:space="preserve"><value>Enter a name for the filter.</value></data>
+  <data name="SavedFilterNameTooLong" xml:space="preserve"><value>The name cannot exceed 200 characters.</value></data>
+  <data name="SavedFilterNameExists" xml:space="preserve"><value>You already have a filter with this name on this page. Choose overwrite or use a different name.</value></data>
+  <data name="SavedFilterSelectionRequired" xml:space="preserve"><value>Select the filter to overwrite.</value></data>
+  <data name="SavedFilterPageInvalid" xml:space="preserve"><value>The filter page is invalid.</value></data>
+  <data name="SavedFilterCriteriaInvalid" xml:space="preserve"><value>The filter criteria are invalid or cannot be restored.</value></data>
+  <data name="SavedFilterLoadFailed" xml:space="preserve"><value>Saved filters could not be loaded.</value></data>
+  <data name="SavedFilterSaveFailed" xml:space="preserve"><value>The filter could not be saved.</value></data>
+  <data name="SavedFilterSaved" xml:space="preserve"><value>The filter has been saved.</value></data>
 </root>

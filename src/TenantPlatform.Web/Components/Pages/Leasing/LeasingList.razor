@@ -17,7 +17,11 @@
 @if (allowed && ViewKind == "all"){<LeasingDashboard />}
 @if (allowed)
 {
-    <div class="card mb-3"><div class="card-body"><fieldset disabled="@busy"><div class="row g-3">
+    <div class="card mb-3"><div class="card-body">
+    <SavedFilterTabs AccountId="account" Page="SavedPage" Disabled="busy"
+                     CaptureCriteria="CaptureCriteria" OnApplyCriteria="ApplySaved"
+                     OnEditCriteria="EditSaved" OnSearch="Search" OnReset="Reset">
+    <FilterContent><fieldset disabled="@busy"><div class="row g-3">
         <div class="col-md-4"><label for="leasing-search" class="form-label">@L["Search"]</label><input id="leasing-search" class="form-control" @bind="filter.Search" maxlength="200" /></div>
         <div class="col-md-2"><label for="leasing-kind" class="form-label">@L["LeasingKind"]</label><select id="leasing-kind" class="form-select" @bind="filter.Kind" @bind:after="KindChanged">
             <option value="all">@L["AgreementAll"]</option><option value="frameworks">@L["LeasingFrameworks"]</option><option value="acquisitions">@L["LeasingAcquisitions"]</option><option value="orders">@L["LeasingOrders"]</option>
@@ -30,8 +34,8 @@
             @foreach (var value in options?.Owners ?? []) { <option value="@value.Id">@value.Name</option> }
         </select></div>
         @if (data is not null) { <DimensionListFilterFields Catalog="data.DimensionFilters" Selections="filter.Dimensions" /> }
-        <div class="col-12 d-flex gap-2"><button class="btn btn-primary" @onclick="Search">@L["Search"]</button><button type="button" class="btn btn-outline-secondary" @onclick="Reset">@L["Reset"]</button></div>
-    </div></fieldset></div></div>
+    </div></fieldset></FilterContent>
+    </SavedFilterTabs></div></div>
 }
 @if (busy) { <p role="status">@L["Loading"]</p> }
 else if (error) { <div class="alert alert-danger" role="alert">@L["LeasingFailed"] <button class="btn btn-outline-primary btn-sm" @onclick="Load">@L["DashboardRetry"]</button></div> }
@@ -61,12 +65,15 @@ else if (data is not null)
     private LeasingOptions? options; private LeasingPage? data;
     private CancellationTokenSource? loadCancellation; private long loadVersion;
     private string Title => L[ViewKind == "frameworks" ? "LeasingFrameworks" : ViewKind == "orders" ? "LeasingOrders" : "LeasingOverview"];
+    private string RequiredKind => ViewKind == "frameworks" ? "frameworks" : ViewKind == "orders" ? "orders" : "all";
+    private SavedFilterPage SavedPage => ViewKind == "frameworks" ? SavedFilterPage.LeasingFrameworks :
+        ViewKind == "orders" ? SavedFilterPage.LeasingOrders : SavedFilterPage.Leasing;
     protected override async Task OnParametersSetAsync()
     {
         if (User.Current.CurrentAccountId is not Guid id || !await Authorization.CanUseLeasingAsync()) { Navigation.NavigateTo("/access-denied"); return; }
         if (account != id) options = null;
         account = id; allowed = true;
-        filter.Kind = ViewKind == "frameworks" ? "frameworks" : ViewKind == "orders" ? "orders" : "all";
+        filter.Kind = RequiredKind;
         filter.Dimensions.Clear(); filter.Page = 1; await Load();
     }
     private async Task Load()
@@ -86,11 +93,22 @@ else if (data is not null)
         finally { if (version == loadVersion) busy = false; }
     }
     private Task Search() { filter.Page = 1; return Load(); }
+    private string CaptureCriteria() => SavedFilterCriteria.Capture(filter);
+    private async Task ApplySaved(string json)
+    {
+        SavedFilterCriteria.Apply(json, filter);
+        await Load();
+    }
+    private Task EditSaved(string json)
+    {
+        SavedFilterCriteria.Apply(json, filter);
+        return Task.CompletedTask;
+    }
     private void KindChanged() { filter.Dimensions.Clear(); filter.Page = 1; }
     private Task Reset()
     {
         filter.Search = null; filter.Status = null; filter.Owner = null; filter.Dimensions.Clear(); filter.Page = 1;
-        filter.Kind = ViewKind == "frameworks" ? "frameworks" : ViewKind == "orders" ? "orders" : "all"; return Load();
+        filter.Kind = RequiredKind; return Load();
     }
     private Task Previous() { filter.Page--; return Load(); }
     private Task Next() { filter.Page++; return Load(); }

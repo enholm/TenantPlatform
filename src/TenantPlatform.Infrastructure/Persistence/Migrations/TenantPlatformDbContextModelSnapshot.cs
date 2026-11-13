@@ -1900,6 +1900,61 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.ToTable("login_accounts", (string)null);
                 });
 
+            modelBuilder.Entity("TenantPlatform.Core.Identity.SavedFilter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CriteriaJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("CriteriaVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Page")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("AccountId", "UserId", "Page", "Name");
+
+                    b.HasIndex("AccountId", "UserId", "Page", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("saved_filters", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_saved_filters_criteria_version", "\"CriteriaVersion\" > 0");
+
+                            t.HasCheckConstraint("CK_saved_filters_page", "\"Page\" BETWEEN 1 AND 5");
+                        });
+                });
+
             modelBuilder.Entity("TenantPlatform.Core.Identity.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5617,6 +5672,21 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Identity.SavedFilter", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Accounts.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Identity.UserAccount", b =>

@@ -1,0 +1,223 @@
+@using TenantPlatform.Core.Identity
+@using TenantPlatform.Web.Services.SavedFilters
+@inject ISavedFilterService SavedFilters
+@inject ILogger<SavedFilterTabs> Logger
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button type="button" class="nav-link @(activeTab == Tab.Filter ? "active" : null)" role="tab"
+                id="@filterTabId" aria-controls="@filterPanelId" aria-selected="@(activeTab == Tab.Filter)"
+                @onclick="() => activeTab = Tab.Filter">@L["SavedFilterFilterTab"]</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button type="button" class="nav-link @(activeTab == Tab.Saved ? "active" : null)" role="tab"
+                id="@savedTabId" aria-controls="@savedPanelId" aria-selected="@(activeTab == Tab.Saved)"
+                @onclick="() => activeTab = Tab.Saved">@L["SavedFilterSavedTab"]</button>
+    </li>
+</ul>
+
+@if (messageKey is not null)
+{
+    <div class="alert @(messageError ? "alert-danger" : "alert-success")" role="@(messageError ? "alert" : "status")">@L[messageKey]</div>
+}
+
+@if (activeTab == Tab.Filter)
+{
+    <div id="@filterPanelId" role="tabpanel" aria-labelledby="@filterTabId">
+        @FilterContent
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <button type="button" class="btn btn-primary" disabled="@Disabled" @onclick="SearchAsync">@L["Search"]</button>
+            @if (OnReset.HasDelegate)
+            {
+                <button type="button" class="btn btn-outline-secondary" disabled="@Disabled" @onclick="ResetAsync">@L["Reset"]</button>
+            }
+            <button type="button" class="btn btn-outline-primary" disabled="@Disabled" @onclick="OpenSave">@L["SavedFilterSave"]</button>
+        </div>
+    </div>
+}
+else if (loading)
+{
+    <p role="status">@L["Loading"]</p>
+}
+else
+{
+    <div id="@savedPanelId" role="tabpanel" aria-labelledby="@savedTabId">
+        @if (items.Count == 0) { <div class="alert alert-info">@L["SavedFilterEmpty"]</div> }
+        <div class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label class="form-label" for="@selectId">@L["SavedFilterChoose"]</label>
+                <select id="@selectId" class="form-select" disabled="@(Disabled || items.Count == 0)" @bind="selectedId" @bind:after="ApplySelectedAsync">
+                    <option value="">@L["SavedFilterChoosePlaceholder"]</option>
+                    @foreach (var item in items) { <option value="@item.Id">@item.Name</option> }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="button" class="btn btn-outline-primary" disabled="@(Disabled || !selectedId.HasValue)" @onclick="EditSelectedAsync">@L["Edit"]</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (saveOpen)
+{
+    <div class="modal-backdrop show"></div>
+    <div class="modal d-block" role="dialog" aria-modal="true" aria-labelledby="saved-filter-dialog-title" tabindex="-1">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h2 id="saved-filter-dialog-title" class="modal-title fs-5">@L["SavedFilterSaveTitle"]</h2></div>
+            <div class="modal-body">
+                @if (dialogErrorKey is not null) { <div class="alert alert-danger" role="alert">@L[dialogErrorKey]</div> }
+                <div class="form-check mb-3">
+                    <input id="saved-filter-mode-new" class="form-check-input" type="radio" name="saved-filter-mode"
+                           checked="@(saveMode == "new")" @onchange="SetNewMode" />
+                    <label class="form-check-label" for="saved-filter-mode-new">@L["SavedFilterCreateNew"]</label>
+                </div>
+                @if (saveMode == "new")
+                {
+                    <label class="form-label" for="saved-filter-name">@L["Name"]</label>
+                    <input id="saved-filter-name" class="form-control" maxlength="200" @bind="newName" autofocus />
+                }
+                <div class="form-check mt-3 mb-3">
+                    <input id="saved-filter-mode-overwrite" class="form-check-input" type="radio" name="saved-filter-mode"
+                           checked="@(saveMode == "overwrite")" disabled="@(items.Count == 0)" @onchange="SetOverwriteMode" />
+                    <label class="form-check-label" for="saved-filter-mode-overwrite">@L["SavedFilterOverwrite"]</label>
+                </div>
+                @if (saveMode == "overwrite")
+                {
+                    <label class="form-label" for="saved-filter-overwrite">@L["SavedFilterChoose"]</label>
+                    <select id="saved-filter-overwrite" class="form-select" @bind="overwriteId" autofocus>
+                        <option value="">@L["SavedFilterChoosePlaceholder"]</option>
+                        @foreach (var item in items) { <option value="@item.Id">@item.Name</option> }
+                    </select>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" disabled="@saving" @onclick="CloseSave">@L["Cancel"]</button>
+                <button type="button" class="btn btn-primary" disabled="@saving" @onclick="SaveAsync">@(saving ? L["Loading"] : L["SavedFilterSave"])</button>
+            </div>
+        </div></div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public Guid AccountId { get; set; }
+    [Parameter, EditorRequired] public SavedFilterPage Page { get; set; }
+    [Parameter, EditorRequired] public RenderFragment FilterContent { get; set; } = null!;
+    [Parameter, EditorRequired] public Func<string> CaptureCriteria { get; set; } = null!;
+    [Parameter, EditorRequired] public EventCallback<string> OnApplyCriteria { get; set; }
+    [Parameter, EditorRequired] public EventCallback<string> OnEditCriteria { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnSearch { get; set; }
+    [Parameter] public EventCallback OnReset { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    private enum Tab { Filter, Saved }
+    private readonly string selectId = "saved-filter-" + Guid.NewGuid().ToString("N");
+    private readonly string filterTabId = "saved-filter-tab-filter-" + Guid.NewGuid().ToString("N");
+    private readonly string savedTabId = "saved-filter-tab-saved-" + Guid.NewGuid().ToString("N");
+    private readonly string filterPanelId = "saved-filter-panel-filter-" + Guid.NewGuid().ToString("N");
+    private readonly string savedPanelId = "saved-filter-panel-saved-" + Guid.NewGuid().ToString("N");
+    private IReadOnlyList<SavedFilterDto> items = [];
+    private Tab activeTab;
+    private Guid? selectedId, overwriteId;
+    private string saveMode = "new", newName = "";
+    private string? messageKey, dialogErrorKey;
+    private bool messageError, loading, saveOpen, saving, editPrepared;
+    private Guid loadedAccount;
+    private SavedFilterPage loadedPage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedAccount == AccountId && loadedPage == Page) return;
+        loadedAccount = AccountId; loadedPage = Page; activeTab = Tab.Filter; selectedId = null; editPrepared = false;
+        items = [];
+        await LoadAsync();
+    }
+
+    private async Task<bool> LoadAsync()
+    {
+        loading = true; messageKey = null;
+        try
+        {
+            items = await SavedFilters.ListAsync(AccountId, Page);
+            return true;
+        }
+        catch (UnauthorizedAccessException) { items = []; messageKey = "SavedFilterLoadFailed"; messageError = true; }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Could not load saved filters for {Page}.", Page);
+            items = []; messageKey = "SavedFilterLoadFailed"; messageError = true;
+        }
+        finally { loading = false; }
+        return false;
+    }
+
+    private Task SearchAsync() { messageKey = null; return OnSearch.InvokeAsync(); }
+    private Task ResetAsync() { selectedId = null; editPrepared = false; messageKey = null; return OnReset.InvokeAsync(); }
+
+    private async Task ApplySelectedAsync()
+    {
+        editPrepared = false; messageKey = null;
+        var item = Selected();
+        if (item is null) return;
+        try { await OnApplyCriteria.InvokeAsync(item.CriteriaJson); }
+        catch (SavedFilterValidationException ex) { messageKey = ex.Message; messageError = true; }
+    }
+
+    private async Task EditSelectedAsync()
+    {
+        var item = Selected();
+        if (item is null) return;
+        try
+        {
+            await OnEditCriteria.InvokeAsync(item.CriteriaJson);
+            overwriteId = item.Id; editPrepared = true; activeTab = Tab.Filter; messageKey = null;
+        }
+        catch (SavedFilterValidationException ex) { messageKey = ex.Message; messageError = true; }
+    }
+
+    private void OpenSave()
+    {
+        saveMode = editPrepared && selectedId.HasValue ? "overwrite" : "new";
+        overwriteId = saveMode == "overwrite" ? selectedId : null;
+        newName = ""; dialogErrorKey = null; saveOpen = true;
+    }
+
+    private void SetNewMode(ChangeEventArgs _) => saveMode = "new";
+    private void SetOverwriteMode(ChangeEventArgs _) => saveMode = "overwrite";
+
+    private void CloseSave() { if (!saving) { saveOpen = false; dialogErrorKey = null; } }
+
+    private async Task SaveAsync()
+    {
+        dialogErrorKey = null;
+        if (saveMode == "new" && string.IsNullOrWhiteSpace(newName)) { dialogErrorKey = "SavedFilterNameRequired"; return; }
+        if (saveMode == "overwrite" && !overwriteId.HasValue) { dialogErrorKey = "SavedFilterSelectionRequired"; return; }
+        saving = true;
+        try
+        {
+            var criteria = CaptureCriteria();
+            var overwrote = saveMode == "overwrite";
+            SavedFilterDto saved;
+            if (saveMode == "new") saved = await SavedFilters.CreateAsync(AccountId, Page, newName, criteria);
+            else saved = await SavedFilters.OverwriteAsync(AccountId, Page, overwriteId!.Value, criteria);
+            if (await LoadAsync())
+            {
+                selectedId = saved.Id; overwriteId = saved.Id; editPrepared = overwrote;
+                saveOpen = false; messageKey = "SavedFilterSaved"; messageError = false;
+            }
+            else
+            {
+                saveOpen = false;
+            }
+        }
+        catch (SavedFilterValidationException ex) { dialogErrorKey = ex.Message; }
+        catch (UnauthorizedAccessException) { dialogErrorKey = "SavedFilterSaveFailed"; }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Could not save a filter for {Page}.", Page);
+            dialogErrorKey = "SavedFilterSaveFailed";
+        }
+        finally { saving = false; }
+    }
+
+    private SavedFilterDto? Selected() => selectedId.HasValue ? items.SingleOrDefault(x => x.Id == selectedId.Value) : null;
+}

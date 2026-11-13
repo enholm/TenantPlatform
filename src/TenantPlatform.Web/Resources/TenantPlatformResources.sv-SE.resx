@@ -3402,4 +3402,22 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="ReportTreeAgreementLineStatusActive" xml:space="preserve"><value>Aktiv</value></data>
   <data name="ReportTreeAgreementLineStatusEnded" xml:space="preserve"><value>Avslutad</value></data>
   <data name="ReportTreeAgreementLineStatusDeactivated" xml:space="preserve"><value>Inaktiverad</value></data>
+  <data name="SavedFilterFilterTab" xml:space="preserve"><value>Filter</value></data>
+  <data name="SavedFilterSavedTab" xml:space="preserve"><value>Sparade filter</value></data>
+  <data name="SavedFilterSave" xml:space="preserve"><value>Spara</value></data>
+  <data name="SavedFilterEmpty" xml:space="preserve"><value>Du har inga sparade filter för den här sidan.</value></data>
+  <data name="SavedFilterChoose" xml:space="preserve"><value>Sparat filter</value></data>
+  <data name="SavedFilterChoosePlaceholder" xml:space="preserve"><value>Välj ett sparat filter</value></data>
+  <data name="SavedFilterSaveTitle" xml:space="preserve"><value>Spara filter</value></data>
+  <data name="SavedFilterCreateNew" xml:space="preserve"><value>Skapa ett nytt sparat filter</value></data>
+  <data name="SavedFilterOverwrite" xml:space="preserve"><value>Skriv över ett befintligt sparat filter</value></data>
+  <data name="SavedFilterNameRequired" xml:space="preserve"><value>Ange ett namn för filtret.</value></data>
+  <data name="SavedFilterNameTooLong" xml:space="preserve"><value>Namnet får inte vara längre än 200 tecken.</value></data>
+  <data name="SavedFilterNameExists" xml:space="preserve"><value>Du har redan ett filter med detta namn på den här sidan. Välj att skriva över eller använd ett annat namn.</value></data>
+  <data name="SavedFilterSelectionRequired" xml:space="preserve"><value>Välj filtret som ska skrivas över.</value></data>
+  <data name="SavedFilterPageInvalid" xml:space="preserve"><value>Filtersidan är ogiltig.</value></data>
+  <data name="SavedFilterCriteriaInvalid" xml:space="preserve"><value>Filterkriterierna är ogiltiga eller kan inte återställas.</value></data>
+  <data name="SavedFilterLoadFailed" xml:space="preserve"><value>Sparade filter kunde inte läsas in.</value></data>
+  <data name="SavedFilterSaveFailed" xml:space="preserve"><value>Filtret kunde inte sparas.</value></data>
+  <data name="SavedFilterSaved" xml:space="preserve"><value>Filtret har sparats.</value></data>
 </root>

@@ -98,6 +98,8 @@ builder.Services.AddScoped<IServiceRequestReplyAddressParser, ServiceRequestRepl
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserAdministrationService, UserAdministrationService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<TenantPlatform.Web.Services.SavedFilters.ISavedFilterService,
+    TenantPlatform.Web.Services.SavedFilters.SavedFilterService>();
 builder.Services.AddOptions<AgreementDocumentStorageOptions>()
     .Bind(builder.Configuration.GetSection("AgreementDocuments"))
     .PostConfigure(options =>

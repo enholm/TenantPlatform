@@ -17,6 +17,7 @@ namespace TenantPlatform.Infrastructure.Persistence;
 
 public class TenantPlatformDbContext : DbContext
 {
+    public DbSet<SavedFilter> SavedFilters => Set<SavedFilter>();
     public DbSet<ReportPage> ReportPages => Set<ReportPage>();
     public DbSet<ReportCard> ReportCards => Set<ReportCard>();
     public DbSet<LeasingLifecycle> LeasingLifecycles => Set<LeasingLifecycle>();
