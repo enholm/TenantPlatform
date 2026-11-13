@@ -74,6 +74,51 @@ assert.equal(mutationObservers[0].disconnected, true, "chart dispose disconnects
 assert.equal(disposed, true, "chart dispose releases the ECharts instance");
 chart.dispose();
 
+const treeElement = { clientWidth: 720, clientHeight: 360 };
+const treeOptions = [];
+const treeHandlers = new Map();
+let treeDisposed = false;
+let treeResizeCount = 0;
+let treeCurrentOption = null;
+const treeInstance = {
+    setOption(value) { treeCurrentOption = value; treeOptions.push(value); },
+    getOption() { return treeCurrentOption; },
+    resize() { treeResizeCount++; },
+    dispose() { treeDisposed = true; },
+    isDisposed() { return treeDisposed; },
+    on(name, callback) { treeHandlers.set(name, callback); },
+    off(name, callback) { if (treeHandlers.get(name) === callback) treeHandlers.delete(name); }
+};
+const treeEcharts = { getInstanceByDom: () => null, init: () => treeInstance };
+const selections = [];
+const treeModel = {
+    root: { key: "root", name: "Account <script>", context: null, selected: false,
+        children: [{ key: "child", name: "Same name", context: "Agreement", selected: true, children: [] }] },
+    ariaLabel: "Relationship tree"
+};
+const tree = chartModule.createTreeWithLibrary(treeElement, treeModel,
+    { invokeMethodAsync: (...args) => { selections.push(args); return Promise.resolve(); } }, 7, treeEcharts);
+flushFrames();
+assert.equal(treeOptions[0].series[0].type, "tree", "relationship adapter creates an ECharts tree series");
+assert.equal(treeOptions[0].series[0].orient, "LR", "relationship tree is oriented left to right");
+assert.equal(treeOptions[0].series[0].roam, true, "relationship tree enables pan and zoom");
+assert.equal(treeOptions[0].tooltip.renderMode, "richText", "tree tooltips do not interpret stored names as HTML");
+assert.equal(treeOptions[0].series[0].data[0].id, "root", "typed stable tree key reaches ECharts data");
+treeCurrentOption.series[0].zoom = 1.4;
+treeCurrentOption.series[0].center = [120, 80];
+tree.update({ ...treeModel, root: { ...treeModel.root, selected: true } }, 8);
+flushFrames();
+assert.equal(treeOptions.at(-1).series[0].zoom, 1.4, "tree update preserves zoom");
+assert.deepEqual(treeOptions.at(-1).series[0].center, [120, 80], "tree update preserves pan centre");
+treeHandlers.get("click")({ data: { id: "child" } });
+await Promise.resolve();
+assert.deepEqual(selections[0], ["SelectTreeNode", "child", 8],
+    "tree click reports stable identity with the current generation");
+tree.dispose();
+assert.equal(treeHandlers.size, 0, "tree dispose removes the click handler");
+assert.equal(treeDisposed, true, "tree dispose releases the ECharts instance");
+assert.ok(treeResizeCount >= 1, "tree participates in ResizeObserver lifecycle");
+
 const windowListeners = new Map();
 globalThis.addEventListener = (name, callback) => windowListeners.set(name, callback);
 globalThis.removeEventListener = (name, callback) => {

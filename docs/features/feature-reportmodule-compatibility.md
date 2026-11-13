@@ -57,9 +57,9 @@ Dette dokumentet er den produktgodkjente kompatibilitetsmatrisen for rapportdefi
 | Modul | Grain | Datogrunnlag | Metric/aggregation | Gruppering | Visualisering | Relasjonskilde |
 |---|---|---|---|---|---|---|
 | Agreements | `Relationship` | `AgreementPeriodOverlap` | ingen | ingen | `RelationshipTree` | konto → autoriserte avtaler → økonomilinjer |
-| Leasing | `Relationship` | `LeasingAcquisitionPurchaseDate` | ingen | ingen | `RelationshipTree` | konto → autoriserte rammeavtaler → anskaffelser → varelinjer → utstyr |
+| Leasing | `Relationship` | `LeasingAcquisitionPurchaseDate` | ingen | ingen | `RelationshipTree` | konto → nødvendige rammeavtaleforfedre / syntetisk «Uten rammeavtale» → autoriserte anskaffelser → varelinjer → faktisk utstyr |
 
-P6 om presentasjon av frittstående Leasing-anskaffelser er fortsatt åpen og blokkerer implementasjonen av treet, men ikke den strukturelle definisjonsvalideringen.
+P6 er **GODKJENT**: frittstående Leasing-anskaffelser vises under en lokalisert, syntetisk «Uten rammeavtale»-gren. Grenen har en egen typed identitet, vises bare når det filtrerte og autoriserte utvalget har slike anskaffelser, og representerer ikke en faktisk rammeavtale.
 
 ## 5. Definisjonsvalidering
 
@@ -99,5 +99,4 @@ Normalisering returnerer eksplisitte feltendringer og velger aldri valuta, metri
 - Leasing-linje-/kostnadsfordelingsdimensjoner.
 - Nye metrics utover tabellene, inkludert kapasitetshistorikk, limit, reserved og available.
 - Valutaomregning.
-- Rapport-UI, ECharts og endelig visningspolicy utover de implementerte resultatkontraktene.
-- P6 og selve sammenhengstreet.
+- Samlet PostgreSQL-/InteractiveServer-verifikasjon av rapportmodulen.

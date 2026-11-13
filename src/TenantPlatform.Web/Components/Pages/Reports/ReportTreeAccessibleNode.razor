@@ -1,0 +1,55 @@
+@using TenantPlatform.Web.Services.Reports
+
+<li role="treeitem" aria-expanded="@(Node.HasChildren ? Expanded.Contains(Node.Id.Key) : null)" aria-selected="@(SelectedKey == Node.Id.Key)">
+    <div class="report-tree-list-row">
+        @if (Node.HasChildren)
+        {
+            <button type="button" class="btn btn-outline-secondary btn-sm report-tree-toggle"
+                    aria-label="@(Expanded.Contains(Node.Id.Key) ? L["ReportTreeCollapseNode", Node.Name] : L["ReportTreeExpandNode", Node.Name])"
+                    @onclick="() => OnToggle.InvokeAsync(Node)">
+                <i class="bi @(Expanded.Contains(Node.Id.Key) ? "bi-dash" : "bi-plus")" aria-hidden="true"></i>
+            </button>
+        }
+        else
+        {
+            <span class="report-tree-toggle-placeholder" aria-hidden="true"></span>
+        }
+        <button type="button" class="btn btn-link text-start report-tree-node-button @(SelectedKey == Node.Id.Key ? "fw-bold" : "")"
+                @onclick="() => OnSelect.InvokeAsync(Node)">
+            <span>@Node.Name</span>
+            @if (!string.IsNullOrWhiteSpace(Node.Context))
+            {
+                <small class="d-block text-body-secondary">@Node.Context</small>
+            }
+        </button>
+    </div>
+    @if (Node.HasChildren && Expanded.Contains(Node.Id.Key))
+    {
+        <ul role="group">
+            @foreach (var child in Children.GetValueOrDefault(Node.Id.Key, []))
+            {
+                <ReportTreeAccessibleNode Node="child" Children="Children" Expanded="Expanded"
+                    NextOffsets="NextOffsets" SelectedKey="SelectedKey" OnToggle="OnToggle"
+                    OnSelect="OnSelect" OnLoadMore="OnLoadMore" @key="child.Id.Key" />
+            }
+            @if (NextOffsets.GetValueOrDefault(Node.Id.Key).HasValue)
+            {
+                <li role="none">
+                    <button type="button" class="btn btn-outline-secondary btn-sm mt-1"
+                            @onclick="() => OnLoadMore.InvokeAsync(Node)">@L["ReportTreeLoadMore"]</button>
+                </li>
+            }
+        </ul>
+    }
+</li>
+
+@code {
+    [Parameter, EditorRequired] public ReportTreeNode Node { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, IReadOnlyList<ReportTreeNode>> Children { get; set; } = null!;
+    [Parameter, EditorRequired] public HashSet<string> Expanded { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, int?> NextOffsets { get; set; } = null!;
+    [Parameter] public string? SelectedKey { get; set; }
+    [Parameter] public EventCallback<ReportTreeNode> OnToggle { get; set; }
+    [Parameter] public EventCallback<ReportTreeNode> OnSelect { get; set; }
+    [Parameter] public EventCallback<ReportTreeNode> OnLoadMore { get; set; }
+}

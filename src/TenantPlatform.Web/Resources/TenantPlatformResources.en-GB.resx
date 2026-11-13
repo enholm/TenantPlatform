@@ -3340,4 +3340,29 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ReportResizeShorter" xml:space="preserve"><value>Make {0} shorter</value></data>
   <data name="ReportResizeTaller" xml:space="preserve"><value>Make {0} taller</value></data>
   <data name="ReportResizeKeyboardGroup" xml:space="preserve"><value>Resize {0} with the keyboard</value></data>
+  <data name="ReportTreeWithoutFramework" xml:space="preserve"><value>Without framework agreement</value></data>
+  <data name="ReportTreeSearch" xml:space="preserve"><value>Search the relationship tree</value></data>
+  <data name="ReportTreeSearchResults" xml:space="preserve"><value>Search results</value></data>
+  <data name="ReportTreeNoSearchResults" xml:space="preserve"><value>No matches in the authorised selection.</value></data>
+  <data name="ReportTreeAccessibleView" xml:space="preserve"><value>Accessible tree view</value></data>
+  <data name="ReportTreeLoadingDetails" xml:space="preserve"><value>Loading details …</value></data>
+  <data name="ReportTreeExpandNode" xml:space="preserve"><value>Expand {0}</value></data>
+  <data name="ReportTreeCollapseNode" xml:space="preserve"><value>Collapse {0}</value></data>
+  <data name="ReportTreeLoadMore" xml:space="preserve"><value>Load more</value></data>
+  <data name="ReportTreeExpand" xml:space="preserve"><value>Expand</value></data>
+  <data name="ReportTreeCollapse" xml:space="preserve"><value>Collapse</value></data>
+  <data name="ReportTreeAria" xml:space="preserve"><value>Relationship tree for {0}</value></data>
+  <data name="ReportTreeFieldPeriod" xml:space="preserve"><value>Report period</value></data>
+  <data name="ReportTreeNodeInvalid" xml:space="preserve"><value>The node identity is invalid.</value></data>
+  <data name="ReportTreePageInvalid" xml:space="preserve"><value>The page boundary is invalid.</value></data>
+  <data name="ReportTreeSearchInvalid" xml:space="preserve"><value>The search is invalid.</value></data>
+  <data name="ReportTreeDefinitionInvalid" xml:space="preserve"><value>The report definition cannot be used for a relationship tree.</value></data>
+  <data name="ReportTreeNodeUnavailable" xml:space="preserve"><value>The record is not available in the report selection.</value></data>
+  <data name="ReportTreeLoadFailed" xml:space="preserve"><value>The relationship tree could not be loaded.</value></data>
+  <data name="ReportTreeSearchFailed" xml:space="preserve"><value>The search could not be completed.</value></data>
+  <data name="ReportTreeDetailFailed" xml:space="preserve"><value>The details could not be loaded.</value></data>
+  <data name="ReportTreeAgreementLineStatusDraft" xml:space="preserve"><value>Draft</value></data>
+  <data name="ReportTreeAgreementLineStatusActive" xml:space="preserve"><value>Active</value></data>
+  <data name="ReportTreeAgreementLineStatusEnded" xml:space="preserve"><value>Ended</value></data>
+  <data name="ReportTreeAgreementLineStatusDeactivated" xml:space="preserve"><value>Deactivated</value></data>
 </root>

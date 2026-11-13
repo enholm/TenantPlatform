@@ -8,12 +8,14 @@
     <link rel="stylesheet" href="/app.css">
     <link rel="stylesheet" href="/report-chart.css">
     <link rel="stylesheet" href="/report-grid.css">
+    <link rel="stylesheet" href="/report-tree-chart.css">
     <style>
         body { padding: 1rem; }
         .harness-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
         .harness-card { border: 1px solid var(--bs-border-color); border-radius: .5rem; padding: 1rem; min-width: 0; }
         .report-chart { height: 260px; min-height: 260px; }
         #hidden-chart { display: none; width: 520px; height: 260px; }
+        #tree-chart { width: 100%; height: 360px; }
         #scroll-host { max-height: 520px; overflow: auto; border: 1px solid var(--bs-border-color); padding: .5rem; }
         #edit-grid, #view-grid { width: 100%; min-height: 16rem; }
         .grid-card { height: 100%; border: 1px solid var(--bs-border-color); background: var(--bs-body-bg); padding: 2.75rem .75rem; overflow: auto; }
@@ -36,6 +38,7 @@
         <article class="harness-card"><h2>Empty and invalid</h2><p id="empty-result">No data</p><p id="invalid-donut">Invalid donut rejected</p></article>
     </section>
     <div id="hidden-chart" class="report-chart"></div>
+    <section class="harness-card mt-4"><h2>Relationship tree</h2><div id="tree-chart" class="report-tree-chart"></div></section>
 
     <section class="mt-4" aria-label="Grid">
         <h2>Editable grid</h2>

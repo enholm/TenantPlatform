@@ -43,10 +43,21 @@ static class BrowserHarnessFixtures
             keyboardMoveUp,
             keyboardWider,
             charts = ChartFixtures(),
+            tree = TreeFixture(),
             invalidDonutRejected = InvalidDonutRejected(),
             currentGeneration = 5L
         };
     }
+
+    private static ReportTreeChartModel TreeFixture() => new(
+        new("1:0:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "Account", null, false,
+        [
+            new("1:3:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "Framework with a deliberately long display name", "FRAME-1", false,
+            [
+                new("1:4:cccccccccccccccccccccccccccccccc", "Acquisition <script>text</script>", "ACQ-1", true, [])
+            ]),
+            new("1:s:1", "Without framework agreement", null, false, [])
+        ]), "Relationship tree fixture");
 
     private static object ChartFixtures()
     {

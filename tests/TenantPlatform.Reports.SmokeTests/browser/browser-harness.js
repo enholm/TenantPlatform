@@ -230,6 +230,38 @@ async function chartChecks() {
     check(Boolean(echarts.getInstanceByDom(hiddenElement)?.getDom().querySelector("canvas")),
         "a disposed chart can be recreated");
     recreated.dispose();
+
+    const treeElement = document.querySelector("#tree-chart");
+    const selected = [];
+    const treeAdapter = await charts.createTree(treeElement, fixture.tree,
+        { invokeMethodAsync: (...args) => { selected.push(args); return Promise.resolve(); } }, 12);
+    adapters.push(treeAdapter);
+    await wait(100);
+    const tree = echarts.getInstanceByDom(treeElement);
+    check(Boolean(tree && treeElement.querySelector("canvas")), "relationship tree renders through the real local ECharts canvas");
+    const treeOption = tree.getOption();
+    check(treeOption.series[0].type === "tree" && treeOption.series[0].orient === "LR" && treeOption.series[0].roam,
+        "real tree chart is left-to-right and supports pan/zoom");
+    check(treeOption.series[0].data[0].children[0].children[0].name.includes("<script>") && !treeElement.querySelector("script"),
+        "tree labels containing HTML-like text remain chart text");
+    const treeId = tree.id;
+    const treeCanvasCount = treeElement.querySelectorAll("canvas").length;
+    tree.dispatchAction({ type: "treeRoam", zoom: 1.2, originX: 100, originY: 100 });
+    await wait(40);
+    const zoom = tree.getOption().series[0].zoom;
+    treeAdapter.update({ ...fixture.tree, root: { ...fixture.tree.root, selected: true } }, 13);
+    await wait(80);
+    check(echarts.getInstanceByDom(treeElement).id === treeId && treeElement.querySelectorAll("canvas").length === treeCanvasCount,
+        "tree update reuses its ECharts instance without duplicate canvases");
+    check(echarts.getInstanceByDom(treeElement).getOption().series[0].zoom === zoom,
+        "tree update preserves the current zoom state");
+    const treeWidth = tree.getWidth();
+    treeElement.style.width = "70%";
+    await wait(120);
+    check(tree.getWidth() > 0 && tree.getWidth() !== treeWidth, "tree ResizeObserver follows its responsive container");
+    treeElement.style.width = "100%";
+    treeAdapter.dispose();
+    check(!echarts.getInstanceByDom(treeElement), "tree dispose releases the real ECharts instance");
 }
 
 async function gridChecks() {

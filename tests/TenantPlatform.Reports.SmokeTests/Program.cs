@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Localization;
 using TenantPlatform.Core.Accounts;
 using TenantPlatform.Core.Agreements;
 using TenantPlatform.Core.Dimensions;
@@ -11,6 +12,7 @@ using TenantPlatform.Core.Leasing;
 using TenantPlatform.Core.Organizations;
 using TenantPlatform.Core.Reports;
 using TenantPlatform.Infrastructure.Persistence;
+using TenantPlatform.Web;
 using TenantPlatform.Web.Security.Authorization;
 using TenantPlatform.Web.Security.CurrentUserContext;
 using TenantPlatform.Web.Services.Agreements;
@@ -33,6 +35,7 @@ await LeasingChecks.RunAsync(fixture);
 await CatalogChecks.RunAsync(fixture);
 await PeriodChecks.RunAsync(fixture);
 await CompatibilityChecks.RunAsync(fixture);
+await TreeChecks.RunAsync(fixture);
 await ExecutionChecks.RunAsync(fixture);
 await LeasingExecutionChecks.RunAsync(fixture);
 WorkspaceChecks.Run();
@@ -276,6 +279,10 @@ sealed class Fixture
     public Guid AcquisitionChild { get; } = Guid.NewGuid();
     public Guid AcquisitionStandalone { get; } = Guid.NewGuid();
     public Guid AcquisitionHidden { get; } = Guid.NewGuid();
+    public Guid ChildItem { get; } = Guid.NewGuid();
+    public Guid StandaloneItem { get; } = Guid.NewGuid();
+    public Guid ChildEquipment { get; } = Guid.NewGuid();
+    public Guid StandaloneEquipment { get; } = Guid.NewGuid();
     private readonly InMemoryDatabaseRoot root = new();
     private readonly string database = Guid.NewGuid().ToString();
 
@@ -330,6 +337,17 @@ sealed class Fixture
             new ReportLocalDateService(factory, context, new TestClock()),
             new AgreementReportModule(factory, context, authorization),
             new LeasingReportModule(factory, context, authorization));
+    }
+
+    public ReportTreeService Trees(Guid user, Guid? selected = null)
+    {
+        var context = new TestContext(user, selected ?? Account);
+        var factory = new Factory(this);
+        var authorization = new TenantAuthorizationService(factory, context);
+        return new(authorization, new ReportCatalogService(Agreements(user, selected), Leasing(user, selected)),
+            new ReportDefinitionCompatibilityValidator(), new ReportLocalDateService(factory, context, new TestClock()),
+            new AgreementReportTreeModule(factory, context, authorization),
+            new LeasingReportTreeModule(factory, context, authorization, new TestLocalizer()));
     }
 
     public async Task SetTimeZoneAsync(string timeZoneId)
@@ -438,6 +456,18 @@ sealed class Fixture
         db.LeasingAcquisitions.AddRange(
             childAcquisition, standaloneAcquisition, hiddenAcquisition,
             Acquisition(Guid.NewGuid(), ForeignAccount, null, "Foreign acquisition", "FOREIGN", ForeignUser, LeasingAcquisitionStatus.Registered));
+        db.LeasingItems.AddRange(
+            new LeasingItem { Id = ChildItem, AccountId = Account, AcquisitionId = AcquisitionChild,
+                Position = 1, Description = "Shared item name", ItemNumber = "ITEM-CHILD", Quantity = 5 },
+            new LeasingItem { Id = StandaloneItem, AccountId = Account, AcquisitionId = AcquisitionStandalone,
+                Position = 1, Description = "Shared item name", ItemNumber = "ITEM-STANDALONE", Quantity = 12 });
+        db.LeasingEquipment.AddRange(
+            new LeasingEquipment { Id = ChildEquipment, AccountId = Account, AcquisitionId = AcquisitionChild,
+                ItemId = ChildItem, Description = "Child device", SerialNumber = "SERIAL-HIDDEN-BRANCH",
+                RegisteredDate = new(2026, 1, 2), Revision = Guid.NewGuid() },
+            new LeasingEquipment { Id = StandaloneEquipment, AccountId = Account, AcquisitionId = AcquisitionStandalone,
+                ItemId = StandaloneItem, Description = "Standalone device", InternalId = "INTERNAL-STANDALONE",
+                RegisteredDate = new(2026, 1, 3), Revision = Guid.NewGuid() });
         AssignFramework(db, FrameworkAlpha, DimensionOne, Child);
         AssignFramework(db, FrameworkAlpha, DimensionTwo, DepartmentA);
         AssignFramework(db, FrameworkAlpha, HistoricalDimension, HistoricalValue);
@@ -580,6 +610,13 @@ sealed class Fixture
     private sealed class TestClock(DateTimeOffset? now = null) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now ?? new(2026, 11, 12, 12, 0, 0, TimeSpan.Zero);
+    }
+    private sealed class TestLocalizer : IStringLocalizer<TenantPlatformResources>
+    {
+        public LocalizedString this[string name] => new(name, name == "ReportTreeWithoutFramework" ? "Uten rammeavtale" : name);
+        public LocalizedString this[string name, params object[] arguments] =>
+            new(name, string.Format(CultureInfo.InvariantCulture, this[name].Value, arguments));
+        public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) => [];
     }
 }
 

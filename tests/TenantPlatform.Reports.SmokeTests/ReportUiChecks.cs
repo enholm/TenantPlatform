@@ -21,6 +21,7 @@ static class ReportUiChecks
         var services = new ServiceCollection().AddLogging().AddLocalization(x => x.ResourcesPath = "Resources");
         var execution = new UiExecution();
         services.AddSingleton<IReportExecutionService>(execution);
+        services.AddSingleton<IReportTreeService>(new UiTree());
         services.AddSingleton<IJSRuntime>(new NoopJsRuntime());
         await using var provider = services.BuildServiceProvider();
         await using var renderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
@@ -51,6 +52,15 @@ static class ReportUiChecks
             cardState.Host!.Refresh();
             Check.That(execution.Calls == before + 1,
                 "layout-only card rerender reuses the report result and does not execute the query again");
+
+            var treeBefore = execution.Calls;
+            var tree = await renderer.RenderComponentAsync<ReportCardView>(ParameterView.FromDictionary(
+                new Dictionary<string, object?> { ["AccountId"] = Guid.NewGuid(), ["Card"] = TreeCard() }));
+            var treeHtml = tree.ToHtmlString();
+            Check.That(treeHtml.Contains("role=\"tree\"") && treeHtml.Contains("role=\"treeitem\"") &&
+                treeHtml.Contains("report-tree-chart") && Occurrences(treeHtml, "type=\"button\"") >= 3 &&
+                execution.Calls == treeBefore,
+                "relationship-tree card renders separate accessible expand/detail controls without aggregate execution");
 
             RenderFragment<ReportGridItem> template = item => builder => builder.AddContent(0, item.ClientId.ToString("N"));
             var item = new ReportGridItem(Guid.NewGuid(), 1, 1, 6, 4, 0);
@@ -102,6 +112,11 @@ static class ReportUiChecks
             ReportAggregation.CountDistinct, Grouping: new AgreementReportGroupingKey(AgreementReportGrouping.Type),
             Visualization: ReportVisualization.Bar), 1, 1, 12, 4, 0);
 
+    private static ReportCardDto TreeCard() => new(Guid.NewGuid(), "Relationships",
+        new(ReportModule.Agreements, 1, [], new(ReportPeriodRule.CurrentYear),
+            ReportDateBasis.AgreementPeriodOverlap, Visualization: ReportVisualization.RelationshipTree),
+        1, 1, 12, 6, 0);
+
     private sealed class UiExecution : IReportExecutionService
     {
         public int Calls { get; private set; }
@@ -116,6 +131,29 @@ static class ReportUiChecks
                 new(ReportGrain.Agreement, ReportValueUnit.Count, ReportCurrencyRule.None,
                     ReportAdditivity.UniqueBeforeGroupExpansion, true, true, false, false, 2, 2, "test", [])));
         }
+    }
+
+    private sealed class UiTree : IReportTreeService
+    {
+        private static readonly Guid Account = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        private static readonly Guid Agreement = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        private static readonly ReportTreeNode Root = new(
+            new(ReportModule.Agreements, ReportTreeNodeType.Account, Account), "Account", null, true, null);
+        private static readonly ReportTreeNode Child = new(
+            new(ReportModule.Agreements, ReportTreeNodeType.Agreement, Agreement), "Agreement", "Context", false, Root.Id);
+
+        public Task<ReportTreeNode> GetRootAsync(Guid accountId, ReportCardDefinition definition, CancellationToken ct = default) =>
+            Task.FromResult(Root);
+        public Task<ReportTreeNodePage> GetChildrenAsync(Guid accountId, ReportCardDefinition definition,
+            ReportTreeNodeId parentId, int offset = 0, int pageSize = 50, CancellationToken ct = default) =>
+            Task.FromResult(new ReportTreeNodePage(parentId == Root.Id ? [Child] : [], offset,
+                parentId == Root.Id ? 1 : 0, null));
+        public Task<IReadOnlyList<ReportTreeSearchHit>> SearchAsync(Guid accountId, ReportCardDefinition definition,
+            string query, int limit = 25, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<ReportTreeSearchHit>>([]);
+        public Task<ReportTreeNodeDetails> GetNodeAsync(Guid accountId, ReportCardDefinition definition,
+            ReportTreeNodeId nodeId, CancellationToken ct = default) => Task.FromResult(new ReportTreeNodeDetails(
+                nodeId == Root.Id ? Root : Child, nodeId == Root.Id ? [] : [new(Root.Id, Root.Name)], [],
+                nodeId == Child.Id ? $"/agreements/{Agreement}" : null));
     }
 }
 

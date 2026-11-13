@@ -3434,4 +3434,29 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ReportResizeShorter" xml:space="preserve"><value>Gjør {0} lavere</value></data>
   <data name="ReportResizeTaller" xml:space="preserve"><value>Gjør {0} høyere</value></data>
   <data name="ReportResizeKeyboardGroup" xml:space="preserve"><value>Endre størrelsen på {0} med tastaturet</value></data>
+  <data name="ReportTreeWithoutFramework" xml:space="preserve"><value>Uten rammeavtale</value></data>
+  <data name="ReportTreeSearch" xml:space="preserve"><value>Søk i sammenhengstreet</value></data>
+  <data name="ReportTreeSearchResults" xml:space="preserve"><value>Søkeresultater</value></data>
+  <data name="ReportTreeNoSearchResults" xml:space="preserve"><value>Ingen treff i det autoriserte utvalget.</value></data>
+  <data name="ReportTreeAccessibleView" xml:space="preserve"><value>Tilgjengelig trevisning</value></data>
+  <data name="ReportTreeLoadingDetails" xml:space="preserve"><value>Laster detaljer …</value></data>
+  <data name="ReportTreeExpandNode" xml:space="preserve"><value>Utvid {0}</value></data>
+  <data name="ReportTreeCollapseNode" xml:space="preserve"><value>Trekk sammen {0}</value></data>
+  <data name="ReportTreeLoadMore" xml:space="preserve"><value>Last flere</value></data>
+  <data name="ReportTreeExpand" xml:space="preserve"><value>Utvid</value></data>
+  <data name="ReportTreeCollapse" xml:space="preserve"><value>Trekk sammen</value></data>
+  <data name="ReportTreeAria" xml:space="preserve"><value>Sammenhengstre for {0}</value></data>
+  <data name="ReportTreeFieldPeriod" xml:space="preserve"><value>Rapportperiode</value></data>
+  <data name="ReportTreeNodeInvalid" xml:space="preserve"><value>Nodeidentiteten er ugyldig.</value></data>
+  <data name="ReportTreePageInvalid" xml:space="preserve"><value>Sidegrensen er ugyldig.</value></data>
+  <data name="ReportTreeSearchInvalid" xml:space="preserve"><value>Søket er ugyldig.</value></data>
+  <data name="ReportTreeDefinitionInvalid" xml:space="preserve"><value>Rapportdefinisjonen kan ikke brukes til et sammenhengstre.</value></data>
+  <data name="ReportTreeNodeUnavailable" xml:space="preserve"><value>Posten er ikke tilgjengelig i rapportutvalget.</value></data>
+  <data name="ReportTreeLoadFailed" xml:space="preserve"><value>Sammenhengstreet kunne ikke lastes.</value></data>
+  <data name="ReportTreeSearchFailed" xml:space="preserve"><value>Søket kunne ikke fullføres.</value></data>
+  <data name="ReportTreeDetailFailed" xml:space="preserve"><value>Detaljene kunne ikke lastes.</value></data>
+  <data name="ReportTreeAgreementLineStatusDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="ReportTreeAgreementLineStatusActive" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="ReportTreeAgreementLineStatusEnded" xml:space="preserve"><value>Avsluttet</value></data>
+  <data name="ReportTreeAgreementLineStatusDeactivated" xml:space="preserve"><value>Deaktivert</value></data>
 </root>

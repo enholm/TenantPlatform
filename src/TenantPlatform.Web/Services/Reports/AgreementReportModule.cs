@@ -62,7 +62,7 @@ public sealed class AgreementReportModule(
         };
     }
 
-    private static AgreementFilter Filters(IReadOnlyList<ReportFilterSelection> selections)
+    internal static AgreementFilter Filters(IReadOnlyList<ReportFilterSelection> selections)
     {
         var result = new AgreementFilter();
         foreach (var selection in selections.OfType<ReportValueFilterSelection>())
@@ -90,7 +90,7 @@ public sealed class AgreementReportModule(
         return result;
     }
 
-    private static IQueryable<AgreementListQueryRow> Overlap(
+    internal static IQueryable<AgreementListQueryRow> Overlap(
         IQueryable<AgreementListQueryRow> source, ReportDateRange period) =>
         source.Where(x => x.Agreement.StartDate <= period.To &&
             (!(x.Agreement.CessationDate ?? x.Agreement.EndDate).HasValue ||

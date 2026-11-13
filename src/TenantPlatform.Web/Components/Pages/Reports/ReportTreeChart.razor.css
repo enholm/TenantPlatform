@@ -1,0 +1,9 @@
+.report-tree-chart {
+    width: 100%;
+    height: clamp(22rem, 58vh, 40rem);
+    min-height: 22rem;
+}
+
+@media (max-width: 767.98px) {
+    .report-tree-chart { height: 24rem; min-height: 20rem; }
+}

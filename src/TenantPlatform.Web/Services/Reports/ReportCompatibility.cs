@@ -153,7 +153,7 @@ public static class ReportCompatibilityMatrix
             ReportModule.Agreements => new(module, ReportDateBasis.AgreementPeriodOverlap,
                 "Account → authorized agreements → financial lines"),
             ReportModule.Leasing => new(module, ReportDateBasis.LeasingAcquisitionPurchaseDate,
-                "Account → authorized frameworks → acquisitions → items → equipment"),
+                "Account → framework ancestors or synthetic without-framework branch → authorized acquisitions → items → equipment"),
             _ => throw new ReportDefinitionValidationException([new("module", "ReportDefinitionModuleInvalid")])
         };
         return new(module, metrics, tree,

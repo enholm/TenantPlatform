@@ -66,54 +66,61 @@
                                         </select>
                                     </div>
 
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="report-card-metric">@L["ReportMetric"]</label>
-                                        <select id="report-card-metric" class="form-select" value="@EnumValue(model.Metric)" @onchange="MetricChanged">
-                                            <option value="">@L["ReportChoose"]</option>
-                                            @foreach (var metric in catalog.Compatibility.Metrics)
-                                            {
-                                                <option value="@((int)metric.Metric)">@L[metric.LabelResourceKey]</option>
-                                            }
-                                        </select>
-                                    </div>
+                                    @if (model.Visualization != ReportVisualization.RelationshipTree)
+                                    {
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="report-card-metric">@L["ReportMetric"]</label>
+                                            <select id="report-card-metric" class="form-select" value="@EnumValue(model.Metric)" @onchange="MetricChanged">
+                                                <option value="">@L["ReportChoose"]</option>
+                                                @foreach (var metric in catalog.Compatibility.Metrics)
+                                                {
+                                                    <option value="@((int)metric.Metric)">@L[metric.LabelResourceKey]</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    }
                                     <div class="col-md-6">
                                         <label class="form-label" for="report-card-date-basis">@L["ReportDateBasis"]</label>
                                         <select id="report-card-date-basis" class="form-select" @bind="model.DateBasisText">
                                             <option value="">@L["ReportChoose"]</option>
-                                            @foreach (var option in catalog.Compatibility.DateBases)
+                                            @foreach (var option in catalog.Compatibility.DateBases.Where(x =>
+                                                model.Visualization != ReportVisualization.RelationshipTree || x.Id == catalog.Compatibility.Tree.DateBasis))
                                             {
                                                 <option value="@((int)option.Id)">@L[option.LabelResourceKey]</option>
                                             }
                                         </select>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="report-card-aggregation">@L["ReportAggregation"]</label>
-                                        <select id="report-card-aggregation" class="form-select" @bind="model.AggregationText">
-                                            <option value="">@L["ReportChoose"]</option>
-                                            @foreach (var option in catalog.Compatibility.Aggregations)
-                                            {
-                                                <option value="@((int)option.Id)">@L[option.LabelResourceKey]</option>
-                                            }
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="report-card-grouping">@L["ReportGrouping"]</label>
-                                        <select id="report-card-grouping" class="form-select" @bind="model.GroupingText">
-                                            <option value="">@L["ReportNoGrouping"]</option>
-                                            <optgroup label="@L["ReportTimeGrouping"]">
-                                                @foreach (var grouping in Enum.GetValues<ReportTimeGrouping>())
+                                    @if (model.Visualization != ReportVisualization.RelationshipTree)
+                                    {
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="report-card-aggregation">@L["ReportAggregation"]</label>
+                                            <select id="report-card-aggregation" class="form-select" @bind="model.AggregationText">
+                                                <option value="">@L["ReportChoose"]</option>
+                                                @foreach (var option in catalog.Compatibility.Aggregations)
                                                 {
-                                                    <option value="@($"time:{(int)grouping}")">@L[$"ReportTimeGrouping{grouping}"]</option>
+                                                    <option value="@((int)option.Id)">@L[option.LabelResourceKey]</option>
                                                 }
-                                            </optgroup>
-                                            <optgroup label="@L["ReportCategoryGrouping"]">
-                                                @foreach (var grouping in catalog.Groupings)
-                                                {
-                                                    <option value="@GroupingValue(grouping.Key)">@CatalogLabel(grouping.Label)</option>
-                                                }
-                                            </optgroup>
-                                        </select>
-                                    </div>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label" for="report-card-grouping">@L["ReportGrouping"]</label>
+                                            <select id="report-card-grouping" class="form-select" @bind="model.GroupingText">
+                                                <option value="">@L["ReportNoGrouping"]</option>
+                                                <optgroup label="@L["ReportTimeGrouping"]">
+                                                    @foreach (var grouping in Enum.GetValues<ReportTimeGrouping>())
+                                                    {
+                                                        <option value="@($"time:{(int)grouping}")">@L[$"ReportTimeGrouping{grouping}"]</option>
+                                                    }
+                                                </optgroup>
+                                                <optgroup label="@L["ReportCategoryGrouping"]">
+                                                    @foreach (var grouping in catalog.Groupings)
+                                                    {
+                                                        <option value="@GroupingValue(grouping.Key)">@CatalogLabel(grouping.Label)</option>
+                                                    }
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                    }
 
                                     <div class="col-md-6">
                                         <label class="form-label" for="report-card-period">@L["ReportPeriod"]</label>
@@ -273,7 +280,10 @@
     {
         if (model is null || catalog is null) return;
         model.Visualization = ParseNullable<ReportVisualization>(args.Value);
-        Normalize(BuildDefinition());
+        var definition = BuildDefinition();
+        if (model.Visualization == ReportVisualization.RelationshipTree)
+            definition = definition with { DateBasis = catalog.Compatibility.Tree.DateBasis };
+        Normalize(definition);
     }
 
     private void Normalize(ReportCardDefinition definition)

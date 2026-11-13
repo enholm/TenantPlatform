@@ -1,6 +1,6 @@
 # Rapportmodul — kartlegging og konkret implementasjonsplan
 
-Dato: 13. november 2026. Status: **STEG 1–2 FERDIG — STEG 3–5 KILDEIMPLEMENTASJON FERDIG — senere steg ikke startet**.
+Dato: 13. november 2026. Status: **STEG 1–8 KILDEIMPLEMENTERT — STEG 7–8 MÅLRETTET DATABASEFRITT NETTLESERVERIFISERT — samlet PostgreSQL-/InteractiveServer-verifikasjon gjenstår**.
 
 Dette dokumentet konkretiserer [featurebeskrivelsen](feature-reportmodule.md) mot gjeldende kodebase. Den opprinnelige kartleggingen var databasefri og uten kodeendringer. Steg 1–5 er senere kildeimplementert som beskrevet i kapittel 17–22. Steg 3 har schema-, migrasjons- og snapshotendringer i kildekoden, men migrasjonen er ikke anvendt mot noen database. Ingen rapport-UI, applikasjonsinstans eller ekstern tjeneste er startet.
 
@@ -545,7 +545,7 @@ Disse må avklares før de respektive stegene; de er ikke tekniske spørsmål me
 
 **P5 — GODKJENT: Leasing-dimensjoner.** Første leveranse tilbyr bare effektive avtalenivådimensjoner. Linje- og kostnadsfordelingsdimensjoner er utsatt, er ikke valgbare rapportdimensjoner og avvises av validatoren.
 
-**P6 — frittstående anskaffelser i treet (blokkerer Steg 8).** Anbefaling er en syntetisk «Uten rammeavtale»-gren under konto. Alternativet er anskaffelser direkte under konto, men da har treet to forskjellige nivåstrukturer.
+**P6 — GODKJENT: frittstående anskaffelser i treet.** Frittstående Leasing-anskaffelser vises under en lokalisert, syntetisk «Uten rammeavtale»-gren under konto. Grenen har egen typed identitet, er ikke en rammeavtale og vises bare når den har relevante, autoriserte etterkommere.
 
 **P7 — GODKJENT: multiverdi ved gruppering.** En post inngår i hver relevant gruppe. Unik total beregnes på autorisert grunnlag før gruppeutvidelse, gruppene merkes som ikke-additive, og beløp fordeles aldri automatisk mellom gruppene.
 
@@ -701,7 +701,7 @@ Ingen appinstans, databaseforbindelse eller databaseoperasjon ble startet. Migra
 ### 19.5 Senere status
 
 - P1–P5 og P7 er nå lukket. Den endelige matrisen og validatoren er dokumentert i kapittel 20.
-- P6 gjenstår før sammenhengstreet i Steg 8.
+- Ved avslutningen av Steg 3 gjensto P6; den er senere godkjent og implementert i Steg 8, se kapittel 25.
 - PostgreSQL-verifikasjon av Steg 3 er fortsatt åpen; databasefrie Steg 2-kontroller erstatter ikke denne.
 
 ## 20. Faktisk resultat for fullføring av Steg 2
@@ -735,7 +735,7 @@ Smoke-testene er databasefrie og bruker ren logikk og EF InMemory. De beviser ik
 ### 20.3 Fortsatt avgrenset eller åpent
 
 - Rapportkjøring, SQL-aggregering, økonomiske nyberegninger, UI, ECharts og selve sammenhengstreet er ikke implementert.
-- P6 om presentasjon av frittstående Leasing-anskaffelser gjenstår før Steg 8. Det blokkerer ikke Agreements-kjøring.
+- Ved denne Steg 2-kjøringen gjensto P6. Den er senere godkjent og implementert i Steg 8, se kapittel 25.
 - Agreements «gjelder perioden» med dagperiodisering, Leasing linje-/fordelingsdimensjoner, kapasitetshistorikk, valutakurser og nye metrics er eksplisitt utsatt, ikke uavklarte deler av denne matrisen.
 - Steg 3 sin PostgreSQL-runtimeverifikasjon står fortsatt åpen.
 
@@ -893,7 +893,7 @@ Smoke-testene bruker ren logikk, `HtmlRenderer` og EF InMemory. De er ikke fakti
 
 - PostgreSQL-runtimeverifikasjon av Steg 3–5 er fortsatt åpen: migrasjonsanvendelse, `jsonb`, `FOR UPDATE`, concurrency/rollback og Npgsql-oversettelse/ytelse er ikke bevist av denne kjøringen.
 - Direkte URL, server circuit, navigasjonsvarsel, dialogfokus, responsivitet, cancellation/stale-response under reell latency og full brukerflyt for sideadministrasjon/flytting er ikke browserverifisert.
-- ECharts, dra-og-slipp, resize-adapter og annen layoutinteraksjon tilhører Steg 7 og er ikke startet. Sammenhengstre og P6 tilhører Steg 8 og er ikke startet.
+- På tidspunktet for Steg 6-rapporten var ECharts/layout og sammenhengstre/P6 ikke startet. De senere resultatene står i kapittel 24–25.
 - Startsidevalg, deling, nye rettigheter, nye metrics, nye økonomiske regler og Leasing linje-/fordelingsdimensjoner er fortsatt utenfor scope.
 
 ### 23.5 Ferdigstatus og anbefalt neste avgrensning
@@ -902,7 +902,7 @@ Steg 6 er **kildeferdig og databasefritt verifisert innenfor grensene over**. Ne
 
 ## 24. Faktisk resultat for Steg 7 — ECharts og responsivt rapportgrid
 
-Status 13. november 2026: **KILDEIMPLEMENTASJON FERDIG OG MÅLRETTET NETTLESERVERIFISERT innenfor avtalt databasefritt scope**. Steg 8 og P6 er ikke startet. Ingen databaseforbindelse eller applikasjonsinstans ble startet.
+Historisk status ved avslutningen av Steg 7 den 13. november 2026: **KILDEIMPLEMENTASJON FERDIG OG MÅLRETTET NETTLESERVERIFISERT innenfor avtalt databasefritt scope**. Steg 8 og P6 var da ikke startet. Ingen databaseforbindelse eller applikasjonsinstans ble startet.
 
 ### 24.1 Lokal ECharts-distribusjon og diagramlivssyklus
 
@@ -954,8 +954,60 @@ Status 13. november 2026: **KILDEIMPLEMENTASJON FERDIG OG MÅLRETTET NETTLESERVE
 - Blazor InteractiveServer-livssyklus, circuit-disconnect, reell .NET interop over circuit, native navigasjons-/refreshvarsler og Avbryt gjennom en faktisk serverøkt er fortsatt **IKKE VERIFISERT**. C# smoke dekker arbeidskopi, generation og full cancel databasefritt; dette er ikke runtimebevis for circuit/navigasjon.
 - Testet smal CSS-viewport var `500×757`, som aktiverer produksjonens breakpoint under 768 px. Eksakt `390px`, øvrige skjermstørrelser og en full browser-/tilgjengelighetsmatrise er ikke testet. Temaobservasjonen er verifisert med de forventede CSS-variablene, men ekstern Bootstrap 5.3.8 ble ikke lastet av den isolerte, nettverksuavhengige harnessen.
 - PostgreSQL-runtimeverifikasjon av Steg 3–5 er fortsatt åpen: migrasjon, `jsonb`, `FOR UPDATE`, concurrency/rollback, Npgsql-oversettelse og ytelse er ikke bevist av Steg 7.
-- Sammenhengstre, nodedetaljer, tresøk og P6 tilhører Steg 8 og er ikke implementert eller startet. Ingen nye metrics, økonomiske regler, deling, startside eller rettigheter er innført.
+- Ved avslutningen av Steg 7 var sammenhengstre, nodedetaljer, tresøk og P6 ikke startet. De er senere implementert i Steg 8, se kapittel 25. Ingen nye metrics, økonomiske regler, deling, startside eller rettigheter ble innført i Steg 7.
 
 ### 24.7 Ferdigstatus og neste avgrensning
 
 Steg 7 har **tilstrekkelig målrettet, databasefri nettleserverifikasjon til å kunne gå videre til Steg 8**, med de uttrykkelige runtimegrensene over. Denne statusen starter eller implementerer ikke Steg 8 og gjør ingen PostgreSQL- eller InteractiveServer-påstand.
+
+## 25. Faktisk resultat for Steg 8 — progressive sammenhengstrær
+
+Status 13. november 2026: **KILDEIMPLEMENTASJON FERDIG OG MÅLRETTET DATABASEFRITT NETTLESERVERIFISERT innenfor grensene under**. P6 er godkjent og implementert. Ingen databaseforbindelse, migrasjon eller TenantPlatform-applikasjonsinstans ble startet.
+
+### 25.1 Typed tjeneste, struktur og autorisasjon
+
+- `IReportTreeService` tilbyr `GetRootAsync`, paginert `GetChildrenAsync`, serverbasert `SearchAsync` og `GetNodeAsync`. Kontraktene returnerer begrensede node-, path-, treff- og detalj-DTO-er; EF-entiteter og `IQueryable` forlater aldri den kortlivede factory-contexten.
+- `ReportTreeNodeId` skiller modul, nodetype og faktisk entitets-GUID. Syntetiske noder har egen `ReportTreeSyntheticNode`-identitet og kan ikke forveksles med en rammeavtale. Navn og lokaliserte etiketter brukes aldri som identitet.
+- Agreements følger konto → autoriserte avtaler → økonomilinjer. Linjer velges som siste lagrede `AgreementLineVersion` per stabil `LineId` (høyeste `Sequence`), slik at versjoner ikke blir dupliserte trenoder.
+- Leasing følger konto → nødvendige rammeavtaleforfedre → autoriserte anskaffelser → varelinjer → faktisk registrert utstyr. Frittstående anskaffelser følger P6 via den lokaliserte syntetiske grenen «Uten rammeavtale». Grenen utelates når den ikke har relevante etterkommere og har ingen falsk åpnehandling. Utstyr bruker faktisk `LeasingEquipment.Id`; `LeasingItem.Quantity` lager aldri antatte utstyrsnoder.
+- Hver operasjon validerer rapportdefinisjon/katalog, valgt konto, aktivt medlemskap, modultilgang og eksisterende Agreements-/Leasing-ressursscope på nytt. Den forespurte noden må fortsatt ligge i det filtrerte utvalget. Sideeierskap eller adminrett til rapportsiden utvider ikke moduldatarettighetene. Manipulerte modul-/nodeidentiteter, fremmed konto og filtrerte noder avvises.
+- Detaljer bruker bare eksisterende felt. Verifiserte mål er `/agreements/{id}`, `/agreements/{id}/lines`, `/leasing/frameworks/{id}`, `/leasing/acquisitions/{id}` og `/leasing/equipment?acquisition={id}`. Varelinjen faller tilbake til anskaffelsen; syntetisk node har ingen URL. Ingen beløp eller nye økonomiske regler er lagt til.
+
+### 25.2 Filter-, periode- og lastesemantikk
+
+- Agreements bruker samme autoriserte base, record-filtre, attention-dato, `DimensionListFilters`, historiske valg, «Ikke angitt», etterkommere og AND-semantikk som listen. Rapportperioden velger avtaler hvis faktisk avtaleperiode overlapper perioden. De siste linjesnapshotene vises som relasjonskontekst under en valgt avtale; linjene periodiseres ikke separat.
+- Leasing bruker samme autoriserte acquisition-scope, kind/status/eier/søk og effektive avtalenivådimensjoner som listen. Rapportperioden velger anskaffelser etter inklusiv `PurchaseDate`, i samsvar med matrisen. Rammeavtalen er en nødvendig forfader og ikke et selvstendig periodetreff. Varelinjer og faktisk utstyr er relasjonskontekst under en valgt anskaffelse og får ingen ny periodisering.
+- Rot og første barneside lastes ved åpning. Øvrige barn lastes ved utvidelse. Tjenesten krever eksplisitt offset og sidegrense 1–100; UI-et bruker 50 og viser «Last flere» når `NextOffset` finnes. Det skjer ingen stille trunkering. UI-søk bruker maksimalt 25 treff, mens tjenestekontrakten tillater opptil 50.
+- Server-søk går i hele det aktuelle autoriserte/filterte scopes, også når grenen ikke er lastet. Avtaletittel/motpart/linjenavn/-beskrivelse og Leasing-navn/referanse/varelinje/varenummer/utstyrsbeskrivelse/serie-/intern-ID inngår. Treffet inneholder typed ID og full ancestor-path. Klienten laster manglende sider i rekkefølge, utvider pathen og åpner detaljpanelet etter stabil ID.
+- Definisjonsfingeravtrykket omfatter konto, modul, datogrunnlag, perioderegel/-datoer og serialiserte filtre. Definisjonsendring avbryter pågående operasjoner, øker generation og tømmer lokal trecache. Kortets layout inngår ikke og utløser derfor ikke full trelasting. Søk, utvidelser, valgt node og ECharts-visning er lokal presentasjonstilstand og muterer ikke `ReportWorkspaceState` eller lagret definisjon.
+
+### 25.3 UI, ECharts og tilgjengelig alternativ
+
+- `ReportCardView` kjører ikke den aggregerte `ReportExecutionService` for `RelationshipTree`, men viser den nye `ReportTree`. Korteditoren skjuler metric, aggregation og grouping for treet og bruker modulmatrisens tree-date-basis; filtre og periode beholdes.
+- `ReportTreeChart` utvider den lokale `report-charts.js`-adapteren med ECharts `tree`: venstre-til-høyre, pan/zoom, markert node, stabile ID-er, lange avkortede etiketter, rich-text-tooltip, redusert bevegelse, temaoppdatering, resize, update uten ny instans og full dispose. Zoom og senter beholdes ved dataoppdatering.
+- Diagramklikk velger detaljer. Utvidelse/sammentrekking er en egen handling i den parallelle semantiske `<ul role="tree">`-visningen, med egne ikke-submit-knapper, `aria-expanded`, `aria-selected`, eksplisitt «Last flere» og lesbar kontekst. Canvas eller mus er derfor ikke eneste betjening.
+- Detaljpanelet har loading/error uten å fjerne treet, lokaliserte feltetiketter, verifisert «Åpne»-mål, lukkeknapp og Escape. Fokus flyttes til detaljoverskriften og returneres til søkefeltet ved lukking. Oppsettet går til én kolonne på smal skjerm.
+- Målrettet gjennomgang av asynkron flyt avdekket at to detalj- eller barnelastinger innen samme definisjonsgeneration kunne fullføres i motsatt rekkefølge. Dette er rettet med en egen detaljgeneration og per-node-generationsnummer i tillegg til definisjons- og søkegeneration. Et sent svar kan dermed ikke erstatte nyere detaljinnhold eller barneside. Ingen diagramfeil ble påvist i den faktiske Chrome-harnessen.
+
+### 25.4 Faktisk verifikasjon
+
+| Kontroll | Resultat | Evidens/begrensning |
+|---|---|---|
+| `TenantPlatform.Reports.SmokeTests` | PASS, 278 kontroller | EF InMemory/ren logikk/`HtmlRenderer`. Nye kontroller dekker begge strukturer, P6, tom syntetisk gren, stabile typed ID-er/like navn med ulik path, siste `LineId` uten versjonsduplikat, perioder, hierarkiske/arvede dimensjonsfiltre, standalone-kind, tenant/ressursscope, filtrert/manipulert node, søk i ikke-lastet gren, ancestor-path, paginering, faktiske equipment-ID-er, detaljer/ruter, syntetisk node uten rute og tilgjengelig komponentmarkup uten aggregert kjøring. Dette beviser ikke Npgsql-oversettelse. |
+| `node tests/TenantPlatform.Reports.SmokeTests/js/report-modules.test.mjs` | PASS | Mock-harness dekker tree option/type/orientering/pan-zoom, stable ID, rich-text, valgt node, update med bevart zoom/senter, generation-bundet klikk, resize og dispose uten handler-/instanslekkasje. |
+| `node tests/TenantPlatform.Reports.SmokeTests/browser/run-browser-harness.mjs` | PASS, Chrome 157.0.8103.78 | Faktisk lokal ECharts-canvas: 50 kontroller ved `1440×913` og 51 ved `500×757` (forespurte vinduer `1440×1000`/`390×844`). Treet renderer, bruker LR/roam, behandler HTML-lignende tekst som tekst, gjenbruker instans/canvas, bevarer zoom, resizer og disponerer. Harnessen er databasefri og starter ikke Blazor/apphost. |
+| `TenantPlatform.AgreementDimensions.SmokeTests` | PASS, 166 kontroller | InMemory og offline metadata; ingen databaseforbindelse eller SQL. |
+| `TenantPlatform.Dimensions.SmokeTests` | PASS, 228 kontroller | InMemory, komponenter og offline design-time metadata; ingen databaseforbindelse, SQL eller migrasjonsanvendelse. |
+| `dotnet build TenantPlatform.sln` | PASS | 0 feil. Eksisterende NU1902/NU1903 for `System.Security.Cryptography.Pkcs` 10.0.0 består. |
+| `git diff --check` | PASS | Ingen whitespace-feil. |
+
+Den isolerte nettleserharnessen kjøres på nytt fra repo-roten med `node tests/TenantPlatform.Reports.SmokeTests/browser/run-browser-harness.mjs`. Den laster produksjonsmodulen, lokal ECharts 5.6.0 og repository-CSS direkte; den kopierer ikke trelogikken.
+
+### 25.5 Begrensninger og ferdigstatus
+
+- Reports-smoke bruker EF InMemory. PostgreSQL/Npgsql-oversettelse av de nye trespørringene, queryplaner/query count, store datamengder, ytelse og provider-spesifikke forskjeller er **IKKE VERIFISERT**. PostgreSQL-baserte Agreements- og Leasing-smoke ble bevisst ikke startet i dette databasefrie steget.
+- Den faktiske rapportsiden i Blazor InteractiveServer, circuit-disconnect, .NET↔JS-interop over circuit, reell nettverkslatency/cancellation og native navigasjon/refresh er **IKKE VERIFISERT**. Generasjons-/cancellationvern og arbeidskopi-isolasjon er databasefritt kontrollert, men er ikke et runtimebevis for disse forholdene.
+- Headless Chrome-harnessen verifiserer faktisk ECharts-rendering og responsive CSS-bredder, men ikke en full browser-/tilgjengelighetsmatrise, fysisk touch/stylus, pikselperfeksjon eller manuell skjermleserbruk. Automatisk path-utvidelse er kontrollert gjennom tjenestepath og komponentlogikk, ikke gjennom en faktisk InteractiveServer-sesjon.
+- Ingen nye økonomiske regler, dagperiodisering, valutakonvertering, Leasing-linje-/kostnadsfordelingsdimensjoner, deling eller startsidefunksjon er innført.
+
+Steg 8 er **kildeferdig og tilstrekkelig målrettet databasefritt verifisert til å gå videre til Steg 9**, med de uttrykkelige begrensningene over. Neste avgrensede oppgave er Steg 9: samlet verifikasjon og leveranserapport, der PostgreSQL/provider, InteractiveServer og større datamengder behandles som eksplisitte verifikasjonsspor og ikke som implisitte PASS.

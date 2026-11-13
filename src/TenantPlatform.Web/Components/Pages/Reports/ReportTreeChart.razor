@@ -1,0 +1,71 @@
+@using System.Text.Json
+@using TenantPlatform.Web.Services.Reports
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@if (jsError)
+{
+    <div class="alert alert-warning" role="alert">@L["ReportChartLoadFailed"]</div>
+}
+else
+{
+    <div class="report-tree-chart" @ref="element" role="img" aria-label="@Model.AriaLabel">
+        <span class="visually-hidden">@Model.AriaLabel</span>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public ReportTreeChartModel Model { get; set; } = null!;
+    [Parameter] public long Generation { get; set; }
+    [Parameter] public EventCallback<string> OnSelected { get; set; }
+
+    private ElementReference element;
+    private IJSObjectReference? module;
+    private IJSObjectReference? chart;
+    private DotNetObjectReference<ReportTreeChart>? self;
+    private string? fingerprint;
+    private bool disposed;
+    private bool jsError;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (disposed || jsError) return;
+        var next = JsonSerializer.Serialize(Model);
+        try
+        {
+            module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/report-charts.js");
+            if (chart is null)
+            {
+                self ??= DotNetObjectReference.Create(this);
+                chart = await module.InvokeAsync<IJSObjectReference>("createTree", element, Model, self, Generation);
+            }
+            else if (fingerprint != next)
+                await chart.InvokeVoidAsync("update", Model, Generation);
+            fingerprint = next;
+        }
+        catch (InvalidOperationException) { }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+        catch (JSException) { jsError = true; await InvokeAsync(StateHasChanged); }
+    }
+
+    [JSInvokable]
+    public Task SelectTreeNode(string key, long generation) =>
+        disposed || generation != Generation ? Task.CompletedTask : OnSelected.InvokeAsync(key);
+
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed) return;
+        disposed = true;
+        try
+        {
+            if (chart is not null) await chart.InvokeVoidAsync("dispose");
+            if (chart is not null) await chart.DisposeAsync();
+            if (module is not null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+        catch (ObjectDisposedException) { }
+        self?.Dispose();
+    }
+}

@@ -1,0 +1,16 @@
+.report-tree-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); gap: 1rem; align-items: start; }
+.report-tree-visual, .report-tree-accessible { min-width: 0; border: 1px solid var(--bs-border-color); border-radius: .5rem; padding: .75rem; }
+.report-tree-accessible { max-height: 40rem; overflow: auto; }
+.report-tree-list, .report-tree-list ul { list-style: none; margin: 0; padding-left: 1.25rem; }
+.report-tree-list { padding-left: 0; }
+.report-tree-list-row { display: flex; align-items: flex-start; gap: .25rem; margin-block: .2rem; }
+.report-tree-toggle, .report-tree-toggle-placeholder { flex: 0 0 2rem; width: 2rem; height: 2rem; }
+.report-tree-node-button { min-width: 0; padding-block: .2rem; text-decoration: none; overflow-wrap: anywhere; }
+.report-tree-details { position: relative; }
+.report-tree-details :focus-visible, .report-tree-list button:focus-visible { outline: 3px solid #258cfb; outline-offset: 2px; }
+.report-tree-search-results { max-height: 18rem; overflow: auto; }
+
+@media (max-width: 991.98px) {
+    .report-tree-layout { grid-template-columns: 1fr; }
+    .report-tree-accessible { max-height: 24rem; }
+}

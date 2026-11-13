@@ -70,7 +70,7 @@ public sealed class LeasingReportModule(
         };
     }
 
-    private static LeasingListFilter Filters(IReadOnlyList<ReportFilterSelection> selections)
+    internal static LeasingListFilter Filters(IReadOnlyList<ReportFilterSelection> selections)
     {
         var result = new LeasingListFilter { Kind = "all" };
         foreach (var selection in selections.OfType<ReportValueFilterSelection>())
@@ -105,7 +105,7 @@ public sealed class LeasingReportModule(
         IQueryable<LeasingFramework> source, ReportDateRange period) =>
         source.Where(x => x.AcquisitionFrom <= period.To && x.AcquisitionTo >= period.From);
 
-    private static IQueryable<LeasingAcquisition> AcquisitionPeriod(
+    internal static IQueryable<LeasingAcquisition> AcquisitionPeriod(
         IQueryable<LeasingAcquisition> source, ReportDateRange period) =>
         source.Where(x => x.PurchaseDate >= period.From && x.PurchaseDate <= period.To);
 

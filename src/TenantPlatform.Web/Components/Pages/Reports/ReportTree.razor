@@ -1,0 +1,303 @@
+@using System.Text.Json
+@using TenantPlatform.Core.Reports
+@using TenantPlatform.Web.Services.Reports
+@implements IAsyncDisposable
+@inject IReportTreeService Trees
+
+<div class="report-tree-shell">
+    <form class="report-tree-search" @onsubmit="SearchAsync" @onsubmit:preventDefault>
+        <label class="form-label" for="@SearchId">@L["ReportTreeSearch"]</label>
+        <div class="input-group">
+            <input id="@SearchId" @ref="searchElement" class="form-control" @bind="searchText"
+                   maxlength="200" autocomplete="off" />
+            <button type="submit" class="btn btn-outline-primary" disabled="@searching">
+                @if (searching) { <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> }
+                else { <i class="bi bi-search" aria-hidden="true"></i> }
+                <span class="visually-hidden">@L["Search"]</span>
+            </button>
+        </div>
+    </form>
+
+    @if (searchError is not null)
+    {
+        <div class="alert alert-warning mt-2" role="alert">@L[searchError]</div>
+    }
+    else if (searchHits.Count > 0)
+    {
+        <div class="list-group report-tree-search-results mt-2" aria-label="@L["ReportTreeSearchResults"]">
+            @foreach (var hit in searchHits)
+            {
+                <button type="button" class="list-group-item list-group-item-action" @onclick="() => SelectHitAsync(hit)" @key="hit.Id.Key">
+                    <span class="fw-semibold">@hit.Name</span>
+                    <small class="d-block text-body-secondary">@string.Join(" › ", hit.Ancestors.Select(x => x.Name).Append(hit.Context).Where(x => !string.IsNullOrWhiteSpace(x)))</small>
+                </button>
+            }
+        </div>
+    }
+    else if (searched)
+    {
+        <p class="small text-body-secondary mt-2">@L["ReportTreeNoSearchResults"]</p>
+    }
+
+    @if (loading)
+    {
+        <p class="text-body-secondary mt-3" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>@L["Loading"]</p>
+    }
+    else if (error is not null)
+    {
+        <div class="alert alert-warning mt-3" role="alert">@L[error]</div>
+    }
+    else if (root is not null)
+    {
+        <div class="report-tree-layout mt-3">
+            <div class="report-tree-visual">
+                <ReportTreeChart Model="ChartModel" Generation="generation" OnSelected="SelectByKeyAsync" />
+            </div>
+            <div class="report-tree-accessible">
+                <h3 class="h6">@L["ReportTreeAccessibleView"]</h3>
+                <ul class="report-tree-list" role="tree" aria-label="@L["ReportTreeAccessibleView"]">
+                    <ReportTreeAccessibleNode Node="root" Children="children" Expanded="expanded"
+                        NextOffsets="nextOffsets" SelectedKey="details?.Node.Id.Key" OnToggle="ToggleAsync"
+                        OnSelect="SelectAsync" OnLoadMore="LoadMoreAsync" />
+                </ul>
+            </div>
+        </div>
+    }
+
+    @if (detailsLoading)
+    {
+        <p class="small text-body-secondary mt-3" role="status">@L["ReportTreeLoadingDetails"]</p>
+    }
+    else if (detailError is not null)
+    {
+        <div class="alert alert-warning mt-3" role="alert">@L[detailError]</div>
+    }
+    else if (details is not null)
+    {
+        <aside class="report-tree-details card mt-3" aria-labelledby="@DetailTitleId" @onkeydown="DetailKeyDown">
+            <div class="card-header d-flex justify-content-between align-items-start gap-2">
+                <div>
+                    <h3 id="@DetailTitleId" @ref="detailHeading" tabindex="-1" class="h5 mb-1">@details.Node.Name</h3>
+                    @if (!string.IsNullOrWhiteSpace(details.Node.Context)) { <div class="small text-body-secondary">@details.Node.Context</div> }
+                </div>
+                <button type="button" class="btn-close" aria-label="@L["Close"]" @onclick="CloseDetailsAsync"></button>
+            </div>
+            <div class="card-body">
+                <div class="small text-body-secondary mb-2">@string.Join(" › ", details.Ancestors.Select(x => x.Name))</div>
+                @if (details.Fields.Count > 0)
+                {
+                    <dl class="row mb-3">
+                        @foreach (var field in details.Fields)
+                        {
+                            <dt class="col-sm-5">@L[field.LabelResourceKey]</dt>
+                            <dd class="col-sm-7">@(field.ValueResourceKey is null ? field.Value : L[field.ValueResourceKey])</dd>
+                        }
+                    </dl>
+                }
+                <div class="d-flex flex-wrap gap-2">
+                    @if (details.Node.HasChildren)
+                    {
+                        <button type="button" class="btn btn-outline-secondary" @onclick="() => ToggleAsync(details.Node)">
+                            @L[expanded.Contains(details.Node.Id.Key) ? "ReportTreeCollapse" : "ReportTreeExpand"]
+                        </button>
+                    }
+                    @if (details.NavigationTarget is not null)
+                    {
+                        <a class="btn btn-primary" href="@details.NavigationTarget">@L["Open"]</a>
+                    }
+                </div>
+            </div>
+        </aside>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Guid AccountId { get; set; }
+    [Parameter, EditorRequired] public ReportCardDefinition Definition { get; set; } = null!;
+    [Parameter, EditorRequired] public string CardName { get; set; } = "";
+
+    private const int PageSize = 50;
+    private readonly Dictionary<string, ReportTreeNode> nodes = [];
+    private readonly Dictionary<string, IReadOnlyList<ReportTreeNode>> children = [];
+    private readonly Dictionary<string, int?> nextOffsets = [];
+    private readonly Dictionary<string, long> childGenerations = [];
+    private readonly HashSet<string> expanded = [];
+    private CancellationTokenSource? lifetime;
+    private CancellationTokenSource? searchCancellation;
+    private ReportTreeNode? root;
+    private ReportTreeNodeDetails? details;
+    private IReadOnlyList<ReportTreeSearchHit> searchHits = [];
+    private string searchText = "";
+    private string? fingerprint;
+    private string? error;
+    private string? searchError;
+    private string? detailError;
+    private long generation;
+    private long searchGeneration;
+    private long detailGeneration;
+    private bool loading;
+    private bool searching;
+    private bool searched;
+    private bool detailsLoading;
+    private bool focusDetails;
+    private ElementReference searchElement;
+    private ElementReference detailHeading;
+    private string SearchId => $"report-tree-search-{GetHashCode():x}";
+    private string DetailTitleId => $"report-tree-detail-{GetHashCode():x}";
+    private ReportTreeChartModel ChartModel => new(BuildChart(root!), L["ReportTreeAria", CardName]);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var next = $"{AccountId:N}|{Definition.Module}|{Definition.DateBasis}|{Definition.Period}|{ReportFilterJson.Serialize(Definition.Filters)}";
+        if (fingerprint == next) return;
+        fingerprint = next;
+        await ResetAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusDetails && details is not null)
+        {
+            focusDetails = false;
+            await detailHeading.FocusAsync();
+        }
+    }
+
+    private async Task ResetAsync()
+    {
+        lifetime?.Cancel(); lifetime?.Dispose(); lifetime = new();
+        searchCancellation?.Cancel(); searchCancellation?.Dispose(); searchCancellation = null;
+        var current = ++generation;
+        detailGeneration++;
+        nodes.Clear(); children.Clear(); nextOffsets.Clear(); childGenerations.Clear(); expanded.Clear();
+        root = null; details = null; searchHits = []; error = searchError = detailError = null;
+        searched = false; loading = true;
+        try
+        {
+            var loaded = await Trees.GetRootAsync(AccountId, Definition, lifetime.Token);
+            if (current != generation) return;
+            root = loaded; nodes[loaded.Id.Key] = loaded;
+            if (loaded.HasChildren)
+            {
+                await LoadChildrenAsync(loaded, false, current, lifetime.Token);
+                expanded.Add(loaded.Id.Key);
+            }
+        }
+        catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
+        catch (UnauthorizedAccessException) { if (current == generation) error = "ReportCardUnavailable"; }
+        catch (ReportDefinitionValidationException) { if (current == generation) error = "ReportCardInvalid"; }
+        catch (ReportTreeException ex) { if (current == generation) error = ex.Message; }
+        catch { if (current == generation) error = "ReportTreeLoadFailed"; }
+        finally { if (current == generation) loading = false; }
+    }
+
+    private async Task ToggleAsync(ReportTreeNode node)
+    {
+        if (!node.HasChildren) return;
+        if (expanded.Remove(node.Id.Key)) return;
+        if (!children.ContainsKey(node.Id.Key)) await LoadChildrenAsync(node, false, generation, lifetime!.Token);
+        expanded.Add(node.Id.Key);
+    }
+
+    private Task LoadMoreAsync(ReportTreeNode node) =>
+        LoadChildrenAsync(node, true, generation, lifetime!.Token);
+
+    private async Task LoadChildrenAsync(ReportTreeNode node, bool append, long current, CancellationToken ct)
+    {
+        var childGeneration = childGenerations.GetValueOrDefault(node.Id.Key) + 1;
+        childGenerations[node.Id.Key] = childGeneration;
+        var offset = append ? nextOffsets.GetValueOrDefault(node.Id.Key) ?? 0 : 0;
+        var page = await Trees.GetChildrenAsync(AccountId, Definition, node.Id, offset, PageSize, ct);
+        if (current != generation || ct.IsCancellationRequested ||
+            childGenerations.GetValueOrDefault(node.Id.Key) != childGeneration) return;
+        foreach (var child in page.Items) nodes[child.Id.Key] = child;
+        children[node.Id.Key] = append
+            ? children.GetValueOrDefault(node.Id.Key, []).Concat(page.Items).DistinctBy(x => x.Id.Key).ToList()
+            : page.Items;
+        nextOffsets[node.Id.Key] = page.NextOffset;
+    }
+
+    private async Task SearchAsync()
+    {
+        searchCancellation?.Cancel(); searchCancellation?.Dispose(); searchCancellation = new();
+        var token = searchCancellation.Token;
+        var current = ++searchGeneration;
+        searching = true; searched = false; searchError = null; searchHits = [];
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(searchText))
+                searchHits = await Trees.SearchAsync(AccountId, Definition, searchText, 25, token);
+            if (current == searchGeneration) searched = true;
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (ReportTreeException ex) { if (current == searchGeneration) searchError = ex.Message; }
+        catch { if (current == searchGeneration) searchError = "ReportTreeSearchFailed"; }
+        finally { if (current == searchGeneration) searching = false; }
+    }
+
+    private async Task SelectHitAsync(ReportTreeSearchHit hit)
+    {
+        var current = generation;
+        detailError = null;
+        try
+        {
+            var path = hit.Ancestors.Select(x => x.Id).Append(hit.Id).ToList();
+            for (var index = 0; index + 1 < path.Count; index++)
+            {
+                if (!nodes.TryGetValue(path[index].Key, out var parent))
+                    throw new ReportTreeException("ReportTreeNodeUnavailable");
+                while (!children.GetValueOrDefault(parent.Id.Key, []).Any(x => x.Id == path[index + 1]) &&
+                       (!children.ContainsKey(parent.Id.Key) || nextOffsets.GetValueOrDefault(parent.Id.Key).HasValue))
+                    await LoadChildrenAsync(parent, children.ContainsKey(parent.Id.Key), current, lifetime!.Token);
+                if (current != generation) return;
+                expanded.Add(parent.Id.Key);
+            }
+            if (nodes.TryGetValue(hit.Id.Key, out var node)) await SelectAsync(node);
+        }
+        catch (OperationCanceledException) when (lifetime?.IsCancellationRequested == true) { }
+        catch (ReportTreeException ex) { if (current == generation) detailError = ex.Message; }
+        catch { if (current == generation) detailError = "ReportTreeDetailFailed"; }
+    }
+
+    private Task SelectByKeyAsync(string key) => nodes.TryGetValue(key, out var node)
+        ? SelectAsync(node) : Task.CompletedTask;
+
+    private async Task SelectAsync(ReportTreeNode node)
+    {
+        var current = generation;
+        var currentDetail = ++detailGeneration;
+        var token = lifetime?.Token ?? new CancellationToken(true);
+        detailsLoading = true; detailError = null;
+        try
+        {
+            var loaded = await Trees.GetNodeAsync(AccountId, Definition, node.Id, token);
+            if (current == generation && currentDetail == detailGeneration)
+                { details = loaded; focusDetails = true; }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (ReportTreeException ex) { if (current == generation && currentDetail == detailGeneration) detailError = ex.Message; }
+        catch { if (current == generation && currentDetail == detailGeneration) detailError = "ReportTreeDetailFailed"; }
+        finally { if (current == generation && currentDetail == detailGeneration) detailsLoading = false; }
+    }
+
+    private async Task CloseDetailsAsync()
+    {
+        detailGeneration++;
+        details = null; detailError = null;
+        await searchElement.FocusAsync();
+    }
+
+    private Task DetailKeyDown(KeyboardEventArgs args) => args.Key == "Escape" ? CloseDetailsAsync() : Task.CompletedTask;
+
+    private ReportTreeChartNode BuildChart(ReportTreeNode node) => new(node.Id.Key, node.Name, node.Context,
+        details?.Node.Id == node.Id, expanded.Contains(node.Id.Key)
+            ? children.GetValueOrDefault(node.Id.Key, []).Select(BuildChart).ToList() : []);
+
+    public ValueTask DisposeAsync()
+    {
+        generation++; searchGeneration++; detailGeneration++;
+        lifetime?.Cancel(); lifetime?.Dispose();
+        searchCancellation?.Cancel(); searchCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

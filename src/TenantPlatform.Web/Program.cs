@@ -126,8 +126,12 @@ builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportDefinition
     TenantPlatform.Web.Services.Reports.ReportDefinitionCompatibilityValidator>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.AgreementReportModule>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.LeasingReportModule>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.AgreementReportTreeModule>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.LeasingReportTreeModule>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportExecutionService,
     TenantPlatform.Web.Services.Reports.ReportExecutionService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportTreeService,
+    TenantPlatform.Web.Services.Reports.ReportTreeService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportPageService,
     TenantPlatform.Web.Services.Reports.ReportPageService>();
 builder.Services.AddScoped<LeasingLifecycleProcessor>();

@@ -3377,4 +3377,29 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="ReportResizeShorter" xml:space="preserve"><value>Gör {0} lägre</value></data>
   <data name="ReportResizeTaller" xml:space="preserve"><value>Gör {0} högre</value></data>
   <data name="ReportResizeKeyboardGroup" xml:space="preserve"><value>Ändra storlek på {0} med tangentbordet</value></data>
+  <data name="ReportTreeWithoutFramework" xml:space="preserve"><value>Utan ramavtal</value></data>
+  <data name="ReportTreeSearch" xml:space="preserve"><value>Sök i sambandsträdet</value></data>
+  <data name="ReportTreeSearchResults" xml:space="preserve"><value>Sökresultat</value></data>
+  <data name="ReportTreeNoSearchResults" xml:space="preserve"><value>Inga träffar i det behöriga urvalet.</value></data>
+  <data name="ReportTreeAccessibleView" xml:space="preserve"><value>Tillgänglig trädvy</value></data>
+  <data name="ReportTreeLoadingDetails" xml:space="preserve"><value>Läser in detaljer …</value></data>
+  <data name="ReportTreeExpandNode" xml:space="preserve"><value>Expandera {0}</value></data>
+  <data name="ReportTreeCollapseNode" xml:space="preserve"><value>Fäll ihop {0}</value></data>
+  <data name="ReportTreeLoadMore" xml:space="preserve"><value>Läs in fler</value></data>
+  <data name="ReportTreeExpand" xml:space="preserve"><value>Expandera</value></data>
+  <data name="ReportTreeCollapse" xml:space="preserve"><value>Fäll ihop</value></data>
+  <data name="ReportTreeAria" xml:space="preserve"><value>Sambandsträd för {0}</value></data>
+  <data name="ReportTreeFieldPeriod" xml:space="preserve"><value>Rapportperiod</value></data>
+  <data name="ReportTreeNodeInvalid" xml:space="preserve"><value>Nodidentiteten är ogiltig.</value></data>
+  <data name="ReportTreePageInvalid" xml:space="preserve"><value>Sidgränsen är ogiltig.</value></data>
+  <data name="ReportTreeSearchInvalid" xml:space="preserve"><value>Sökningen är ogiltig.</value></data>
+  <data name="ReportTreeDefinitionInvalid" xml:space="preserve"><value>Rapportdefinitionen kan inte användas för ett sambandsträd.</value></data>
+  <data name="ReportTreeNodeUnavailable" xml:space="preserve"><value>Posten är inte tillgänglig i rapporturvalet.</value></data>
+  <data name="ReportTreeLoadFailed" xml:space="preserve"><value>Sambandsträdet kunde inte läsas in.</value></data>
+  <data name="ReportTreeSearchFailed" xml:space="preserve"><value>Sökningen kunde inte slutföras.</value></data>
+  <data name="ReportTreeDetailFailed" xml:space="preserve"><value>Detaljerna kunde inte läsas in.</value></data>
+  <data name="ReportTreeAgreementLineStatusDraft" xml:space="preserve"><value>Utkast</value></data>
+  <data name="ReportTreeAgreementLineStatusActive" xml:space="preserve"><value>Aktiv</value></data>
+  <data name="ReportTreeAgreementLineStatusEnded" xml:space="preserve"><value>Avslutad</value></data>
+  <data name="ReportTreeAgreementLineStatusDeactivated" xml:space="preserve"><value>Inaktiverad</value></data>
 </root>

@@ -21,7 +21,7 @@
         }
         else if (Card.Definition.Visualization == ReportVisualization.RelationshipTree)
         {
-            <div class="alert alert-info mt-3 mb-0" role="status">@L["ReportTreeDeferred"]</div>
+            <ReportTree AccountId="AccountId" Definition="Card.Definition" CardName="Card.Name" />
         }
         else if (result is not null)
         {
