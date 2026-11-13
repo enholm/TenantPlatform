@@ -1,0 +1,72 @@
+@using System.Text.Json
+@using TenantPlatform.Web.Services.Reports
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@if (jsError)
+{
+    <div class="alert alert-warning" role="alert">@L["ReportChartLoadFailed"]</div>
+}
+else
+{
+    <div class="report-chart"
+         @ref="chartElement"
+         role="img"
+         aria-label="@Model.AriaLabel">
+        <span class="visually-hidden">@Model.AriaLabel</span>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public ReportChartModel Model { get; set; } = null!;
+
+    private ElementReference chartElement;
+    private IJSObjectReference? module;
+    private IJSObjectReference? chart;
+    private string? renderedFingerprint;
+    private bool disposed;
+    private bool jsError;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (disposed || jsError) return;
+        var fingerprint = JsonSerializer.Serialize(Model);
+        try
+        {
+            module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/report-charts.js");
+            if (chart is null)
+                chart = await module.InvokeAsync<IJSObjectReference>("create", chartElement, Model);
+            else if (renderedFingerprint != fingerprint)
+                await chart.InvokeVoidAsync("update", Model);
+            renderedFingerprint = fingerprint;
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop is unavailable during static prerendering. The interactive render retries.
+        }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+        catch (JSException)
+        {
+            jsError = true;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    protected override bool ShouldRender() => !disposed;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed) return;
+        disposed = true;
+        try
+        {
+            if (chart is not null) await chart.InvokeVoidAsync("dispose");
+            if (chart is not null) await chart.DisposeAsync();
+            if (module is not null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+        catch (ObjectDisposedException) { }
+    }
+}

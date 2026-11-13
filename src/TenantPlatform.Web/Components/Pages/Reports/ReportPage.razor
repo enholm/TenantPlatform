@@ -1,0 +1,259 @@
+@page "/reports/{ReportPageId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@rendermode InteractiveServer
+@implements IDisposable
+@using TenantPlatform.Core.Reports
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Reports
+@inject ICurrentUserContextService UserContext
+@inject IReportPageService Pages
+@inject IReportCatalogService Catalogs
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>@(page?.Name ?? L["ReportsTitle"])</PageTitle>
+<NavigationLock ConfirmExternalNavigation="@IsDirty" OnBeforeInternalNavigation="ConfirmNavigationAsync" />
+
+<div class="page-workspace">
+@if (busy && page is null) { <p role="status">@L["Loading"]</p> }
+else if (loadError is not null) { <div class="alert alert-danger" role="alert">@L[loadError]</div> }
+else if (page is not null)
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div><a href="/reports" class="small">@L["ReportsTitle"]</a><h1 class="mb-0">@(editing ? workspace.Page(page.Id).Name : page.Name)</h1></div>
+        <div class="d-flex flex-wrap gap-2">
+            @if (!editing)
+            {
+                <button type="button" class="btn btn-primary" @onclick="BeginEdit">@L["ReportPageEdit"]</button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="DuplicatePageAsync">@L["Duplicate"]</button>
+                <button type="button" class="btn btn-outline-danger" @onclick="() => deleting = true">@L["Delete"]</button>
+            }
+        </div>
+    </div>
+
+    @if (operationError is not null) { <div class="alert alert-danger" role="alert">@L[operationError]</div> }
+    @if (conflict)
+    {
+        <div class="alert alert-warning" role="alert">
+            @L["ReportPageConcurrency"]
+            <button type="button" class="btn btn-sm btn-outline-dark ms-2" @onclick="ReloadAfterConflictAsync">@L["ReportDiscardAndReload"]</button>
+        </div>
+    }
+
+    @if (!editing)
+    {
+        @if (page.Cards.Count == 0) { <div class="alert alert-info">@L["ReportPageEmpty"]</div> }
+        else
+        {
+            <ReportGrid Items="ViewGridItems" Editable="false">
+                <ItemTemplate Context="gridItem">
+                    @{ var viewCard = page.Cards.Single(x => x.Id == gridItem.ClientId); }
+                    <ReportCardView AccountId="accountId" Card="viewCard" @key="gridItem.ClientId" />
+                </ItemTemplate>
+            </ReportGrid>
+        }
+    }
+    else
+    {
+        @foreach (var draftPage in workspace.Pages)
+        {
+            <section class="card mb-3" aria-labelledby="@($"workspace-page-{draftPage.Id:N}")">
+                <div class="card-header">
+                    <label class="form-label fw-semibold" id="@($"workspace-page-{draftPage.Id:N}")" for="@($"workspace-name-{draftPage.Id:N}")">@L["ReportPageName"]</label>
+                    <input id="@($"workspace-name-{draftPage.Id:N}")" class="form-control" value="@draftPage.Name" @oninput="e => workspace.Rename(draftPage.Id, e.Value?.ToString() ?? string.Empty)" />
+                </div>
+                <div class="card-body">
+                    @if (draftPage.Cards.Count == 0) { <p class="text-body-secondary">@L["ReportPageEmpty"]</p> }
+                    <ReportGrid Items="@DraftGridItems(draftPage)" Editable="true" Generation="workspaceGeneration"
+                                OnLayoutChanged="change => ApplyLayout(draftPage.Id, change)">
+                        <ItemTemplate Context="gridItem">
+                        @{ var card = draftPage.Cards.Single(x => x.ClientId == gridItem.ClientId); }
+                        <article class="card h-100 report-edit-card" @key="card.ClientId">
+                            <div class="card-body overflow-auto">
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <strong>@card.Name</strong>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => MoveOrder(draftPage.Id, card.ClientId, -1)" aria-label="@L["ReportMoveUp", card.Name]">↑</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => MoveOrder(draftPage.Id, card.ClientId, 1)" aria-label="@L["ReportMoveDown", card.Name]">↓</button>
+                                    <ReportLayoutKeyboardControls Name="card.Name"
+                                        OnNarrower="() => ResizeCard(draftPage.Id, card.ClientId, -1, 0)"
+                                        OnWider="() => ResizeCard(draftPage.Id, card.ClientId, 1, 0)"
+                                        OnShorter="() => ResizeCard(draftPage.Id, card.ClientId, 0, -1)"
+                                        OnTaller="() => ResizeCard(draftPage.Id, card.ClientId, 0, 1)" />
+                                    <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => EditCard(draftPage.Id, card)">@L["Edit"]</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => DuplicateCard(draftPage.Id, card.ClientId, card.Name)">@L["Duplicate"]</button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => workspace.DeleteCard(draftPage.Id, card.ClientId)">@L["Delete"]</button>
+                                </div>
+                            </div>
+                            @if (summaries.Any(x => x.Id != draftPage.Id))
+                            {
+                                <div class="input-group input-group-sm mt-2">
+                                    <label class="input-group-text" for="@($"move-{card.ClientId:N}")">@L["ReportMoveToPage"]</label>
+                                    <select id="@($"move-{card.ClientId:N}")" class="form-select" value="" @onchange="e => MoveToPageAsync(draftPage.Id, card.ClientId, e.Value?.ToString())">
+                                        <option value="">@L["ReportChoose"]</option>
+                                        @foreach (var target in summaries.Where(x => x.Id != draftPage.Id)) { <option value="@target.Id">@target.Name</option> }
+                                    </select>
+                                </div>
+                            }
+                            </div>
+                        </article>
+                        </ItemTemplate>
+                    </ReportGrid>
+                    <button type="button" class="btn btn-outline-primary" @onclick="() => AddCardAsync(draftPage.Id)"><i class="bi bi-plus-lg" aria-hidden="true"></i> @L["ReportCardAdd"]</button>
+                </div>
+            </section>
+        }
+        <p class="small text-body-secondary">@L["ReportWorkspaceSaveHelp"]</p>
+        <p class="visually-hidden" aria-live="polite">@layoutStatus</p>
+        <div class="sticky-actions d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary" disabled="@(busy || editorOpen)" @onclick="CancelEdit">@L["Cancel"]</button>
+            <button type="button" class="btn btn-primary" disabled="@(busy || editorOpen || !workspace.IsDirty)" @onclick="SaveAsync">@L["SaveChanges"]</button>
+        </div>
+    }
+}
+</div>
+
+<ReportCardEditorDialog AccountId="accountId" IsOpen="editorOpen" IsNew="editorNew" Card="editorCard" OnApply="ApplyCard" OnCancel="CloseEditor" />
+
+@if (deleting && page is not null)
+{
+    <div class="modal-backdrop show"></div><div class="modal d-block" role="alertdialog" aria-modal="true" aria-labelledby="delete-report-title">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h2 id="delete-report-title" class="modal-title fs-5">@L["ReportPageDelete"]</h2></div>
+    <div class="modal-body">@L["ReportPageDeleteConfirm", page.Name, page.Cards.Count]</div><div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" @onclick="() => deleting = false">@L["Cancel"]</button><button type="button" class="btn btn-danger" @onclick="DeletePageAsync">@L["Delete"]</button>
+    </div></div></div></div>
+}
+
+@code {
+    [Parameter] public Guid ReportPageId { get; set; }
+    private readonly ReportWorkspaceState workspace = new();
+    private ReportPageDto? page;
+    private IReadOnlyList<ReportPageSummaryDto> summaries = [];
+    private Guid accountId, editorPageId;
+    private ReportCardDraft? editorCard;
+    private string? loadError, operationError;
+    private bool busy, editing, conflict, deleting, editorOpen, editorNew;
+    private long workspaceGeneration;
+    private string layoutStatus = "";
+    private CancellationTokenSource? lifetime;
+    private bool IsDirty => editing && workspace.IsDirty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        lifetime?.Cancel(); lifetime?.Dispose(); lifetime = new();
+        if (UserContext.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; }
+        accountId = id; await LoadAsync(lifetime.Token);
+    }
+
+    private async Task LoadAsync(CancellationToken ct = default)
+    {
+        busy = true; loadError = null; operationError = null;
+        try { page = await Pages.GetAsync(accountId, ReportPageId, ct); summaries = await Pages.ListAsync(accountId, ct); editing = false; workspaceGeneration++; }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+        catch (UnauthorizedAccessException) { loadError = "ReportPageUnavailable"; }
+        catch { loadError = "ReportPagesLoadFailed"; }
+        finally { busy = false; }
+    }
+
+    private void BeginEdit() { if (page is null) return; workspace.Begin(page); workspaceGeneration++; editing = true; conflict = false; operationError = null; }
+    private void CancelEdit() { if (editorOpen) return; workspace.Cancel(); workspaceGeneration++; editing = false; conflict = false; }
+    private void MoveOrder(Guid pageId, Guid cardId, int direction) { workspace.MoveCardInPage(pageId, cardId, direction); layoutStatus = L["ReportLayoutUpdated"]; }
+    private void ResizeCard(Guid pageId, Guid cardId, int width, int height) { workspace.ResizeCard(pageId, cardId, width, height); layoutStatus = L["ReportLayoutUpdated"]; }
+    private void DuplicateCard(Guid pageId, Guid cardId, string name) => workspace.DuplicateCard(pageId, cardId, $"{name} {L["ReportCopySuffix"]}");
+
+    private async Task AddCardAsync(Guid pageId)
+    {
+        operationError = null;
+        try
+        {
+            ReportModuleCatalog? catalog = null;
+            foreach (var module in Enum.GetValues<ReportModule>()) { try { catalog = await Catalogs.GetAsync(accountId, module); break; } catch (UnauthorizedAccessException) { } }
+            if (catalog is null) { operationError = "ReportCardUnavailable"; return; }
+            var metric = catalog.Compatibility.Metrics.First();
+            var definition = new ReportCardDefinition(catalog.Module, 1, [], new(ReportPeriodRule.CurrentYear), metric.DateBasis,
+                metric.Metric, metric.Aggregation, null, null, ReportVisualization.KeyFigure);
+            editorPageId = pageId; editorCard = new() { ClientId = Guid.NewGuid(), Name = L["ReportCardDefaultName"], Definition = definition,
+                GridColumn = 1, GridRow = workspace.Page(pageId).Cards.Count + 1, GridWidth = 12, GridHeight = 4, SortOrder = workspace.Page(pageId).Cards.Count };
+            editorNew = true; editorOpen = true;
+        }
+        catch { operationError = "ReportCardUnavailable"; }
+    }
+
+    private void EditCard(Guid pageId, ReportCardDraft card) { editorPageId = pageId; editorCard = ReportWorkspaceState.Copy(card.Definition) is var d ? card with { Definition = d } : card; editorNew = false; editorOpen = true; }
+    private Task CloseEditor() { editorOpen = false; editorCard = null; return Task.CompletedTask; }
+    private Task ApplyCard(ReportCardDraft card)
+    {
+        if (editorNew)
+        {
+            var added = workspace.AddCard(editorPageId, card.Definition, card.Name);
+            workspace.UpdateCard(editorPageId, added.ClientId, card with { ClientId = added.ClientId, Id = null });
+        }
+        else workspace.UpdateCard(editorPageId, card.ClientId, card);
+        editorOpen = false; editorCard = null; return Task.CompletedTask;
+    }
+
+    private async Task MoveToPageAsync(Guid sourceId, Guid cardId, string? targetText)
+    {
+        if (!Guid.TryParse(targetText, out var targetId)) return;
+        try
+        {
+            if (!workspace.Pages.Any(x => x.Id == targetId)) workspace.AddSnapshot(await Pages.GetAsync(accountId, targetId));
+            workspace.MoveCard(sourceId, targetId, cardId);
+        }
+        catch (UnauthorizedAccessException) { operationError = "ReportPageUnavailable"; }
+        catch { operationError = "ReportPagesLoadFailed"; }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (editorOpen || !workspace.IsDirty) return;
+        busy = true; operationError = null; conflict = false;
+        try
+        {
+            var saved = await Pages.SaveWorkspaceAsync(accountId, workspace.BuildRequest());
+            workspace.ApplySaved(saved); page = saved.Single(x => x.Id == ReportPageId); workspaceGeneration++; editing = false;
+        }
+        catch (ReportPageConflictException) { conflict = true; }
+        catch (ReportPageValidationException ex) { operationError = ex.Message; }
+        catch (UnauthorizedAccessException) { operationError = "ReportPageUnavailable"; }
+        catch { operationError = "ReportPageSaveFailed"; }
+        finally { busy = false; }
+    }
+
+    private async Task ReloadAfterConflictAsync() { if (editorOpen) return; await LoadAsync(); conflict = false; }
+    private async Task DuplicatePageAsync()
+    {
+        if (page is null) return;
+        try { var copy = await Pages.DuplicateAsync(accountId, page.Id, page.Revision); Navigation.NavigateTo($"/reports/{copy.Id}"); }
+        catch (ReportPageConflictException) { operationError = "ReportPageConcurrency"; }
+        catch { operationError = "ReportPageSaveFailed"; }
+    }
+    private async Task DeletePageAsync()
+    {
+        if (page is null) return;
+        try { await Pages.DeleteAsync(accountId, page.Id, page.Revision); Navigation.NavigateTo("/reports"); }
+        catch (ReportPageConflictException) { operationError = "ReportPageConcurrency"; deleting = false; }
+        catch { operationError = "ReportPageDeleteFailed"; deleting = false; }
+    }
+
+    private async Task ConfirmNavigationAsync(LocationChangingContext context)
+    {
+        if (!IsDirty) return;
+        if (!await JS.InvokeAsync<bool>("confirm", L["ReportUnsavedNavigation"].Value)) context.PreventNavigation();
+    }
+    private IReadOnlyList<ReportGridItem> ViewGridItems => page is null ? [] :
+        ReportLayoutEngine.Normalize(page.Cards.Select(x => new ReportGridItem(
+            x.Id, x.GridColumn, x.GridRow, x.GridWidth, x.GridHeight, x.SortOrder)));
+    private static IReadOnlyList<ReportGridItem> DraftGridItems(ReportPageDraft draft) =>
+        draft.Cards.Select(x => new ReportGridItem(x.ClientId, x.GridColumn, x.GridRow,
+            x.GridWidth, x.GridHeight, x.SortOrder)).ToList();
+    private Task ApplyLayout(Guid pageId, ReportGridLayoutChange change)
+    {
+        if (!editing || change.Generation != workspaceGeneration) return Task.CompletedTask;
+        workspace.UpdateLayout(pageId, change);
+        layoutStatus = L["ReportLayoutUpdated"];
+        return Task.CompletedTask;
+    }
+    public void Dispose() { lifetime?.Cancel(); lifetime?.Dispose(); }
+}

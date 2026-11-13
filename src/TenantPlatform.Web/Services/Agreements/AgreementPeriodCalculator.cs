@@ -132,4 +132,21 @@ public static class AgreementPeriodCalculator
     }
 
     private static DateOnly Max(DateOnly a, DateOnly b) => a > b ? a : b;
+
+    public static List<AgreementCalculatedPeriod> CalculateInvoicePeriods(Guid agreementId,
+        AgreementDirection direction, string currency,
+        IEnumerable<AgreementLineVersion> lineVersions, IEnumerable<AgreementPriceVersion> priceVersions,
+        DateOnly from, DateOnly to,
+        IReadOnlyDictionary<Guid, List<AgreementAutomaticPrice>>? automaticPrices = null)
+    {
+        if (from > to || from.Year < 3 || to.Year > 9996 || to.DayNumber - from.DayNumber > 366)
+            throw new AgreementValidationException("FinanceInvalidRange");
+        // Annual arrears may invoice the day after the entire prior year. Calculate whole
+        // logical events, select them by invoice date, then retain every segment in the event.
+        var rows = Calculate(agreementId, direction, currency, lineVersions, priceVersions,
+            from.AddMonths(-13), to.AddMonths(13), automaticPrices);
+        var eventKeys = rows.Where(x => !x.Included && x.InvoiceDate >= from && x.InvoiceDate <= to)
+            .Select(x => x.EventKey).ToHashSet();
+        return rows.Where(x => !x.Included && eventKeys.Contains(x.EventKey)).ToList();
+    }
 }

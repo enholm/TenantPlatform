@@ -93,20 +93,6 @@ public sealed partial class LeasingService
         return new(readOnly, inherited, options);
     }
 
-    private static async Task<DimensionListFilterCatalog> LoadListDimensionFilters(TenantPlatformDbContext db, Guid account,
-        IQueryable<LeasingFramework> frameworks, IQueryable<LeasingAcquisition> acquisitions, CancellationToken ct)
-    {
-        var catalog = await AgreementCatalog(db, account, ct);
-        var enabled = catalog.Rules.Values.Where(x => x.IsEnabled).Select(x => x.DimensionId).ToHashSet();
-        var frameworkValues = db.LeasingFrameworkDimensionAssignments.AsNoTracking()
-            .Where(x => x.AccountId == account && frameworks.Any(f => f.Id == x.FrameworkId)).Select(x => new { x.DimensionId, x.ValueId });
-        var acquisitionValues = db.LeasingAcquisitionDimensionAssignments.AsNoTracking()
-            .Where(x => x.AccountId == account && acquisitions.Any(a => a.Id == x.AcquisitionId)).Select(x => new { x.DimensionId, x.ValueId });
-        var used = await frameworkValues.Concat(acquisitionValues).Distinct().ToListAsync(ct);
-        return DimensionListFilters.Catalog(catalog.Dimensions, catalog.Values, enabled,
-            used.Select(x => (x.DimensionId, x.ValueId)).ToHashSet(), CultureInfo.CurrentUICulture.Name, catalog.DefaultLanguage);
-    }
-
     public async Task<List<LeasingAgreementDimensionRule>> GetAgreementDimensionRulesAsync(Guid account, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); var (_, admin) = await Member(db, account, ct);

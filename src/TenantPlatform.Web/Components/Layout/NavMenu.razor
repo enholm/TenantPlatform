@@ -7,6 +7,14 @@
 
 @if (UserContext.Current.IsAuthenticated)
 {
+    @if (permissions.CanSeeAgreements || permissions.CanSeeLeasing)
+    {
+        <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "Reports")">
+            <summary class="sidebar-section-title">@L["ReportsTitle"]</summary>
+            <NavLink href="/reports" class="sidebar-link"><i class="bi bi-bar-chart"></i><span>@L["ReportsTitle"]</span></NavLink>
+        </details>
+    }
+
     @if (permissions.CanSeeAgreements)
     {
         <details class="sidebar-group" name="sidebar-navigation" open="@(initialGroup == "RRM")">
@@ -220,6 +228,7 @@
 
     private string? GetInitialGroup()
     {
+        if ((permissions.CanSeeAgreements || permissions.CanSeeLeasing) && IsCurrentPath("reports")) return "Reports";
         if (permissions.CanSeeLeasing && IsCurrentPath("leasing")) return "Leasing";
         if (permissions.CanSeeAgreements && IsCurrentPath("agreements"))
             return "RRM";

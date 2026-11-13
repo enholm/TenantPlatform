@@ -14,7 +14,7 @@ public sealed class DimensionListFilterSelection
 
 public sealed record DimensionListFilterValue(Guid Id, Guid? ParentId, string Name, string Code, string Path, int Depth, bool IsHistorical);
 public sealed record DimensionListFilterOption(Guid DimensionId, string Code, string Name, string? Description,
-    bool IsHistorical, List<DimensionListFilterValue> Values);
+    bool IsHistorical, bool AllowMultiple, List<DimensionListFilterValue> Values);
 public sealed record DimensionListFilterCatalog(List<DimensionListFilterOption> Dimensions);
 public sealed record DimensionListFilterCriterion(Guid DimensionId, Guid[] MatchingValueIds, bool IncludeUnspecified);
 
@@ -41,7 +41,7 @@ public static class DimensionListFilters
             }
             options.Add(new(dimension.Id, dimension.Code,
                 DimensionLocalization.Name(dimension, requestedLanguage, defaultLanguage),
-                DimensionLocalization.Description(dimension, requestedLanguage, defaultLanguage), !normal,
+                DimensionLocalization.Description(dimension, requestedLanguage, defaultLanguage), !normal, dimension.AllowMultiple,
                 paths.Where(x => included.Contains(x.Id)).Select(x => new DimensionListFilterValue(
                     x.Id, x.ParentId, x.Name, x.Code, x.Path, x.Depth, !normal || !x.IsActive)).ToList()));
         }

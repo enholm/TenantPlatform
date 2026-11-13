@@ -57,7 +57,7 @@ static class ComponentChecks
                     "Leasing administration distinguishes agreement and line rules: " + language);
 
                 var listFilterCatalog = new DimensionListFilterCatalog([
-                    new(dimension.Id, dimension.Code, name, description, false,
+                    new(dimension.Id, dimension.Code, name, description, false, dimension.AllowMultiple,
                         [new(value.Id, null, value.Name, value.Code, "Parent / " + value.Name, 1, false)])]);
                 var listFilterSelections = new List<DimensionListFilterSelection>();
                 var listFilters = await renderer.RenderComponentAsync<DimensionListFilterFields>(Parameters(
@@ -120,7 +120,7 @@ static class ComponentChecks
         {
             var filterSelections = new List<DimensionListFilterSelection>();
             var filterCatalog = new DimensionListFilterCatalog([
-                new(dimension.Id, dimension.Code, "Norsk navn", "Norsk beskrivelse", false,
+                new(dimension.Id, dimension.Code, "Norsk navn", "Norsk beskrivelse", false, dimension.AllowMultiple,
                     [new(value.Id, null, value.Name, value.Code, "Parent / " + value.Name, 1, false)])]);
             var filterHostState = new ComponentState(typeof(DimensionListFilterFields));
             filterHostState.Parameters["Catalog"] = filterCatalog; filterHostState.Parameters["Selections"] = filterSelections;

@@ -35,7 +35,9 @@ static class FinalModelChecks
         var ordered = migrations.Migrations.OrderBy(x => x.Key).ToList();
         var legacyIndex = ordered.FindIndex(x => x.Key.EndsWith("_RemoveLegacyAgreementClassifications"));
         var legacy = migrations.CreateMigration(ordered[legacyIndex].Value, db.Database.ProviderName!);
-        Verify.That(legacyIndex > 0 && ordered.Skip(legacyIndex + 1).All(x => x.Key.EndsWith("_AddLeasingAgreementDimensions")),
+        var allowedAdditiveMigrations = new[] { "_AddLeasingAgreementDimensions", "_AddReportPages" };
+        Verify.That(legacyIndex > 0 && ordered.Skip(legacyIndex + 1)
+                .All(x => allowedAdditiveMigrations.Any(suffix => x.Key.EndsWith(suffix))),
             "legacy drop remains after its additive replacement migrations; later additive features are allowed");
         var up = legacy.UpOperations;
         Verify.That(up.Count == 8 && up.Take(2).All(x => x is DropForeignKeyOperation) && up.Skip(2).Take(2).All(x => x is DropIndexOperation) && up.Skip(4).Take(2).All(x => x is DropColumnOperation) && up.Skip(6).All(x => x is DropTableOperation), "new Up contains only two FKs, two indexes, two columns, then two tables");

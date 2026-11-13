@@ -1,0 +1,145 @@
+@page "/reports"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@rendermode InteractiveServer
+@using TenantPlatform.Web.Security.CurrentUserContext
+@using TenantPlatform.Web.Services.Reports
+@inject ICurrentUserContextService UserContext
+@inject IReportPageService Pages
+@inject NavigationManager Navigation
+
+<PageTitle>@L["ReportsTitle"]</PageTitle>
+<div class="page-workspace">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h1 class="mb-0">@L["ReportsTitle"]</h1>
+        <button type="button" class="btn btn-primary" @onclick="OpenCreate">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> @L["ReportPageCreate"]
+        </button>
+    </div>
+
+    @if (busy)
+    {
+        <p role="status">@L["Loading"]</p>
+    }
+    else if (errorKey is not null)
+    {
+        <div class="alert alert-danger" role="alert">@L[errorKey]</div>
+    }
+    else if (pages.Count == 0)
+    {
+        <div class="alert alert-info">@L["ReportPagesEmpty"]</div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var item in pages)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <article class="card h-100">
+                        <div class="card-body">
+                            <h2 class="h5"><a href="@($"/reports/{item.Id}")">@item.Name</a></h2>
+                            <p class="text-body-secondary mb-0">@L["ReportCardCount", item.CardCount]</p>
+                        </div>
+                        <div class="card-footer bg-transparent d-flex gap-2">
+                            <a class="btn btn-outline-primary btn-sm" href="@($"/reports/{item.Id}")">@L["Open"]</a>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@busy" @onclick="() => DuplicateAsync(item)">@L["Duplicate"]</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" disabled="@busy" @onclick="() => ConfirmDelete(item)">@L["Delete"]</button>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (creating)
+{
+    <div class="modal-backdrop show"></div>
+    <div class="modal d-block" role="dialog" aria-modal="true" aria-labelledby="report-create-title">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h2 id="report-create-title" class="modal-title fs-5">@L["ReportPageCreate"]</h2></div>
+            <div class="modal-body">
+                <label class="form-label" for="report-page-name">@L["Name"]</label>
+                <input id="report-page-name" class="form-control" maxlength="200" @bind="newName" autofocus />
+                @if (dialogError is not null) { <div class="text-danger mt-2" role="alert">@L[dialogError]</div> }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" @onclick="CloseDialogs">@L["Cancel"]</button>
+                <button type="button" class="btn btn-primary" disabled="@busy" @onclick="CreateAsync">@L["Create"]</button>
+            </div>
+        </div></div>
+    </div>
+}
+
+@if (deleteItem is not null)
+{
+    <div class="modal-backdrop show"></div>
+    <div class="modal d-block" role="alertdialog" aria-modal="true" aria-labelledby="report-delete-title" aria-describedby="report-delete-description">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h2 id="report-delete-title" class="modal-title fs-5">@L["ReportPageDelete"]</h2></div>
+            <div class="modal-body" id="report-delete-description">@L["ReportPageDeleteConfirm", deleteItem.Name, deleteItem.CardCount]</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" @onclick="CloseDialogs">@L["Cancel"]</button>
+                <button type="button" class="btn btn-danger" disabled="@busy" @onclick="DeleteAsync">@L["Delete"]</button>
+            </div>
+        </div></div>
+    </div>
+}
+
+@code {
+    private Guid accountId;
+    private IReadOnlyList<ReportPageSummaryDto> pages = [];
+    private ReportPageSummaryDto? deleteItem;
+    private string newName = "";
+    private string? errorKey, dialogError;
+    private bool busy = true, creating;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserContext.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; }
+        accountId = id;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        busy = true; errorKey = null;
+        try { pages = await Pages.ListAsync(accountId); }
+        catch (UnauthorizedAccessException) { Navigation.NavigateTo("/access-denied"); }
+        catch { errorKey = "ReportPagesLoadFailed"; }
+        finally { busy = false; }
+    }
+
+    private void OpenCreate() { creating = true; newName = ""; dialogError = null; }
+    private void ConfirmDelete(ReportPageSummaryDto item) { deleteItem = item; dialogError = null; }
+    private void CloseDialogs() { creating = false; deleteItem = null; dialogError = null; }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newName)) { dialogError = "ReportNameRequired"; return; }
+        busy = true;
+        try { var created = await Pages.CreateAsync(accountId, new(newName)); Navigation.NavigateTo($"/reports/{created.Id}"); }
+        catch (ReportPageValidationException ex) { dialogError = ex.Message; }
+        catch { dialogError = "ReportPageSaveFailed"; }
+        finally { busy = false; }
+    }
+
+    private async Task DuplicateAsync(ReportPageSummaryDto item)
+    {
+        busy = true; errorKey = null;
+        try { var copy = await Pages.DuplicateAsync(accountId, item.Id, item.Revision); Navigation.NavigateTo($"/reports/{copy.Id}"); }
+        catch (ReportPageConflictException) { errorKey = "ReportPageConcurrency"; }
+        catch { errorKey = "ReportPageSaveFailed"; }
+        finally { busy = false; }
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (deleteItem is null) return;
+        busy = true;
+        try { await Pages.DeleteAsync(accountId, deleteItem.Id, deleteItem.Revision); CloseDialogs(); await LoadAsync(); }
+        catch (ReportPageConflictException) { dialogError = "ReportPageConcurrency"; }
+        catch { dialogError = "ReportPageDeleteFailed"; }
+        finally { busy = false; }
+    }
+}

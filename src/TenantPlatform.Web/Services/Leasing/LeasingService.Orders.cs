@@ -51,11 +51,9 @@ public sealed partial class LeasingService
     }
     private static async Task<LeasingCapacity> Capacity(TenantPlatformDbContext db, LeasingFramework f, CancellationToken ct)
     {
-        var acquisitions = db.LeasingAcquisitions.Where(x => x.AccountId == f.AccountId &&
-            x.FrameworkId == f.Id && x.Status == LeasingAcquisitionStatus.Registered);
-        var usedNet = await acquisitions.SumAsync(x => x.NetTotal - x.ReleasedNetTotal, ct);
-        var usedVat = await acquisitions.SumAsync(x => x.VatTotal - x.ReleasedVatTotal, ct);
-        return new(f.LimitNet, f.LimitVat, usedNet, usedVat,
+        var used = (await LeasingCapacityQuery.UsedByFrameworkAsync(db, f.AccountId, [f.Id], ct))
+            .GetValueOrDefault(f.Id, new(f.Id, 0, 0));
+        return new(f.LimitNet, f.LimitVat, used.Net, used.Vat,
             await Reserved(db, f.AccountId, f.Id, false, ct),
             await Reserved(db, f.AccountId, f.Id, true, ct));
     }

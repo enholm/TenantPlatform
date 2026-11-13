@@ -3284,4 +3284,154 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="LeasingAgreementDimensionsInherited" xml:space="preserve"><value>Dimensjonsvalgene arves fra rammeavtalen og kan ikke overstyres.</value></data>
   <data name="DimensionFilterHelp" xml:space="preserve"><value>Velg én verdi per dimensjon. Aktive dimensjonsfiltre kombineres med OG. Valg av en forelder inkluderer etterkommere.</value></data>
   <data name="DimensionFilterUnspecified" xml:space="preserve"><value>Ikke angitt</value></data>
+  <data name="LeasingStandaloneAcquisitions" xml:space="preserve"><value>Frittstående anskaffelser</value></data>
+  <data name="ReportFilterInvalid" xml:space="preserve"><value>Rapportfilteret inneholder et ugyldig eller utilgjengelig valg.</value></data>
+  <data name="ReportPeriodInvalid" xml:space="preserve"><value>Rapportperioden er ugyldig eller ufullstendig.</value></data>
+  <data name="ReportTimeGroupingInvalid" xml:space="preserve"><value>Tidsgrupperingen er ugyldig.</value></data>
+  <data name="ReportDefinitionInvalid" xml:space="preserve"><value>Rapportdefinisjonen er ugyldig.</value></data>
+  <data name="ReportDefinitionUnsupported" xml:space="preserve"><value>Rapportdefinisjonen inneholder valg som ikke støttes ennå.</value></data>
+  <data name="ReportPageConcurrency" xml:space="preserve"><value>Rapportsiden er endret av en annen bruker. Last inn på nytt før du lagrer.</value></data>
+  <data name="ReportMetricAgreementCount" xml:space="preserve"><value>Antall avtaler</value></data>
+  <data name="ReportMetricAgreementIncome" xml:space="preserve"><value>Kontraktsinntekt på fakturadato</value></data>
+  <data name="ReportMetricAgreementCost" xml:space="preserve"><value>Kontraktskostnad på fakturadato</value></data>
+  <data name="ReportMetricLeasingFrameworkCount" xml:space="preserve"><value>Antall rammeavtaler</value></data>
+  <data name="ReportMetricLeasingAcquisitionCount" xml:space="preserve"><value>Antall anskaffelser</value></data>
+  <data name="ReportMetricLeasingOriginalNet" xml:space="preserve"><value>Original kjøpsverdi – netto</value></data>
+  <data name="ReportMetricLeasingOriginalVat" xml:space="preserve"><value>Original kjøpsverdi – MVA</value></data>
+  <data name="ReportMetricLeasingOriginalGross" xml:space="preserve"><value>Original kjøpsverdi – brutto</value></data>
+  <data name="ReportMetricLeasingAdjustedNet" xml:space="preserve"><value>Kjøpsverdi etter kreditnota/reversering – netto</value></data>
+  <data name="ReportMetricLeasingAdjustedVat" xml:space="preserve"><value>Kjøpsverdi etter kreditnota/reversering – MVA</value></data>
+  <data name="ReportMetricLeasingAdjustedGross" xml:space="preserve"><value>Kjøpsverdi etter kreditnota/reversering – brutto</value></data>
+  <data name="ReportMetricLeasingCapacityNet" xml:space="preserve"><value>Kapasitetsforbruk etter frigivelse – netto</value></data>
+  <data name="ReportMetricLeasingCapacityVat" xml:space="preserve"><value>Kapasitetsforbruk etter frigivelse – MVA</value></data>
+  <data name="ReportMetricLeasingCapacityGross" xml:space="preserve"><value>Kapasitetsforbruk etter frigivelse – brutto</value></data>
+  <data name="ReportDateBasisAgreementPeriodOverlap" xml:space="preserve"><value>Avtaleperioden overlapper rapportperioden</value></data>
+  <data name="ReportDateBasisAgreementInvoiceDate" xml:space="preserve"><value>Beregnet fakturadato</value></data>
+  <data name="ReportDateBasisLeasingFrameworkAcquisitionWindowOverlap" xml:space="preserve"><value>Rammeavtalens anskaffelsesperiode overlapper rapportperioden</value></data>
+  <data name="ReportDateBasisLeasingAcquisitionPurchaseDate" xml:space="preserve"><value>Anskaffelsens kjøpsdato</value></data>
+  <data name="ReportAggregationCountDistinct" xml:space="preserve"><value>Unikt antall</value></data>
+  <data name="ReportAggregationSum" xml:space="preserve"><value>Sum</value></data>
+  <data name="ReportVisualizationKeyFigure" xml:space="preserve"><value>Nøkkeltall</value></data>
+  <data name="ReportVisualizationBar" xml:space="preserve"><value>Stolpediagram</value></data>
+  <data name="ReportVisualizationLine" xml:space="preserve"><value>Linjediagram</value></data>
+  <data name="ReportVisualizationDonut" xml:space="preserve"><value>Donutdiagram</value></data>
+  <data name="ReportVisualizationTable" xml:space="preserve"><value>Tabell</value></data>
+  <data name="ReportVisualizationRelationshipTree" xml:space="preserve"><value>Sammenhengstre</value></data>
+  <data name="ReportGrainAgreement" xml:space="preserve"><value>Avtale</value></data>
+  <data name="ReportGrainAgreementFinancialPeriod" xml:space="preserve"><value>Økonomisk avtaleperiode</value></data>
+  <data name="ReportGrainLeasingFramework" xml:space="preserve"><value>Leasing-rammeavtale</value></data>
+  <data name="ReportGrainLeasingAcquisition" xml:space="preserve"><value>Leasing-anskaffelse</value></data>
+  <data name="ReportGrainRelationship" xml:space="preserve"><value>Relasjon</value></data>
+  <data name="ReportDefinitionModuleInvalid" xml:space="preserve"><value>Rapportmodulen er ugyldig.</value></data>
+  <data name="ReportDefinitionMetricInvalid" xml:space="preserve"><value>Velg et gyldig måltall for modulen.</value></data>
+  <data name="ReportDefinitionDateBasisInvalid" xml:space="preserve"><value>Datogrunnlaget er ikke gyldig for måltallet.</value></data>
+  <data name="ReportDefinitionAggregationInvalid" xml:space="preserve"><value>Summeringsmetoden er ikke gyldig for måltallet.</value></data>
+  <data name="ReportDefinitionVisualizationInvalid" xml:space="preserve"><value>Visualiseringen er ikke gyldig for rapportdefinisjonen.</value></data>
+  <data name="ReportDefinitionFilterGrainInvalid" xml:space="preserve"><value>Et filter passer ikke til måltallets posttype.</value></data>
+  <data name="ReportDefinitionGroupingInvalid" xml:space="preserve"><value>Grupperingen er ugyldig eller utilgjengelig.</value></data>
+  <data name="ReportDefinitionGroupingGrainInvalid" xml:space="preserve"><value>Grupperingen passer ikke til måltallets posttype.</value></data>
+  <data name="ReportDefinitionGroupingExclusive" xml:space="preserve"><value>Velg enten tidsgruppering eller kategorigruppering, ikke begge.</value></data>
+  <data name="ReportDefinitionTimeGroupingInvalid" xml:space="preserve"><value>Tidsgrupperingen støttes ikke for dette måltallet.</value></data>
+  <data name="ReportDefinitionKeyFigureGrouping" xml:space="preserve"><value>Et nøkkeltall kan ikke ha gruppering.</value></data>
+  <data name="ReportDefinitionLineTimeGrouping" xml:space="preserve"><value>Et linjediagram krever tidsgruppering.</value></data>
+  <data name="ReportDefinitionBarGrouping" xml:space="preserve"><value>Et stolpediagram krever én tids- eller kategorigruppering.</value></data>
+  <data name="ReportDefinitionDonutUnsafe" xml:space="preserve"><value>Donutdiagrammet krever en additiv, ikke-monetær kategorigruppering uten flervalgsfordeling.</value></data>
+  <data name="ReportDefinitionTreeMetric" xml:space="preserve"><value>Et sammenhengstre bruker ikke måltall eller summeringsmetode.</value></data>
+  <data name="ReportDefinitionTreeGrouping" xml:space="preserve"><value>Et sammenhengstre bruker ikke aggregeringsgruppering.</value></data>
+  <data name="ReportDefinitionNormalized" xml:space="preserve"><value>Valget ble fjernet fordi det ikke er kompatibelt med de øvrige rapportvalgene.</value></data>
+  <data name="ReportResultCurrencyMissing" xml:space="preserve"><value>Resultatet mangler en gyldig valuta.</value></data>
+  <data name="ReportResultCurrencyMixed" xml:space="preserve"><value>Beløp i ulike valutaer må holdes i separate resultater eller serier.</value></data>
+  <data name="ReportResultKeyFigureCurrency" xml:space="preserve"><value>Et nøkkeltall med beløp krever nøyaktig én valuta.</value></data>
+  <data name="ReportResultDonutUnsafe" xml:space="preserve"><value>Resultatet kan ikke vises som donut fordi det har negative eller overlappende grupper.</value></data>
+  <data name="ReportExecutionInvalidPage" xml:space="preserve"><value>Tabellsiden eller sidestørrelsen er ugyldig.</value></data>
+  <data name="ReportExecutionUnsupportedModule" xml:space="preserve"><value>Rapportkjøring for denne modulen er ikke tilgjengelig ennå.</value></data>
+  <data name="ReportExecutionUnsupportedVisualization" xml:space="preserve"><value>Denne visualiseringen kan ikke kjøres i dette rapportsteget.</value></data>
+  <data name="ReportExecutionUnsupportedMetric" xml:space="preserve"><value>Måltallet kan ikke kjøres i denne rapportmodulen.</value></data>
+  <data name="ReportExecutionUnsupportedGrouping" xml:space="preserve"><value>Grupperingen kan ikke kjøres for dette måltallet.</value></data>
+  <data name="ReportExecutionTooBroad" xml:space="preserve"><value>Rapportutvalget er for stort. Snevr inn periode eller filtre.</value></data>
+  <data name="ReportRestrictionOverlapTotalsUnique" xml:space="preserve"><value>Unik total beregnes for hele perioden. Tidsbøtter som overlapper kan ikke summeres til denne totalen.</value></data>
+  <data name="ReportRestrictionCurrencySeparated" xml:space="preserve"><value>Beløp vises og summeres separat per valuta.</value></data>
+  <data name="ReportRestrictionGroupsNonAdditive" xml:space="preserve"><value>En post kan inngå i flere grupper. Gruppesummene kan ikke summeres til den unike totalen.</value></data>
+  <data name="ReportRestrictionCurrentSnapshot" xml:space="preserve"><value>Kapasitetsforbruk er et nåbilde for rammeavtaler som overlapper perioden, ikke en historisk tidsserie.</value></data>
+  <data name="ReportsTitle" xml:space="preserve"><value>Rapporter</value></data>
+  <data name="ReportPageCreate" xml:space="preserve"><value>Opprett rapportside</value></data>
+  <data name="ReportPageEdit" xml:space="preserve"><value>Rediger side</value></data>
+  <data name="ReportPageDelete" xml:space="preserve"><value>Slett rapportside</value></data>
+  <data name="ReportPageDeleteConfirm" xml:space="preserve"><value>Vil du slette «{0}» med {1} rapportkort?</value></data>
+  <data name="ReportPagesEmpty" xml:space="preserve"><value>Du har ingen rapportsider ennå.</value></data>
+  <data name="ReportPageEmpty" xml:space="preserve"><value>Rapportsiden har ingen kort.</value></data>
+  <data name="ReportPageName" xml:space="preserve"><value>Navn på rapportside</value></data>
+  <data name="ReportCardCount" xml:space="preserve"><value>{0} rapportkort</value></data>
+  <data name="ReportCardAdd" xml:space="preserve"><value>Legg til rapportkort</value></data>
+  <data name="ReportCardEdit" xml:space="preserve"><value>Rediger rapportkort</value></data>
+  <data name="ReportCardDefaultName" xml:space="preserve"><value>Nytt rapportkort</value></data>
+  <data name="ReportCardApply" xml:space="preserve"><value>Bruk endringer</value></data>
+  <data name="ReportCardApplyHelp" xml:space="preserve"><value>Endringene lagres bare i arbeidskopien til du lagrer hele siden.</value></data>
+  <data name="ReportWorkspaceSaveHelp" xml:space="preserve"><value>Kortendringer og flytting lagres samlet først når du velger Lagre endringer.</value></data>
+  <data name="ReportUnsavedNavigation" xml:space="preserve"><value>Du har ulagrede endringer. Vil du forlate siden og forkaste dem?</value></data>
+  <data name="ReportDiscardAndReload" xml:space="preserve"><value>Forkast og last inn på nytt</value></data>
+  <data name="ReportCopySuffix" xml:space="preserve"><value>(kopi)</value></data>
+  <data name="ReportMoveToPage" xml:space="preserve"><value>Flytt til side</value></data>
+  <data name="ReportMoveUp" xml:space="preserve"><value>Flytt {0} opp</value></data>
+  <data name="ReportMoveDown" xml:space="preserve"><value>Flytt {0} ned</value></data>
+  <data name="ReportChoose" xml:space="preserve"><value>Velg</value></data>
+  <data name="ReportModule" xml:space="preserve"><value>Modul</value></data>
+  <data name="ReportModuleAgreements" xml:space="preserve"><value>Avtaler</value></data>
+  <data name="ReportModuleLeasing" xml:space="preserve"><value>Leasing</value></data>
+  <data name="ReportVisualization" xml:space="preserve"><value>Visualisering</value></data>
+  <data name="ReportMetric" xml:space="preserve"><value>Måltall</value></data>
+  <data name="ReportDateBasis" xml:space="preserve"><value>Datogrunnlag</value></data>
+  <data name="ReportAggregation" xml:space="preserve"><value>Summering</value></data>
+  <data name="ReportGrouping" xml:space="preserve"><value>Gruppering</value></data>
+  <data name="ReportNoGrouping" xml:space="preserve"><value>Ingen gruppering</value></data>
+  <data name="ReportTimeGrouping" xml:space="preserve"><value>Tidsgruppering</value></data>
+  <data name="ReportCategoryGrouping" xml:space="preserve"><value>Kategorigruppering</value></data>
+  <data name="ReportPeriod" xml:space="preserve"><value>Periode</value></data>
+  <data name="ReportSettingsReset" xml:space="preserve"><value>Disse innstillingene ble tilbakestilt</value></data>
+  <data name="ReportNoData" xml:space="preserve"><value>Ingen data i valgt periode.</value></data>
+  <data name="ReportGroupedResults" xml:space="preserve"><value>Grupperte resultater</value></data>
+  <data name="ReportTimeResults" xml:space="preserve"><value>Resultater over tid</value></data>
+  <data name="ReportDetailRows" xml:space="preserve"><value>Detaljrader</value></data>
+  <data name="ReportGroupOrPeriod" xml:space="preserve"><value>Gruppe eller periode</value></data>
+  <data name="ReportUniqueRecords" xml:space="preserve"><value>Unike poster</value></data>
+  <data name="ReportChartTableFallback" xml:space="preserve"><value>Dataene finnes også i den tilgjengelige tabellen.</value></data>
+  <data name="ReportTreeDeferred" xml:space="preserve"><value>Sammenhengstrær kommer i et senere steg. Definisjonen er bevart.</value></data>
+  <data name="ReportUnitCount" xml:space="preserve"><value>antall</value></data>
+  <data name="ReportUnitAmount" xml:space="preserve"><value>beløp</value></data>
+  <data name="ReportUnknown" xml:space="preserve"><value>Ukjent</value></data>
+  <data name="ReportPagesLoadFailed" xml:space="preserve"><value>Rapportsidene kunne ikke lastes.</value></data>
+  <data name="ReportPageSaveFailed" xml:space="preserve"><value>Rapportsiden kunne ikke lagres.</value></data>
+  <data name="ReportPageDeleteFailed" xml:space="preserve"><value>Rapportsiden kunne ikke slettes.</value></data>
+  <data name="ReportPageUnavailable" xml:space="preserve"><value>Rapportsiden finnes ikke, eller du har ikke tilgang.</value></data>
+  <data name="ReportCardUnavailable" xml:space="preserve"><value>Rapportkortet bruker en modul du ikke har tilgang til.</value></data>
+  <data name="ReportCardInvalid" xml:space="preserve"><value>Rapportkortet har en ugyldig definisjon.</value></data>
+  <data name="ReportCardLoadFailed" xml:space="preserve"><value>Rapportkortet kunne ikke kjøres.</value></data>
+  <data name="ReportNameRequired" xml:space="preserve"><value>Navn må fylles ut.</value></data>
+  <data name="Duplicate" xml:space="preserve"><value>Dupliser</value></data>
+  <data name="Filters" xml:space="preserve"><value>Filtre</value></data>
+  <data name="Reference" xml:space="preserve"><value>Referanse</value></data>
+  <data name="SaveChanges" xml:space="preserve"><value>Lagre endringer</value></data>
+  <data name="Value" xml:space="preserve"><value>Verdi</value></data>
+  <data name="ReportPeriodCurrentMonth" xml:space="preserve"><value>Inneværende måned</value></data><data name="ReportPeriodPreviousMonth" xml:space="preserve"><value>Forrige måned</value></data><data name="ReportPeriodNextMonth" xml:space="preserve"><value>Neste måned</value></data>
+  <data name="ReportPeriodCurrentQuarter" xml:space="preserve"><value>Inneværende kvartal</value></data><data name="ReportPeriodPreviousQuarter" xml:space="preserve"><value>Forrige kvartal</value></data><data name="ReportPeriodNextQuarter" xml:space="preserve"><value>Neste kvartal</value></data>
+  <data name="ReportPeriodCurrentTertial" xml:space="preserve"><value>Inneværende tertial</value></data><data name="ReportPeriodPreviousTertial" xml:space="preserve"><value>Forrige tertial</value></data><data name="ReportPeriodNextTertial" xml:space="preserve"><value>Neste tertial</value></data>
+  <data name="ReportPeriodCurrentHalfYear" xml:space="preserve"><value>Inneværende halvår</value></data><data name="ReportPeriodPreviousHalfYear" xml:space="preserve"><value>Forrige halvår</value></data><data name="ReportPeriodNextHalfYear" xml:space="preserve"><value>Neste halvår</value></data>
+  <data name="ReportPeriodCurrentYear" xml:space="preserve"><value>Inneværende år</value></data><data name="ReportPeriodPreviousYear" xml:space="preserve"><value>Forrige år</value></data><data name="ReportPeriodNextYear" xml:space="preserve"><value>Neste år</value></data>
+  <data name="ReportPeriodYearToDate" xml:space="preserve"><value>Hittil i år</value></data><data name="ReportPeriodRolling12Months" xml:space="preserve"><value>Siste 12 måneder</value></data><data name="ReportPeriodCustom" xml:space="preserve"><value>Egendefinert</value></data>
+  <data name="ReportTimeGroupingMonth" xml:space="preserve"><value>Måned</value></data><data name="ReportTimeGroupingQuarter" xml:space="preserve"><value>Kvartal</value></data><data name="ReportTimeGroupingTertial" xml:space="preserve"><value>Tertial</value></data><data name="ReportTimeGroupingHalfYear" xml:space="preserve"><value>Halvår</value></data><data name="ReportTimeGroupingYear" xml:space="preserve"><value>År</value></data>
+  <data name="ReportFieldModule" xml:space="preserve"><value>modul</value></data><data name="ReportFieldFilters" xml:space="preserve"><value>filtre</value></data><data name="ReportFieldDateBasis" xml:space="preserve"><value>datogrunnlag</value></data><data name="ReportFieldMetric" xml:space="preserve"><value>måltall</value></data><data name="ReportFieldAggregation" xml:space="preserve"><value>summering</value></data><data name="ReportFieldGrouping" xml:space="preserve"><value>gruppering</value></data><data name="ReportFieldTimeGrouping" xml:space="preserve"><value>tidsgruppering</value></data><data name="ReportFieldVisualization" xml:space="preserve"><value>visualisering</value></data>
+  <data name="ReportChartAria" xml:space="preserve"><value>Diagram for {0}. Dataene finnes også i tabellen nedenfor.</value></data>
+  <data name="ReportChartNonAdditive" xml:space="preserve"><value>Gruppene kan overlappe. Ikke summer søylene eller punktene som en unik total.</value></data>
+  <data name="ReportChartInvalid" xml:space="preserve"><value>Resultatet kan ikke vises trygt som valgt diagram.</value></data>
+  <data name="ReportChartInvalidDonut" xml:space="preserve"><value>Donutdiagram krever én additiv serie uten negative verdier, overlapp eller blandede valutaer.</value></data>
+  <data name="ReportChartUnsupported" xml:space="preserve"><value>Denne diagramtypen støttes ikke.</value></data>
+  <data name="ReportChartLoadFailed" xml:space="preserve"><value>Diagrammet kunne ikke lastes. Dataene er fortsatt tilgjengelige i tabellen.</value></data>
+  <data name="ReportDragCard" xml:space="preserve"><value>Dra rapportkortet</value></data>
+  <data name="ReportResizeCard" xml:space="preserve"><value>Endre størrelsen på rapportkortet</value></data>
+  <data name="ReportLayoutUpdated" xml:space="preserve"><value>Oppsettet i arbeidskopien er oppdatert.</value></data>
+  <data name="ReportResizeNarrower" xml:space="preserve"><value>Gjør {0} smalere</value></data>
+  <data name="ReportResizeWider" xml:space="preserve"><value>Gjør {0} bredere</value></data>
+  <data name="ReportResizeShorter" xml:space="preserve"><value>Gjør {0} lavere</value></data>
+  <data name="ReportResizeTaller" xml:space="preserve"><value>Gjør {0} høyere</value></data>
+  <data name="ReportResizeKeyboardGroup" xml:space="preserve"><value>Endre størrelsen på {0} med tastaturet</value></data>
 </root>

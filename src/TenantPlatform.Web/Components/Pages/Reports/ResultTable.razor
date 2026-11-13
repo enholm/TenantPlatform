@@ -1,0 +1,18 @@
+<div class="table-responsive mt-3">
+    <table class="table table-sm align-middle mb-0">
+        <caption>@Caption</caption>
+        <thead>
+            <tr>
+                <th>@L["ReportGroupOrPeriod"]</th>
+                <th>@L["Value"]</th>
+                <th>@L["ReportUniqueRecords"]</th>
+            </tr>
+        </thead>
+        <tbody>@ChildContent</tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Caption { get; set; } = "";
+    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = null!;
+}

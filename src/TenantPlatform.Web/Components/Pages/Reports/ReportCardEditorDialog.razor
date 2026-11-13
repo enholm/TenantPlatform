@@ -1,0 +1,466 @@
+@using TenantPlatform.Core.Reports
+@using TenantPlatform.Web.Services.Reports
+@inject IReportCatalogService Catalogs
+@inject IReportDefinitionCompatibilityValidator Compatibility
+
+@if (IsOpen && model is not null)
+{
+    <div class="modal-backdrop show"></div>
+    <div class="modal d-block" role="dialog" aria-modal="true" aria-labelledby="report-card-editor-title" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <EditForm EditContext="editContext" OnValidSubmit="ApplyAsync" FormName="report-card-editor" class="report-editor-form">
+                    <div class="modal-header">
+                        <h2 id="report-card-editor-title" class="modal-title fs-5">@L[IsNew ? "ReportCardAdd" : "ReportCardEdit"]</h2>
+                        <button type="button" class="btn-close" aria-label="@L["Cancel"]" @onclick="CancelAsync"></button>
+                    </div>
+                    <fieldset class="report-editor-fieldset" disabled="@busy">
+                        <div class="modal-body">
+                            @if (loading)
+                            {
+                                <p role="status">@L["Loading"]</p>
+                            }
+                            else if (catalog is not null)
+                            {
+                                @if (normalizationFields.Count > 0)
+                                {
+                                    <div class="alert alert-info" role="status">
+                                        @L["ReportSettingsReset"]:
+                                        @string.Join(", ", normalizationFields.Select(FieldLabel))
+                                    </div>
+                                }
+                                @if (issues.Count > 0)
+                                {
+                                    <div class="alert alert-danger" role="alert">
+                                        <ul class="mb-0">
+                                            @foreach (var issue in issues)
+                                            {
+                                                <li>@L[issue.ResourceKey]</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                }
+
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label" for="report-card-name">@L["Name"]</label>
+                                        <InputText id="report-card-name" class="form-control" @bind-Value="model.Name" maxlength="200" autofocus />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="report-card-module">@L["ReportModule"]</label>
+                                        <select id="report-card-module" class="form-select" value="@((int)model.Module)" @onchange="ModuleChangedAsync">
+                                            @foreach (var module in Enum.GetValues<ReportModule>())
+                                            {
+                                                <option value="@((int)module)">@L[$"ReportModule{module}"]</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="report-card-visualization">@L["ReportVisualization"]</label>
+                                        <select id="report-card-visualization" class="form-select" value="@EnumValue(model.Visualization)" @onchange="VisualizationChanged">
+                                            <option value="">@L["ReportChoose"]</option>
+                                            @foreach (var option in catalog.Compatibility.Visualizations)
+                                            {
+                                                <option value="@((int)option.Id)">@L[option.LabelResourceKey]</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="report-card-metric">@L["ReportMetric"]</label>
+                                        <select id="report-card-metric" class="form-select" value="@EnumValue(model.Metric)" @onchange="MetricChanged">
+                                            <option value="">@L["ReportChoose"]</option>
+                                            @foreach (var metric in catalog.Compatibility.Metrics)
+                                            {
+                                                <option value="@((int)metric.Metric)">@L[metric.LabelResourceKey]</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="report-card-date-basis">@L["ReportDateBasis"]</label>
+                                        <select id="report-card-date-basis" class="form-select" @bind="model.DateBasisText">
+                                            <option value="">@L["ReportChoose"]</option>
+                                            @foreach (var option in catalog.Compatibility.DateBases)
+                                            {
+                                                <option value="@((int)option.Id)">@L[option.LabelResourceKey]</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="report-card-aggregation">@L["ReportAggregation"]</label>
+                                        <select id="report-card-aggregation" class="form-select" @bind="model.AggregationText">
+                                            <option value="">@L["ReportChoose"]</option>
+                                            @foreach (var option in catalog.Compatibility.Aggregations)
+                                            {
+                                                <option value="@((int)option.Id)">@L[option.LabelResourceKey]</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="report-card-grouping">@L["ReportGrouping"]</label>
+                                        <select id="report-card-grouping" class="form-select" @bind="model.GroupingText">
+                                            <option value="">@L["ReportNoGrouping"]</option>
+                                            <optgroup label="@L["ReportTimeGrouping"]">
+                                                @foreach (var grouping in Enum.GetValues<ReportTimeGrouping>())
+                                                {
+                                                    <option value="@($"time:{(int)grouping}")">@L[$"ReportTimeGrouping{grouping}"]</option>
+                                                }
+                                            </optgroup>
+                                            <optgroup label="@L["ReportCategoryGrouping"]">
+                                                @foreach (var grouping in catalog.Groupings)
+                                                {
+                                                    <option value="@GroupingValue(grouping.Key)">@CatalogLabel(grouping.Label)</option>
+                                                }
+                                            </optgroup>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="report-card-period">@L["ReportPeriod"]</label>
+                                        <select id="report-card-period" class="form-select" @bind="model.PeriodRule">
+                                            @foreach (var rule in Enum.GetValues<ReportPeriodRule>())
+                                            {
+                                                <option value="@rule">@L[$"ReportPeriod{rule}"]</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    @if (model.PeriodRule == ReportPeriodRule.Custom)
+                                    {
+                                        <div class="col-md-3">
+                                            <label class="form-label" for="report-card-from">@L["PaymentFrom"]</label>
+                                            <InputDate id="report-card-from" class="form-control" @bind-Value="model.CustomFrom" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label" for="report-card-to">@L["PaymentTo"]</label>
+                                            <InputDate id="report-card-to" class="form-control" @bind-Value="model.CustomTo" />
+                                        </div>
+                                    }
+                                </div>
+
+                                <fieldset class="mt-4">
+                                    <legend class="h6">@L["Filters"]</legend>
+                                    <div class="row g-3">
+                                        @foreach (var filter in filterInputs)
+                                        {
+                                            <div class="col-md-6" @key="filter.Definition.Key">
+                                                <label class="form-label" for="@filter.Id">@CatalogLabel(filter.Definition.Label)</label>
+                                                @if (filter.Definition.ValueKind == ReportFilterValueKind.Text)
+                                                {
+                                                    <input id="@filter.Id" class="form-control" value="@filter.Text" @oninput="e => filter.Text = e.Value?.ToString() ?? string.Empty" />
+                                                }
+                                                else
+                                                {
+                                                    <select id="@filter.Id" class="form-select" @bind="filter.OptionIndex">
+                                                        <option value="-1">@L["AgreementAll"]</option>
+                                                        @for (var i = 0; i < filter.Definition.Options.Count; i++)
+                                                        {
+                                                            var option = filter.Definition.Options[i];
+                                                            <option value="@i">@CatalogLabel(option.Label)</option>
+                                                        }
+                                                    </select>
+                                                }
+                                            </div>
+                                        }
+                                        @foreach (var dimension in dimensionInputs)
+                                        {
+                                            <div class="col-md-6" @key="dimension.Definition.Key">
+                                                <label class="form-label" for="@dimension.Id">@dimension.Definition.Definition.Name</label>
+                                                <select id="@dimension.Id" class="form-select" @bind="dimension.Value">
+                                                    <option value="">@L["AgreementAll"]</option>
+                                                    <option value="unspecified">@L["DashboardUnspecified"]</option>
+                                                    @foreach (var value in dimension.Definition.Definition.Values)
+                                                    {
+                                                        <option value="@value.Id.ToString("N")">@value.Path</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        }
+                                    </div>
+                                </fieldset>
+                                <p class="small text-body-secondary mt-4 mb-0">@L["ReportCardApplyHelp"]</p>
+                            }
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" @onclick="CancelAsync">@L["Cancel"]</button>
+                            <button type="submit" class="btn btn-primary" disabled="@loading">@L["ReportCardApply"]</button>
+                        </div>
+                    </fieldset>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public Guid AccountId { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public bool IsNew { get; set; }
+    [Parameter] public ReportCardDraft? Card { get; set; }
+    [Parameter] public EventCallback<ReportCardDraft> OnApply { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private ReportCardForm? model;
+    private EditContext? editContext;
+    private ReportModuleCatalog? catalog;
+    private List<FilterInput> filterInputs = [];
+    private List<DimensionInput> dimensionInputs = [];
+    private List<ReportValidationIssue> issues = [];
+    private List<string> normalizationFields = [];
+    private Guid? copiedClientId;
+    private bool loading;
+    private bool busy;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsOpen || Card is null || copiedClientId == Card.ClientId) return;
+        copiedClientId = Card.ClientId;
+        model = ReportCardForm.From(Card);
+        editContext = new(model);
+        issues = [];
+        normalizationFields = [];
+        await LoadCatalogAsync(Card.Definition);
+    }
+
+    private async Task LoadCatalogAsync(ReportCardDefinition definition)
+    {
+        loading = true;
+        try
+        {
+            catalog = await Catalogs.GetAsync(AccountId, definition.Module);
+            SetDefinition(definition, false);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            issues = [new("module", "ReportCardUnavailable")];
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task ModuleChangedAsync(ChangeEventArgs args)
+    {
+        if (model is null || !int.TryParse(args.Value?.ToString(), out var raw) ||
+            !Enum.IsDefined((ReportModule)raw)) return;
+        var nextModule = (ReportModule)raw;
+        var before = BuildDefinition() with { Module = nextModule };
+        loading = true;
+        try
+        {
+            catalog = await Catalogs.GetAsync(AccountId, nextModule);
+            var normalized = ReportDefinitionNormalizer.Normalize(before, catalog);
+            SetDefinition(normalized.Definition, true, normalized.Changes);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            issues = [new("module", "ReportCardUnavailable")];
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void MetricChanged(ChangeEventArgs args)
+    {
+        if (model is null || catalog is null) return;
+        model.Metric = ParseNullable<ReportMetric>(args.Value);
+        Normalize(BuildDefinition());
+    }
+
+    private void VisualizationChanged(ChangeEventArgs args)
+    {
+        if (model is null || catalog is null) return;
+        model.Visualization = ParseNullable<ReportVisualization>(args.Value);
+        Normalize(BuildDefinition());
+    }
+
+    private void Normalize(ReportCardDefinition definition)
+    {
+        var normalized = ReportDefinitionNormalizer.Normalize(definition, catalog!);
+        SetDefinition(normalized.Definition, true, normalized.Changes);
+    }
+
+    private void SetDefinition(ReportCardDefinition definition, bool preserveName,
+        IReadOnlyList<ReportNormalizationChange>? changes = null)
+    {
+        var name = model?.Name ?? Card?.Name ?? "";
+        model = ReportCardForm.From(Card! with { Name = name, Definition = ReportWorkspaceState.Copy(definition) });
+        if (preserveName) model.Name = name;
+        editContext = new(model);
+        normalizationFields = changes?.Select(x => x.Field).Distinct().ToList() ?? [];
+        BuildFilterInputs(definition.Filters);
+    }
+
+    private void BuildFilterInputs(IReadOnlyList<ReportFilterSelection> selections)
+    {
+        filterInputs = catalog!.Filters.Select((definition, index) =>
+        {
+            var selected = selections.OfType<ReportValueFilterSelection>().SingleOrDefault(x => x.Key == definition.Key);
+            return new FilterInput(definition, $"report-filter-{index}")
+            {
+                Text = (selected?.Value as ReportTextValue)?.Value ?? "",
+                OptionIndex = selected is null ? -1 : definition.Options.ToList().FindIndex(x => x.Value == selected.Value)
+            };
+        }).ToList();
+        dimensionInputs = catalog.DynamicFilters.Select((definition, index) =>
+        {
+            var selected = selections.OfType<ReportDimensionFilterSelection>()
+                .SingleOrDefault(x => x.DimensionKey == definition.Key);
+            return new DimensionInput(definition, $"report-dimension-{index}")
+            {
+                Value = selected?.IncludeUnspecified == true ? "unspecified" :
+                    selected?.ValueId?.ToString("N") ?? ""
+            };
+        }).ToList();
+    }
+
+    private async Task ApplyAsync()
+    {
+        if (model is null || Card is null || catalog is null || busy) return;
+        issues = [];
+        if (string.IsNullOrWhiteSpace(model.Name))
+        {
+            issues = [new("name", "ReportNameRequired")];
+            return;
+        }
+        var definition = BuildDefinition();
+        try
+        {
+            Compatibility.Validate(definition, catalog);
+        }
+        catch (ReportDefinitionValidationException ex)
+        {
+            issues = ex.Issues.ToList();
+            return;
+        }
+        busy = true;
+        try
+        {
+            await OnApply.InvokeAsync(Card with
+            {
+                Name = model.Name.Trim(),
+                Definition = ReportWorkspaceState.Copy(definition)
+            });
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private ReportCardDefinition BuildDefinition()
+    {
+        var filters = new List<ReportFilterSelection>();
+        foreach (var input in filterInputs)
+        {
+            if (input.Definition.ValueKind == ReportFilterValueKind.Text)
+            {
+                if (!string.IsNullOrWhiteSpace(input.Text))
+                    filters.Add(new ReportValueFilterSelection(input.Definition.Key,
+                        new ReportTextValue(input.Text.Trim())));
+            }
+            else if (input.OptionIndex >= 0 && input.OptionIndex < input.Definition.Options.Count)
+                filters.Add(new ReportValueFilterSelection(input.Definition.Key,
+                    input.Definition.Options[input.OptionIndex].Value));
+        }
+        foreach (var input in dimensionInputs.Where(x => !string.IsNullOrEmpty(x.Value)))
+        {
+            var unspecified = input.Value == "unspecified";
+            filters.Add(new ReportDimensionFilterSelection(input.Definition.Key,
+                unspecified ? null : Guid.ParseExact(input.Value, "N"), unspecified));
+        }
+        var (grouping, time) = ParseGrouping(model!.GroupingText);
+        return new(model.Module, 1, filters,
+            new(model.PeriodRule, model.PeriodRule == ReportPeriodRule.Custom ? model.CustomFrom : null,
+                model.PeriodRule == ReportPeriodRule.Custom ? model.CustomTo : null),
+            ParseNullable<ReportDateBasis>(model.DateBasisText),
+            model.Metric,
+            ParseNullable<ReportAggregation>(model.AggregationText),
+            grouping, time, model.Visualization);
+    }
+
+    private Task CancelAsync() => OnCancel.InvokeAsync();
+    private string CatalogLabel(ReportCatalogLabel label) =>
+        label.ResourceKey is not null ? L[label.ResourceKey].Value : label.Text ?? "";
+    private string FieldLabel(string field) => L[$"ReportField{char.ToUpperInvariant(field[0])}{field[1..]}"].Value;
+    private static string EnumValue<T>(T? value) where T : struct, Enum =>
+        value.HasValue ? Convert.ToInt32(value.Value).ToString() : "";
+    private static T? ParseNullable<T>(object? value) where T : struct, Enum =>
+        int.TryParse(value?.ToString(), out var raw) && Enum.IsDefined(typeof(T), raw)
+            ? (T)Enum.ToObject(typeof(T), raw) : null;
+
+    private static string GroupingValue(ReportGroupingKey key) => key switch
+    {
+        AgreementReportGroupingKey agreement => $"agreement:{(int)agreement.Field}",
+        LeasingReportGroupingKey leasing => $"leasing:{(int)leasing.Field}",
+        ReportDimensionGroupingKey dimension => $"dimension:{(int)dimension.Scope}:{dimension.DimensionId:N}",
+        _ => ""
+    };
+
+    private static (ReportGroupingKey? Grouping, ReportTimeGrouping? Time) ParseGrouping(string value)
+    {
+        var parts = value.Split(':');
+        if (parts.Length == 2 && parts[0] == "time" && int.TryParse(parts[1], out var time))
+            return (null, (ReportTimeGrouping)time);
+        if (parts.Length == 2 && int.TryParse(parts[1], out var fixedKey))
+            return parts[0] switch
+            {
+                "agreement" => (new AgreementReportGroupingKey((AgreementReportGrouping)fixedKey), null),
+                "leasing" => (new LeasingReportGroupingKey((LeasingReportGrouping)fixedKey), null),
+                _ => (null, null)
+            };
+        if (parts.Length == 3 && parts[0] == "dimension" &&
+            int.TryParse(parts[1], out var scope) && Guid.TryParseExact(parts[2], "N", out var dimension))
+            return (new ReportDimensionGroupingKey((ReportDimensionScope)scope, dimension), null);
+        return (null, null);
+    }
+
+    private static string GroupingValue(ReportCardDefinition definition) =>
+        definition.TimeGrouping.HasValue ? $"time:{(int)definition.TimeGrouping.Value}" :
+        definition.Grouping is null ? "" : GroupingValue(definition.Grouping);
+
+    private sealed class ReportCardForm
+    {
+        public string Name { get; set; } = "";
+        public ReportModule Module { get; set; }
+        public ReportPeriodRule PeriodRule { get; set; }
+        public DateOnly? CustomFrom { get; set; }
+        public DateOnly? CustomTo { get; set; }
+        public string DateBasisText { get; set; } = "";
+        public ReportMetric? Metric { get; set; }
+        public string AggregationText { get; set; } = "";
+        public string GroupingText { get; set; } = "";
+        public ReportVisualization? Visualization { get; set; }
+
+        public static ReportCardForm From(ReportCardDraft card) => new()
+        {
+            Name = card.Name,
+            Module = card.Definition.Module,
+            PeriodRule = card.Definition.Period.Rule,
+            CustomFrom = card.Definition.Period.CustomFrom,
+            CustomTo = card.Definition.Period.CustomTo,
+            DateBasisText = EnumValue(card.Definition.DateBasis),
+            Metric = card.Definition.Metric,
+            AggregationText = EnumValue(card.Definition.Aggregation),
+            GroupingText = GroupingValue(card.Definition),
+            Visualization = card.Definition.Visualization
+        };
+    }
+
+    private sealed class FilterInput(ReportFilterDefinition definition, string id)
+    {
+        public ReportFilterDefinition Definition { get; } = definition;
+        public string Id { get; } = id;
+        public string Text { get; set; } = "";
+        public int OptionIndex { get; set; } = -1;
+    }
+
+    private sealed class DimensionInput(ReportDimensionFilterDefinition definition, string id)
+    {
+        public ReportDimensionFilterDefinition Definition { get; } = definition;
+        public string Id { get; } = id;
+        public string Value { get; set; } = "";
+    }
+}

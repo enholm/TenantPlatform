@@ -11,11 +11,14 @@ using TenantPlatform.Core.Properties;
 using TenantPlatform.Core.Services;
 using TenantPlatform.Core.Auditing;
 using TenantPlatform.Core.MeetingRooms;
+using TenantPlatform.Core.Reports;
 
 namespace TenantPlatform.Infrastructure.Persistence;
 
 public class TenantPlatformDbContext : DbContext
 {
+    public DbSet<ReportPage> ReportPages => Set<ReportPage>();
+    public DbSet<ReportCard> ReportCards => Set<ReportCard>();
     public DbSet<LeasingLifecycle> LeasingLifecycles => Set<LeasingLifecycle>();
     public DbSet<LeasingEquipment> LeasingEquipment => Set<LeasingEquipment>();
     public DbSet<LeasingLifecycleEvent> LeasingLifecycleEvents => Set<LeasingLifecycleEvent>();

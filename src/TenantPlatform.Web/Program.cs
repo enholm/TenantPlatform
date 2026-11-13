@@ -118,6 +118,18 @@ builder.Services.AddScoped<IAgreementAnalysisService>(sp => sp.GetRequiredServic
 builder.Services.AddScoped<AgreementAnalysisCleanup>();
 builder.Services.AddHostedService<AgreementAnalysisCleanupWorker>();
 builder.Services.AddScoped<LeasingService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportCatalogService,
+    TenantPlatform.Web.Services.Reports.ReportCatalogService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportLocalDateService,
+    TenantPlatform.Web.Services.Reports.ReportLocalDateService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportDefinitionCompatibilityValidator,
+    TenantPlatform.Web.Services.Reports.ReportDefinitionCompatibilityValidator>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.AgreementReportModule>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.LeasingReportModule>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportExecutionService,
+    TenantPlatform.Web.Services.Reports.ReportExecutionService>();
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportPageService,
+    TenantPlatform.Web.Services.Reports.ReportPageService>();
 builder.Services.AddScoped<LeasingLifecycleProcessor>();
 builder.Services.AddHostedService<LeasingLifecycleWorker>();
 builder.Services.AddOptions<TenantPlatform.Web.Services.Leasing.Invoices.LeasingInvoiceInterpretationOptions>().Bind(builder.Configuration.GetSection("LeasingInvoiceInterpretation"));

@@ -15,14 +15,10 @@ public partial class AgreementService
         AgreementPeriodCalculator.Calculate(source.Agreement.Id, source.Agreement.Direction ?? throw new AgreementValidationException("FinanceSetupRequired"),
             source.Agreement.Currency ?? throw new AgreementValidationException("FinanceSetupRequired"), source.Versions, source.Prices, from, to, source.AutomaticPrices);
     private static List<AgreementCalculatedPeriod> InvoicePeriods(FinancialSource source, DateOnly from, DateOnly to)
-    {
-        if (from > to || from.Year < 3 || to.Year > 9996 || to.DayNumber - from.DayNumber > 366) throw new AgreementValidationException("FinanceInvalidRange");
-        // Annual arrears may invoice the day after the entire prior year. Calculate whole periods,
-        // not invoice-window slices, and retain all segments belonging to the selected event.
-        var rows = CalculateSource(source, from.AddMonths(-13), to.AddMonths(13));
-        var keys = rows.Where(x => !x.Included && x.InvoiceDate >= from && x.InvoiceDate <= to).Select(x => x.EventKey).ToHashSet();
-        return rows.Where(x => !x.Included && keys.Contains(x.EventKey)).ToList();
-    }
+        => AgreementPeriodCalculator.CalculateInvoicePeriods(source.Agreement.Id,
+            source.Agreement.Direction ?? throw new AgreementValidationException("FinanceSetupRequired"),
+            source.Agreement.Currency ?? throw new AgreementValidationException("FinanceSetupRequired"),
+            source.Versions, source.Prices, from, to, source.AutomaticPrices);
     public async Task<AgreementForecastDto> PreviewBasisAsync(Guid accountId, Guid agreementId, AgreementDirection direction, DateOnly from, DateOnly to, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct); await using var tx = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, ct);

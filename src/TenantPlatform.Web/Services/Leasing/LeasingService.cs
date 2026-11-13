@@ -44,10 +44,9 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         return (c.UserId, await authorization.CanCreateAgreementAsync(ct));
     }
     private static IQueryable<LeasingFramework> Frameworks(TenantPlatformDbContext db, Guid account, Guid user, bool admin) =>
-        db.LeasingFrameworks.Where(x => x.AccountId == account && (admin || x.OwnerUserId == user));
+        LeasingListQuery.AuthorizedFrameworks(db, account, user, admin);
     private static IQueryable<LeasingAcquisition> Acquisitions(TenantPlatformDbContext db, Guid account, Guid user, bool admin) =>
-        db.LeasingAcquisitions.Where(x => x.AccountId == account && (admin || x.OwnerUserId == user ||
-            db.LeasingFrameworks.Any(f => f.AccountId == account && f.Id == x.FrameworkId && f.OwnerUserId == user)));
+        LeasingListQuery.AuthorizedAcquisitions(db, account, user, admin);
 
     public async Task<LeasingOptions> OptionsAsync(Guid account, CancellationToken ct = default)
     {
@@ -72,42 +71,15 @@ public sealed partial class LeasingService(IDbContextFactory<TenantPlatformDbCon
         await using var db = await factory.CreateDbContextAsync(ct);
         var (user, admin) = await Member(db, account, ct);
         var frameworkReader = admin || await authorization.CanChangeLeasingLimitAsync(ct);
-        var frameworks = Frameworks(db, account, user, frameworkReader).AsNoTracking();
-        var acquisitions = Acquisitions(db, account, user, admin).AsNoTracking();
-        if (filter.Kind == "orders") acquisitions = acquisitions.Where(x => x.FrameworkId == null);
-        if (filter.Kind is "orders" or "acquisitions") frameworks = frameworks.Where(x => false);
-        if (filter.Kind == "frameworks") acquisitions = acquisitions.Where(x => false);
-        var dimensionCatalog = await LoadListDimensionFilters(db, account, frameworks, acquisitions, ct);
-        foreach (var criterion in DimensionListFilters.Plan(dimensionCatalog, filter.Dimensions))
-        {
-            var dimensionId = criterion.DimensionId; var valueIds = criterion.MatchingValueIds; var unspecified = criterion.IncludeUnspecified;
-            frameworks = frameworks.Where(framework =>
-                (unspecified && !db.LeasingFrameworkDimensionAssignments.Any(x => x.AccountId == account && x.FrameworkId == framework.Id && x.DimensionId == dimensionId)) ||
-                db.LeasingFrameworkDimensionAssignments.Any(x => x.AccountId == account && x.FrameworkId == framework.Id && x.DimensionId == dimensionId && valueIds.Contains(x.ValueId)));
-            acquisitions = acquisitions.Where(acquisition =>
-                (unspecified && !db.LeasingAcquisitionDimensionAssignments.Any(x => x.AccountId == account && x.AcquisitionId == acquisition.Id && x.DimensionId == dimensionId)) ||
-                db.LeasingAcquisitionDimensionAssignments.Any(x => x.AccountId == account && x.AcquisitionId == acquisition.Id && x.DimensionId == dimensionId && valueIds.Contains(x.ValueId)));
-        }
-        if (filter.Owner.HasValue) { frameworks = frameworks.Where(x => x.OwnerUserId == filter.Owner.Value); acquisitions = acquisitions.Where(x => x.OwnerUserId == filter.Owner.Value); }
-        if (!string.IsNullOrWhiteSpace(filter.Search))
-        {
-            var term = filter.Search.Trim().ToLowerInvariant();
-            frameworks = frameworks.Where(x => x.Name.ToLower().Contains(term) || x.Number.ToLower().Contains(term));
-            acquisitions = acquisitions.Where(x => x.Name.ToLower().Contains(term) || x.Reference.ToLower().Contains(term));
-        }
-        if (!string.IsNullOrEmpty(filter.Status))
-        {
-            frameworks = Enum.TryParse<LeasingFrameworkStatus>(filter.Status, out var fs) && Enum.IsDefined(fs)
-                ? frameworks.Where(x => x.Status == fs) : frameworks.Where(x => false);
-            acquisitions = Enum.TryParse<LeasingAcquisitionStatus>(filter.Status, out var acs) && Enum.IsDefined(acs)
-                ? acquisitions.Where(x => x.Status == acs) : acquisitions.Where(x => false);
-        }
+        var scopes = LeasingListQuery.ApplyKind(new(
+            Frameworks(db, account, user, frameworkReader).AsNoTracking(),
+            Acquisitions(db, account, user, admin).AsNoTracking()), filter.Kind);
+        var dimensionCatalog = await LeasingListQuery.LoadDimensionCatalogAsync(db, account, scopes, ct);
+        scopes = LeasingListQuery.ApplyDimensions(db, account, scopes,
+            DimensionListFilters.Plan(dimensionCatalog, filter.Dimensions));
+        scopes = LeasingListQuery.ApplyRecordFilters(scopes, filter);
         // Project a common shape before paging; no financial totals from inaccessible agreements.
-        var frows = frameworks.Select(x => new { x.Id, Framework = true, x.Name, Number = x.Number, Status = (int)x.Status,
-            x.OwnerUserId, Start = x.AcquisitionFrom, End = x.AcquisitionTo, x.Currency, Amount = x.LimitNet + x.LimitVat });
-        var arows = acquisitions.Select(x => new { x.Id, Framework = false, x.Name, Number = x.Reference, Status = (int)x.Status,
-            x.OwnerUserId, Start = x.PurchaseDate, End = x.EndDate, x.Currency, Amount = x.GrossTotal - x.CreditNetTotal - x.CreditVatTotal - x.ReversedNetTotal - x.ReversedVatTotal });
-        var query = frows.Concat(arows);
+        var query = LeasingListQuery.Project(scopes);
         var count = await query.CountAsync(ct);
         const int size = 25;
         var page = Math.Clamp(filter.Page, 1, Math.Max(1, (count + size - 1) / size));

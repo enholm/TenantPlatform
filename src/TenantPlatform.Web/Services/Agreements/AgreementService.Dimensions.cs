@@ -125,18 +125,6 @@ public partial class AgreementService
         return result;
     }
 
-    private static async Task<DimensionListFilterCatalog> LoadAgreementListFilterCatalogAsync(TenantPlatformDbContext db,
-        Guid account, IQueryable<Agreement> visible, CancellationToken ct)
-    {
-        var catalog = await LoadAgreementDimensionCatalogAsync(db, account, ct);
-        var enabled = catalog.Rules.Values.Where(x => x.IsEnabled).Select(x => x.DimensionId).ToHashSet();
-        var used = await db.AgreementDimensionAssignments.AsNoTracking()
-            .Where(x => x.AccountId == account && visible.Any(a => a.Id == x.AgreementId))
-            .Select(x => new { x.DimensionId, x.ValueId }).Distinct().ToListAsync(ct);
-        return DimensionListFilters.Catalog(catalog.Dimensions, catalog.Values, enabled,
-            used.Select(x => (x.DimensionId, x.ValueId)).ToHashSet(), CultureInfo.CurrentUICulture.Name, catalog.DefaultLanguage);
-    }
-
     public async Task<List<AgreementDimensionHistoryDto>> GetAgreementDimensionHistoryAsync(Guid accountId, Guid agreementId, CancellationToken ct = default)
     {
         await using var db = await factory.CreateDbContextAsync(ct);

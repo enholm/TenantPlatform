@@ -1,0 +1,4 @@
+.report-editor-form, .report-editor-fieldset { min-height: 0; display: flex; flex-direction: column; }
+.report-editor-fieldset { border: 0; padding: 0; margin: 0; }
+.modal-body { overflow-y: auto; }
+.modal-footer { flex: 0 0 auto; }

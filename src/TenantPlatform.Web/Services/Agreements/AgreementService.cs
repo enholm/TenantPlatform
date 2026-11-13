@@ -31,9 +31,7 @@ public partial class AgreementService(
     }
 
     private static IQueryable<Agreement> Accessible(TenantPlatformDbContext db, Guid accountId, Guid userId, bool admin) =>
-        db.Agreements.Where(x => x.AccountId == accountId &&
-            (admin || x.OwnerUserId == userId || db.AgreementAccess.Any(g =>
-                g.AccountId == accountId && g.AgreementId == x.Id && g.UserId == userId)));
+        AgreementListQuery.Authorized(db, accountId, userId, admin);
 
     private async Task<(Agreement Agreement, bool Edit, bool Manage)> RequireAsync(
         TenantPlatformDbContext db, Guid accountId, Guid id, bool edit, bool manage, CancellationToken ct)
@@ -54,38 +52,16 @@ public partial class AgreementService(
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         var (userId, admin) = await RequireMemberAsync(db, accountId, cancellationToken);
         var visible = Accessible(db, accountId, userId, admin).AsNoTracking();
+        DateOnly? today = null;
         if (filter.Attention.HasValue)
-        {
-            var today = AgreementReminderSchedule.Today(Clock.GetUtcNow(),
+            today = AgreementReminderSchedule.Today(Clock.GetUtcNow(),
                 (await SettingsAsync(db, accountId, cancellationToken)).TimeZoneId);
-            visible = AgreementDashboardQueries.Attention(visible, filter.Attention.Value, today);
-        }
-        var owners = await (from a in visible join u in db.Users on a.OwnerUserId equals u.Id
-                            select new { u.Id, Name = u.FirstName + " " + u.LastName })
-            .Distinct().OrderBy(x => x.Name)
-            .Select(x => new AgreementOptionDto(x.Id, x.Name, null)).ToListAsync(cancellationToken);
-        var dimensionCatalog = await LoadAgreementListFilterCatalogAsync(db, accountId, visible, cancellationToken);
+        visible = AgreementListQuery.ApplyAttention(visible, filter.Attention, today);
+        var owners = await AgreementListQuery.LoadOwnersAsync(db, visible, cancellationToken);
+        var dimensionCatalog = await AgreementListQuery.LoadDimensionCatalogAsync(db, accountId, visible, cancellationToken);
         var dimensionPlan = DimensionListFilters.Plan(dimensionCatalog, filter.Dimensions);
-        foreach (var criterion in dimensionPlan)
-        {
-            var dimensionId = criterion.DimensionId; var valueIds = criterion.MatchingValueIds; var unspecified = criterion.IncludeUnspecified;
-            visible = visible.Where(agreement =>
-                (unspecified && !db.AgreementDimensionAssignments.Any(x => x.AccountId == accountId && x.AgreementId == agreement.Id && x.DimensionId == dimensionId)) ||
-                db.AgreementDimensionAssignments.Any(x => x.AccountId == accountId && x.AgreementId == agreement.Id && x.DimensionId == dimensionId && valueIds.Contains(x.ValueId)));
-        }
-        var query = from a in visible
-                    join org in db.Organizations on a.CounterpartyOrganizationId equals org.Id
-                    join owner in db.Users on a.OwnerUserId equals owner.Id
-                    where org.AccountId == accountId
-                    select new { Agreement = a, Counterparty = org.Name, Owner = owner.FirstName + " " + owner.LastName };
-        if (!string.IsNullOrWhiteSpace(filter.Search))
-        {
-            var search = filter.Search.Trim().ToLowerInvariant();
-            query = query.Where(x => x.Agreement.Title.ToLower().Contains(search) || x.Counterparty.ToLower().Contains(search));
-        }
-        if (filter.Status.HasValue) query = query.Where(x => x.Agreement.Status == filter.Status.Value);
-        if (filter.Type.HasValue) query = query.Where(x => x.Agreement.Type == filter.Type.Value);
-        if (filter.OwnerUserId.HasValue) query = query.Where(x => x.Agreement.OwnerUserId == filter.OwnerUserId.Value);
+        visible = AgreementListQuery.ApplyDimensions(db, accountId, visible, dimensionPlan);
+        var query = AgreementListQuery.ApplyRecordFilters(AgreementListQuery.Project(db, accountId, visible), filter);
         const int pageSize = 25;
         var count = await query.CountAsync(cancellationToken);
         var page = Math.Clamp(filter.Page, 1, Math.Max(1, (count + pageSize - 1) / pageSize));

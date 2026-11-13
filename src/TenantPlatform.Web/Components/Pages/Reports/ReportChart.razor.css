@@ -1,0 +1,5 @@
+.report-chart {
+    width: 100%;
+    height: clamp(14rem, 32vh, 24rem);
+    min-height: 14rem;
+}

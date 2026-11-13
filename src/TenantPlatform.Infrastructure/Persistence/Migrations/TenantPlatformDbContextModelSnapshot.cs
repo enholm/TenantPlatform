@@ -4379,6 +4379,170 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                     b.ToTable("units", (string)null);
                 });
 
+            modelBuilder.Entity("TenantPlatform.Core.Reports.ReportCard", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AggregationId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateOnly?>("CustomFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("CustomTo")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DateBasisId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("DefinitionVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DisplayJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("FiltersJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("GridColumn")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GridHeight")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GridRow")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GridWidth")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("GroupingDimensionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("GroupingKey")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("GroupingKind")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("GroupingScope")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MetricId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Module")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("PeriodRule")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ReportPageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TimeGrouping")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Visualization")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("AccountId", "Id");
+
+                    b.HasIndex("AccountId", "ReportPageId", "Id")
+                        .IsUnique();
+
+                    b.HasIndex("AccountId", "ReportPageId", "SortOrder");
+
+                    b.ToTable("report_cards", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_report_cards_custom_period", "(\"PeriodRule\" = 17 AND \"CustomFrom\" IS NOT NULL AND \"CustomTo\" IS NOT NULL AND \"CustomFrom\" <= \"CustomTo\") OR (\"PeriodRule\" <> 17 AND \"CustomFrom\" IS NULL AND \"CustomTo\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_report_cards_definition_version", "\"DefinitionVersion\" > 0");
+
+                            t.HasCheckConstraint("CK_report_cards_grouping_kind", "\"GroupingKind\" IN (0,1,2,3)");
+
+                            t.HasCheckConstraint("CK_report_cards_grouping_shape", "(\"GroupingKind\" = 0 AND \"GroupingKey\" IS NULL AND \"GroupingScope\" IS NULL AND \"GroupingDimensionId\" IS NULL AND \"TimeGrouping\" IS NULL) OR (\"GroupingKind\" = 1 AND \"GroupingKey\" IS NULL AND \"GroupingScope\" IS NULL AND \"GroupingDimensionId\" IS NULL AND \"TimeGrouping\" IS NOT NULL) OR (\"GroupingKind\" = 2 AND \"GroupingKey\" IS NOT NULL AND \"GroupingScope\" IS NULL AND \"GroupingDimensionId\" IS NULL AND \"TimeGrouping\" IS NULL) OR (\"GroupingKind\" = 3 AND \"GroupingKey\" IS NULL AND \"GroupingScope\" IS NOT NULL AND \"GroupingDimensionId\" IS NOT NULL AND \"TimeGrouping\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_report_cards_layout", "\"GridColumn\" BETWEEN 1 AND 12 AND \"GridRow\" > 0 AND \"GridWidth\" BETWEEN 1 AND 12 AND \"GridHeight\" > 0 AND \"SortOrder\" >= 0");
+
+                            t.HasCheckConstraint("CK_report_cards_module", "\"Module\" IN (0,1)");
+
+                            t.HasCheckConstraint("CK_report_cards_period_rule", "\"PeriodRule\" BETWEEN 0 AND 17");
+
+                            t.HasCheckConstraint("CK_report_cards_time_grouping", "\"TimeGrouping\" IS NULL OR \"TimeGrouping\" BETWEEN 0 AND 4");
+
+                            t.HasCheckConstraint("CK_report_cards_visualization", "\"Visualization\" IS NULL OR \"Visualization\" BETWEEN 0 AND 5");
+                        });
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Reports.ReportPage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("AccountId", "Name");
+
+                    b.HasIndex("AccountId", "OwnerUserId");
+
+                    b.ToTable("report_pages", (string)null);
+                });
+
             modelBuilder.Entity("TenantPlatform.Core.Services.EmailOutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6446,6 +6610,49 @@ namespace TenantPlatform.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("ParentUnitId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Reports.ReportCard", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Accounts.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Reports.ReportPage", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId", "ReportPageId")
+                        .HasPrincipalKey("AccountId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TenantPlatform.Core.Reports.ReportPage", b =>
+                {
+                    b.HasOne("TenantPlatform.Core.Accounts.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("TenantPlatform.Core.Identity.User", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("TenantPlatform.Core.Services.EmailOutboxMessage", b =>

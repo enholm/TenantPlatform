@@ -1,0 +1,113 @@
+@using TenantPlatform.Web.Services.Reports
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="report-layout-grid @(Editable ? "report-layout-grid-editable" : "")"
+     @ref="gridElement"
+     data-report-grid-generation="@Generation">
+    @foreach (var item in NormalizedItems)
+    {
+        <div class="report-grid-item"
+             data-report-card-id="@item.ClientId.ToString("N")"
+             style="--report-grid-column:@item.Column;--report-grid-row:@item.Row;--report-grid-width:@item.Width;--report-grid-height:@item.Height"
+             @key="item.ClientId">
+            @if (Editable)
+            {
+                <button type="button" class="report-drag-handle" aria-label="@L["ReportDragCard"]" title="@L["ReportDragCard"]">
+                    <i class="bi bi-arrows-move" aria-hidden="true"></i>
+                </button>
+            }
+            <div class="report-grid-content">@ItemTemplate(item)</div>
+            @if (Editable)
+            {
+                <button type="button" class="report-resize-handle" aria-label="@L["ReportResizeCard"]" title="@L["ReportResizeCard"]">
+                    <i class="bi bi-arrows-angle-expand" aria-hidden="true"></i>
+                </button>
+            }
+        </div>
+    }
+</div>
+@if (Editable)
+{
+    <p class="visually-hidden" aria-live="polite">@status</p>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<ReportGridItem> Items { get; set; } = [];
+    [Parameter, EditorRequired] public RenderFragment<ReportGridItem> ItemTemplate { get; set; } = null!;
+    [Parameter] public bool Editable { get; set; }
+    [Parameter] public long Generation { get; set; }
+    [Parameter] public EventCallback<ReportGridLayoutChange> OnLayoutChanged { get; set; }
+
+    private ElementReference gridElement;
+    private IJSObjectReference? module;
+    private IJSObjectReference? adapter;
+    private DotNetObjectReference<ReportGrid>? self;
+    private bool disposed;
+    private long adapterGeneration = -1;
+    private string status = "";
+    private IReadOnlyList<ReportGridItem> NormalizedItems => ReportLayoutEngine.Normalize(Items);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (disposed) return;
+        try
+        {
+            if (Editable)
+            {
+                module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/report-grid.js");
+                if (adapter is null)
+                {
+                    self ??= DotNetObjectReference.Create(this);
+                    adapter = await module.InvokeAsync<IJSObjectReference>("create", gridElement, self, Generation,
+                        ReportLayoutEngine.Columns, ReportLayoutEngine.MinimumInteractiveWidth,
+                        ReportLayoutEngine.MinimumInteractiveHeight, ReportLayoutEngine.MaximumInteractiveHeight);
+                }
+                else if (adapterGeneration != Generation)
+                    await adapter.InvokeVoidAsync("setGeneration", Generation);
+                adapterGeneration = Generation;
+            }
+            else if (adapter is not null)
+                await DisposeAdapterAsync();
+        }
+        catch (InvalidOperationException) { }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    [JSInvokable]
+    public async Task CommitLayout(string clientId, int column, int row, int width, int height, long generation)
+    {
+        if (disposed || !Editable || generation != Generation ||
+            !Guid.TryParseExact(clientId, "N", out var id) || Items.All(x => x.ClientId != id)) return;
+        await OnLayoutChanged.InvokeAsync(new(id, column, row, width, height, generation));
+        status = L["ReportLayoutUpdated"].Value;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async ValueTask DisposeAdapterAsync()
+    {
+        if (adapter is null) return;
+        try { await adapter.InvokeVoidAsync("dispose"); }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+        await adapter.DisposeAsync();
+        adapter = null;
+        adapterGeneration = -1;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (disposed) return;
+        disposed = true;
+        try
+        {
+            await DisposeAdapterAsync();
+            if (module is not null) await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+        catch (ObjectDisposedException) { }
+        self?.Dispose();
+    }
+}

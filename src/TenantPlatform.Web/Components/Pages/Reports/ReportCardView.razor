@@ -1,0 +1,256 @@
+@using TenantPlatform.Core.Reports
+@using TenantPlatform.Web.Services.Reports
+@implements IAsyncDisposable
+@inject IReportExecutionService Execution
+
+<article class="card report-card h-100" aria-labelledby="@TitleId">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+            <h2 id="@TitleId" class="h5 mb-0">@Card.Name</h2>
+            <span class="badge text-bg-light">@VisualizationLabel</span>
+        </div>
+        @if (loading)
+        {
+            <p class="text-body-secondary mt-3" role="status">
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>@L["Loading"]
+            </p>
+        }
+        else if (error is not null)
+        {
+            <div class="alert alert-warning mt-3 mb-0" role="alert">@L[error]</div>
+        }
+        else if (Card.Definition.Visualization == ReportVisualization.RelationshipTree)
+        {
+            <div class="alert alert-info mt-3 mb-0" role="status">@L["ReportTreeDeferred"]</div>
+        }
+        else if (result is not null)
+        {
+            <div class="small text-body-secondary mt-2">
+                <span>@L[$"ReportDateBasis{Card.Definition.DateBasis}"]:</span>
+                <time datetime="@result.Period.From.ToString("yyyy-MM-dd")">@result.Period.From.ToString("d")</time>
+                <span aria-hidden="true">–</span>
+                <time datetime="@result.Period.To.ToString("yyyy-MM-dd")">@result.Period.To.ToString("d")</time>
+                <span class="ms-2">@UnitLabel</span>
+            </div>
+
+            @if (Empty)
+            {
+                <p class="text-body-secondary mt-3 mb-0">@L["ReportNoData"]</p>
+            }
+            else
+            {
+                <div class="report-kpis mt-3">
+                    @foreach (var total in result.Totals)
+                    {
+                        <div class="report-kpi">
+                            <div class="report-kpi-value">@Format(total)</div>
+                            @if (!string.IsNullOrWhiteSpace(total.Currency))
+                            {
+                                <div class="report-kpi-label">@total.Currency</div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (ChartModel is not null)
+                {
+                    <ReportChart Model="ChartModel" @key="loadedFingerprint" />
+                    @if (ChartModel.NonAdditive)
+                    {
+                        <p class="small text-body-secondary mb-0">
+                            <i class="bi bi-info-circle me-1" aria-hidden="true"></i>@L["ReportChartNonAdditive"]
+                        </p>
+                    }
+                }
+                else if (chartError is not null)
+                {
+                    <div class="alert alert-warning mt-3" role="alert">@L[chartError]</div>
+                }
+
+                @if (result.Groups.Count > 0)
+                {
+                    <ResultTable Caption="@L["ReportGroupedResults"]">
+                        @foreach (var group in result.Groups)
+                        {
+                            <tr>
+                                <th scope="row">@Label(group.Label)</th>
+                                <td>@Values(group.Values)</td>
+                                <td>@group.UniqueEntityCount</td>
+                            </tr>
+                        }
+                    </ResultTable>
+                }
+                else if (result.TimeSeries.Count > 0)
+                {
+                    <ResultTable Caption="@L["ReportTimeResults"]">
+                        @foreach (var bucket in result.TimeSeries)
+                        {
+                            <tr>
+                                <th scope="row">@TimeLabel(bucket)</th>
+                                <td>@Values(bucket.Values)</td>
+                                <td>@bucket.UniqueEntityCount</td>
+                            </tr>
+                        }
+                    </ResultTable>
+                }
+
+                @if (result.Table is not null)
+                {
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm align-middle mb-0">
+                            <caption>@L["ReportDetailRows"] (@result.Table.TotalRows)</caption>
+                            <thead><tr><th>@L["Name"]</th><th>@L["Reference"]</th><th>@L["Status"]</th><th class="text-end">@L["Value"]</th></tr></thead>
+                            <tbody>
+                            @foreach (var row in result.Table.Rows)
+                            {
+                                @if (row is ReportAgreementTableRow agreement)
+                                {
+                                    <tr>
+                                        <th scope="row"><a href="@($"/agreements/{agreement.AgreementId}")">@agreement.AgreementTitle</a></th>
+                                        <td>@agreement.Counterparty</td>
+                                        <td>@L[$"AgreementStatus{agreement.Status}"]</td>
+                                        <td class="text-end">@Format(agreement.Value, agreement.Currency)</td>
+                                    </tr>
+                                }
+                                else if (row is ReportLeasingTableRow leasing)
+                                {
+                                    <tr>
+                                        <th scope="row"><a href="@(leasing.IsFramework ? $"/leasing/frameworks/{leasing.RecordId}" : $"/leasing/acquisitions/{leasing.RecordId}")">@leasing.Name</a></th>
+                                        <td>@leasing.Reference</td>
+                                        <td>@L[leasing.StatusResourceKey]</td>
+                                        <td class="text-end">@Format(leasing.Value, leasing.Currency)</td>
+                                    </tr>
+                                }
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+
+            @if (Card.Definition.Visualization is ReportVisualization.Bar or ReportVisualization.Line or ReportVisualization.Donut)
+            {
+                <p class="small text-body-secondary mt-3 mb-0">@L["ReportChartTableFallback"]</p>
+            }
+            @foreach (var restriction in result.Metadata.RestrictionResourceKeys)
+            {
+                <p class="small text-body-secondary mt-2 mb-0"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>@L[restriction]</p>
+            }
+        }
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public Guid AccountId { get; set; }
+    [Parameter, EditorRequired] public ReportCardDto Card { get; set; } = null!;
+
+    private CancellationTokenSource? loadCancellation;
+    private ReportExecutionResult? result;
+    private ReportChartModel? ChartModel;
+    private string? error;
+    private string? chartError;
+    private string? loadedFingerprint;
+    private long generation;
+    private bool loading;
+
+    private string TitleId => $"report-card-title-{Card.Id:N}";
+    private string VisualizationLabel => Card.Definition.Visualization.HasValue
+        ? L[$"ReportVisualization{Card.Definition.Visualization.Value}"].Value : L["ReportUnknown"].Value;
+    private string UnitLabel => result?.Metadata.Unit switch
+    {
+        ReportValueUnit.Count => L["ReportUnitCount"].Value,
+        ReportValueUnit.Amount => L["ReportUnitAmount"].Value,
+        _ => string.Empty
+    };
+    private bool Empty => result is not null && result.Totals.All(x => x.Value == 0) &&
+        result.Groups.Count == 0 && result.TimeSeries.All(x => x.Values.All(y => y.Value == 0)) &&
+        result.Table is not { TotalRows: > 0 };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var fingerprint = $"{AccountId:N}|{Fingerprint(Card)}";
+        if (loadedFingerprint == fingerprint) return;
+        loadedFingerprint = fingerprint;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loadCancellation?.Cancel();
+        loadCancellation?.Dispose();
+        loadCancellation = new();
+        var token = loadCancellation.Token;
+        var currentGeneration = ++generation;
+        loading = true;
+        result = null;
+        ChartModel = null;
+        error = null;
+        chartError = null;
+        try
+        {
+            if (Card.Definition.Visualization == ReportVisualization.RelationshipTree)
+                return;
+            var loaded = await Execution.ExecuteAsync(AccountId, new(Card.Definition), token);
+            if (currentGeneration == generation && !token.IsCancellationRequested)
+            {
+                result = loaded;
+                MapChart(loaded);
+            }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (UnauthorizedAccessException)
+        {
+            if (currentGeneration == generation) error = "ReportCardUnavailable";
+        }
+        catch (ReportDefinitionValidationException)
+        {
+            if (currentGeneration == generation) error = "ReportCardInvalid";
+        }
+        catch (ReportExecutionException ex)
+        {
+            if (currentGeneration == generation) error = ex.Message;
+        }
+        catch
+        {
+            if (currentGeneration == generation) error = "ReportCardLoadFailed";
+        }
+        finally
+        {
+            if (currentGeneration == generation) loading = false;
+        }
+    }
+
+    private string Label(ReportExecutionLabel label) =>
+        label.ResourceKey is not null ? L[label.ResourceKey].Value : label.Text ?? "";
+    private string Format(ReportExecutionValue value) => Format(value.Value, value.Currency);
+    private string Format(decimal? value, string? currency) =>
+        value.HasValue ? $"{value.Value:N2}{(currency is null ? "" : $" {currency}")}" : "—";
+    private string Values(IReadOnlyList<ReportExecutionValue> values) =>
+        values.Count == 0 ? "—" : string.Join(", ", values.Select(Format));
+    private static string TimeLabel(ReportTimeResult bucket) =>
+        $"{bucket.OverlapFrom:d}–{bucket.OverlapTo:d}";
+    private void MapChart(ReportExecutionResult loaded)
+    {
+        if (Card.Definition.Visualization is not (ReportVisualization.Bar or ReportVisualization.Line or ReportVisualization.Donut))
+            return;
+        try
+        {
+            ChartModel = ReportChartMapper.Map(Card.Definition.Visualization.Value, loaded, Label, TimeLabel,
+                UnitLabel, L["ReportChartAria", Card.Name].Value);
+        }
+        catch (ReportChartMappingException ex) { chartError = ex.Message; }
+    }
+    private static string Fingerprint(ReportCardDto card) =>
+        $"{card.Id:N}|{card.Name}|{card.Definition.Module}|{card.Definition.Metric}|" +
+        $"{card.Definition.DateBasis}|{card.Definition.Period}|{card.Definition.Grouping}|" +
+        $"{card.Definition.TimeGrouping}|{card.Definition.Visualization}|" +
+        $"{ReportFilterJson.Serialize(card.Definition.Filters)}";
+
+    public ValueTask DisposeAsync()
+    {
+        generation++;
+        loadCancellation?.Cancel();
+        loadCancellation?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
