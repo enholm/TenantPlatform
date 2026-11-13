@@ -3477,4 +3477,5 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="SavedFilterLoadFailed" xml:space="preserve"><value>Lagrede filter kunne ikke lastes.</value></data>
   <data name="SavedFilterSaveFailed" xml:space="preserve"><value>Filteret kunne ikke lagres.</value></data>
   <data name="SavedFilterSaved" xml:space="preserve"><value>Filteret er lagret.</value></data>
+  <data name="MessageBannerClose" xml:space="preserve"><value>Lukk melding</value></data>
 </root>

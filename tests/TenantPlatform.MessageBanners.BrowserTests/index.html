@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="nb-NO">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/bootstrap.css">
+    <link rel="stylesheet" href="/app.css">
+    <title>Message banner browser harness</title>
+</head>
+<body data-message-close-label="Lukk melding" data-message-banner-timeout="250">
+    <main class="p-3">
+        <div id="manual" class="alert alert-success" role="status">Lagret</div>
+        <div id="automatic" class="alert alert-danger" role="alert">Kunne ikke lagre</div>
+        <div id="renewed" class="alert alert-warning" role="alert">Opprinnelig advarsel</div>
+        <div id="long" class="alert alert-warning">En svært lang melding med etsværtlangtordsomskalbrettesutenåskyvelukkeknappenutavbanneretellerutavmobilvisningen</div>
+        <div id="semantic-info" class="alert alert-info" role="status">Kort informasjon</div>
+        <div id="empty-info" class="alert alert-info">Ingen resultater</div>
+        <div id="permanent" class="alert alert-warning" data-message-banner="off">Permanent statusindikator</div>
+    </main>
+    <script src="/js/message-banners.js"></script>
+    <script type="module" src="/browser-harness.js"></script>
+</body>
+</html>

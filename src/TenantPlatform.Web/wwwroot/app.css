@@ -216,3 +216,25 @@ h1:focus {
     --bs-btn-disabled-color: #c5cbd2; --bs-btn-disabled-border-color: #c5cbd2;
 }
 [data-bs-theme="dark"] :is(.page-workspace, .leasing-workspace) .text-danger { color: var(--bs-danger-text-emphasis) !important; }
+
+/* Dismissible transient banners. The close button is added by message-banners.js. */
+.tp-message-banner {
+    position: relative;
+    padding-inline-end: 3.25rem;
+    overflow-wrap: anywhere;
+}
+.tp-message-banner-close {
+    position: absolute;
+    inset-block-start: .75rem;
+    inset-inline-end: .75rem;
+    flex: 0 0 auto;
+}
+.tp-message-banner-close:focus-visible {
+    outline: 3px solid var(--bs-primary);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 .2rem var(--bs-body-bg);
+}
+@media (max-width: 575.98px) {
+    .tp-message-banner { padding-inline-end: 3rem; }
+    .tp-message-banner-close { inset-block-start: .65rem; inset-inline-end: .65rem; }
+}

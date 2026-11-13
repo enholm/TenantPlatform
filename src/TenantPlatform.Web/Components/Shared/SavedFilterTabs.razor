@@ -18,7 +18,8 @@
 
 @if (messageKey is not null)
 {
-    <div class="alert @(messageError ? "alert-danger" : "alert-success")" role="@(messageError ? "alert" : "status")">@L[messageKey]</div>
+    <div class="alert @(messageError ? "alert-danger" : "alert-success")" role="@(messageError ? "alert" : "status")"
+         data-message-id="@messageVersion">@L[messageKey]</div>
 }
 
 @if (activeTab == Tab.Filter)
@@ -121,6 +122,7 @@ else
     private string saveMode = "new", newName = "";
     private string? messageKey, dialogErrorKey;
     private bool messageError, loading, saveOpen, saving, editPrepared;
+    private long messageVersion;
     private Guid loadedAccount;
     private SavedFilterPage loadedPage;
 
@@ -209,7 +211,7 @@ else
             if (await LoadAsync())
             {
                 selectedId = saved.Id; overwriteId = saved.Id; editPrepared = overwrote;
-                saveOpen = false; messageKey = "SavedFilterSaved"; messageError = false;
+                saveOpen = false; messageKey = "SavedFilterSaved"; messageError = false; messageVersion++;
             }
             else
             {

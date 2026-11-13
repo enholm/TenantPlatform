@@ -3383,4 +3383,5 @@ This is a reminder, not a termination or renewal.</value>
   <data name="SavedFilterLoadFailed" xml:space="preserve"><value>Saved filters could not be loaded.</value></data>
   <data name="SavedFilterSaveFailed" xml:space="preserve"><value>The filter could not be saved.</value></data>
   <data name="SavedFilterSaved" xml:space="preserve"><value>The filter has been saved.</value></data>
+  <data name="MessageBannerClose" xml:space="preserve"><value>Close message</value></data>
 </root>

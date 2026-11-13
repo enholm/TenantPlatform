@@ -3420,4 +3420,5 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="SavedFilterLoadFailed" xml:space="preserve"><value>Sparade filter kunde inte läsas in.</value></data>
   <data name="SavedFilterSaveFailed" xml:space="preserve"><value>Filtret kunde inte sparas.</value></data>
   <data name="SavedFilterSaved" xml:space="preserve"><value>Filtret har sparats.</value></data>
+  <data name="MessageBannerClose" xml:space="preserve"><value>Stäng meddelande</value></data>
 </root>
