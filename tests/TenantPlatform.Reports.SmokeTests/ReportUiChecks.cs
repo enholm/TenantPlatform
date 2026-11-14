@@ -59,6 +59,10 @@ static class ReportUiChecks
             cardState.Host.Refresh();
             Check.That(execution.Calls == before + 1,
                 "card name changes update presentation without executing the report again");
+            cardState.Card = WithPlacement(cardState.Card, ReportTitlePlacement.Center);
+            cardState.Host.Refresh();
+            Check.That(execution.Calls == before + 1,
+                "title placement changes update presentation without executing the report again");
             cardState.Card = cardState.Card with
             {
                 Definition = cardState.Card.Definition with
@@ -154,8 +158,10 @@ static class ReportUiChecks
             var passiveTreeHtml = passiveTree.ToHtmlString();
             Check.That(passiveTreeHtml.Contains("data-report-preview-passive=\"true\"") &&
                 passiveTreeHtml.Contains("report-tree-preview") &&
+                !passiveTreeHtml.Contains("text-bg-light", StringComparison.Ordinal) &&
+                !passiveTreeHtml.Contains("Passiv forhåndsvisning", StringComparison.Ordinal) &&
                 !passiveTreeHtml.Contains("<button") && !passiveTreeHtml.Contains("<a "),
-                "passive relationship preview uses real tree results without focusable tree controls or links");
+                "passive relationship preview uses real tree results without header labels, focusable tree controls or links");
 
             var passiveTable = await renderer.RenderComponentAsync<ReportCardView>(ParameterView.FromDictionary(
                 new Dictionary<string, object?>
@@ -172,8 +178,56 @@ static class ReportUiChecks
                 !passiveTable.ToHtmlString().Contains("href=\"/agreements/") &&
                 activeTable.ToHtmlString().Contains("href=\"/agreements/"),
                 "passive table preserves real row text but removes record navigation only in edit mode");
+
+            foreach (var placement in Enum.GetValues<ReportTitlePlacement>())
+            {
+                var placed = await renderer.RenderComponentAsync<ReportCardView>(ParameterView.FromDictionary(
+                    new Dictionary<string, object?>
+                    {
+                        ["AccountId"] = Guid.NewGuid(), ["SessionId"] = Guid.NewGuid(),
+                        ["Card"] = WithPlacement(Card(), placement)
+                    }));
+                var placedHtml = placed.ToHtmlString();
+                if (placement == ReportTitlePlacement.Hidden)
+                {
+                    Check.That(placedHtml.Contains("data-report-title-placement=\"hidden\"", StringComparison.Ordinal) &&
+                        placedHtml.Contains("aria-label=\"Count\"", StringComparison.Ordinal) &&
+                        !placedHtml.Contains("report-card-heading", StringComparison.Ordinal) &&
+                        !placedHtml.Contains("report-card-description", StringComparison.Ordinal) &&
+                        placedHtml.Contains("report-card-unit", StringComparison.Ordinal) &&
+                        placedHtml.Contains("report-card-restriction", StringComparison.Ordinal) &&
+                        placedHtml.Contains("report-chart", StringComparison.Ordinal),
+                        "hidden title removes visual heading and descriptive metadata while preserving units, data, accessible name and restrictions");
+                }
+                else
+                {
+                    var alignment = placement == ReportTitlePlacement.Center ? "text-center" :
+                        placement == ReportTitlePlacement.Right ? "text-end" : "text-start";
+                    Check.That(placedHtml.Contains($"data-report-title-placement=\"{placement.ToString().ToLowerInvariant()}\"", StringComparison.Ordinal) &&
+                        placedHtml.Contains($"h5 mb-0 {alignment}", StringComparison.Ordinal) &&
+                        placedHtml.Contains("report-card-description", StringComparison.Ordinal),
+                        $"{placement} title placement renders the expected title alignment and descriptions");
+                }
+            }
+
+            foreach (var hiddenCard in new[] { KeyFigureCard(), TableCard(), TreeCard() })
+            {
+                var hidden = await renderer.RenderComponentAsync<ReportCardView>(ParameterView.FromDictionary(
+                    new Dictionary<string, object?>
+                    {
+                        ["AccountId"] = Guid.NewGuid(), ["SessionId"] = Guid.NewGuid(),
+                        ["Card"] = WithPlacement(hiddenCard, ReportTitlePlacement.Hidden), ["Passive"] = true
+                    }));
+                var hiddenHtml = hidden.ToHtmlString();
+                Check.That(!hiddenHtml.Contains("report-card-heading", StringComparison.Ordinal) &&
+                    !hiddenHtml.Contains("report-card-description", StringComparison.Ordinal) &&
+                    (hiddenHtml.Contains("report-kpi", StringComparison.Ordinal) ||
+                     hiddenHtml.Contains("<table", StringComparison.Ordinal) || hiddenHtml.Contains("report-tree", StringComparison.Ordinal)),
+                    $"hidden title preserves the passive {hiddenCard.Definition.Visualization} data view without descriptive chrome");
+            }
         });
         await VerifyLateCardResponsesAsync();
+        await VerifyHiddenErrorAsync();
         CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("nb-NO");
     }
 
@@ -242,6 +296,26 @@ static class ReportUiChecks
             "a late error for an older definition neither clears the current result nor becomes visible");
     }
 
+    private static async Task VerifyHiddenErrorAsync()
+    {
+        var services = new ServiceCollection().AddLogging().AddLocalization(x => x.ResourcesPath = "Resources");
+        services.AddSingleton<IReportPreviewSession>(new FailingPreview());
+        services.AddSingleton<IReportTreeService>(new UiTree());
+        services.AddSingleton<IJSRuntime>(new NoopJsRuntime());
+        await using var provider = services.BuildServiceProvider();
+        await using var renderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
+        var output = await renderer.Dispatcher.InvokeAsync(() => renderer.RenderComponentAsync<ReportCardView>(
+            ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                ["AccountId"] = Guid.NewGuid(), ["SessionId"] = Guid.NewGuid(),
+                ["Card"] = WithPlacement(Card(), ReportTitlePlacement.Hidden)
+            })));
+        var html = await renderer.Dispatcher.InvokeAsync(output.ToHtmlString);
+        Check.That(html.Contains("role=\"alert\"", StringComparison.Ordinal) &&
+            html.Contains("aria-label=\"Count\"", StringComparison.Ordinal),
+            "hidden title preserves necessary execution errors and the accessible card name");
+    }
+
     private static async Task WaitUntilAsync(Func<bool> predicate)
     {
         var deadline = DateTime.UtcNow.AddSeconds(3);
@@ -284,6 +358,20 @@ static class ReportUiChecks
             ReportAggregation.CountDistinct, Visualization: ReportVisualization.Table),
         1, 1, 12, 6, 0);
 
+    private static ReportCardDto KeyFigureCard() => new(Guid.NewGuid(), "Key figure",
+        new(ReportModule.Agreements, 1, [], new(ReportPeriodRule.CurrentYear),
+            ReportDateBasis.AgreementPeriodOverlap, ReportMetric.AgreementCount,
+            ReportAggregation.CountDistinct, Visualization: ReportVisualization.KeyFigure),
+        1, 1, 12, 4, 0);
+
+    private static ReportCardDto WithPlacement(ReportCardDto card, ReportTitlePlacement placement) => card with
+    {
+        Definition = card.Definition with
+        {
+            DisplayJson = ReportDisplaySettingsJson.SetTitlePlacement(card.Definition.DisplayJson, placement)
+        }
+    };
+
     private sealed class UiExecution : IReportExecutionService
     {
         public int Calls { get; private set; }
@@ -300,8 +388,21 @@ static class ReportUiChecks
                         [new ReportAgreementTableRow("row", Guid.NewGuid(), "Agreement row", "Counterparty", "Owner", AgreementType.Lease, AgreementStatus.Active)])
                     : null,
                 new(ReportGrain.Agreement, ReportValueUnit.Count, ReportCurrencyRule.None,
-                    ReportAdditivity.UniqueBeforeGroupExpansion, true, true, false, false, 2, 2, "test", [])));
+                    ReportAdditivity.UniqueBeforeGroupExpansion, true, true, false, false, 2, 2, "test",
+                    ["ReportRestrictionCurrencySeparated"])));
         }
+    }
+
+    private sealed class FailingPreview : IReportPreviewSession
+    {
+        public ReportPreviewSessionSnapshot Snapshot => new(0, 0, 0);
+        public Task<ReportExecutionResult> ExecuteAsync(Guid sessionId, Guid accountId,
+            ReportExecutionRequest request, bool forceRefresh = false, CancellationToken ct = default) =>
+            Task.FromException<ReportExecutionResult>(new ReportExecutionException("ReportCardLoadFailed"));
+        public Task<ReportTreePreviewResult> LoadTreeAsync(Guid sessionId, Guid accountId,
+            ReportCardDefinition definition, bool forceRefresh = false, CancellationToken ct = default) =>
+            Task.FromException<ReportTreePreviewResult>(new ReportTreeException("ReportCardLoadFailed"));
+        public void EndSession(Guid sessionId) { }
     }
 
     private sealed class UiTree : IReportTreeService

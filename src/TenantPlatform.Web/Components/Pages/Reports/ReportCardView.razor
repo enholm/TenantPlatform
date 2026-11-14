@@ -4,33 +4,32 @@
 @inject IReportPreviewSession Preview
 
 <article class="card report-card h-100 @(Passive ? "report-card-passive" : null)"
-         aria-labelledby="@TitleId" data-report-preview-passive="@Passive.ToString().ToLowerInvariant()">
+         aria-labelledby="@(!TitleHidden ? TitleId : null)" aria-label="@(TitleHidden ? Card.Name : null)"
+         data-report-title-placement="@TitlePlacementValue"
+         data-report-preview-passive="@Passive.ToString().ToLowerInvariant()">
     <div class="card-body">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-            <h2 id="@TitleId" class="h5 mb-0">@Card.Name</h2>
-            <div class="text-end">
-                <span class="badge text-bg-light">@VisualizationLabel</span>
-                @if (Passive)
-                {
-                    <div class="small text-body-secondary mt-1">@L["ReportPreviewPassive"]</div>
-                }
-            </div>
+        @if (!TitleHidden)
+        {
+        <div class="report-card-heading">
+            <h2 id="@TitleId" class="h5 mb-0 @TitleAlignmentClass">@Card.Name</h2>
         </div>
+        }
         @if (loading)
         {
-            <p class="text-body-secondary mt-3" role="status">
+            <p class="text-body-secondary @(TitleHidden ? null : "mt-3")" role="status">
                 <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>@L["Loading"]
             </p>
         }
         else if (error is not null)
         {
-            <div class="alert alert-warning mt-3 mb-0" role="alert">@L[error]</div>
+            <div class="alert alert-warning @(TitleHidden ? null : "mt-3") mb-0" role="alert">@L[error]</div>
         }
         else if (Card.Definition.Visualization == ReportVisualization.RelationshipTree)
         {
             @if (Passive && treeResult is not null)
             {
-                <ReportTreePreview Result="treeResult" CardName="Card.Name" />
+                <ReportTreePreview Result="treeResult" CardName="Card.Name"
+                                   ShowDescriptions="@(!TitleHidden)" />
             }
             else if (!Passive && treeResult is not null)
             {
@@ -40,21 +39,28 @@
         }
         else if (result is not null)
         {
-            <div class="small text-body-secondary mt-2">
+            @if (TitleHidden)
+            {
+            <div class="report-card-unit small text-body-secondary">@UnitLabel</div>
+            }
+            else
+            {
+            <div class="report-card-description small text-body-secondary mt-2">
                 <span>@L[$"ReportDateBasis{Card.Definition.DateBasis}"]:</span>
                 <time datetime="@result.Period.From.ToString("yyyy-MM-dd")">@result.Period.From.ToString("d")</time>
                 <span aria-hidden="true">–</span>
                 <time datetime="@result.Period.To.ToString("yyyy-MM-dd")">@result.Period.To.ToString("d")</time>
                 <span class="ms-2">@UnitLabel</span>
             </div>
+            }
 
             @if (Empty)
             {
-                <p class="text-body-secondary mt-3 mb-0">@L["ReportNoData"]</p>
+                <p class="text-body-secondary @(TitleHidden ? null : "mt-3") mb-0">@L["ReportNoData"]</p>
             }
             else
             {
-                <div class="report-kpis mt-3">
+                <div class="report-kpis @(TitleHidden ? null : "mt-3")">
                     @foreach (var total in result.Totals)
                     {
                         <div class="report-kpi">
@@ -149,13 +155,13 @@
                 }
             }
 
-            @if (Card.Definition.Visualization is ReportVisualization.Bar or ReportVisualization.Line or ReportVisualization.Donut)
+            @if (!TitleHidden && Card.Definition.Visualization is (ReportVisualization.Bar or ReportVisualization.Line or ReportVisualization.Donut))
             {
-                <p class="small text-body-secondary mt-3 mb-0">@L["ReportChartTableFallback"]</p>
+                <p class="report-card-description small text-body-secondary mt-3 mb-0">@L["ReportChartTableFallback"]</p>
             }
             @foreach (var restriction in result.Metadata.RestrictionResourceKeys)
             {
-                <p class="small text-body-secondary mt-2 mb-0"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>@L[restriction]</p>
+                <p class="report-card-restriction small text-body-secondary mt-2 mb-0"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>@L[restriction]</p>
             }
         }
     </div>
@@ -181,8 +187,14 @@
     private bool loading;
 
     private string TitleId => $"report-card-title-{Card.Id:N}";
-    private string VisualizationLabel => Card.Definition.Visualization.HasValue
-        ? L[$"ReportVisualization{Card.Definition.Visualization.Value}"].Value : L["ReportUnknown"].Value;
+    private bool TitleHidden => Card.Definition.TitlePlacement == ReportTitlePlacement.Hidden;
+    private string TitlePlacementValue => Card.Definition.TitlePlacement.ToString().ToLowerInvariant();
+    private string TitleAlignmentClass => Card.Definition.TitlePlacement switch
+    {
+        ReportTitlePlacement.Center => "text-center",
+        ReportTitlePlacement.Right => "text-end",
+        _ => "text-start"
+    };
     private string UnitLabel => result?.Metadata.Unit switch
     {
         ReportValueUnit.Count => L["ReportUnitCount"].Value,
@@ -291,7 +303,7 @@
     private static string Fingerprint(ReportCardDefinition definition) =>
         $"{definition.Module}|{definition.DefinitionVersion}|{definition.Metric}|" +
         $"{definition.DateBasis}|{definition.Aggregation}|{definition.Period}|{definition.Grouping}|" +
-        $"{definition.TimeGrouping}|{definition.Visualization}|{definition.DisplayJson}|" +
+        $"{definition.TimeGrouping}|{definition.Visualization}|" +
         $"{ReportFilterJson.Serialize(definition.Filters)}";
 
     public ValueTask DisposeAsync()

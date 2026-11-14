@@ -28,15 +28,19 @@
                 }
             </li>
         </ul>
-        <p class="small text-body-secondary mb-0">
-            @L[Result.IsTruncated ? "ReportTreePreviewTruncated" : "ReportTreePreviewFirstLevel"]
-        </p>
+        @if (ShowDescriptions)
+        {
+            <p class="report-card-description small text-body-secondary mb-0">
+                @L[Result.IsTruncated ? "ReportTreePreviewTruncated" : "ReportTreePreviewFirstLevel"]
+            </p>
+        }
     </div>
 </div>
 
 @code {
     [Parameter, EditorRequired] public ReportTreePreviewResult Result { get; set; } = null!;
     [Parameter, EditorRequired] public string CardName { get; set; } = "";
+    [Parameter] public bool ShowDescriptions { get; set; } = true;
 
     private ReportTreeChartModel ChartModel => new(
         new(Result.Root.Id.Key, Result.Root.Name, Result.Root.Context, false,

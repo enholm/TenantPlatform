@@ -29,11 +29,17 @@ static class ReportEditorChecks
         var html = await renderer.Dispatcher.InvokeAsync(root.ToHtmlString);
         var basics = html.IndexOf("report-editor-basics", StringComparison.Ordinal);
         var tabs = html.IndexOf("role=\"tablist\"", StringComparison.Ordinal);
+        var title = html.IndexOf("report-card-name", basics, StringComparison.Ordinal);
+        var titlePlacement = html.IndexOf("report-card-title-placement", basics, StringComparison.Ordinal);
+        var module = html.IndexOf("report-card-module", basics, StringComparison.Ordinal);
         var visualPanel = html.IndexOf("id=\"report-card-panel-visualization\"", StringComparison.Ordinal);
         var filterPanel = html.IndexOf("id=\"report-card-panel-filter\"", StringComparison.Ordinal);
-        Check.That(basics >= 0 && html.IndexOf("report-card-name", basics, StringComparison.Ordinal) < tabs &&
-            html.IndexOf("report-card-module", basics, StringComparison.Ordinal) < tabs,
-            "report name and module stay together above the editor tabs");
+        Check.That(basics >= 0 && title < titlePlacement && titlePlacement < module && module < tabs &&
+            html.Contains("col-md-5", StringComparison.Ordinal) && html.Contains("col-md-4", StringComparison.Ordinal) &&
+            html.Contains("col-md-3", StringComparison.Ordinal) && html.Contains(">Tittel</label>", StringComparison.Ordinal),
+            "title, title placement and module use the responsive ordered row above the editor tabs");
+        Check.That(GetModelProperty<ReportTitlePlacement>(state.Component!, "TitlePlacement") == ReportTitlePlacement.Left,
+            "editor defaults an existing card without a display setting to left title placement");
         Check.That(html.Contains("id=\"report-card-tab-visualization\" class=\"nav-link active\"", StringComparison.Ordinal) &&
             html.Contains("role=\"tab\"", StringComparison.Ordinal) && html.Contains("role=\"tabpanel\"", StringComparison.Ordinal),
             "visualisation is the default accessible editor tab");
@@ -52,6 +58,7 @@ static class ReportEditorChecks
 
         var component = state.Component!;
         SetModelProperty(component, "Name", "Input kept across tabs");
+        SetModelProperty(component, "TitlePlacement", ReportTitlePlacement.Right);
         SetPrivateField(component, "issues", new List<ReportValidationIssue> { new("metric", "ReportDefinitionMetricInvalid") });
         SetPrivateField(component, "normalizationFields", new List<string> { "grouping" });
         await renderer.Dispatcher.InvokeAsync(() => InvokeTabAsync(component, "Filter"));
@@ -67,8 +74,9 @@ static class ReportEditorChecks
         await renderer.Dispatcher.InvokeAsync(state.Host!.Refresh);
         html = await renderer.Dispatcher.InvokeAsync(root.ToHtmlString);
         Check.That(html.Contains("value=\"Input kept across tabs\"", StringComparison.Ordinal) &&
-            html.Contains("id=\"report-card-tab-filter\" class=\"nav-link active\"", StringComparison.Ordinal),
-            "module normalization preserves the name and active editor tab");
+            html.Contains("id=\"report-card-tab-filter\" class=\"nav-link active\"", StringComparison.Ordinal) &&
+            GetModelProperty<ReportTitlePlacement>(component, "TitlePlacement") == ReportTitlePlacement.Right,
+            "module normalization preserves the title, title placement and active editor tab");
 
         await renderer.Dispatcher.InvokeAsync(() => InvokePrivateAsync(component, "HandleTabKeyDownAsync",
             new KeyboardEventArgs { Key = "ArrowLeft" }));
@@ -117,9 +125,10 @@ static class ReportEditorChecks
         await WaitUntilAsync(() => renderer.Dispatcher.InvokeAsync(() =>
             root.ToHtmlString().Contains("report-card-panel-visualization", StringComparison.Ordinal)).GetAwaiter().GetResult());
         component = state.Component!;
+        SetModelProperty(component, "TitlePlacement", ReportTitlePlacement.Center);
         await renderer.Dispatcher.InvokeAsync(() => InvokePrivateAsync(component, "ApplyAsync"));
-        Check.That(state.Applied is not null && !state.IsOpen,
-            "successful apply closes through shared cleanup while returning the working-copy card");
+        Check.That(state.Applied?.Definition.TitlePlacement == ReportTitlePlacement.Center && !state.IsOpen,
+            "successful apply returns the selected title placement and closes through shared cleanup");
 
         await VerifyLateCatalogMessageAsync();
     }
@@ -183,6 +192,12 @@ static class ReportEditorChecks
     {
         var model = component.GetType().GetField("model", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(component)!;
         model.GetType().GetProperty(property)!.SetValue(model, value);
+    }
+
+    private static T GetModelProperty<T>(ReportCardEditorDialog component, string property)
+    {
+        var model = component.GetType().GetField("model", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(component)!;
+        return (T)model.GetType().GetProperty(property)!.GetValue(model)!;
     }
 
     private static void SetPrivateField<T>(ReportCardEditorDialog component, string field, T value) =>

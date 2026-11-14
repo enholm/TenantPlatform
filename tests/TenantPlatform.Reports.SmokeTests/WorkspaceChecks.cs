@@ -15,6 +15,28 @@ static class WorkspaceChecks
             !ReferenceEquals(first.Cards[0].Definition.Period, state.Page(first.Id).Cards[0].Definition.Period),
             "workspace definition collections and period have no shared mutable references");
 
+        var titleCard = state.Page(first.Id).Cards[0];
+        var hiddenDefinition = titleCard.Definition with
+        {
+            DisplayJson = ReportDisplaySettingsJson.SetTitlePlacement(
+                titleCard.Definition.DisplayJson, ReportTitlePlacement.Hidden)
+        };
+        state.UpdateCard(first.Id, titleCard.ClientId, titleCard with { Definition = hiddenDefinition });
+        var titleCopy = state.DuplicateCard(first.Id, titleCard.ClientId, "Title copy");
+        state.AddSnapshot(second);
+        state.MoveCard(first.Id, second.Id, titleCopy.ClientId);
+        var editedTitleCard = state.Page(first.Id).Cards.Single(x => x.ClientId == titleCard.ClientId);
+        var movedTitleCopy = state.Page(second.Id).Cards.Single();
+        Check.That(state.IsDirty && editedTitleCard.Name == titleCard.Name &&
+            editedTitleCard.Definition.TitlePlacement == ReportTitlePlacement.Hidden &&
+            movedTitleCopy.Name == "Title copy" &&
+            movedTitleCopy.Definition.TitlePlacement == ReportTitlePlacement.Hidden,
+            "title placement participates in dirty state and survives duplication and cross-page movement without deleting card titles");
+        state.Cancel();
+        Check.That(!state.IsDirty && state.Page(first.Id).Cards[0].Definition.TitlePlacement == ReportTitlePlacement.Left &&
+            state.Page(second.Id).Cards.Count == 0,
+            "cancel restores the saved title placement after display edits, duplication and movement");
+
         state.Rename(first.Id, "Renamed");
         var added = state.AddCard(first.Id, Definition("added"), "Added");
         var duplicate = state.DuplicateCard(first.Id, first.Cards[0].Id, "Duplicate");

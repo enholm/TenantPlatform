@@ -43,6 +43,7 @@ await ExecutionChecks.RunAsync(fixture);
 await LeasingExecutionChecks.RunAsync(fixture);
 WorkspaceChecks.Run();
 ChartLayoutChecks.Run();
+ReportDisplayChecks.Run();
 await PreviewChecks.RunAsync();
 await ReportUiChecks.RunAsync();
 await ReportEditorChecks.RunAsync();

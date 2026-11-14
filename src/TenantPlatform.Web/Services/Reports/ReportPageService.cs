@@ -203,6 +203,12 @@ public sealed class ReportPageService(
         var filtersJson = ReportFilterJson.Serialize(edit.Definition.Filters ?? throw InvalidException());
         if (filtersJson.Length > JsonLimit || edit.Definition.DisplayJson is null ||
             edit.Definition.DisplayJson.Length > JsonLimit || !JsonObject(edit.Definition.DisplayJson)) Invalid();
+        try { _ = edit.Definition.TitlePlacement; }
+        catch (ReportDisplaySettingsException)
+        {
+            throw new ReportDefinitionValidationException(
+                [new ReportValidationIssue("titlePlacement", "ReportDefinitionTitlePlacementInvalid")]);
+        }
 
         var definitionChanged = existing is null || !SameDefinition(existing, edit.Definition, filtersJson);
         if (!definitionChanged) return;

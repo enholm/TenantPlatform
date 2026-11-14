@@ -3,3 +3,5 @@
 .report-kpi-value { font-size: 1.5rem; font-weight: 600; }
 .report-kpi-label { color: var(--bs-secondary-color); }
 .report-card .card-body { overflow: auto; }
+.report-card-heading h2 { width: 100%; overflow-wrap: anywhere; }
+.report-card[data-report-title-placement="hidden"] ::deep .report-tree-preview { margin-top: 0 !important; }

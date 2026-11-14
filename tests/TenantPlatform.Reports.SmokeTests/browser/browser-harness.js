@@ -128,6 +128,30 @@ async function chartChecks() {
     check([barElement, lineElement, donutElement].every(x => x.querySelector("canvas")),
         "all supported chart kinds render to canvas");
 
+    const titleToggleCard = document.querySelector("#chart-title-toggle-card");
+    const titleChrome = document.querySelector("#chart-title-chrome");
+    const titleChromeParent = titleChrome.parentElement;
+    const titleChromeNext = titleChrome.nextSibling;
+    const chartTopWithTitle = barElement.getBoundingClientRect().top;
+    const titleCanvasCount = barElement.querySelectorAll("canvas").length;
+    titleChrome.remove();
+    titleToggleCard.removeAttribute("aria-labelledby");
+    titleToggleCard.setAttribute("aria-label", "Bar");
+    titleToggleCard.dataset.reportTitlePlacement = "hidden";
+    await wait(80);
+    check(barElement.getBoundingClientRect().top < chartTopWithTitle &&
+        echarts.getInstanceByDom(barElement).id === bar.id &&
+        barElement.querySelectorAll("canvas").length === titleCanvasCount,
+        "hiding title chrome frees vertical space without reinitialising the chart");
+    titleChromeParent.insertBefore(titleChrome, titleChromeNext);
+    titleToggleCard.setAttribute("aria-labelledby", "chart-title-toggle");
+    titleToggleCard.removeAttribute("aria-label");
+    titleToggleCard.dataset.reportTitlePlacement = "left";
+    await wait(80);
+    check(echarts.getInstanceByDom(barElement).id === bar.id &&
+        barElement.querySelectorAll("canvas").length === titleCanvasCount,
+        "showing title chrome again keeps the existing chart instance");
+
     const barOption = bar.getOption();
     equal(barOption.series.map(x => x.name), ["EUR", "NOK"],
         "currency series retain stable mapper ordering");
@@ -679,9 +703,37 @@ async function gridChecks() {
         "disposing edit mode cancels the gesture and rejects its late callback");
 
     generation++;
-    adapter = gridModule.create(editGrid, dotnet, generation, 12, 3, 3, 12);
+    adapter = gridModule.create(editGrid, dotnet, generation, 12, 3, 3, fixture.maximumResize.height);
     adapter.setGeneration(generation);
     adapter.dispose();
+}
+
+function presentationChecks() {
+    const fixtures = document.querySelector("#title-placement-fixtures");
+    check(!document.querySelector(".report-card-heading .badge") &&
+        !document.body.textContent.includes("Passive preview"),
+        "report card headers contain neither visualization badges nor passive-preview labels");
+    const visible = [...fixtures.querySelectorAll("[data-report-title-placement]:not([data-report-title-placement='hidden'])")];
+    equal(visible.map(x => getComputedStyle(x.querySelector("h2")).textAlign), ["left", "center", "right"],
+        "left, centred and right report titles use the requested browser text alignment");
+    const hidden = document.querySelector("#hidden-title-card");
+    check(!hidden.querySelector("h2,.report-card-heading,.report-card-description") &&
+        hidden.getAttribute("aria-label") === "Hidden title" && hidden.querySelector(".data-view") &&
+        hidden.querySelector("[role='alert']"),
+        "hidden title fixture has no descriptive chrome while data and necessary warning remain");
+
+    const editorRow = document.querySelector("#editor-row-fixture .report-editor-basics");
+    const editorFields = [...editorRow.children];
+    check(editorRow.scrollWidth <= editorRow.clientWidth + 1 &&
+        editorFields.every(x => x.getBoundingClientRect().right <= editorRow.getBoundingClientRect().right + 1),
+        "title, title position and module do not overflow the editor row");
+    if (innerWidth >= 768)
+        check(new Set(editorFields.map(x => Math.round(x.getBoundingClientRect().top))).size === 1,
+            "editor title controls share one row at desktop width");
+    else
+        check(new Set(editorFields.map(x => Math.round(x.getBoundingClientRect().top))).size === 3 &&
+            editorFields.every(x => x.getBoundingClientRect().width > editorRow.clientWidth * .9),
+            "editor title controls stack to full width at the narrow viewport");
 }
 
 function cardFor(items, id) {
@@ -694,6 +746,7 @@ function cardFor(items, id) {
 try {
     await chartChecks();
     await gridChecks();
+    presentationChecks();
 } catch (error) {
     check(false, `${error?.stack ?? error}`);
 }

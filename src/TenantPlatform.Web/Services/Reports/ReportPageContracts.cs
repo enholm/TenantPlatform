@@ -13,7 +13,10 @@ public sealed record ReportCardDefinition(
     ReportGroupingKey? Grouping = null,
     ReportTimeGrouping? TimeGrouping = null,
     ReportVisualization? Visualization = null,
-    string DisplayJson = "{}");
+    string DisplayJson = "{}")
+{
+    public ReportTitlePlacement TitlePlacement => ReportDisplaySettingsJson.Deserialize(DisplayJson).TitlePlacement;
+}
 
 public sealed record ReportCardEdit(
     Guid? Id,

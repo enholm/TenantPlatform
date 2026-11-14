@@ -24,12 +24,21 @@
                             else if (catalog is not null)
                             {
                                 <div class="row g-3 report-editor-basics">
-                                    <div class="col-md-8">
-                                        <label class="form-label" for="report-card-name">@L["Name"]</label>
+                                    <div class="col-md-5">
+                                        <label class="form-label" for="report-card-name">@L["ReportCardTitle"]</label>
                                         <input id="report-card-name" class="form-control" @bind="model.Name" @bind:event="oninput"
                                                maxlength="200" autofocus @ref="nameElement" />
                                     </div>
                                     <div class="col-md-4">
+                                        <label class="form-label" for="report-card-title-placement">@L["ReportTitlePlacement"]</label>
+                                        <select id="report-card-title-placement" class="form-select" @bind="model.TitlePlacement">
+                                            @foreach (var placement in Enum.GetValues<ReportTitlePlacement>())
+                                            {
+                                                <option value="@placement">@L[$"ReportTitlePlacement{placement}"]</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
                                         <label class="form-label" for="report-card-module">@L["ReportModule"]</label>
                                         <select id="report-card-module" class="form-select" value="@((int)model.Module)"
                                                 @onchange="ModuleChangedAsync" @ref="moduleElement">
@@ -475,7 +484,8 @@
             ParseNullable<ReportDateBasis>(model.DateBasisText),
             model.Metric,
             ParseNullable<ReportAggregation>(model.AggregationText),
-            grouping, time, model.Visualization);
+            grouping, time, model.Visualization,
+            ReportDisplaySettingsJson.SetTitlePlacement(Card!.Definition.DisplayJson, model.TitlePlacement));
     }
 
     private async Task SelectTabAsync(EditorTab tab, bool focus = false)
@@ -621,6 +631,7 @@
         public string AggregationText { get; set; } = "";
         public string GroupingText { get; set; } = "";
         public ReportVisualization? Visualization { get; set; }
+        public ReportTitlePlacement TitlePlacement { get; set; }
 
         public static ReportCardForm From(ReportCardDraft card) => new()
         {
@@ -633,7 +644,8 @@
             Metric = card.Definition.Metric,
             AggregationText = EnumValue(card.Definition.Aggregation),
             GroupingText = GroupingValue(card.Definition),
-            Visualization = card.Definition.Visualization
+            Visualization = card.Definition.Visualization,
+            TitlePlacement = card.Definition.TitlePlacement
         };
     }
 

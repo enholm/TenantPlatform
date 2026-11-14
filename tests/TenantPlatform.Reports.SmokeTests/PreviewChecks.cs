@@ -43,6 +43,14 @@ static class PreviewChecks
         await preview.ExecuteAsync(fixture.Session, fixture.Account, new(renamedPresentation));
         Check.That(fixture.Execution.Calls == 1,
             "presentation-only chart kind reuses the compatible aggregate data result");
+        var hiddenTitle = first with
+        {
+            DisplayJson = ReportDisplaySettingsJson.SetTitlePlacement(
+                first.DisplayJson, ReportTitlePlacement.Hidden)
+        };
+        await preview.ExecuteAsync(fixture.Session, fixture.Account, new(hiddenTitle));
+        Check.That(fixture.Execution.Calls == 1,
+            "title placement is presentation-only and does not change the result cache identity");
         await preview.ExecuteAsync(fixture.Session, fixture.Account,
             new(first with { Visualization = ReportVisualization.Table }));
         Check.That(fixture.Execution.Calls == 2,

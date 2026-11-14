@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="/report-chart.css">
     <link rel="stylesheet" href="/report-grid.css">
     <link rel="stylesheet" href="/report-palette.css">
+    <link rel="stylesheet" href="/report-card.css">
+    <link rel="stylesheet" href="/report-editor.css">
     <link rel="stylesheet" href="/report-tree-chart.css">
     <style>
         body { padding: 1rem; }
@@ -33,7 +35,10 @@
     <ol id="results" aria-live="polite"></ol>
 
     <section class="harness-charts" aria-label="Charts">
-        <article class="harness-card"><h2>Bar</h2><div id="bar-chart" class="report-chart"></div></article>
+        <article id="chart-title-toggle-card" class="harness-card card report-card" aria-labelledby="chart-title-toggle">
+            <div id="chart-title-chrome"><div class="report-card-heading"><h2 id="chart-title-toggle" class="h5 mb-0 text-start">Bar</h2></div><div class="report-card-description small text-body-secondary">Selected period</div></div>
+            <div id="bar-chart" class="report-chart"></div>
+        </article>
         <article class="harness-card"><h2>Line</h2><div id="line-chart" class="report-chart"></div></article>
         <article class="harness-card"><h2>Donut</h2><div id="donut-chart" class="report-chart"></div></article>
         <article class="harness-card"><h2>Empty and invalid</h2><p id="empty-result">No data</p><p id="invalid-donut">Invalid donut rejected</p></article>
@@ -50,6 +55,21 @@
         <p id="layout-status" aria-live="polite"></p>
         <h2>Read-only grid</h2>
         <div id="view-grid" class="report-layout-grid"></div>
+    </section>
+
+    <section id="title-placement-fixtures" class="mt-4" aria-label="Title placement fixtures">
+        <article class="card report-card mb-2" data-report-title-placement="left"><div class="card-body"><div class="report-card-heading"><h2 class="h5 mb-0 text-start">Left title</h2></div><div class="data-view">KPI data</div></div></article>
+        <article class="card report-card mb-2" data-report-title-placement="center"><div class="card-body"><div class="report-card-heading"><h2 class="h5 mb-0 text-center">Centred title</h2></div><div class="data-view">Table data</div></div></article>
+        <article class="card report-card mb-2" data-report-title-placement="right"><div class="card-body"><div class="report-card-heading"><h2 class="h5 mb-0 text-end">Right title</h2></div><div class="data-view">Tree data</div></div></article>
+        <article id="hidden-title-card" class="card report-card mb-2" data-report-title-placement="hidden" aria-label="Hidden title"><div class="card-body"><div class="data-view">Chart data</div><div class="alert alert-warning mb-0" role="alert">Necessary warning</div></div></article>
+    </section>
+
+    <section id="editor-row-fixture" class="mt-4" aria-label="Editor top row">
+        <div class="row g-3 report-editor-basics">
+            <div class="col-md-5"><label class="form-label">Title</label><input class="form-control"></div>
+            <div class="col-md-4"><label class="form-label">Title position</label><select class="form-select"><option>Left</option></select></div>
+            <div class="col-md-3"><label class="form-label">Module</label><select class="form-select"><option>Agreements</option></select></div>
+        </div>
     </section>
 
     <aside id="layout-palette" class="report-layout-palette" aria-label="Layout tools">

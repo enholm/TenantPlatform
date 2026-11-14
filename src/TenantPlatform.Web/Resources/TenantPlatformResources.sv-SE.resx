@@ -3440,4 +3440,11 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="ReportEditorTabs" xml:space="preserve"><value>Inställningar för rapportkort</value></data>
   <data name="ReportEditorVisualizationTab" xml:space="preserve"><value>Visualisering</value></data>
   <data name="ReportEditorFilterTab" xml:space="preserve"><value>Urval</value></data>
+  <data name="ReportCardTitle" xml:space="preserve"><value>Titel</value></data>
+  <data name="ReportTitlePlacement" xml:space="preserve"><value>Titelplacering</value></data>
+  <data name="ReportTitlePlacementHidden" xml:space="preserve"><value>Dold</value></data>
+  <data name="ReportTitlePlacementLeft" xml:space="preserve"><value>Vänster</value></data>
+  <data name="ReportTitlePlacementCenter" xml:space="preserve"><value>Centrerad</value></data>
+  <data name="ReportTitlePlacementRight" xml:space="preserve"><value>Höger</value></data>
+  <data name="ReportDefinitionTitlePlacementInvalid" xml:space="preserve"><value>Titelplaceringen är ogiltig.</value></data>
 </root>
