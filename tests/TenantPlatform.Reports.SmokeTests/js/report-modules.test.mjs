@@ -80,6 +80,20 @@ assert.equal(mutationObservers[0].disconnected, true, "chart dispose disconnects
 assert.equal(disposed, true, "chart dispose releases the ECharts instance");
 chart.dispose();
 
+disposed = false;
+const passiveOptions = [];
+const passiveInstance = {
+    setOption(value) { passiveOptions.push(value); }, resize() {}, dispose() { disposed = true; },
+    isDisposed() { return disposed; }
+};
+const passiveChart = chartModule.createWithLibrary({ clientWidth: 640, clientHeight: 320 }, model,
+    { getInstanceByDom: () => null, init: () => passiveInstance }, false);
+flushFrames();
+assert.equal(passiveOptions[0].tooltip.show, false, "passive chart disables tooltips");
+assert.equal(passiveOptions[0].legend.selectedMode, false, "passive chart disables legend toggling");
+assert.equal(passiveOptions[0].series[0].silent, true, "passive chart series emits no pointer events");
+passiveChart.dispose();
+
 const treeElement = { clientWidth: 720, clientHeight: 360 };
 const treeOptions = [];
 const treeHandlers = new Map();
@@ -124,6 +138,28 @@ tree.dispose();
 assert.equal(treeHandlers.size, 0, "tree dispose removes the click handler");
 assert.equal(treeDisposed, true, "tree dispose releases the ECharts instance");
 assert.ok(treeResizeCount >= 1, "tree participates in ResizeObserver lifecycle");
+
+const passiveTreeOptions = [];
+const passiveTreeHandlers = new Map();
+let passiveTreeDisposed = false;
+const passiveTreeInstance = {
+    setOption(value) { passiveTreeOptions.push(value); }, getOption() { return passiveTreeOptions.at(-1); },
+    resize() {}, dispose() { passiveTreeDisposed = true; }, isDisposed() { return passiveTreeDisposed; },
+    on(name, callback) { passiveTreeHandlers.set(name, callback); },
+    off(name, callback) { if (passiveTreeHandlers.get(name) === callback) passiveTreeHandlers.delete(name); }
+};
+const passiveSelections = [];
+const passiveTree = chartModule.createTreeWithLibrary(treeElement, treeModel,
+    { invokeMethodAsync: (...args) => { passiveSelections.push(args); return Promise.resolve(); } }, 9,
+    { getInstanceByDom: () => null, init: () => passiveTreeInstance }, false);
+flushFrames();
+assert.equal(passiveTreeOptions[0].tooltip.show, false, "passive tree disables tooltips");
+assert.equal(passiveTreeOptions[0].series[0].roam, false, "passive tree disables pan and zoom");
+assert.equal(passiveTreeOptions[0].series[0].silent, true, "passive tree disables node interaction");
+passiveTreeHandlers.get("click")({ data: { id: "child" } });
+await Promise.resolve();
+assert.equal(passiveSelections.length, 0, "passive tree ignores chart callbacks");
+passiveTree.dispose();
 
 const windowListeners = new Map();
 globalThis.addEventListener = (name, callback) => windowListeners.set(name, callback);

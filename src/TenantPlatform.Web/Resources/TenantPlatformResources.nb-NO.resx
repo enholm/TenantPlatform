@@ -3489,4 +3489,9 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ReportPaletteActions" xml:space="preserve"><value>Flytt og endre størrelsen på valgt rapportkort</value></data>
   <data name="ReportPaletteCardActions" xml:space="preserve"><value>Korthandlinger</value></data>
   <data name="ReportPaletteLayoutActions" xml:space="preserve"><value>Plassering og størrelse</value></data>
+  <data name="ReportPreviewRefresh" xml:space="preserve"><value>Oppdater forhåndsvisning</value></data>
+  <data name="ReportPreviewPassive" xml:space="preserve"><value>Passiv forhåndsvisning</value></data>
+  <data name="ReportTreePreviewFirstLevel" xml:space="preserve"><value>Forhåndsvisningen viser roten og første nivå. Åpne visningsmodus for å utforske treet.</value></data>
+  <data name="ReportTreePreviewTruncated" xml:space="preserve"><value>Forhåndsvisningen viser roten og et begrenset antall noder på første nivå. Åpne visningsmodus for å utforske hele treet.</value></data>
+  <data name="ReportPreviewBusy" xml:space="preserve"><value>For mange rapportforhåndsvisninger lastes samtidig. Prøv å oppdatere kortet på nytt.</value></data>
 </root>

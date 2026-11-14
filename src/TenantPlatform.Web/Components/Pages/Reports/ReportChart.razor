@@ -19,6 +19,7 @@ else
 
 @code {
     [Parameter, EditorRequired] public ReportChartModel Model { get; set; } = null!;
+    [Parameter] public bool Interactive { get; set; } = true;
 
     private ElementReference chartElement;
     private IJSObjectReference? module;
@@ -30,14 +31,14 @@ else
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (disposed || jsError) return;
-        var fingerprint = JsonSerializer.Serialize(Model);
+        var fingerprint = $"{Interactive}|{JsonSerializer.Serialize(Model)}";
         try
         {
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/report-charts.js");
             if (chart is null)
-                chart = await module.InvokeAsync<IJSObjectReference>("create", chartElement, Model);
+                chart = await module.InvokeAsync<IJSObjectReference>("create", chartElement, Model, Interactive);
             else if (renderedFingerprint != fingerprint)
-                await chart.InvokeVoidAsync("update", Model);
+                await chart.InvokeVoidAsync("update", Model, Interactive);
             renderedFingerprint = fingerprint;
         }
         catch (InvalidOperationException)

@@ -3432,4 +3432,9 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="ReportPaletteActions" xml:space="preserve"><value>Flytta och ändra storlek på valt rapportkort</value></data>
   <data name="ReportPaletteCardActions" xml:space="preserve"><value>Kortåtgärder</value></data>
   <data name="ReportPaletteLayoutActions" xml:space="preserve"><value>Placering och storlek</value></data>
+  <data name="ReportPreviewRefresh" xml:space="preserve"><value>Uppdatera förhandsvisning</value></data>
+  <data name="ReportPreviewPassive" xml:space="preserve"><value>Passiv förhandsvisning</value></data>
+  <data name="ReportTreePreviewFirstLevel" xml:space="preserve"><value>Förhandsvisningen visar roten och den första nivån. Öppna visningsläget för att utforska trädet.</value></data>
+  <data name="ReportTreePreviewTruncated" xml:space="preserve"><value>Förhandsvisningen visar roten och ett begränsat antal noder på första nivån. Öppna visningsläget för att utforska hela trädet.</value></data>
+  <data name="ReportPreviewBusy" xml:space="preserve"><value>För många rapportförhandsvisningar läses in samtidigt. Försök uppdatera kortet igen.</value></data>
 </root>

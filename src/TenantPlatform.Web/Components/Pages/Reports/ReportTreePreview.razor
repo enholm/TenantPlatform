@@ -1,0 +1,46 @@
+@using TenantPlatform.Web.Services.Reports
+
+<div class="report-tree-preview mt-3">
+    <ReportTreeChart Model="ChartModel" Interactive="false" />
+    <div class="report-tree-preview-summary">
+        <h3 class="h6">@L["ReportTreeAccessibleView"]</h3>
+        <ul class="report-tree-list">
+            <li>
+                <span class="fw-semibold">@Result.Root.Name</span>
+                @if (!string.IsNullOrWhiteSpace(Result.Root.Context))
+                {
+                    <span class="text-body-secondary"> — @Result.Root.Context</span>
+                }
+                @if (Result.Children.Count > 0)
+                {
+                    <ul>
+                        @foreach (var child in Result.Children)
+                        {
+                            <li @key="child.Id.Key">
+                                <span>@child.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(child.Context))
+                                {
+                                    <span class="text-body-secondary"> — @child.Context</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </li>
+        </ul>
+        <p class="small text-body-secondary mb-0">
+            @L[Result.IsTruncated ? "ReportTreePreviewTruncated" : "ReportTreePreviewFirstLevel"]
+        </p>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ReportTreePreviewResult Result { get; set; } = null!;
+    [Parameter, EditorRequired] public string CardName { get; set; } = "";
+
+    private ReportTreeChartModel ChartModel => new(
+        new(Result.Root.Id.Key, Result.Root.Name, Result.Root.Context, false,
+            Result.Children.Select(x => new ReportTreeChartNode(
+                x.Id.Key, x.Name, x.Context, false, [])).ToArray()),
+        L["ReportTreeAria", CardName]);
+}

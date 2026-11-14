@@ -1,13 +1,20 @@
 @using TenantPlatform.Core.Reports
 @using TenantPlatform.Web.Services.Reports
 @implements IAsyncDisposable
-@inject IReportExecutionService Execution
+@inject IReportPreviewSession Preview
 
-<article class="card report-card h-100" aria-labelledby="@TitleId">
+<article class="card report-card h-100 @(Passive ? "report-card-passive" : null)"
+         aria-labelledby="@TitleId" data-report-preview-passive="@Passive.ToString().ToLowerInvariant()">
     <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
             <h2 id="@TitleId" class="h5 mb-0">@Card.Name</h2>
-            <span class="badge text-bg-light">@VisualizationLabel</span>
+            <div class="text-end">
+                <span class="badge text-bg-light">@VisualizationLabel</span>
+                @if (Passive)
+                {
+                    <div class="small text-body-secondary mt-1">@L["ReportPreviewPassive"]</div>
+                }
+            </div>
         </div>
         @if (loading)
         {
@@ -21,7 +28,15 @@
         }
         else if (Card.Definition.Visualization == ReportVisualization.RelationshipTree)
         {
-            <ReportTree AccountId="AccountId" Definition="Card.Definition" CardName="Card.Name" />
+            @if (Passive && treeResult is not null)
+            {
+                <ReportTreePreview Result="treeResult" CardName="Card.Name" />
+            }
+            else if (!Passive && treeResult is not null)
+            {
+                <ReportTree AccountId="AccountId" Definition="Card.Definition" CardName="Card.Name"
+                            InitialPreview="treeResult" />
+            }
         }
         else if (result is not null)
         {
@@ -54,7 +69,7 @@
 
                 @if (ChartModel is not null)
                 {
-                    <ReportChart Model="ChartModel" @key="loadedFingerprint" />
+                    <ReportChart Model="ChartModel" Interactive="@(!Passive)" @key="Card.Id" />
                     @if (ChartModel.NonAdditive)
                     {
                         <p class="small text-body-secondary mb-0">
@@ -106,7 +121,10 @@
                                 @if (row is ReportAgreementTableRow agreement)
                                 {
                                     <tr>
-                                        <th scope="row"><a href="@($"/agreements/{agreement.AgreementId}")">@agreement.AgreementTitle</a></th>
+                                        <th scope="row">
+                                            @if (Passive) { @agreement.AgreementTitle }
+                                            else { <a href="@($"/agreements/{agreement.AgreementId}")">@agreement.AgreementTitle</a> }
+                                        </th>
                                         <td>@agreement.Counterparty</td>
                                         <td>@L[$"AgreementStatus{agreement.Status}"]</td>
                                         <td class="text-end">@Format(agreement.Value, agreement.Currency)</td>
@@ -115,7 +133,10 @@
                                 else if (row is ReportLeasingTableRow leasing)
                                 {
                                     <tr>
-                                        <th scope="row"><a href="@(leasing.IsFramework ? $"/leasing/frameworks/{leasing.RecordId}" : $"/leasing/acquisitions/{leasing.RecordId}")">@leasing.Name</a></th>
+                                        <th scope="row">
+                                            @if (Passive) { @leasing.Name }
+                                            else { <a href="@(leasing.IsFramework ? $"/leasing/frameworks/{leasing.RecordId}" : $"/leasing/acquisitions/{leasing.RecordId}")">@leasing.Name</a> }
+                                        </th>
                                         <td>@leasing.Reference</td>
                                         <td>@L[leasing.StatusResourceKey]</td>
                                         <td class="text-end">@Format(leasing.Value, leasing.Currency)</td>
@@ -142,14 +163,20 @@
 
 @code {
     [Parameter, EditorRequired] public Guid AccountId { get; set; }
+    [Parameter, EditorRequired] public Guid SessionId { get; set; }
     [Parameter, EditorRequired] public ReportCardDto Card { get; set; } = null!;
+    [Parameter] public bool Passive { get; set; }
+    [Parameter] public long RefreshVersion { get; set; }
 
     private CancellationTokenSource? loadCancellation;
     private ReportExecutionResult? result;
+    private ReportTreePreviewResult? treeResult;
     private ReportChartModel? ChartModel;
     private string? error;
     private string? chartError;
-    private string? loadedFingerprint;
+    private string? requestFingerprint;
+    private string? presentationFingerprint;
+    private long loadedRefreshVersion = -1;
     private long generation;
     private bool loading;
 
@@ -168,13 +195,22 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        var fingerprint = $"{AccountId:N}|{Fingerprint(Card)}";
-        if (loadedFingerprint == fingerprint) return;
-        loadedFingerprint = fingerprint;
-        await LoadAsync();
+        var nextRequest = $"{SessionId:N}|{AccountId:N}|{Fingerprint(Card.Definition)}";
+        var nextPresentation = $"{Card.Name}|{Card.Definition.Visualization}|{Passive}";
+        var forceRefresh = loadedRefreshVersion >= 0 && loadedRefreshVersion != RefreshVersion;
+        if (requestFingerprint == nextRequest && !forceRefresh)
+        {
+            if (presentationFingerprint != nextPresentation && result is not null) MapChart(result);
+            presentationFingerprint = nextPresentation;
+            return;
+        }
+        requestFingerprint = nextRequest;
+        presentationFingerprint = nextPresentation;
+        loadedRefreshVersion = RefreshVersion;
+        await LoadAsync(forceRefresh);
     }
 
-    private async Task LoadAsync()
+    private async Task LoadAsync(bool forceRefresh)
     {
         loadCancellation?.Cancel();
         loadCancellation?.Dispose();
@@ -183,14 +219,22 @@
         var currentGeneration = ++generation;
         loading = true;
         result = null;
+        treeResult = null;
         ChartModel = null;
         error = null;
         chartError = null;
         try
         {
             if (Card.Definition.Visualization == ReportVisualization.RelationshipTree)
+            {
+                var loadedTree = await Preview.LoadTreeAsync(SessionId, AccountId, Card.Definition,
+                    forceRefresh, token);
+                if (currentGeneration == generation && !token.IsCancellationRequested)
+                    treeResult = loadedTree;
                 return;
-            var loaded = await Execution.ExecuteAsync(AccountId, new(Card.Definition), token);
+            }
+            var loaded = await Preview.ExecuteAsync(SessionId, AccountId, new(Card.Definition),
+                forceRefresh, token);
             if (currentGeneration == generation && !token.IsCancellationRequested)
             {
                 result = loaded;
@@ -207,6 +251,10 @@
             if (currentGeneration == generation) error = "ReportCardInvalid";
         }
         catch (ReportExecutionException ex)
+        {
+            if (currentGeneration == generation) error = ex.Message;
+        }
+        catch (ReportTreeException ex)
         {
             if (currentGeneration == generation) error = ex.Message;
         }
@@ -240,11 +288,11 @@
         }
         catch (ReportChartMappingException ex) { chartError = ex.Message; }
     }
-    private static string Fingerprint(ReportCardDto card) =>
-        $"{card.Id:N}|{card.Name}|{card.Definition.Module}|{card.Definition.Metric}|" +
-        $"{card.Definition.DateBasis}|{card.Definition.Period}|{card.Definition.Grouping}|" +
-        $"{card.Definition.TimeGrouping}|{card.Definition.Visualization}|" +
-        $"{ReportFilterJson.Serialize(card.Definition.Filters)}";
+    private static string Fingerprint(ReportCardDefinition definition) =>
+        $"{definition.Module}|{definition.DefinitionVersion}|{definition.Metric}|" +
+        $"{definition.DateBasis}|{definition.Aggregation}|{definition.Period}|{definition.Grouping}|" +
+        $"{definition.TimeGrouping}|{definition.Visualization}|{definition.DisplayJson}|" +
+        $"{ReportFilterJson.Serialize(definition.Filters)}";
 
     public ValueTask DisposeAsync()
     {

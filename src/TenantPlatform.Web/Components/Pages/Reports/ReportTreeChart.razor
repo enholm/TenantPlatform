@@ -17,6 +17,7 @@ else
 @code {
     [Parameter, EditorRequired] public ReportTreeChartModel Model { get; set; } = null!;
     [Parameter] public long Generation { get; set; }
+    [Parameter] public bool Interactive { get; set; } = true;
     [Parameter] public EventCallback<string> OnSelected { get; set; }
 
     private ElementReference element;
@@ -30,17 +31,18 @@ else
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (disposed || jsError) return;
-        var next = JsonSerializer.Serialize(Model);
+        var next = $"{Interactive}|{JsonSerializer.Serialize(Model)}";
         try
         {
             module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/report-charts.js");
             if (chart is null)
             {
-                self ??= DotNetObjectReference.Create(this);
-                chart = await module.InvokeAsync<IJSObjectReference>("createTree", element, Model, self, Generation);
+                if (Interactive) self ??= DotNetObjectReference.Create(this);
+                chart = await module.InvokeAsync<IJSObjectReference>("createTree", element, Model,
+                    self, Generation, Interactive);
             }
             else if (fingerprint != next)
-                await chart.InvokeVoidAsync("update", Model, Generation);
+                await chart.InvokeVoidAsync("update", Model, Generation, Interactive);
             fingerprint = next;
         }
         catch (InvalidOperationException) { }
@@ -51,7 +53,7 @@ else
 
     [JSInvokable]
     public Task SelectTreeNode(string key, long generation) =>
-        disposed || generation != Generation ? Task.CompletedTask : OnSelected.InvokeAsync(key);
+        disposed || !Interactive || generation != Generation ? Task.CompletedTask : OnSelected.InvokeAsync(key);
 
     public async ValueTask DisposeAsync()
     {

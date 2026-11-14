@@ -43,6 +43,7 @@ await ExecutionChecks.RunAsync(fixture);
 await LeasingExecutionChecks.RunAsync(fixture);
 WorkspaceChecks.Run();
 ChartLayoutChecks.Run();
+await PreviewChecks.RunAsync();
 await ReportUiChecks.RunAsync();
 await PageChecks.RunAsync(fixture);
 if (fixture.IsPostgres)

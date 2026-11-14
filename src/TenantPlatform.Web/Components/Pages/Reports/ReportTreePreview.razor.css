@@ -1,0 +1,7 @@
+.report-tree-preview { min-height: 0; }
+.report-tree-preview ::deep .report-tree-chart {
+    height: clamp(12rem, 28vh, 20rem);
+    min-height: 12rem;
+}
+.report-tree-preview-summary { margin-top: .75rem; }
+.report-tree-preview-summary ul { margin-bottom: .35rem; }

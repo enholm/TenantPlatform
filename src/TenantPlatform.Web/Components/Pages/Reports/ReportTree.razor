@@ -115,6 +115,7 @@
     [Parameter, EditorRequired] public Guid AccountId { get; set; }
     [Parameter, EditorRequired] public ReportCardDefinition Definition { get; set; } = null!;
     [Parameter, EditorRequired] public string CardName { get; set; } = "";
+    [Parameter] public ReportTreePreviewResult? InitialPreview { get; set; }
 
     private const int PageSize = 50;
     private readonly Dictionary<string, ReportTreeNode> nodes = [];
@@ -174,12 +175,19 @@
         searched = false; loading = true;
         try
         {
-            var loaded = await Trees.GetRootAsync(AccountId, Definition, lifetime.Token);
+            var loaded = InitialPreview?.Root ?? await Trees.GetRootAsync(AccountId, Definition, lifetime.Token);
             if (current != generation) return;
             root = loaded; nodes[loaded.Id.Key] = loaded;
             if (loaded.HasChildren)
             {
-                await LoadChildrenAsync(loaded, false, current, lifetime.Token);
+                if (InitialPreview is not null)
+                {
+                    foreach (var child in InitialPreview.Children) nodes[child.Id.Key] = child;
+                    children[loaded.Id.Key] = InitialPreview.Children;
+                    nextOffsets[loaded.Id.Key] = InitialPreview.NextOffset;
+                }
+                else
+                    await LoadChildrenAsync(loaded, false, current, lifetime.Token);
                 expanded.Add(loaded.Id.Key);
             }
         }

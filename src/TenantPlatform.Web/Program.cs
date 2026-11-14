@@ -134,6 +134,10 @@ builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportExecutionS
     TenantPlatform.Web.Services.Reports.ReportExecutionService>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportTreeService,
     TenantPlatform.Web.Services.Reports.ReportTreeService>();
+builder.Services.AddOptions<TenantPlatform.Web.Services.Reports.ReportPreviewOptions>()
+    .Bind(builder.Configuration.GetSection("ReportPreview"));
+builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportPreviewSession,
+    TenantPlatform.Web.Services.Reports.ReportPreviewSession>();
 builder.Services.AddScoped<TenantPlatform.Web.Services.Reports.IReportPageService,
     TenantPlatform.Web.Services.Reports.ReportPageService>();
 builder.Services.AddScoped<LeasingLifecycleProcessor>();

@@ -1045,4 +1045,43 @@ Status 13. november 2026: **KILDEIMPLEMENTASJON FERDIG OG MÅLRETTET DATABASEFRI
 | `dotnet build TenantPlatform.sln --no-restore` | PASS | 0 feil; eksisterende NU1902/NU1903 for `System.Security.Cryptography.Pkcs` 10.0.0 består. |
 | `git diff --check` | PASS | Ingen whitespace-feil etter justeringen. |
 
-Den isolerte harnessen starter ikke apphost, Blazor InteractiveServer eller database. Fysisk touch/stylus, full skjermlesermatrise og faktisk circuit-/navigasjonslivssyklus er fortsatt ikke verifisert av denne justeringen. Redigeringskortene viser fortsatt dagens redigeringsinnhold; en eventuell levende, passiv forhåndsvisning i redigeringsmodus er ikke implementert her.
+Den isolerte harnessen starter ikke apphost, Blazor InteractiveServer eller database. Fysisk touch/stylus, full skjermlesermatrise og faktisk circuit-/navigasjonslivssyklus er fortsatt ikke verifisert av denne justeringen. Ved avslutningen av denne justeringen viste redigeringskortene fortsatt bare redigeringsinnhold; den senere passive forhåndsvisningen er dokumentert i kapittel 28.
+
+## 28. Senere UI-justering — faktisk, passiv kortforhåndsvisning
+
+Status 13. november 2026: **KILDEIMPLEMENTASJON FERDIG OG MÅLRETTET DATABASEFRITT NETTLESERVERIFISERT.** Endringen bruker eksisterende rapport-/tretjenester og endrer ikke rapportdefinisjon, arbeidskopi, lagringsmodell, schema eller migrasjoner.
+
+### 28.1 Resultater og passiv presentasjon
+
+- `ReportPage` bygger `ReportCardDto` direkte fra hvert `ReportCardDraft`. «Bruk endringer» i eksisterende editor oppdaterer fortsatt bare arbeidskopien; den endrede definisjonen blir deretter grunnlaget for en ny forhåndsvisning. Åpen editor kjører ingen rapport per tastetrykk.
+- `ReportCardView` brukes nå i både visnings- og redigeringsmodus. KPI, tabell, stolpe, linje og donut bruker samme `IReportExecutionService`, kompatibilitetsvalidator, autorisasjon, kontolokale dato, perioderesolver og resultatkontrakt som visningsmodus. Lasting, tomt resultat, ugyldig definisjon, manglende tilgang og feil beholdes per kort.
+- Redigeringsmodus setter eksplisitt passiv presentasjon. Tabellrader rendres uten lenker. ECharts får `tooltip.show=false`, `legend.selectedMode=false` og `series.silent=true`; treet får i tillegg `roam=false`. Kortinnholdet har derfor ingen søk, nodevalg, detaljpanel, ekspanderingsknapper, lenker eller andre fokuserbare kontroller bak kortflaten. Selve gridkortet er fortsatt tastaturfokus og valg-/dragflate, og valgt kort beholder resize-håndtaket.
+- Diagramadapteren oppdaterer eksisterende ECharts-instans når modell eller interaksjonsmodus endres. Layout, resize og navn endrer ikke kjøregrunnlaget eller reinitialiserer diagrammet. Vanlig visningsmodus beholder tooltip, legendetoggling, tree pan/zoom, nodesøk, ekspandering, detaljer og navigasjon.
+- Passivt sammenhengstre bruker `IReportTreeService` og laster deterministisk bare rot pluss første side på første nivå (standard 12 noder, konfigurerbart 1–100). Det rendres både som passivt ECharts-tre og lesbar tekstliste. Lokalisert tekst forklarer at forhåndsvisningen er begrenset; `NextOffset` markeres som trunkert. Ingen heltrelasting eller cached omgåelse av tilgang/filter brukes.
+
+### 28.2 Cacheidentitet, levetid og ferskhet
+
+- `ReportPreviewSession` er registrert `Scoped`, altså per aktiv Blazor circuit/request, og alle nøkler er i tillegg bundet til autentisert bruker, valgt konto og en unik rapportside-/arbeidskopiøkt. `ReportPage.Dispose` og parameter-/sidebytte avslutter økten og kansellerer/fjerner alle dens oppføringer. Dette er ikke en global cache.
+- Kanonisk identitet omfatter modul, definisjonsversjon, typed filter-/dimensjonsidentiteter og verdier, perioderegel, faktisk løst fra-/til-intervall, lokal dato og tidssone, datogrunnlag, metric, aggregation, grouping, time grouping og relevant datashape. Tekstsøk normaliseres som eksisterende spørring (trim/lowercase), og uordnede filtre sorteres uten å endre noen intern verdiorden. Table page/page size og treets nivå/page size inngår.
+- Navn, kort-ID, side-ID utover øktpartisjoneringen, plassering, størrelse, sortering, valgt kort og palettplassering inngår ikke. Key figure/bar/line/donut kan dele samme aggregatresultat når tjenestens request/data er lik; tabell er separat fordi den krever rader/paging. Exact visualiseringskompatibilitet valideres fortsatt før hvert cacheoppslag. `DisplayJson` er ikke med fordi dagens tjenestekjede ikke leser det og det påvirker derfor ikke resultatdata.
+- Standardgrensene er fem minutters alder, 64 oppføringer, fire samtidige tjenestekjøringer og 12 første-nivå-treenoder. Verdiene kan overstyres under konfigurasjonsseksjonen `ReportPreview`. Fullførte least-recently-used-oppføringer fjernes ved kapasitetsgrensen; en side med bare maksimum pågående unike requests får en eksplisitt, lokalisert busy-feil fremfor ubegrenset vekst.
+- Hvert uttak validerer gjeldende bruker/konto, modultilgang, autorisert katalog/definisjon og kontolokal dato før en cachehit kan returneres. Bruker-/kontoskifte og tilgangsavvisning tømmer økten. Relative regler får ny nøkkel når lokal dato/løst intervall endres. Paletten tilbyr «Oppdater forhåndsvisning», som pensjonerer gjeldende oppføring og kjører på nytt. Feil og cancellation lagres aldri som varige cachetreff.
+- Cacheobjektet beholder egne kopier av resultatlistene og returnerer nye samlingskopier til hvert kort. Duplikater kan derfor dele beregningen uten å dele muterbar diagram-/UI-tilstand. Save lagrer fortsatt bare definisjon/layout. Avbryt bruker lagret definisjon; et utkastresultat kan ikke vises i visningsmodus fordi cacheidentiteten følger kjøregrunnlaget.
+
+### 28.3 Samtidighet, cancellation og sene svar
+
+- Identiske parallelle requests samles til ett pågående cachearbeid. En abonnent bruker egen cancellation; underliggende kjøring avbrytes først når ingen abonnenter gjenstår, økten avsluttes eller konteksten invalideres. Semaphore-grensen gjelder samlet aggregate- og trepreviewarbeid.
+- `ReportCardView` bruker stabil kort-ID, kjøredefinisjonsfingeravtrykk, refresh-versjon, egen `CancellationTokenSource` og monoton generation. Resultat, feil og loadingstatus oppdateres bare når alle fortsatt tilhører siste generation. Definisjonsendring, sletting, flytting, Save, Avbryt, sidebytte og dispose kan derfor ikke la et sent svar overskrive et nyere kort.
+- En tvungen oppdatering pensjonerer forrige cacheoppføring. En allerede abonnert forbruker kan fullføre den, men den gamle fullføringen får aldri erstatte den nye cacheverdien. Cancellation vises ikke som brukerfeil.
+
+### 28.4 Faktisk verifikasjon
+
+| Kontroll | Resultat | Evidens/begrensning |
+|---|---|---|
+| `TenantPlatform.Reports.SmokeTests` | PASS, 316 kontroller | Databasefri ren logikk, EF InMemory og `HtmlRenderer`. Nye kontroller dekker faktisk draft-definisjon, ingen ny execution ved layout/navn, ny execution ved kjørerelevant endring, filterkanonisering, chart-datadeling kontra tabellshape med ny resultatvalidering, gjenbruk av autorisert første-nivå-tre mellom passiv/interaktiv presentasjon, parallelldeduplisering, uavhengige resultatkopier, abonnentcancellation, retry etter feil, refresh, utløp, LRU-kapasitet, lokalt datoskifte, bruker-/tilgangsskifte, øktavslutning, tvungen A/B-race, maksimal samtidighet, passivt tre/tabell uten kontroller eller postlenker og komponentnivåets sene resultat/feil. Dette er ikke Npgsql-bevis. |
+| `node tests/TenantPlatform.Reports.SmokeTests/js/report-modules.test.mjs` | PASS | Mock-harness dekker passive chart-/tree-options, ingen tree callback, update, resize og dispose med produksjonsmodulen. |
+| `node tests/TenantPlatform.Reports.SmokeTests/browser/run-browser-harness.mjs` | PASS, Chrome 157.0.8103.78 | Faktisk lokal ECharts og produksjons-JS: 81 kontroller ved `1440×913`, 70 ved `500×757`. Verifiserer passive bar/tree-options, ingen nodecallback, ingen fokuserbare kortkontroller, valg/drag/resize over ekte canvas, palett, desktop/mobil CSS og fortsatt interaktivt ordinært chart/tree. |
+| `dotnet build TenantPlatform.sln --no-restore` | PASS | 0 feil; eksisterende NU1902/NU1903 for `System.Security.Cryptography.Pkcs` 10.0.0 består. |
+| `git diff --check` | PASS | Ingen whitespace-feil. |
+
+Den statiske Chrome-harnessen bruker syntetiske DTO-er fra faktisk C# mapper/layoutmotor og produksjons-JS/CSS, men starter ikke Blazor eller database. Faktisk apphost/InteractiveServer-circuit, Npgsql-cancellation, PostgreSQL-query count/ytelse, fysisk touch/stylus, manuell skjermleser og full browsermatrise er derfor fortsatt **IKKE VERIFISERT** i denne justeringen. Ingen ny PostgreSQL-kjøring ble startet.

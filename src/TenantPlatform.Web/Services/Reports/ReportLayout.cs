@@ -21,7 +21,7 @@ public static class ReportLayoutEngine
     public const int Columns = 12;
     public const int MinimumInteractiveWidth = 3;
     public const int MinimumInteractiveHeight = 3;
-    public const int MaximumInteractiveHeight = 12;
+    public const int MaximumInteractiveHeight = 20;
 
     public static IReadOnlyList<ReportGridItem> Normalize(
         IEnumerable<ReportGridItem> source,

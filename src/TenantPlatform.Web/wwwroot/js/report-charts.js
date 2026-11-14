@@ -10,7 +10,7 @@ async function ensureECharts() {
     return echartsPromise;
 }
 
-function option(model) {
+function option(model, interactive = true) {
     const categories = model.categories.map(category => ({ id: category.key, value: category.label }));
     const styles = getComputedStyle(document.documentElement);
     const textColor = styles.getPropertyValue("--bs-body-color").trim() || undefined;
@@ -20,20 +20,21 @@ function option(model) {
         aria: { enabled: true, decal: { show: true }, label: { description: model.ariaLabel } },
         backgroundColor: "transparent",
         textStyle: { color: textColor },
-        tooltip: { trigger: model.kind === 2 ? "item" : "axis", renderMode: "richText", confine: true }
+        tooltip: { show: interactive, trigger: model.kind === 2 ? "item" : "axis", renderMode: "richText", confine: true }
     };
 
     if (model.kind === 2) {
         const series = model.series[0];
         return {
             ...common,
-            legend: { type: "scroll", bottom: 0, textStyle: { color: textColor } },
+            legend: { type: "scroll", bottom: 0, selectedMode: interactive, textStyle: { color: textColor } },
             series: [{
                 id: series.key,
                 name: series.label,
                 type: "pie",
                 radius: ["48%", "72%"],
                 avoidLabelOverlap: true,
+                silent: !interactive,
                 label: { color: textColor },
                 data: model.categories.map((category, index) => ({
                     id: category.key,
@@ -47,7 +48,7 @@ function option(model) {
     const chartType = model.kind === 1 ? "line" : "bar";
     return {
         ...common,
-        legend: { type: "scroll", bottom: 0, textStyle: { color: textColor } },
+        legend: { type: "scroll", bottom: 0, selectedMode: interactive, textStyle: { color: textColor } },
         grid: { left: 16, right: 16, top: 32, bottom: 56, containLabel: true },
         xAxis: { type: "category", data: categories, axisLabel: { hideOverlap: true, color: textColor }, axisLine: { lineStyle: { color: borderColor } } },
         yAxis: { type: "value", axisLabel: { color: textColor }, splitLine: { lineStyle: { color: borderColor } } },
@@ -55,6 +56,7 @@ function option(model) {
             id: series.key,
             name: series.label,
             type: chartType,
+            silent: !interactive,
             data: model.categories.map((category, index) => ({ id: category.key, value: series.values[index] })),
             connectNulls: false,
             showSymbol: chartType === "line",
@@ -63,16 +65,17 @@ function option(model) {
     };
 }
 
-export async function create(element, model) {
+export async function create(element, model, interactive = true) {
     const echarts = await ensureECharts();
-    return createWithLibrary(element, model, echarts);
+    return createWithLibrary(element, model, echarts, interactive);
 }
 
-export function createWithLibrary(element, model, echarts) {
+export function createWithLibrary(element, model, echarts, interactive = true) {
     let instance = echarts.getInstanceByDom(element);
     if (!instance) instance = echarts.init(element, null, { renderer: "canvas" });
     let disposed = false;
     let currentModel = model;
+    let currentInteractive = interactive;
     let frame = 0;
     const resize = () => {
         if (disposed || frame) return;
@@ -84,17 +87,18 @@ export function createWithLibrary(element, model, echarts) {
     const observer = new ResizeObserver(resize);
     observer.observe(element);
     const themeObserver = typeof MutationObserver === "undefined" ? null : new MutationObserver(() => {
-        if (!disposed) instance.setOption(option(currentModel), { notMerge: true, lazyUpdate: false });
+        if (!disposed) instance.setOption(option(currentModel, currentInteractive), { notMerge: true, lazyUpdate: false });
     });
     themeObserver?.observe(document.documentElement, { attributes: true, attributeFilter: ["data-bs-theme"] });
-    instance.setOption(option(currentModel), { notMerge: true, lazyUpdate: false });
+    instance.setOption(option(currentModel, currentInteractive), { notMerge: true, lazyUpdate: false });
     resize();
 
     return {
-        update(nextModel) {
+        update(nextModel, nextInteractive = true) {
             if (disposed) return;
             currentModel = nextModel;
-            instance.setOption(option(currentModel), { notMerge: true, lazyUpdate: false });
+            currentInteractive = nextInteractive;
+            instance.setOption(option(currentModel, currentInteractive), { notMerge: true, lazyUpdate: false });
             resize();
         },
         resize,
@@ -109,7 +113,7 @@ export function createWithLibrary(element, model, echarts) {
     };
 }
 
-function treeOption(model, view) {
+function treeOption(model, view, interactive = true) {
     const styles = getComputedStyle(document.documentElement);
     const textColor = styles.getPropertyValue("--bs-body-color").trim() || undefined;
     const borderColor = styles.getPropertyValue("--bs-border-color").trim() || undefined;
@@ -127,13 +131,14 @@ function treeOption(model, view) {
         aria: { enabled: true, decal: { show: true }, label: { description: model.ariaLabel } },
         backgroundColor: "transparent",
         textStyle: { color: textColor },
-        tooltip: { trigger: "item", renderMode: "richText", confine: true },
+        tooltip: { show: interactive, trigger: "item", renderMode: "richText", confine: true },
         series: [{
             id: "report-tree",
             type: "tree",
             data: [node(model.root)],
             orient: "LR",
-            roam: true,
+            roam: interactive,
+            silent: !interactive,
             expandAndCollapse: false,
             initialTreeDepth: -1,
             top: 20,
@@ -154,24 +159,25 @@ function treeOption(model, view) {
     };
 }
 
-export async function createTree(element, model, dotnet, generation) {
+export async function createTree(element, model, dotnet, generation, interactive = true) {
     const echarts = await ensureECharts();
-    return createTreeWithLibrary(element, model, dotnet, generation, echarts);
+    return createTreeWithLibrary(element, model, dotnet, generation, echarts, interactive);
 }
 
-export function createTreeWithLibrary(element, model, dotnet, generation, echarts) {
+export function createTreeWithLibrary(element, model, dotnet, generation, echarts, interactive = true) {
     let instance = echarts.getInstanceByDom(element);
     if (!instance) instance = echarts.init(element, null, { renderer: "canvas" });
     let disposed = false;
     let currentModel = model;
     let currentGeneration = generation;
+    let currentInteractive = interactive;
     let frame = 0;
     const view = () => {
         const series = instance.getOption()?.series?.[0];
         return series ? { zoom: series.zoom, center: series.center } : undefined;
     };
     const render = preserveView => instance.setOption(treeOption(currentModel,
-        preserveView ? view() : undefined), { notMerge: true, lazyUpdate: false });
+        preserveView ? view() : undefined, currentInteractive), { notMerge: true, lazyUpdate: false });
     const resize = () => {
         if (disposed || frame) return;
         frame = requestAnimationFrame(() => {
@@ -186,7 +192,7 @@ export function createTreeWithLibrary(element, model, dotnet, generation, echart
     });
     themeObserver?.observe(document.documentElement, { attributes: true, attributeFilter: ["data-bs-theme"] });
     const selected = event => {
-        if (disposed || !event?.data?.id) return;
+        if (disposed || !currentInteractive || !event?.data?.id || !dotnet) return;
         dotnet.invokeMethodAsync("SelectTreeNode", event.data.id, currentGeneration)
             .catch(() => { /* circuit navigation/disposal invalidates late callbacks */ });
     };
@@ -194,10 +200,11 @@ export function createTreeWithLibrary(element, model, dotnet, generation, echart
     render(false);
     resize();
     return {
-        update(nextModel, nextGeneration) {
+        update(nextModel, nextGeneration, nextInteractive = true) {
             if (disposed) return;
             currentModel = nextModel;
             currentGeneration = nextGeneration;
+            currentInteractive = nextInteractive;
             render(true);
             resize();
         },

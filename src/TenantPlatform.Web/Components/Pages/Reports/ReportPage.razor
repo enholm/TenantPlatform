@@ -9,6 +9,7 @@
 @inject ICurrentUserContextService UserContext
 @inject IReportPageService Pages
 @inject IReportCatalogService Catalogs
+@inject IReportPreviewSession Preview
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -49,7 +50,8 @@ else if (page is not null)
             <ReportGrid Items="ViewGridItems" Editable="false">
                 <ItemTemplate Context="gridItem">
                     @{ var viewCard = page.Cards.Single(x => x.Id == gridItem.ClientId); }
-                    <ReportCardView AccountId="accountId" Card="viewCard" @key="gridItem.ClientId" />
+                    <ReportCardView AccountId="accountId" SessionId="previewSessionId" Card="viewCard"
+                                    RefreshVersion="@RefreshVersion(viewCard.Id)" @key="gridItem.ClientId" />
                 </ItemTemplate>
             </ReportGrid>
         }
@@ -71,11 +73,9 @@ else if (page is not null)
                                 OnLayoutChanged="change => ApplyLayout(draftPage.Id, change)">
                         <ItemTemplate Context="gridItem">
                         @{ var card = draftPage.Cards.Single(x => x.ClientId == gridItem.ClientId); }
-                        <article class="card h-100 report-edit-card" @key="card.ClientId">
-                            <div class="card-body overflow-auto">
-                                <strong>@card.Name</strong>
-                            </div>
-                        </article>
+                        <ReportCardView AccountId="accountId" SessionId="previewSessionId"
+                                        Card="@DraftCard(card)" Passive="true"
+                                        RefreshVersion="@RefreshVersion(card.ClientId)" @key="card.ClientId" />
                         </ItemTemplate>
                     </ReportGrid>
                     <button type="button" class="btn btn-outline-primary" @onclick="() => AddCardAsync(draftPage.Id)"><i class="bi bi-plus-lg" aria-hidden="true"></i> @L["ReportCardAdd"]</button>
@@ -84,7 +84,7 @@ else if (page is not null)
         }
         <ReportLayoutPalette @ref="layoutPalette" Name="@(SelectedCard?.Name ?? string.Empty)" Disabled="@(SelectedCard is null)"
             TargetPages="PaletteTargetPages" OnEdit="EditSelected" OnDuplicate="DuplicateSelected"
-            OnDelete="DeleteSelectedAsync" OnMoveToPage="MoveSelectedToPageAsync"
+            OnDelete="DeleteSelectedAsync" OnRefresh="RefreshSelected" OnMoveToPage="MoveSelectedToPageAsync"
             OnMoveUp="() => MoveSelected(-1)" OnMoveDown="() => MoveSelected(1)"
             OnNarrower="() => ResizeSelected(-1, 0)" OnWider="() => ResizeSelected(1, 0)"
             OnShorter="() => ResizeSelected(0, -1)" OnTaller="() => ResizeSelected(0, 1)" />
@@ -113,6 +113,7 @@ else if (page is not null)
     [Parameter] public Guid ReportPageId { get; set; }
     private readonly ReportWorkspaceState workspace = new();
     private readonly ReportCardSelectionState selection = new();
+    private readonly Dictionary<Guid, long> refreshVersions = [];
     private ReportPageDto? page;
     private IReadOnlyList<ReportPageSummaryDto> summaries = [];
     private Guid accountId, editorPageId;
@@ -123,10 +124,14 @@ else if (page is not null)
     private long workspaceGeneration;
     private string layoutStatus = "";
     private CancellationTokenSource? lifetime;
+    private Guid previewSessionId = Guid.NewGuid();
     private bool IsDirty => editing && workspace.IsDirty;
 
     protected override async Task OnParametersSetAsync()
     {
+        Preview.EndSession(previewSessionId);
+        previewSessionId = Guid.NewGuid();
+        refreshVersions.Clear();
         lifetime?.Cancel(); lifetime?.Dispose(); lifetime = new();
         if (UserContext.Current.CurrentAccountId is not Guid id) { Navigation.NavigateTo("/access-denied"); return; }
         accountId = id; await LoadAsync(lifetime.Token);
@@ -185,10 +190,16 @@ else if (page is not null)
         var copy = workspace.DuplicateCard(pageId, card.ClientId, $"{card.Name} {L["ReportCopySuffix"]}");
         selection.Select(pageId, copy.ClientId);
     }
+    private void RefreshSelected()
+    {
+        if (selection.CardId is not Guid cardId) return;
+        refreshVersions[cardId] = RefreshVersion(cardId) + 1;
+    }
     private async Task DeleteSelectedAsync()
     {
         if (selection.PageId is not Guid pageId || selection.CardId is not Guid cardId) return;
         workspace.DeleteCard(pageId, cardId);
+        refreshVersions.Remove(cardId);
         ClearSelection();
         await InvokeAsync(StateHasChanged);
         if (layoutPalette is not null) await layoutPalette.FocusAsync();
@@ -291,6 +302,10 @@ else if (page is not null)
     private static IReadOnlyList<ReportGridItem> DraftGridItems(ReportPageDraft draft) =>
         draft.Cards.Select(x => new ReportGridItem(x.ClientId, x.GridColumn, x.GridRow,
             x.GridWidth, x.GridHeight, x.SortOrder)).ToList();
+    private static ReportCardDto DraftCard(ReportCardDraft card) => new(
+        card.ClientId, card.Name, card.Definition, card.GridColumn, card.GridRow,
+        card.GridWidth, card.GridHeight, card.SortOrder);
+    private long RefreshVersion(Guid cardId) => refreshVersions.GetValueOrDefault(cardId);
     private Task ApplyLayout(Guid pageId, ReportGridLayoutChange change)
     {
         if (!editing || change.Generation != workspaceGeneration) return Task.CompletedTask;
@@ -298,5 +313,11 @@ else if (page is not null)
         layoutStatus = L["ReportLayoutUpdated"];
         return Task.CompletedTask;
     }
-    public void Dispose() { ClearSelection(); lifetime?.Cancel(); lifetime?.Dispose(); }
+    public void Dispose()
+    {
+        ClearSelection();
+        Preview.EndSession(previewSessionId);
+        lifetime?.Cancel();
+        lifetime?.Dispose();
+    }
 }

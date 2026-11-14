@@ -70,8 +70,8 @@ function renderGrid(element, editable) {
         const content = document.createElement("div");
         content.className = "report-grid-content grid-card";
         const chartSurface = document.createElement("div");
-        chartSurface.className = "chart-surface";
-        chartSurface.textContent = "Chart surface";
+        chartSurface.className = "chart-surface report-chart";
+        if (!editable || item !== fixture.initial[1]) chartSurface.textContent = "Chart surface";
         content.append(chartSurface);
         card.append(content);
         if (editable && item === fixture.initial[1]) {
@@ -233,6 +233,24 @@ async function chartChecks() {
     treeElement.style.width = "100%";
     treeAdapter.dispose();
     check(!echarts.getInstanceByDom(treeElement), "tree dispose releases the real ECharts instance");
+
+    const passiveTreeElement = document.createElement("div");
+    passiveTreeElement.className = "report-tree-chart";
+    passiveTreeElement.style.height = "320px";
+    document.body.append(passiveTreeElement);
+    const passiveSelections = [];
+    const passiveTreeAdapter = await charts.createTree(passiveTreeElement, fixture.tree,
+        { invokeMethodAsync: (...args) => { passiveSelections.push(args); return Promise.resolve(); } }, 14, false);
+    adapters.push(passiveTreeAdapter);
+    await wait(60);
+    const passiveTree = echarts.getInstanceByDom(passiveTreeElement);
+    const passiveTreeOption = passiveTree.getOption();
+    check(!value(passiveTreeOption.tooltip[0].show) && !value(passiveTreeOption.series[0].roam) &&
+        value(passiveTreeOption.series[0].silent),
+        "passive relationship preview disables tooltip, pan, zoom and node interaction in real ECharts");
+    passiveTree.getZr().handler.dispatch("click", { zrX: 10, zrY: 10 });
+    await wait(20);
+    check(passiveSelections.length === 0, "passive relationship preview emits no node callback");
 }
 
 async function gridChecks() {
@@ -286,6 +304,16 @@ async function gridChecks() {
     const second = card(editGrid, fixture.initial[1].clientId);
     const first = card(editGrid, fixture.initial[0].clientId);
     const commits = () => callbacks.filter(x => x.name === "CommitLayout");
+
+    const passiveSurface = second.querySelector(".chart-surface");
+    const passiveChartAdapter = await charts.create(passiveSurface, fixture.charts.bar, false);
+    adapters.push(passiveChartAdapter);
+    await wait(60);
+    const passiveChart = globalThis.echarts.getInstanceByDom(passiveSurface);
+    const passiveOption = passiveChart.getOption();
+    check(!value(passiveOption.tooltip[0].show) && !value(passiveOption.legend[0].selectedMode) &&
+        passiveOption.series.every(series => value(series.silent)),
+        "edit-card chart is a real passive ECharts result with tooltip, legend toggling and series events disabled");
 
     await wait(60);
     const geometry = gridModule.measureGridGeometry(editGrid, 12);
@@ -395,7 +423,7 @@ async function gridChecks() {
     check(commits().length === beforeThreshold, "movement below the CSS-pixel threshold does not start drag");
 
     resetGrid(editGrid);
-    const chartSurface = second.querySelector(".chart-surface");
+    const chartSurface = second.querySelector(".chart-surface canvas") ?? second.querySelector(".chart-surface");
     pointer(chartSurface, "pointerdown", { pointerId: 11, clientX: 400, clientY: 30 });
     pointer(editGrid, "pointermove", { pointerId: 11, clientX: 400 - columnWidth * 6, clientY: 30 });
     pointer(editGrid, "pointerup", { pointerId: 11, clientX: 400 - columnWidth * 6, clientY: 30 });
@@ -441,8 +469,8 @@ async function gridChecks() {
     check(commits().length === beforeCancel, "pointercancel does not commit a layout callback");
 
     check([...editGrid.querySelectorAll(".report-grid-item")].every(item =>
-        item.querySelectorAll("button:not(.report-resize-handle),select").length === 0),
-    "editable cards contain no edit, duplicate, delete or cross-page controls");
+        item.querySelectorAll("button:not(.report-resize-handle),select,a,input,[tabindex]").length === 0),
+    "editable card content has no focusable or activatable controls behind the passive preview");
     check(getComputedStyle(second).touchAction !== "none" &&
         getComputedStyle(second.querySelector(".report-resize-handle")).touchAction === "none",
     "ordinary touch can scroll while the explicit resize handle owns its gesture");

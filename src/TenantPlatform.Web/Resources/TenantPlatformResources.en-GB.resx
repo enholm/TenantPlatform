@@ -3395,4 +3395,9 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ReportPaletteActions" xml:space="preserve"><value>Move and resize the selected report card</value></data>
   <data name="ReportPaletteCardActions" xml:space="preserve"><value>Card actions</value></data>
   <data name="ReportPaletteLayoutActions" xml:space="preserve"><value>Position and size</value></data>
+  <data name="ReportPreviewRefresh" xml:space="preserve"><value>Refresh preview</value></data>
+  <data name="ReportPreviewPassive" xml:space="preserve"><value>Passive preview</value></data>
+  <data name="ReportTreePreviewFirstLevel" xml:space="preserve"><value>The preview shows the root and first level. Open view mode to explore the tree.</value></data>
+  <data name="ReportTreePreviewTruncated" xml:space="preserve"><value>The preview shows the root and a limited number of first-level nodes. Open view mode to explore the full tree.</value></data>
+  <data name="ReportPreviewBusy" xml:space="preserve"><value>Too many report previews are loading at once. Try refreshing the card again.</value></data>
 </root>
