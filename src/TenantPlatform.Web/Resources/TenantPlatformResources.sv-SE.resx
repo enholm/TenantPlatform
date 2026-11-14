@@ -3437,4 +3437,7 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="ReportTreePreviewFirstLevel" xml:space="preserve"><value>Förhandsvisningen visar roten och den första nivån. Öppna visningsläget för att utforska trädet.</value></data>
   <data name="ReportTreePreviewTruncated" xml:space="preserve"><value>Förhandsvisningen visar roten och ett begränsat antal noder på första nivån. Öppna visningsläget för att utforska hela trädet.</value></data>
   <data name="ReportPreviewBusy" xml:space="preserve"><value>För många rapportförhandsvisningar läses in samtidigt. Försök uppdatera kortet igen.</value></data>
+  <data name="ReportEditorTabs" xml:space="preserve"><value>Inställningar för rapportkort</value></data>
+  <data name="ReportEditorVisualizationTab" xml:space="preserve"><value>Visualisering</value></data>
+  <data name="ReportEditorFilterTab" xml:space="preserve"><value>Urval</value></data>
 </root>

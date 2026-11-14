@@ -62,8 +62,9 @@
 }
 .report-palette-card-actions {
     display: flex;
-    align-items: flex-start;
-    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
 }
 .report-palette-delete { margin-inline-start: auto; }
 .report-layout-palette.report-palette-gesture { user-select: none; }

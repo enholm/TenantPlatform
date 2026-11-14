@@ -62,6 +62,7 @@ export function create(grid, dotnet, initialGeneration, columns, minimumWidth, m
     let gesture = null;
     let pending = null;
     let suppressClick = false;
+    let suppressEditUntil = 0;
     let disposed = false;
     const owner = Symbol("report-grid");
     const moveThreshold = 6;
@@ -179,6 +180,7 @@ export function create(grid, dotnet, initialGeneration, columns, minimumWidth, m
         const current = gesture;
         gesture = null;
         endGesture(current);
+        suppressEditUntil = Date.now() + 150;
         suppressClick = current.kind === "move";
         if (suppressClick) setTimeout(() => { suppressClick = false; }, 0);
         try {
@@ -250,6 +252,16 @@ export function create(grid, dotnet, initialGeneration, columns, minimumWidth, m
         if (event.target === grid) notifySelection(null);
     };
 
+    const doubleClick = event => {
+        if (disposed || Date.now() < suppressEditUntil || event.target.closest?.(interactiveSelector)) return;
+        const item = event.target.closest?.(".report-grid-item");
+        if (!item || !grid.contains(item)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        try { void Promise.resolve(dotnet.invokeMethodAsync("EditCard", item.dataset.reportCardId, generation)).catch(() => {}); }
+        catch { }
+    };
+
     const keydown = event => {
         if (event.key === "Escape" && (gesture || pending)) {
             event.preventDefault();
@@ -268,6 +280,7 @@ export function create(grid, dotnet, initialGeneration, columns, minimumWidth, m
     grid.addEventListener("pointerup", complete, true);
     grid.addEventListener("pointercancel", pointerCancel, true);
     grid.addEventListener("click", click, true);
+    grid.addEventListener("dblclick", doubleClick, true);
     grid.addEventListener("keydown", keydown);
 
     return {
@@ -285,6 +298,7 @@ export function create(grid, dotnet, initialGeneration, columns, minimumWidth, m
             grid.removeEventListener("pointerup", complete, true);
             grid.removeEventListener("pointercancel", pointerCancel, true);
             grid.removeEventListener("click", click, true);
+            grid.removeEventListener("dblclick", doubleClick, true);
             grid.removeEventListener("keydown", keydown);
         }
     };

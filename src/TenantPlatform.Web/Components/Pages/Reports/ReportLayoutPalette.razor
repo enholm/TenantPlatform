@@ -18,14 +18,18 @@
     <div class="report-palette-section" aria-label="@L["ReportPaletteCardActions"]">
         <span class="report-palette-section-label">@L["ReportPaletteCardActions"]</span>
         <div class="report-palette-card-actions">
-            <div class="d-flex flex-wrap gap-1">
-                <button type="button" class="btn btn-outline-primary btn-sm" disabled="@Disabled" @onclick="OnEdit">@L["Edit"]</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnDuplicate">@L["Duplicate"]</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" disabled="@Disabled" @onclick="OnRefresh">
-                    <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>@L["ReportPreviewRefresh"]
-                </button>
-            </div>
-            <button type="button" class="btn btn-outline-danger btn-sm report-palette-delete" disabled="@Disabled" @onclick="OnDelete">@L["Delete"]</button>
+            <button type="button" class="btn btn-outline-primary btn-sm" data-report-palette-action="edit" disabled="@Disabled" @onclick="OnEdit">@L["Edit"]</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-report-palette-action="duplicate" disabled="@Disabled" @onclick="OnDuplicate">@L["Duplicate"]</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-report-palette-action="refresh"
+                    aria-label="@L["ReportPreviewRefresh"]" title="@L["ReportPreviewRefresh"]"
+                    disabled="@Disabled" @onclick="OnRefresh">
+                <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm report-palette-delete"
+                    data-report-palette-action="delete" aria-label="@L["Delete"]" title="@L["Delete"]"
+                    disabled="@Disabled" @onclick="OnDelete">
+                <i class="bi bi-trash" aria-hidden="true"></i>
+            </button>
         </div>
         <label class="form-label mb-0 mt-2" for="report-palette-target">@L["ReportMoveToPage"]</label>
         <select id="report-palette-target" class="form-select form-select-sm" value=""

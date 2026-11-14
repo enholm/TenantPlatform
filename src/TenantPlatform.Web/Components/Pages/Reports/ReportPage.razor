@@ -70,6 +70,7 @@ else if (page is not null)
                     <ReportGrid Items="@DraftGridItems(draftPage)" Editable="true" Generation="workspaceGeneration"
                                 SelectedClientId="@(selection.PageId == draftPage.Id ? selection.CardId : null)"
                                 OnSelectionChanged="cardId => SelectCard(draftPage.Id, cardId)"
+                                OnEditRequested="cardId => OpenCardEditorAsync(draftPage.Id, cardId)"
                                 OnLayoutChanged="change => ApplyLayout(draftPage.Id, change)">
                         <ItemTemplate Context="gridItem">
                         @{ var card = draftPage.Cards.Single(x => x.ClientId == gridItem.ClientId); }
@@ -179,10 +180,20 @@ else if (page is not null)
         if (selection.PageId is not Guid pageId || selection.CardId is not Guid cardId) return;
         ResizeCard(pageId, cardId, width, height);
     }
-    private void EditSelected()
+    private Task EditSelected()
     {
-        if (selection.PageId is not Guid pageId || SelectedCard is not { } card) return;
+        if (selection.PageId is not Guid pageId || selection.CardId is not Guid cardId) return Task.CompletedTask;
+        return OpenCardEditorAsync(pageId, cardId);
+    }
+
+    private Task OpenCardEditorAsync(Guid pageId, Guid cardId)
+    {
+        if (!editing) return Task.CompletedTask;
+        var card = workspace.Page(pageId).Cards.SingleOrDefault(x => x.ClientId == cardId);
+        if (card is null) return Task.CompletedTask;
+        selection.Select(pageId, cardId);
         EditCard(pageId, card);
+        return Task.CompletedTask;
     }
     private void DuplicateSelected()
     {

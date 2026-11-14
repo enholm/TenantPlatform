@@ -224,9 +224,10 @@ const callbacks = [];
 const adapter = gridModule.create(grid, { invokeMethodAsync: (...args) => {
     callbacks.push(args);
     if (args[0] === "SelectCard" && args[1]) itemClasses.add("report-grid-item-selected");
-} }, 4, 12, 3, 3, 12);
+} }, 4, 12, 3, 3, 20);
 const commits = () => callbacks.filter(x => x[0] === "CommitLayout");
 const gridSelections = () => callbacks.filter(x => x[0] === "SelectCard");
+const gridEdits = () => callbacks.filter(x => x[0] === "EditCard");
 const gridObserver = observers.at(-1);
 assert.equal(Number.parseFloat(styleValues.get("--report-grid-row-pitch")), 64,
     "published row pitch combines the resolved 48px track and 16px gap");
@@ -237,6 +238,13 @@ listeners.get("pointerdown")(startEvent);
 await listeners.get("pointerup")({ pointerId: 7, clientX: 0, clientY: 0 });
 assert.equal(gridSelections().length, 1, "pointerdown selects the card by stable id");
 assert.equal(commits().length, 0, "a click without movement does not commit layout");
+listeners.get("dblclick")({ target: item, preventDefault() {}, stopPropagation() {} });
+await Promise.resolve();
+assert.deepEqual(gridEdits().at(-1), ["EditCard", item.dataset.reportCardId, 4],
+    "double-click requests the existing editor by stable id and generation");
+const editsBeforeAction = gridEdits().length;
+listeners.get("dblclick")({ target: action, preventDefault() {}, stopPropagation() {} });
+assert.equal(gridEdits().length, editsBeforeAction, "double-click on a card action does not request editing");
 
 listeners.get("pointerdown")({ ...startEvent, pointerId: 8 });
 listeners.get("pointermove")({ pointerId: 8, clientX: 4, clientY: 3, preventDefault() {} });
@@ -248,6 +256,9 @@ listeners.get("pointermove")({ pointerId: 9, clientX: 200, clientY: 96, preventD
 await listeners.get("pointerup")({ pointerId: 9, clientX: 200, clientY: 96 });
 assert.deepEqual(commits()[0].slice(0, 7), ["CommitLayout", item.dataset.reportCardId, 3, 3, 6, 4, 4],
     "drag from the card surface snaps once and commits one generation-bound layout update");
+listeners.get("dblclick")({ target: item, preventDefault() {}, stopPropagation() {} });
+assert.equal(gridEdits().length, editsBeforeAction,
+    "a double-click event immediately following a completed drag is suppressed");
 
 const resetItem = () => {
     styleValues.set("--report-grid-column", "1"); styleValues.set("--report-grid-row", "1");

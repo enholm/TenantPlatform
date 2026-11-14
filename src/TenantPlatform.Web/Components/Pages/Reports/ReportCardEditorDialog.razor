@@ -6,7 +6,8 @@
 @if (IsOpen && model is not null)
 {
     <div class="modal-backdrop show"></div>
-    <div class="modal d-block" role="dialog" aria-modal="true" aria-labelledby="report-card-editor-title" tabindex="-1">
+    <div class="modal d-block" role="dialog" aria-modal="true" aria-labelledby="report-card-editor-title" tabindex="-1"
+         @onkeydown="HandleDialogKeyDownAsync">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <EditForm EditContext="editContext" OnValidSubmit="ApplyAsync" FormName="report-card-editor" class="report-editor-form">
@@ -22,16 +23,34 @@
                             }
                             else if (catalog is not null)
                             {
+                                <div class="row g-3 report-editor-basics">
+                                    <div class="col-md-8">
+                                        <label class="form-label" for="report-card-name">@L["Name"]</label>
+                                        <input id="report-card-name" class="form-control" @bind="model.Name" @bind:event="oninput"
+                                               maxlength="200" autofocus @ref="nameElement" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label" for="report-card-module">@L["ReportModule"]</label>
+                                        <select id="report-card-module" class="form-select" value="@((int)model.Module)"
+                                                @onchange="ModuleChangedAsync" @ref="moduleElement">
+                                            @foreach (var module in Enum.GetValues<ReportModule>())
+                                            {
+                                                <option value="@((int)module)">@L[$"ReportModule{module}"]</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+
                                 @if (normalizationFields.Count > 0)
                                 {
-                                    <div class="alert alert-info" role="status">
+                                    <div class="alert alert-info mt-3" role="status">
                                         @L["ReportSettingsReset"]:
                                         @string.Join(", ", normalizationFields.Select(FieldLabel))
                                     </div>
                                 }
                                 @if (issues.Count > 0)
                                 {
-                                    <div class="alert alert-danger" role="alert">
+                                    <div class="alert alert-danger mt-3" role="alert">
                                         <ul class="mb-0">
                                             @foreach (var issue in issues)
                                             {
@@ -41,23 +60,40 @@
                                     </div>
                                 }
 
-                                <div class="row g-3">
-                                    <div class="col-12">
-                                        <label class="form-label" for="report-card-name">@L["Name"]</label>
-                                        <InputText id="report-card-name" class="form-control" @bind-Value="model.Name" maxlength="200" autofocus />
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="report-card-module">@L["ReportModule"]</label>
-                                        <select id="report-card-module" class="form-select" value="@((int)model.Module)" @onchange="ModuleChangedAsync">
-                                            @foreach (var module in Enum.GetValues<ReportModule>())
-                                            {
-                                                <option value="@((int)module)">@L[$"ReportModule{module}"]</option>
-                                            }
-                                        </select>
-                                    </div>
+                                <ul class="nav nav-tabs mt-3" role="tablist" aria-label="@L["ReportEditorTabs"]"
+                                    @onkeydown="HandleTabKeyDownAsync">
+                                    <li class="nav-item" role="presentation">
+                                        <button type="button" id="report-card-tab-visualization"
+                                                class="nav-link @(activeTab == EditorTab.Visualization ? "active" : null)"
+                                                role="tab" aria-selected="@(activeTab == EditorTab.Visualization)"
+                                                aria-controls="report-card-panel-visualization"
+                                                tabindex="@(activeTab == EditorTab.Visualization ? 0 : -1)"
+                                                @ref="visualizationTabElement"
+                                                @onclick="() => SelectTabAsync(EditorTab.Visualization)">
+                                            @L["ReportEditorVisualizationTab"]
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button type="button" id="report-card-tab-filter"
+                                                class="nav-link @(activeTab == EditorTab.Filter ? "active" : null)"
+                                                role="tab" aria-selected="@(activeTab == EditorTab.Filter)"
+                                                aria-controls="report-card-panel-filter"
+                                                tabindex="@(activeTab == EditorTab.Filter ? 0 : -1)"
+                                                @ref="filterTabElement"
+                                                @onclick="() => SelectTabAsync(EditorTab.Filter)">
+                                            @L["ReportEditorFilterTab"]
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div id="report-card-panel-visualization" class="report-editor-panel border border-top-0 rounded-bottom p-3"
+                                     role="tabpanel" aria-labelledby="report-card-tab-visualization"
+                                     hidden="@(activeTab != EditorTab.Visualization)" tabindex="-1" @ref="visualizationPanelElement">
+                                    <div class="row g-3">
                                     <div class="col-md-6">
                                         <label class="form-label" for="report-card-visualization">@L["ReportVisualization"]</label>
-                                        <select id="report-card-visualization" class="form-select" value="@EnumValue(model.Visualization)" @onchange="VisualizationChanged">
+                                        <select id="report-card-visualization" class="form-select" value="@EnumValue(model.Visualization)"
+                                                @onchange="VisualizationChanged" @ref="visualizationElement">
                                             <option value="">@L["ReportChoose"]</option>
                                             @foreach (var option in catalog.Compatibility.Visualizations)
                                             {
@@ -70,7 +106,8 @@
                                     {
                                         <div class="col-md-6">
                                             <label class="form-label" for="report-card-metric">@L["ReportMetric"]</label>
-                                            <select id="report-card-metric" class="form-select" value="@EnumValue(model.Metric)" @onchange="MetricChanged">
+                                            <select id="report-card-metric" class="form-select" value="@EnumValue(model.Metric)"
+                                                    @onchange="MetricChanged" @ref="metricElement">
                                                 <option value="">@L["ReportChoose"]</option>
                                                 @foreach (var metric in catalog.Compatibility.Metrics)
                                                 {
@@ -79,22 +116,12 @@
                                             </select>
                                         </div>
                                     }
-                                    <div class="col-md-6">
-                                        <label class="form-label" for="report-card-date-basis">@L["ReportDateBasis"]</label>
-                                        <select id="report-card-date-basis" class="form-select" @bind="model.DateBasisText">
-                                            <option value="">@L["ReportChoose"]</option>
-                                            @foreach (var option in catalog.Compatibility.DateBases.Where(x =>
-                                                model.Visualization != ReportVisualization.RelationshipTree || x.Id == catalog.Compatibility.Tree.DateBasis))
-                                            {
-                                                <option value="@((int)option.Id)">@L[option.LabelResourceKey]</option>
-                                            }
-                                        </select>
-                                    </div>
                                     @if (model.Visualization != ReportVisualization.RelationshipTree)
                                     {
                                         <div class="col-md-6">
                                             <label class="form-label" for="report-card-aggregation">@L["ReportAggregation"]</label>
-                                            <select id="report-card-aggregation" class="form-select" @bind="model.AggregationText">
+                                            <select id="report-card-aggregation" class="form-select" @bind="model.AggregationText"
+                                                    @ref="aggregationElement">
                                                 <option value="">@L["ReportChoose"]</option>
                                                 @foreach (var option in catalog.Compatibility.Aggregations)
                                                 {
@@ -104,7 +131,8 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label" for="report-card-grouping">@L["ReportGrouping"]</label>
-                                            <select id="report-card-grouping" class="form-select" @bind="model.GroupingText">
+                                            <select id="report-card-grouping" class="form-select" @bind="model.GroupingText"
+                                                    @ref="groupingElement">
                                                 <option value="">@L["ReportNoGrouping"]</option>
                                                 <optgroup label="@L["ReportTimeGrouping"]">
                                                     @foreach (var grouping in Enum.GetValues<ReportTimeGrouping>())
@@ -123,8 +151,20 @@
                                     }
 
                                     <div class="col-md-6">
+                                        <label class="form-label" for="report-card-date-basis">@L["ReportDateBasis"]</label>
+                                        <select id="report-card-date-basis" class="form-select" @bind="model.DateBasisText"
+                                                @ref="dateBasisElement">
+                                            <option value="">@L["ReportChoose"]</option>
+                                            @foreach (var option in catalog.Compatibility.DateBases.Where(x =>
+                                                model.Visualization != ReportVisualization.RelationshipTree || x.Id == catalog.Compatibility.Tree.DateBasis))
+                                            {
+                                                <option value="@((int)option.Id)">@L[option.LabelResourceKey]</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label" for="report-card-period">@L["ReportPeriod"]</label>
-                                        <select id="report-card-period" class="form-select" @bind="model.PeriodRule">
+                                        <select id="report-card-period" class="form-select" @bind="model.PeriodRule" @ref="periodElement">
                                             @foreach (var rule in Enum.GetValues<ReportPeriodRule>())
                                             {
                                                 <option value="@rule">@L[$"ReportPeriod{rule}"]</option>
@@ -142,10 +182,14 @@
                                             <InputDate id="report-card-to" class="form-control" @bind-Value="model.CustomTo" />
                                         </div>
                                     }
+
+                                    </div>
                                 </div>
 
-                                <fieldset class="mt-4">
-                                    <legend class="h6">@L["Filters"]</legend>
+                                <div id="report-card-panel-filter" class="report-editor-panel border border-top-0 rounded-bottom p-3"
+                                     role="tabpanel" aria-labelledby="report-card-tab-filter"
+                                     hidden="@(activeTab != EditorTab.Filter)" tabindex="-1" @ref="filterPanelElement">
+                                <div>
                                     <div class="row g-3">
                                         @foreach (var filter in filterInputs)
                                         {
@@ -183,7 +227,8 @@
                                             </div>
                                         }
                                     </div>
-                                </fieldset>
+                                </div>
+                                </div>
                                 <p class="small text-body-secondary mt-4 mb-0">@L["ReportCardApplyHelp"]</p>
                             }
                         </div>
@@ -216,33 +261,65 @@
     private Guid? copiedClientId;
     private bool loading;
     private bool busy;
+    private bool wasOpen;
+    private long lifecycleGeneration;
+    private long messageGeneration;
+    private EditorTab activeTab = EditorTab.Visualization;
+    private ElementReference nameElement;
+    private ElementReference moduleElement;
+    private ElementReference visualizationTabElement;
+    private ElementReference filterTabElement;
+    private ElementReference visualizationPanelElement;
+    private ElementReference filterPanelElement;
+    private ElementReference visualizationElement;
+    private ElementReference metricElement;
+    private ElementReference aggregationElement;
+    private ElementReference groupingElement;
+    private ElementReference dateBasisElement;
+    private ElementReference periodElement;
+
+    private enum EditorTab { Visualization, Filter }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!IsOpen || Card is null || copiedClientId == Card.ClientId) return;
+        if (!IsOpen || Card is null)
+        {
+            if (wasOpen) PrepareForClose();
+            return;
+        }
+        if (wasOpen && copiedClientId == Card.ClientId) return;
+        wasOpen = true;
         copiedClientId = Card.ClientId;
+        activeTab = EditorTab.Visualization;
+        ClearEditorMessages();
+        var lifecycle = ++lifecycleGeneration;
+        var messages = messageGeneration;
         model = ReportCardForm.From(Card);
         editContext = new(model);
-        issues = [];
-        normalizationFields = [];
-        await LoadCatalogAsync(Card.Definition);
+        catalog = null;
+        filterInputs = [];
+        dimensionInputs = [];
+        await LoadCatalogAsync(Card.Definition, lifecycle, messages);
     }
 
-    private async Task LoadCatalogAsync(ReportCardDefinition definition)
+    private async Task LoadCatalogAsync(ReportCardDefinition definition, long lifecycle, long messages)
     {
         loading = true;
         try
         {
-            catalog = await Catalogs.GetAsync(AccountId, definition.Module);
+            var loaded = await Catalogs.GetAsync(AccountId, definition.Module);
+            if (lifecycle != lifecycleGeneration || !IsOpen) return;
+            catalog = loaded;
             SetDefinition(definition, false);
         }
         catch (UnauthorizedAccessException)
         {
-            issues = [new("module", "ReportCardUnavailable")];
+            if (lifecycle == lifecycleGeneration && messages == messageGeneration && IsOpen)
+                issues = [new("module", "ReportCardUnavailable")];
         }
         finally
         {
-            loading = false;
+            if (lifecycle == lifecycleGeneration) loading = false;
         }
     }
 
@@ -250,22 +327,29 @@
     {
         if (model is null || !int.TryParse(args.Value?.ToString(), out var raw) ||
             !Enum.IsDefined((ReportModule)raw)) return;
+        ClearEditorMessages();
+        var lifecycle = lifecycleGeneration;
+        var messages = messageGeneration;
         var nextModule = (ReportModule)raw;
         var before = BuildDefinition() with { Module = nextModule };
         loading = true;
         try
         {
-            catalog = await Catalogs.GetAsync(AccountId, nextModule);
-            var normalized = ReportDefinitionNormalizer.Normalize(before, catalog);
-            SetDefinition(normalized.Definition, true, normalized.Changes);
+            var loaded = await Catalogs.GetAsync(AccountId, nextModule);
+            if (lifecycle != lifecycleGeneration || !IsOpen) return;
+            catalog = loaded;
+            var normalized = ReportDefinitionNormalizer.Normalize(before, loaded);
+            SetDefinition(normalized.Definition, true,
+                messages == messageGeneration ? normalized.Changes : null);
         }
         catch (UnauthorizedAccessException)
         {
-            issues = [new("module", "ReportCardUnavailable")];
+            if (lifecycle == lifecycleGeneration && messages == messageGeneration && IsOpen)
+                issues = [new("module", "ReportCardUnavailable")];
         }
         finally
         {
-            loading = false;
+            if (lifecycle == lifecycleGeneration) loading = false;
         }
     }
 
@@ -329,10 +413,11 @@
     private async Task ApplyAsync()
     {
         if (model is null || Card is null || catalog is null || busy) return;
-        issues = [];
+        ClearEditorMessages();
         if (string.IsNullOrWhiteSpace(model.Name))
         {
             issues = [new("name", "ReportNameRequired")];
+            await FocusFirstIssueAsync();
             return;
         }
         var definition = BuildDefinition();
@@ -343,6 +428,7 @@
         catch (ReportDefinitionValidationException ex)
         {
             issues = ex.Issues.ToList();
+            await FocusFirstIssueAsync();
             return;
         }
         busy = true;
@@ -353,6 +439,7 @@
                 Name = model.Name.Trim(),
                 Definition = ReportWorkspaceState.Copy(definition)
             });
+            PrepareForClose();
         }
         finally
         {
@@ -391,7 +478,98 @@
             grouping, time, model.Visualization);
     }
 
-    private Task CancelAsync() => OnCancel.InvokeAsync();
+    private async Task SelectTabAsync(EditorTab tab, bool focus = false)
+    {
+        ClearEditorMessages();
+        activeTab = tab;
+        if (!focus) return;
+        await InvokeAsync(StateHasChanged);
+        await FocusTabAsync(tab);
+    }
+
+    private async Task HandleTabKeyDownAsync(KeyboardEventArgs args)
+    {
+        var next = args.Key switch
+        {
+            "ArrowLeft" or "ArrowRight" => activeTab == EditorTab.Visualization ? EditorTab.Filter : EditorTab.Visualization,
+            "Home" => EditorTab.Visualization,
+            "End" => EditorTab.Filter,
+            _ => (EditorTab?)null
+        };
+        if (next.HasValue) await SelectTabAsync(next.Value, true);
+    }
+
+    private async Task HandleDialogKeyDownAsync(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape" && !busy) await CancelAsync();
+    }
+
+    private async Task FocusFirstIssueAsync()
+    {
+        if (issues.Count == 0) return;
+        var field = issues[0].Field;
+        if (field == "name")
+        {
+            await InvokeAsync(StateHasChanged);
+            await FocusAsync(nameElement);
+            return;
+        }
+        if (field == "module")
+        {
+            await InvokeAsync(StateHasChanged);
+            await FocusAsync(moduleElement);
+            return;
+        }
+
+        activeTab = IsFilterField(field) ? EditorTab.Filter : EditorTab.Visualization;
+        await InvokeAsync(StateHasChanged);
+        var target = field switch
+        {
+            "period" => periodElement,
+            "dateBasis" => dateBasisElement,
+            "visualization" => visualizationElement,
+            "metric" when model?.Visualization != ReportVisualization.RelationshipTree => metricElement,
+            "aggregation" when model?.Visualization != ReportVisualization.RelationshipTree => aggregationElement,
+            "grouping" or "timeGrouping" when model?.Visualization != ReportVisualization.RelationshipTree => groupingElement,
+            _ => activeTab == EditorTab.Filter ? filterPanelElement : visualizationPanelElement
+        };
+        await FocusAsync(target);
+    }
+
+    private static bool IsFilterField(string field) => field == "filters";
+
+    private async Task FocusTabAsync(EditorTab tab) =>
+        await FocusAsync(tab == EditorTab.Visualization ? visualizationTabElement : filterTabElement);
+
+    private static async Task FocusAsync(ElementReference element)
+    {
+        try { await element.FocusAsync(); }
+        catch (InvalidOperationException) { }
+        catch (JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+    }
+
+    private void ClearEditorMessages()
+    {
+        messageGeneration++;
+        issues = [];
+        normalizationFields = [];
+    }
+
+    private void PrepareForClose()
+    {
+        ClearEditorMessages();
+        lifecycleGeneration++;
+        copiedClientId = null;
+        wasOpen = false;
+        activeTab = EditorTab.Visualization;
+    }
+
+    private async Task CancelAsync()
+    {
+        PrepareForClose();
+        await OnCancel.InvokeAsync();
+    }
     private string CatalogLabel(ReportCatalogLabel label) =>
         label.ResourceKey is not null ? L[label.ResourceKey].Value : label.Text ?? "";
     private string FieldLabel(string field) => L[$"ReportField{char.ToUpperInvariant(field[0])}{field[1..]}"].Value;

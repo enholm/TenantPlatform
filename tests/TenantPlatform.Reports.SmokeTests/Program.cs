@@ -45,6 +45,7 @@ WorkspaceChecks.Run();
 ChartLayoutChecks.Run();
 await PreviewChecks.RunAsync();
 await ReportUiChecks.RunAsync();
+await ReportEditorChecks.RunAsync();
 await PageChecks.RunAsync(fixture);
 if (fixture.IsPostgres)
 {

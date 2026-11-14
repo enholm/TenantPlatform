@@ -56,8 +56,9 @@ static class ChartLayoutChecks
             preferred.Single(x => x.ClientId == first.ClientId).Column == 7,
             "the actively moved card owns its snapped target and displaces later placement deterministically");
         var clamped = ReportLayoutEngine.ClampInteraction(new(Guid.NewGuid(), 12, -4, 1, 99, 0));
-        Check.That(clamped.Width == 3 && clamped.Height == 12 && clamped.Column == 10 && clamped.Row == 1,
-            "interactive resize clamps to documented card and twelve-column bounds");
+        Check.That(clamped.Width == 3 && clamped.Height == ReportLayoutEngine.MaximumInteractiveHeight &&
+            clamped.Column == 10 && clamped.Row == 1,
+            "interactive resize clamps to the configured card-height and twelve-column bounds");
 
         var saved = Page(first.ClientId);
         var workspace = new ReportWorkspaceState();

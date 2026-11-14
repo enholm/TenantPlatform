@@ -260,6 +260,7 @@ async function gridChecks() {
     renderGrid(viewGrid, false);
     const callbacks = [];
     const selections = [];
+    const editorTargets = [];
     let generation = fixture.currentGeneration;
     const selectCard = id => {
         for (const item of editGrid.querySelectorAll(".report-grid-item")) {
@@ -288,6 +289,10 @@ async function gridChecks() {
                 selectCard(id);
                 return;
             }
+            if (name === "EditCard") {
+                if (column === generation) editorTargets.push(id);
+                return;
+            }
             if (callbackGeneration !== generation) return;
             const target = card(editGrid, id);
             let output = { column, row, width, height };
@@ -299,7 +304,7 @@ async function gridChecks() {
             document.querySelector("#layout-status").textContent = "Layout updated";
         }
     };
-    let adapter = gridModule.create(editGrid, dotnet, generation, 12, 3, 3, 12);
+    let adapter = gridModule.create(editGrid, dotnet, generation, 12, 3, 3, fixture.maximumResize.height);
     adapters.push(adapter);
     const second = card(editGrid, fixture.initial[1].clientId);
     const first = card(editGrid, fixture.initial[0].clientId);
@@ -402,10 +407,15 @@ async function gridChecks() {
     check(selections.at(-1) === compact(fixture.initial[0].clientId) && first.classList.contains("report-grid-item-selected"),
         "pointer click selects a card by stable id");
     check(commits().length === beforeClick, "click without movement does not change layout");
+    check(editorTargets.length === 0, "single click selects without opening the editor");
     editGrid.append(first);
     check(first.classList.contains("report-grid-item-selected") && selections.at(-1) === compact(fixture.initial[0].clientId),
         "selection remains attached to the stable id after DOM reordering");
     editGrid.insertBefore(first, second);
+    first.querySelector(".chart-surface").dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+    await wait(20);
+    check(editorTargets.at(-1) === compact(fixture.initial[0].clientId),
+        "double-click over passive card content opens the selected stable id after DOM reordering");
 
     editGrid.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     await wait(20);
@@ -430,6 +440,10 @@ async function gridChecks() {
     await wait(20);
     check(commits().at(-1)?.column === 1 && commits().at(-1)?.id === compact(fixture.initial[1].clientId),
         "mouse drag from chart content selects and snaps the correct card");
+    const editsAfterDrag = editorTargets.length;
+    chartSurface.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+    await wait(20);
+    check(editorTargets.length === editsAfterDrag, "completed drag is not misinterpreted as double-click editing");
     equal(layout(second), { column: 1, row: 1, width: 6, height: 4 },
         "preferred moved card keeps its snapped position");
     equal(layout(first), { column: 7, row: 1, width: 6, height: 4 },
@@ -445,6 +459,10 @@ async function gridChecks() {
     equal(layout(second), { column: fixture.maximumResize.column, row: fixture.maximumResize.row,
         width: fixture.maximumResize.width, height: fixture.maximumResize.height },
     "resize clamps to the maximum grid bounds");
+    const editsAfterResize = editorTargets.length;
+    resize.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+    await wait(20);
+    check(editorTargets.length === editsAfterResize, "resize handle double-click does not open the editor");
     pointer(resize, "pointerdown", { pointerId: 13, clientX: 100, clientY: 100 });
     pointer(editGrid, "pointermove", { pointerId: 13, clientX: -5000, clientY: -5000 });
     pointer(editGrid, "pointerup", { pointerId: 13, clientX: -5000, clientY: -5000 });
@@ -499,6 +517,7 @@ async function gridChecks() {
     const paletteAction = document.querySelector("#palette-action");
     const paletteEdit = document.querySelector("#palette-edit");
     const paletteDuplicate = document.querySelector("#palette-duplicate");
+    const paletteRefresh = document.querySelector("#palette-refresh");
     const paletteDelete = document.querySelector("#palette-delete");
     const paletteTarget = document.querySelector("#palette-target");
     const paletteSelection = document.querySelector("#palette-selection");
@@ -511,6 +530,7 @@ async function gridChecks() {
     const actionTargets = [];
     const selectedStableId = () => editGrid.querySelector(".report-grid-item-selected")?.dataset.reportCardId ?? null;
     paletteEdit.addEventListener("click", () => actionTargets.push({ action: "edit", id: selectedStableId() }));
+    paletteRefresh.addEventListener("click", () => actionTargets.push({ action: "refresh", id: selectedStableId() }));
     paletteDuplicate.addEventListener("click", () => {
         const source = editGrid.querySelector(".report-grid-item-selected");
         actionTargets.push({ action: "duplicate", id: source?.dataset.reportCardId ?? null });
@@ -566,6 +586,20 @@ async function gridChecks() {
         "keyboard layout action publishes a status message");
 
     selectCard(compact(fixture.initial[1].clientId));
+    const actionOrder = [...palette.querySelector(".report-palette-card-actions").children].map(x => x.id);
+    equal(actionOrder, ["palette-edit", "palette-duplicate", "palette-refresh", "palette-delete"],
+        "palette keeps edit, duplicate, refresh and delete in one ordered wrapping action row");
+    const actionRow = palette.querySelector(".report-palette-card-actions");
+    check(actionRow.scrollWidth <= actionRow.clientWidth + 1 &&
+        [...actionRow.children].every(x => x.getBoundingClientRect().right <= actionRow.getBoundingClientRect().right + 1),
+        "palette card actions stay inside the available palette width");
+    if (innerWidth >= 768)
+        check(new Set([...actionRow.children].map(x => Math.round(x.getBoundingClientRect().top))).size === 1,
+            "palette card actions share one row at the desktop width");
+    check(paletteRefresh.getAttribute("aria-label") === "Refresh preview" &&
+        paletteDelete.getAttribute("aria-label") === "Delete" &&
+        paletteDelete.getBoundingClientRect().right >= actionRow.getBoundingClientRect().right - 1,
+        "icon-only refresh and delete actions stay accessible while delete is right aligned");
     editGrid.append(second);
     paletteEdit.click();
     check(actionTargets.at(-1)?.action === "edit" && actionTargets.at(-1)?.id === compact(fixture.initial[1].clientId),

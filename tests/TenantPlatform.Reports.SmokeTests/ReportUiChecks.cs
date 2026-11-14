@@ -88,12 +88,14 @@ static class ReportUiChecks
             }));
             var callbackCount = 0;
             Guid? selectedId = null;
+            Guid? editedId = null;
             var gridState = new ReportGridTestState
             {
                 Items = [item], Template = template, Editable = true, Generation = 9,
                 SelectedClientId = item.ClientId,
                 Changed = EventCallback.Factory.Create<ReportGridLayoutChange>(new object(), _ => callbackCount++),
-                SelectionChanged = EventCallback.Factory.Create<Guid?>(new object(), id => selectedId = id)
+                SelectionChanged = EventCallback.Factory.Create<Guid?>(new object(), id => selectedId = id),
+                EditRequested = EventCallback.Factory.Create<Guid>(new object(), id => editedId = id)
             };
             var editable = await renderer.RenderComponentAsync<ReportGridTestHost>(ParameterView.FromDictionary(
                 new Dictionary<string, object?> { ["State"] = gridState }));
@@ -110,6 +112,10 @@ static class ReportUiChecks
             Check.That(selectedId is null, "stale selection callback is rejected before it can select in a newer workspace");
             await gridState.Component.SelectCard(item.ClientId.ToString("N"), 9);
             Check.That(selectedId == item.ClientId, "selection callback preserves the stable card id");
+            await gridState.Component.EditCard(item.ClientId.ToString("N"), 8);
+            Check.That(editedId is null, "stale double-click callback cannot open an editor in a newer workspace");
+            await gridState.Component.EditCard(item.ClientId.ToString("N"), 9);
+            Check.That(editedId == item.ClientId, "double-click edit callback preserves the stable card id");
 
             var keyboard = await renderer.RenderComponentAsync<ReportLayoutKeyboardControls>(
                 ParameterView.FromDictionary(new Dictionary<string, object?> { ["Name"] = "Card" }));
@@ -129,9 +135,14 @@ static class ReportUiChecks
                     }
                 }));
             var paletteHtml = palette.ToHtmlString();
+            var editPosition = paletteHtml.IndexOf("data-report-palette-action=\"edit\"", StringComparison.Ordinal);
+            var duplicatePosition = paletteHtml.IndexOf("data-report-palette-action=\"duplicate\"", StringComparison.Ordinal);
+            var refreshPosition = paletteHtml.IndexOf("data-report-palette-action=\"refresh\"", StringComparison.Ordinal);
+            var deletePosition = paletteHtml.IndexOf("data-report-palette-action=\"delete\"", StringComparison.Ordinal);
             Check.That(paletteHtml.Contains("report-layout-palette") && paletteHtml.Contains("report-palette-drag-handle") &&
                 paletteHtml.Contains("Allowed target") && paletteHtml.Contains("value=\"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"") &&
-                Occurrences(paletteHtml, "disabled") == 11 && Occurrences(paletteHtml, "type=\"button\"") == 12,
+                Occurrences(paletteHtml, "disabled") == 11 && Occurrences(paletteHtml, "type=\"button\"") == 12 &&
+                editPosition >= 0 && editPosition < duplicatePosition && duplicatePosition < refreshPosition && refreshPosition < deletePosition,
                 "shared palette renders all card actions, allowed target pages and disabled commands without a selection");
 
             var passiveTree = await renderer.RenderComponentAsync<ReportCardView>(ParameterView.FromDictionary(
@@ -401,6 +412,7 @@ sealed class ReportGridTestState
     public Guid? SelectedClientId { get; init; }
     public EventCallback<ReportGridLayoutChange> Changed { get; init; }
     public EventCallback<Guid?> SelectionChanged { get; init; }
+    public EventCallback<Guid> EditRequested { get; init; }
     public ReportGrid? Component { get; set; }
 }
 
@@ -417,7 +429,8 @@ sealed class ReportGridTestHost : ComponentBase
         builder.AddAttribute(5, "OnLayoutChanged", State.Changed);
         builder.AddAttribute(6, "SelectedClientId", State.SelectedClientId);
         builder.AddAttribute(7, "OnSelectionChanged", State.SelectionChanged);
-        builder.AddComponentReferenceCapture(8, value => State.Component = (ReportGrid)value);
+        builder.AddAttribute(8, "OnEditRequested", State.EditRequested);
+        builder.AddComponentReferenceCapture(9, value => State.Component = (ReportGrid)value);
         builder.CloseComponent();
     }
 }

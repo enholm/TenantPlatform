@@ -3400,4 +3400,7 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ReportTreePreviewFirstLevel" xml:space="preserve"><value>The preview shows the root and first level. Open view mode to explore the tree.</value></data>
   <data name="ReportTreePreviewTruncated" xml:space="preserve"><value>The preview shows the root and a limited number of first-level nodes. Open view mode to explore the full tree.</value></data>
   <data name="ReportPreviewBusy" xml:space="preserve"><value>Too many report previews are loading at once. Try refreshing the card again.</value></data>
+  <data name="ReportEditorTabs" xml:space="preserve"><value>Report card settings</value></data>
+  <data name="ReportEditorVisualizationTab" xml:space="preserve"><value>Visualisation</value></data>
+  <data name="ReportEditorFilterTab" xml:space="preserve"><value>Selection</value></data>
 </root>

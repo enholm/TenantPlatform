@@ -39,6 +39,7 @@
     [Parameter] public Guid? SelectedClientId { get; set; }
     [Parameter] public EventCallback<ReportGridLayoutChange> OnLayoutChanged { get; set; }
     [Parameter] public EventCallback<Guid?> OnSelectionChanged { get; set; }
+    [Parameter] public EventCallback<Guid> OnEditRequested { get; set; }
 
     private ElementReference gridElement;
     private IJSObjectReference? module;
@@ -99,6 +100,14 @@
         await OnSelectionChanged.InvokeAsync(id);
         status = id.HasValue ? L["ReportCardSelected"].Value : L["ReportCardSelectionCleared"].Value;
         await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task EditCard(string clientId, long generation)
+    {
+        if (disposed || !Editable || generation != Generation ||
+            !Guid.TryParseExact(clientId, "N", out var id) || Items.All(x => x.ClientId != id)) return;
+        await OnEditRequested.InvokeAsync(id);
     }
 
     private async ValueTask DisposeAdapterAsync()

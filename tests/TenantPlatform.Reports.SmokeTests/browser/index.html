@@ -61,11 +61,10 @@
         <p id="palette-selection" tabindex="-1">Selected card: 2</p>
         <div class="report-palette-section">
             <div class="report-palette-card-actions">
-                <div class="d-flex gap-1">
-                    <button type="button" id="palette-edit" class="btn btn-outline-primary btn-sm">Edit</button>
-                    <button type="button" id="palette-duplicate" class="btn btn-outline-secondary btn-sm">Duplicate</button>
-                </div>
-                <button type="button" id="palette-delete" class="btn btn-outline-danger btn-sm report-palette-delete">Delete</button>
+                <button type="button" id="palette-edit" class="btn btn-outline-primary btn-sm">Edit</button>
+                <button type="button" id="palette-duplicate" class="btn btn-outline-secondary btn-sm">Duplicate</button>
+                <button type="button" id="palette-refresh" class="btn btn-outline-secondary btn-sm" aria-label="Refresh preview" title="Refresh preview">↻</button>
+                <button type="button" id="palette-delete" class="btn btn-outline-danger btn-sm report-palette-delete" aria-label="Delete" title="Delete">⌫</button>
             </div>
             <select id="palette-target" class="form-select form-select-sm">
                 <option value="">Choose</option>

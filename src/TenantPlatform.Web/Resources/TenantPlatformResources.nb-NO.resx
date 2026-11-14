@@ -3494,4 +3494,7 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ReportTreePreviewFirstLevel" xml:space="preserve"><value>Forhåndsvisningen viser roten og første nivå. Åpne visningsmodus for å utforske treet.</value></data>
   <data name="ReportTreePreviewTruncated" xml:space="preserve"><value>Forhåndsvisningen viser roten og et begrenset antall noder på første nivå. Åpne visningsmodus for å utforske hele treet.</value></data>
   <data name="ReportPreviewBusy" xml:space="preserve"><value>For mange rapportforhåndsvisninger lastes samtidig. Prøv å oppdatere kortet på nytt.</value></data>
+  <data name="ReportEditorTabs" xml:space="preserve"><value>Innstillinger for rapportkort</value></data>
+  <data name="ReportEditorVisualizationTab" xml:space="preserve"><value>Visualisering</value></data>
+  <data name="ReportEditorFilterTab" xml:space="preserve"><value>Utvalg</value></data>
 </root>
