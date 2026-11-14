@@ -3447,4 +3447,6 @@ Detta är en påminnelse, inte en uppsägning eller förnyelse.</value>
   <data name="ReportTitlePlacementCenter" xml:space="preserve"><value>Centrerad</value></data>
   <data name="ReportTitlePlacementRight" xml:space="preserve"><value>Höger</value></data>
   <data name="ReportDefinitionTitlePlacementInvalid" xml:space="preserve"><value>Titelplaceringen är ogiltig.</value></data>
+  <data name="ReportCardSubtitle" xml:space="preserve"><value>Undertitel</value></data>
+  <data name="ReportDefinitionSubtitleInvalid" xml:space="preserve"><value>Undertiteln får inte vara längre än 200 tecken.</value></data>
 </root>

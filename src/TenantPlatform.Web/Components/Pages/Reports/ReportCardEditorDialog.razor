@@ -49,6 +49,11 @@
                                         </select>
                                     </div>
                                 </div>
+                                <div class="mt-3 report-editor-subtitle">
+                                    <label class="form-label" for="report-card-subtitle">@L["ReportCardSubtitle"]</label>
+                                    <input id="report-card-subtitle" class="form-control" @bind="model.Subtitle" @bind:event="oninput"
+                                           maxlength="@ReportDisplaySettingsJson.MaximumSubtitleLength" @ref="subtitleElement" />
+                                </div>
 
                                 @if (normalizationFields.Count > 0)
                                 {
@@ -275,6 +280,7 @@
     private long messageGeneration;
     private EditorTab activeTab = EditorTab.Visualization;
     private ElementReference nameElement;
+    private ElementReference subtitleElement;
     private ElementReference moduleElement;
     private ElementReference visualizationTabElement;
     private ElementReference filterTabElement;
@@ -429,6 +435,12 @@
             await FocusFirstIssueAsync();
             return;
         }
+        if ((model.Subtitle?.Length ?? 0) > ReportDisplaySettingsJson.MaximumSubtitleLength)
+        {
+            issues = [new("subtitle", "ReportDefinitionSubtitleInvalid")];
+            await FocusFirstIssueAsync();
+            return;
+        }
         var definition = BuildDefinition();
         try
         {
@@ -478,14 +490,16 @@
                 unspecified ? null : Guid.ParseExact(input.Value, "N"), unspecified));
         }
         var (grouping, time) = ParseGrouping(model!.GroupingText);
+        var displayJson = ReportDisplaySettingsJson.SetTitlePlacement(
+            Card!.Definition.DisplayJson, model.TitlePlacement);
+        displayJson = ReportDisplaySettingsJson.SetSubtitle(displayJson, model.Subtitle);
         return new(model.Module, 1, filters,
             new(model.PeriodRule, model.PeriodRule == ReportPeriodRule.Custom ? model.CustomFrom : null,
                 model.PeriodRule == ReportPeriodRule.Custom ? model.CustomTo : null),
             ParseNullable<ReportDateBasis>(model.DateBasisText),
             model.Metric,
             ParseNullable<ReportAggregation>(model.AggregationText),
-            grouping, time, model.Visualization,
-            ReportDisplaySettingsJson.SetTitlePlacement(Card!.Definition.DisplayJson, model.TitlePlacement));
+            grouping, time, model.Visualization, displayJson);
     }
 
     private async Task SelectTabAsync(EditorTab tab, bool focus = false)
@@ -528,6 +542,12 @@
         {
             await InvokeAsync(StateHasChanged);
             await FocusAsync(moduleElement);
+            return;
+        }
+        if (field == "subtitle")
+        {
+            await InvokeAsync(StateHasChanged);
+            await FocusAsync(subtitleElement);
             return;
         }
 
@@ -632,6 +652,7 @@
         public string GroupingText { get; set; } = "";
         public ReportVisualization? Visualization { get; set; }
         public ReportTitlePlacement TitlePlacement { get; set; }
+        public string Subtitle { get; set; } = "";
 
         public static ReportCardForm From(ReportCardDraft card) => new()
         {
@@ -645,7 +666,8 @@
             AggregationText = EnumValue(card.Definition.Aggregation),
             GroupingText = GroupingValue(card.Definition),
             Visualization = card.Definition.Visualization,
-            TitlePlacement = card.Definition.TitlePlacement
+            TitlePlacement = card.Definition.TitlePlacement,
+            Subtitle = card.Definition.Subtitle ?? ""
         };
     }
 

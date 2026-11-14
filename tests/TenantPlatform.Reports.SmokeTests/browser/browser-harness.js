@@ -130,20 +130,23 @@ async function chartChecks() {
 
     const titleToggleCard = document.querySelector("#chart-title-toggle-card");
     const titleChrome = document.querySelector("#chart-title-chrome");
-    const titleChromeParent = titleChrome.parentElement;
-    const titleChromeNext = titleChrome.nextSibling;
+    const titleHeading = document.querySelector("#chart-title-toggle");
+    const titleHeadingParent = titleHeading.parentElement;
+    const titleHeadingNext = titleHeading.nextSibling;
     const chartTopWithTitle = barElement.getBoundingClientRect().top;
     const titleCanvasCount = barElement.querySelectorAll("canvas").length;
-    titleChrome.remove();
+    titleHeading.remove();
     titleToggleCard.removeAttribute("aria-labelledby");
     titleToggleCard.setAttribute("aria-label", "Bar");
     titleToggleCard.dataset.reportTitlePlacement = "hidden";
     await wait(80);
     check(barElement.getBoundingClientRect().top < chartTopWithTitle &&
+        titleChrome.querySelector("#chart-subtitle") &&
+        getComputedStyle(titleChrome.querySelector("#chart-subtitle")).textAlign === "left" &&
         echarts.getInstanceByDom(barElement).id === bar.id &&
         barElement.querySelectorAll("canvas").length === titleCanvasCount,
-        "hiding title chrome frees vertical space without reinitialising the chart");
-    titleChromeParent.insertBefore(titleChrome, titleChromeNext);
+        "hiding the title retains the left-aligned subtitle and resizes without reinitialising the chart");
+    titleHeadingParent.insertBefore(titleHeading, titleHeadingNext);
     titleToggleCard.setAttribute("aria-labelledby", "chart-title-toggle");
     titleToggleCard.removeAttribute("aria-label");
     titleToggleCard.dataset.reportTitlePlacement = "left";
@@ -714,19 +717,31 @@ function presentationChecks() {
         !document.body.textContent.includes("Passive preview"),
         "report card headers contain neither visualization badges nor passive-preview labels");
     const visible = [...fixtures.querySelectorAll("[data-report-title-placement]:not([data-report-title-placement='hidden'])")];
-    equal(visible.map(x => getComputedStyle(x.querySelector("h2")).textAlign), ["left", "center", "right"],
+    equal(visible.map(x => getComputedStyle(x.querySelector("h2")).textAlign), ["left", "center", "right", "left"],
         "left, centred and right report titles use the requested browser text alignment");
+    equal(visible.map(x => getComputedStyle(x.querySelector(".report-card-subtitle")).textAlign), ["left", "center", "right", "left"],
+        "visible custom subtitles follow the report title alignment");
     const hidden = document.querySelector("#hidden-title-card");
-    check(!hidden.querySelector("h2,.report-card-heading,.report-card-description") &&
+    check(!hidden.querySelector("h2,.report-card-description") && hidden.querySelector(".report-card-heading") &&
+        getComputedStyle(hidden.querySelector(".report-card-subtitle")).textAlign === "left" &&
         hidden.getAttribute("aria-label") === "Hidden title" && hidden.querySelector(".data-view") &&
         hidden.querySelector("[role='alert']"),
-        "hidden title fixture has no descriptive chrome while data and necessary warning remain");
+        "hidden title retains a left-aligned custom subtitle, accessible name, data and necessary warning");
+    check(!document.querySelector("#hidden-empty-title-card .report-card-heading"),
+        "hidden title with empty subtitle leaves no header container or empty space");
+    const longSubtitle = document.querySelector("#long-subtitle-card .report-card-subtitle");
+    check(longSubtitle.scrollWidth <= longSubtitle.clientWidth + 1 &&
+        longSubtitle.getBoundingClientRect().height > parseFloat(getComputedStyle(longSubtitle).lineHeight) * 1.5,
+        "long subtitle wraps inside a narrow card without horizontal overflow");
 
     const editorRow = document.querySelector("#editor-row-fixture .report-editor-basics");
     const editorFields = [...editorRow.children];
+    const subtitleField = document.querySelector("#editor-row-fixture .report-editor-subtitle");
     check(editorRow.scrollWidth <= editorRow.clientWidth + 1 &&
-        editorFields.every(x => x.getBoundingClientRect().right <= editorRow.getBoundingClientRect().right + 1),
-        "title, title position and module do not overflow the editor row");
+        editorFields.every(x => x.getBoundingClientRect().right <= editorRow.getBoundingClientRect().right + 1) &&
+        subtitleField.scrollWidth <= subtitleField.clientWidth + 1 &&
+        subtitleField.getBoundingClientRect().top >= editorRow.getBoundingClientRect().bottom,
+        "title controls and the separate subtitle row do not overflow the editor");
     if (innerWidth >= 768)
         check(new Set(editorFields.map(x => Math.round(x.getBoundingClientRect().top))).size === 1,
             "editor title controls share one row at desktop width");

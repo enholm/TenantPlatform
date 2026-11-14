@@ -6,23 +6,31 @@
 <article class="card report-card h-100 @(Passive ? "report-card-passive" : null)"
          aria-labelledby="@(!TitleHidden ? TitleId : null)" aria-label="@(TitleHidden ? Card.Name : null)"
          data-report-title-placement="@TitlePlacementValue"
+         data-report-has-subtitle="@HasSubtitle.ToString().ToLowerInvariant()"
          data-report-preview-passive="@Passive.ToString().ToLowerInvariant()">
     <div class="card-body">
-        @if (!TitleHidden)
+        @if (HasHeaderContent)
         {
         <div class="report-card-heading">
-            <h2 id="@TitleId" class="h5 mb-0 @TitleAlignmentClass">@Card.Name</h2>
+            @if (!TitleHidden)
+            {
+                <h2 id="@TitleId" class="h5 mb-0 @TitleAlignmentClass">@Card.Name</h2>
+            }
+            @if (HasSubtitle)
+            {
+                <p class="report-card-subtitle small text-body-secondary mb-0 @SubtitleAlignmentClass @(TitleHidden ? null : "mt-1")">@Subtitle</p>
+            }
         </div>
         }
         @if (loading)
         {
-            <p class="text-body-secondary @(TitleHidden ? null : "mt-3")" role="status">
+            <p class="text-body-secondary @(HasHeaderContent ? "mt-3" : null)" role="status">
                 <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>@L["Loading"]
             </p>
         }
         else if (error is not null)
         {
-            <div class="alert alert-warning @(TitleHidden ? null : "mt-3") mb-0" role="alert">@L[error]</div>
+            <div class="alert alert-warning @(HasHeaderContent ? "mt-3" : null) mb-0" role="alert">@L[error]</div>
         }
         else if (Card.Definition.Visualization == ReportVisualization.RelationshipTree)
         {
@@ -39,28 +47,13 @@
         }
         else if (result is not null)
         {
-            @if (TitleHidden)
-            {
-            <div class="report-card-unit small text-body-secondary">@UnitLabel</div>
-            }
-            else
-            {
-            <div class="report-card-description small text-body-secondary mt-2">
-                <span>@L[$"ReportDateBasis{Card.Definition.DateBasis}"]:</span>
-                <time datetime="@result.Period.From.ToString("yyyy-MM-dd")">@result.Period.From.ToString("d")</time>
-                <span aria-hidden="true">–</span>
-                <time datetime="@result.Period.To.ToString("yyyy-MM-dd")">@result.Period.To.ToString("d")</time>
-                <span class="ms-2">@UnitLabel</span>
-            </div>
-            }
-
             @if (Empty)
             {
-                <p class="text-body-secondary @(TitleHidden ? null : "mt-3") mb-0">@L["ReportNoData"]</p>
+                <p class="text-body-secondary @(HasHeaderContent ? "mt-3" : null) mb-0">@L["ReportNoData"]</p>
             }
             else
             {
-                <div class="report-kpis @(TitleHidden ? null : "mt-3")">
+                <div class="report-kpis @(HasHeaderContent ? "mt-3" : null)">
                     @foreach (var total in result.Totals)
                     {
                         <div class="report-kpi">
@@ -188,6 +181,9 @@
 
     private string TitleId => $"report-card-title-{Card.Id:N}";
     private bool TitleHidden => Card.Definition.TitlePlacement == ReportTitlePlacement.Hidden;
+    private string? Subtitle => Card.Definition.Subtitle;
+    private bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
+    private bool HasHeaderContent => !TitleHidden || HasSubtitle;
     private string TitlePlacementValue => Card.Definition.TitlePlacement.ToString().ToLowerInvariant();
     private string TitleAlignmentClass => Card.Definition.TitlePlacement switch
     {
@@ -195,6 +191,7 @@
         ReportTitlePlacement.Right => "text-end",
         _ => "text-start"
     };
+    private string SubtitleAlignmentClass => TitleHidden ? "text-start" : TitleAlignmentClass;
     private string UnitLabel => result?.Metadata.Unit switch
     {
         ReportValueUnit.Count => L["ReportUnitCount"].Value,

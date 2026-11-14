@@ -63,6 +63,10 @@ static class ReportUiChecks
             cardState.Host.Refresh();
             Check.That(execution.Calls == before + 1,
                 "title placement changes update presentation without executing the report again");
+            cardState.Card = WithSubtitle(cardState.Card, "Presentation-only subtitle");
+            cardState.Host.Refresh();
+            Check.That(execution.Calls == before + 1,
+                "subtitle changes update presentation without executing the report again");
             cardState.Card = cardState.Card with
             {
                 Definition = cardState.Card.Definition with
@@ -185,19 +189,22 @@ static class ReportUiChecks
                     new Dictionary<string, object?>
                     {
                         ["AccountId"] = Guid.NewGuid(), ["SessionId"] = Guid.NewGuid(),
-                        ["Card"] = WithPlacement(Card(), placement)
+                        ["Card"] = WithSubtitle(WithPlacement(Card(), placement), "<strong>Custom subtitle</strong>")
                     }));
                 var placedHtml = placed.ToHtmlString();
                 if (placement == ReportTitlePlacement.Hidden)
                 {
                     Check.That(placedHtml.Contains("data-report-title-placement=\"hidden\"", StringComparison.Ordinal) &&
                         placedHtml.Contains("aria-label=\"Count\"", StringComparison.Ordinal) &&
-                        !placedHtml.Contains("report-card-heading", StringComparison.Ordinal) &&
+                        placedHtml.Contains("report-card-heading", StringComparison.Ordinal) &&
+                        !placedHtml.Contains("<h2", StringComparison.Ordinal) &&
+                        placedHtml.Contains("report-card-subtitle small text-body-secondary mb-0 text-start", StringComparison.Ordinal) &&
+                        placedHtml.Contains("&lt;strong&gt;Custom subtitle&lt;/strong&gt;", StringComparison.Ordinal) &&
                         !placedHtml.Contains("report-card-description", StringComparison.Ordinal) &&
-                        placedHtml.Contains("report-card-unit", StringComparison.Ordinal) &&
+                        !placedHtml.Contains("report-card-unit", StringComparison.Ordinal) &&
                         placedHtml.Contains("report-card-restriction", StringComparison.Ordinal) &&
                         placedHtml.Contains("report-chart", StringComparison.Ordinal),
-                        "hidden title removes visual heading and descriptive metadata while preserving units, data, accessible name and restrictions");
+                        "hidden title keeps a safe left-aligned custom subtitle while hiding descriptive metadata and preserving necessary content");
                 }
                 else
                 {
@@ -205,25 +212,42 @@ static class ReportUiChecks
                         placement == ReportTitlePlacement.Right ? "text-end" : "text-start";
                     Check.That(placedHtml.Contains($"data-report-title-placement=\"{placement.ToString().ToLowerInvariant()}\"", StringComparison.Ordinal) &&
                         placedHtml.Contains($"h5 mb-0 {alignment}", StringComparison.Ordinal) &&
-                        placedHtml.Contains("report-card-description", StringComparison.Ordinal),
-                        $"{placement} title placement renders the expected title alignment and descriptions");
+                        placedHtml.Contains($"report-card-subtitle small text-body-secondary mb-0 {alignment}", StringComparison.Ordinal) &&
+                        !placedHtml.Contains("report-card-unit", StringComparison.Ordinal) &&
+                        !placedHtml.Contains("<time", StringComparison.Ordinal),
+                        $"{placement} title placement aligns both title and custom subtitle without generated date or unit metadata");
                 }
             }
 
-            foreach (var hiddenCard in new[] { KeyFigureCard(), TableCard(), TreeCard() })
+            var hiddenWithoutSubtitle = await renderer.RenderComponentAsync<ReportCardView>(ParameterView.FromDictionary(
+                new Dictionary<string, object?>
+                {
+                    ["AccountId"] = Guid.NewGuid(), ["SessionId"] = Guid.NewGuid(),
+                    ["Card"] = WithSubtitle(WithPlacement(Card(), ReportTitlePlacement.Hidden), "   "), ["Passive"] = true
+                }));
+            var hiddenWithoutSubtitleHtml = hiddenWithoutSubtitle.ToHtmlString();
+            Check.That(!hiddenWithoutSubtitleHtml.Contains("report-card-heading", StringComparison.Ordinal) &&
+                !hiddenWithoutSubtitleHtml.Contains("report-card-subtitle", StringComparison.Ordinal) &&
+                !hiddenWithoutSubtitleHtml.Contains("Passiv forhåndsvisning", StringComparison.Ordinal),
+                "hidden title with empty subtitle has no header space and never falls back to an automatic subtitle");
+
+            foreach (var hiddenCard in new[] { Card(), KeyFigureCard(), TableCard(), TreeCard() })
             {
                 var hidden = await renderer.RenderComponentAsync<ReportCardView>(ParameterView.FromDictionary(
                     new Dictionary<string, object?>
                     {
                         ["AccountId"] = Guid.NewGuid(), ["SessionId"] = Guid.NewGuid(),
-                        ["Card"] = WithPlacement(hiddenCard, ReportTitlePlacement.Hidden), ["Passive"] = true
+                        ["Card"] = WithSubtitle(WithPlacement(hiddenCard, ReportTitlePlacement.Hidden), "Visible subtitle"),
+                        ["Passive"] = true
                     }));
                 var hiddenHtml = hidden.ToHtmlString();
-                Check.That(!hiddenHtml.Contains("report-card-heading", StringComparison.Ordinal) &&
+                Check.That(hiddenHtml.Contains("report-card-subtitle", StringComparison.Ordinal) &&
+                    hiddenHtml.Contains("Visible subtitle", StringComparison.Ordinal) &&
+                    !hiddenHtml.Contains("<h2", StringComparison.Ordinal) &&
                     !hiddenHtml.Contains("report-card-description", StringComparison.Ordinal) &&
                     (hiddenHtml.Contains("report-kpi", StringComparison.Ordinal) ||
                      hiddenHtml.Contains("<table", StringComparison.Ordinal) || hiddenHtml.Contains("report-tree", StringComparison.Ordinal)),
-                    $"hidden title preserves the passive {hiddenCard.Definition.Visualization} data view without descriptive chrome");
+                    $"hidden title preserves the custom subtitle and passive {hiddenCard.Definition.Visualization} data view without automatic descriptions");
             }
         });
         await VerifyLateCardResponsesAsync();
@@ -369,6 +393,14 @@ static class ReportUiChecks
         Definition = card.Definition with
         {
             DisplayJson = ReportDisplaySettingsJson.SetTitlePlacement(card.Definition.DisplayJson, placement)
+        }
+    };
+
+    private static ReportCardDto WithSubtitle(ReportCardDto card, string? subtitle) => card with
+    {
+        Definition = card.Definition with
+        {
+            DisplayJson = ReportDisplaySettingsJson.SetSubtitle(card.Definition.DisplayJson, subtitle)
         }
     };
 

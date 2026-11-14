@@ -3410,4 +3410,6 @@ This is a reminder, not a termination or renewal.</value>
   <data name="ReportTitlePlacementCenter" xml:space="preserve"><value>Centred</value></data>
   <data name="ReportTitlePlacementRight" xml:space="preserve"><value>Right</value></data>
   <data name="ReportDefinitionTitlePlacementInvalid" xml:space="preserve"><value>The title position is invalid.</value></data>
+  <data name="ReportCardSubtitle" xml:space="preserve"><value>Subtitle</value></data>
+  <data name="ReportDefinitionSubtitleInvalid" xml:space="preserve"><value>The subtitle cannot exceed 200 characters.</value></data>
 </root>

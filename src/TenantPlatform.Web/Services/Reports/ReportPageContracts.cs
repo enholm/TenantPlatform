@@ -16,6 +16,7 @@ public sealed record ReportCardDefinition(
     string DisplayJson = "{}")
 {
     public ReportTitlePlacement TitlePlacement => ReportDisplaySettingsJson.Deserialize(DisplayJson).TitlePlacement;
+    public string? Subtitle => ReportDisplaySettingsJson.Deserialize(DisplayJson).Subtitle;
 }
 
 public sealed record ReportCardEdit(

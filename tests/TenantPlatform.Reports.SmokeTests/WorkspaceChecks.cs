@@ -16,10 +16,12 @@ static class WorkspaceChecks
             "workspace definition collections and period have no shared mutable references");
 
         var titleCard = state.Page(first.Id).Cards[0];
+        var displayJson = ReportDisplaySettingsJson.SetTitlePlacement(
+            titleCard.Definition.DisplayJson, ReportTitlePlacement.Hidden);
+        displayJson = ReportDisplaySettingsJson.SetSubtitle(displayJson, "Workspace subtitle");
         var hiddenDefinition = titleCard.Definition with
         {
-            DisplayJson = ReportDisplaySettingsJson.SetTitlePlacement(
-                titleCard.Definition.DisplayJson, ReportTitlePlacement.Hidden)
+            DisplayJson = displayJson
         };
         state.UpdateCard(first.Id, titleCard.ClientId, titleCard with { Definition = hiddenDefinition });
         var titleCopy = state.DuplicateCard(first.Id, titleCard.ClientId, "Title copy");
@@ -29,13 +31,16 @@ static class WorkspaceChecks
         var movedTitleCopy = state.Page(second.Id).Cards.Single();
         Check.That(state.IsDirty && editedTitleCard.Name == titleCard.Name &&
             editedTitleCard.Definition.TitlePlacement == ReportTitlePlacement.Hidden &&
+            editedTitleCard.Definition.Subtitle == "Workspace subtitle" &&
             movedTitleCopy.Name == "Title copy" &&
-            movedTitleCopy.Definition.TitlePlacement == ReportTitlePlacement.Hidden,
-            "title placement participates in dirty state and survives duplication and cross-page movement without deleting card titles");
+            movedTitleCopy.Definition.TitlePlacement == ReportTitlePlacement.Hidden &&
+            movedTitleCopy.Definition.Subtitle == "Workspace subtitle",
+            "title presentation participates in dirty state and survives duplication and cross-page movement without deleting card titles");
         state.Cancel();
         Check.That(!state.IsDirty && state.Page(first.Id).Cards[0].Definition.TitlePlacement == ReportTitlePlacement.Left &&
+            state.Page(first.Id).Cards[0].Definition.Subtitle is null &&
             state.Page(second.Id).Cards.Count == 0,
-            "cancel restores the saved title placement after display edits, duplication and movement");
+            "cancel restores the saved title placement and subtitle after display edits, duplication and movement");
 
         state.Rename(first.Id, "Renamed");
         var added = state.AddCard(first.Id, Definition("added"), "Added");

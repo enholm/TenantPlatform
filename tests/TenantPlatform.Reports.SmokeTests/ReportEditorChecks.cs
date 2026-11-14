@@ -32,14 +32,17 @@ static class ReportEditorChecks
         var title = html.IndexOf("report-card-name", basics, StringComparison.Ordinal);
         var titlePlacement = html.IndexOf("report-card-title-placement", basics, StringComparison.Ordinal);
         var module = html.IndexOf("report-card-module", basics, StringComparison.Ordinal);
+        var subtitle = html.IndexOf("report-card-subtitle", module, StringComparison.Ordinal);
         var visualPanel = html.IndexOf("id=\"report-card-panel-visualization\"", StringComparison.Ordinal);
         var filterPanel = html.IndexOf("id=\"report-card-panel-filter\"", StringComparison.Ordinal);
-        Check.That(basics >= 0 && title < titlePlacement && titlePlacement < module && module < tabs &&
+        Check.That(basics >= 0 && title < titlePlacement && titlePlacement < module && module < subtitle && subtitle < tabs &&
             html.Contains("col-md-5", StringComparison.Ordinal) && html.Contains("col-md-4", StringComparison.Ordinal) &&
-            html.Contains("col-md-3", StringComparison.Ordinal) && html.Contains(">Tittel</label>", StringComparison.Ordinal),
-            "title, title placement and module use the responsive ordered row above the editor tabs");
-        Check.That(GetModelProperty<ReportTitlePlacement>(state.Component!, "TitlePlacement") == ReportTitlePlacement.Left,
-            "editor defaults an existing card without a display setting to left title placement");
+            html.Contains("col-md-3", StringComparison.Ordinal) && html.Contains(">Tittel</label>", StringComparison.Ordinal) &&
+            html.Contains(">Undertittel</label>", StringComparison.Ordinal) && html.Contains("maxlength=\"200\"", StringComparison.Ordinal),
+            "title row and optional subtitle row render responsively above the editor tabs");
+        Check.That(GetModelProperty<ReportTitlePlacement>(state.Component!, "TitlePlacement") == ReportTitlePlacement.Left &&
+            GetModelProperty<string>(state.Component!, "Subtitle") == "",
+            "editor defaults an existing card without display settings to left title placement and empty subtitle");
         Check.That(html.Contains("id=\"report-card-tab-visualization\" class=\"nav-link active\"", StringComparison.Ordinal) &&
             html.Contains("role=\"tab\"", StringComparison.Ordinal) && html.Contains("role=\"tabpanel\"", StringComparison.Ordinal),
             "visualisation is the default accessible editor tab");
@@ -57,14 +60,24 @@ static class ReportEditorChecks
             "selection tab uses its localized name without a nested filter heading");
 
         var component = state.Component!;
+        SetModelProperty(component, "Subtitle", new string('x', 201));
+        await renderer.Dispatcher.InvokeAsync(() => InvokePrivateAsync(component, "ApplyAsync"));
+        await renderer.Dispatcher.InvokeAsync(state.Host!.Refresh);
+        html = await renderer.Dispatcher.InvokeAsync(root.ToHtmlString);
+        Check.That(state.Applied is null && html.Contains("alert-danger", StringComparison.Ordinal) &&
+            html.Contains("200", StringComparison.Ordinal),
+            "editor rejects a subtitle beyond the shared maximum before applying the working copy");
+
         SetModelProperty(component, "Name", "Input kept across tabs");
         SetModelProperty(component, "TitlePlacement", ReportTitlePlacement.Right);
+        SetModelProperty(component, "Subtitle", "Subtitle kept across tabs");
         SetPrivateField(component, "issues", new List<ReportValidationIssue> { new("metric", "ReportDefinitionMetricInvalid") });
         SetPrivateField(component, "normalizationFields", new List<string> { "grouping" });
         await renderer.Dispatcher.InvokeAsync(() => InvokeTabAsync(component, "Filter"));
         await renderer.Dispatcher.InvokeAsync(state.Host!.Refresh);
         html = await renderer.Dispatcher.InvokeAsync(root.ToHtmlString);
         Check.That(html.Contains("value=\"Input kept across tabs\"", StringComparison.Ordinal) &&
+            html.Contains("value=\"Subtitle kept across tabs\"", StringComparison.Ordinal) &&
             html.Contains("id=\"report-card-tab-filter\" class=\"nav-link active\"", StringComparison.Ordinal) &&
             !html.Contains("alert-danger", StringComparison.Ordinal) && !html.Contains("alert-info", StringComparison.Ordinal),
             "tab changes preserve input and clear only editor-owned temporary banners");
@@ -75,8 +88,9 @@ static class ReportEditorChecks
         html = await renderer.Dispatcher.InvokeAsync(root.ToHtmlString);
         Check.That(html.Contains("value=\"Input kept across tabs\"", StringComparison.Ordinal) &&
             html.Contains("id=\"report-card-tab-filter\" class=\"nav-link active\"", StringComparison.Ordinal) &&
-            GetModelProperty<ReportTitlePlacement>(component, "TitlePlacement") == ReportTitlePlacement.Right,
-            "module normalization preserves the title, title placement and active editor tab");
+            GetModelProperty<ReportTitlePlacement>(component, "TitlePlacement") == ReportTitlePlacement.Right &&
+            GetModelProperty<string>(component, "Subtitle") == "Subtitle kept across tabs",
+            "module normalization preserves the title, subtitle, title placement and active editor tab");
 
         await renderer.Dispatcher.InvokeAsync(() => InvokePrivateAsync(component, "HandleTabKeyDownAsync",
             new KeyboardEventArgs { Key = "ArrowLeft" }));
@@ -126,9 +140,11 @@ static class ReportEditorChecks
             root.ToHtmlString().Contains("report-card-panel-visualization", StringComparison.Ordinal)).GetAwaiter().GetResult());
         component = state.Component!;
         SetModelProperty(component, "TitlePlacement", ReportTitlePlacement.Center);
+        SetModelProperty(component, "Subtitle", "Applied subtitle");
         await renderer.Dispatcher.InvokeAsync(() => InvokePrivateAsync(component, "ApplyAsync"));
-        Check.That(state.Applied?.Definition.TitlePlacement == ReportTitlePlacement.Center && !state.IsOpen,
-            "successful apply returns the selected title placement and closes through shared cleanup");
+        Check.That(state.Applied?.Definition.TitlePlacement == ReportTitlePlacement.Center &&
+            state.Applied.Definition.Subtitle == "Applied subtitle" && !state.IsOpen,
+            "successful apply returns the selected title placement and subtitle and closes through shared cleanup");
 
         await VerifyLateCatalogMessageAsync();
     }

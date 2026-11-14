@@ -98,6 +98,12 @@ static class PageChecks
             new(afterConflict.Id, afterConflict.Revision, afterConflict.Name,
             [new(card.Id, card.Name, invalidDisplay, 1, 1, 6, 4, 0)])
         ])), "page save rejects an unknown explicit title placement");
+        var invalidSubtitle = definition with { DisplayJson = $"{{\"subtitle\":\"{new string('x', 201)}\"}}" };
+        await Check.ThrowsAsync<ReportDefinitionValidationException>(() => ownerService.SaveWorkspaceAsync(f.Account, new(
+        [
+            new(afterConflict.Id, afterConflict.Revision, afterConflict.Name,
+            [new(card.Id, card.Name, invalidSubtitle, 1, 1, 6, 4, 0)])
+        ])), "page save rejects an overlong subtitle in a manipulated definition");
         var unsupported = definition with { Aggregation = ReportAggregation.Sum };
         await Check.ThrowsAsync<ReportPageValidationException>(() => ownerService.SaveWorkspaceAsync(f.Account, new(
         [
@@ -153,7 +159,7 @@ static class PageChecks
         ReportAggregation.CountDistinct,
         Grouping: new AgreementReportGroupingKey(AgreementReportGrouping.Type),
         Visualization: ReportVisualization.Bar,
-        DisplayJson: "{\"showLegend\":false,\"titlePlacement\":\"center\"}");
+        DisplayJson: "{\"showLegend\":false,\"titlePlacement\":\"center\",\"subtitle\":\"Persisted subtitle\"}");
 
     private static ReportCardEdit Edit(ReportCardDto card) => new(card.Id, card.Name, card.Definition,
         card.GridColumn, card.GridRow, card.GridWidth, card.GridHeight, card.SortOrder);

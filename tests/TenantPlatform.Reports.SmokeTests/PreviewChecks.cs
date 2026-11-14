@@ -51,6 +51,13 @@ static class PreviewChecks
         await preview.ExecuteAsync(fixture.Session, fixture.Account, new(hiddenTitle));
         Check.That(fixture.Execution.Calls == 1,
             "title placement is presentation-only and does not change the result cache identity");
+        var customSubtitle = first with
+        {
+            DisplayJson = ReportDisplaySettingsJson.SetSubtitle(first.DisplayJson, "Custom subtitle")
+        };
+        await preview.ExecuteAsync(fixture.Session, fixture.Account, new(customSubtitle));
+        Check.That(fixture.Execution.Calls == 1,
+            "subtitle is presentation-only and does not change the result cache identity");
         await preview.ExecuteAsync(fixture.Session, fixture.Account,
             new(first with { Visualization = ReportVisualization.Table }));
         Check.That(fixture.Execution.Calls == 2,

@@ -3504,4 +3504,6 @@ Dette er en påminnelse, ikke en oppsigelse eller fornyelse.</value>
   <data name="ReportTitlePlacementCenter" xml:space="preserve"><value>Midtstilt</value></data>
   <data name="ReportTitlePlacementRight" xml:space="preserve"><value>Høyre</value></data>
   <data name="ReportDefinitionTitlePlacementInvalid" xml:space="preserve"><value>Tittelplasseringen er ugyldig.</value></data>
+  <data name="ReportCardSubtitle" xml:space="preserve"><value>Undertittel</value></data>
+  <data name="ReportDefinitionSubtitleInvalid" xml:space="preserve"><value>Undertittelen kan ikke være lengre enn 200 tegn.</value></data>
 </root>
